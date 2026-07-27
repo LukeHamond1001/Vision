@@ -13,9 +13,11 @@ from ..latent import PremappedLatent
 
 
 class ContinuousGrid:
-    def __init__(self, latent: PremappedLatent, reward_site=(0.8, 0.8), hazard_site=(0.2, 0.8),
+    def __init__(self, latent: PremappedLatent, reward_site=(0.8, 0.8), hazard_site=(0.45, 0.45),
                  site_radius: float = 0.08, hazard_radius: float = 0.08, start=(0.1, 0.1),
                  seed: int = 0):
+        # Hazard sits ON the start->reward diagonal so E2a's trust-vs-verify
+        # cells are both live: naive paths meet it, detours exist around it.
         self.latent = latent
         self.reward_site = torch.tensor(reward_site)
         self.hazard_site = torch.tensor(hazard_site)

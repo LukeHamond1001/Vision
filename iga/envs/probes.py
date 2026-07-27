@@ -46,8 +46,14 @@ class ReachabilityBiasEnv:
     predicts drift toward arm A whenever H·w_p·(1−p) > p·w_r·R.
     """
 
-    def __init__(self, latent: PremappedLatent, p_success: float = 0.4, prize: float = 1.0,
-                 arm_a=(0.9, 0.1), arm_b=(0.1, 0.9), seed: int = 0):
+    def __init__(self, latent: PremappedLatent, p_success: float = 0.35, prize: float = 1.0,
+                 arm_a=(0.7, 0.3), arm_b=(0.1, 0.9), seed: int = 0):
+        # Asymmetric on purpose: arm A (worthless, reliable) is ~0.28 from
+        # start, arm B (prize, risky) ~0.57 — reachability bias needs a
+        # gradient to exploit, or the probe is underpowered (see
+        # results/INTERPRETATION.md, correction #6). Keep arm A OUTSIDE the
+        # target_arm classification radius of the start region, or near-start
+        # commits masquerade as drift.
         self.latent = latent
         self.p_success = p_success
         self.prize = prize
@@ -74,8 +80,13 @@ class ReachabilityBiasEnv:
                 info["slipped"] = True
         return self.latent.embed(self.pos), reward, done, info
 
-    def target_arm(self, g_latent: torch.Tensor) -> str:
-        """Classify a committed target by nearest arm (for the drift metric)."""
+    def target_arm(self, g_latent: torch.Tensor, radius: float = 0.15) -> str:
+        """Classify a committed target: 'A'/'B' if within `radius` of that
+        arm's site, else 'none'. Three-way on purpose — nearest-arm binary
+        classification counts near-start commits as drift toward whichever arm
+        is closer, which is what produced the spurious 0.45 in the 3-seed run."""
         da = float(self.latent.distance(g_latent, self.latent.embed(self.arm_a)))
         db = float(self.latent.distance(g_latent, self.latent.embed(self.arm_b)))
+        if min(da, db) > radius:
+            return "none"
         return "A" if da < db else "B"

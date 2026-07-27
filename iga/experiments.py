@@ -68,14 +68,60 @@ def build(seed: int, cfg_overrides: dict, env_kind: str = "grid"):
     return agent, env
 
 
+# ---------------------------------------------------------------- E4 baseline
+class ModelFreeBaseline:
+    """External comparison (E4): same capacity, no imagination machinery —
+    REINFORCE with a running-mean baseline on ENV reward only. What the rules
+    are worth is measured against this, not only against self-ablation."""
+
+    def __init__(self, latent_dim: int, act_dim: int, max_world_step: float,
+                 lr: float, seed: int):
+        torch.manual_seed(seed)
+        self.net = torch.nn.Sequential(
+            torch.nn.Linear(latent_dim, 64), torch.nn.Tanh(),
+            torch.nn.Linear(64, 32), torch.nn.Tanh())
+        self.mean = torch.nn.Linear(32, act_dim)
+        self.log_std = torch.nn.Parameter(torch.full((act_dim,), -1.0))
+        params = (list(self.net.parameters()) + list(self.mean.parameters())
+                  + [self.log_std])
+        self.opt = torch.optim.Adam(params, lr=lr)
+        self.max_world_step = max_world_step
+        self._baseline = 0.0
+
+    def run_episode(self, env, max_steps: int = 80) -> dict:
+        p = env.reset()
+        stats = {"return": 0.0, "catastrophes": 0, "settles": 0,
+                 "commit_claims": [], "settle_realized": []}
+        for _ in range(max_steps):
+            feats = self.net(p)
+            dist = torch.distributions.Normal(self.mean(feats), self.log_std.exp())
+            a = dist.sample()
+            logp = dist.log_prob(a).sum()
+            p, r, done, info = env.step(torch.tanh(a) * self.max_world_step)
+            adv = r - self._baseline
+            self._baseline = 0.99 * self._baseline + 0.01 * r
+            self.opt.zero_grad()
+            (-adv * logp).backward()
+            self.opt.step()
+            stats["return"] += r
+            if info.get("catastrophe"):
+                stats["catastrophes"] += 1
+            if done:
+                break
+        return stats
+
+
 # ---------------------------------------------------------------- runners
 def run_condition(name: str, cfg_overrides: dict, seeds: int, episodes: int,
-                  env_kind: str = "grid") -> dict:
+                  env_kind: str = "grid", model_free: bool = False) -> dict:
     per_seed = {"return": [], "catastrophes": [], "settles": [], "delusion": [], "arm_a_frac": []}
     for s in range(seeds):
         agent, env = build(s, cfg_overrides, env_kind)
-        arm_counts = {"A": 0, "B": 0}
-        if env_kind == "reach":
+        if model_free:
+            agent = ModelFreeBaseline(8, 2, AgentConfig().max_world_step,
+                                      AgentConfig().lr_policy, seed=s)
+        arm_counts = {"A": 0, "B": 0, "none": 0}
+        if env_kind == "reach" and not model_free:
             agent.commit_hook = lambda g: arm_counts.__setitem__(
                 env.target_arm(g), arm_counts[env.target_arm(g)] + 1)
         ret, cat, set_, claims, realized = 0.0, 0, 0, [], []
@@ -94,8 +140,8 @@ def run_condition(name: str, cfg_overrides: dict, seeds: int, episodes: int,
         mean_real = float(np.mean(realized)) if realized else float("nan")
         per_seed["delusion"].append(mean_claim / mean_real if realized and mean_real > 1e-6
                                     else float("nan"))
-        total_commits = arm_counts["A"] + arm_counts["B"]
-        per_seed["arm_a_frac"].append(arm_counts["A"] / total_commits if total_commits else float("nan"))
+        classified = arm_counts["A"] + arm_counts["B"]      # 'none' excluded by design
+        per_seed["arm_a_frac"].append(arm_counts["A"] / classified if classified else float("nan"))
     out = {"name": name, "seeds": seeds, "episodes": episodes, "per_seed": per_seed}
     for metric in ("return", "catastrophes", "arm_a_frac", "delusion"):
         vals = np.array([v for v in per_seed[metric] if not np.isnan(v)])
@@ -135,12 +181,20 @@ def main() -> None:
         print(f"[grid ] {name:22s} return={r['return']['iqm']:+.3f} "
               f"CI={r['return']['ci95']} catastrophes={r['catastrophes']['iqm']:.1f}",
               flush=True)
+    r = run_condition("mf_reinforce_E4", {}, seeds, episodes, "grid", model_free=True)
+    results["grid"].append(r)
+    print(f"[grid ] {'mf_reinforce_E4':22s} return={r['return']['iqm']:+.3f} "
+          f"CI={r['return']['ci95']} catastrophes={r['catastrophes']['iqm']:.1f}", flush=True)
+
     for name, over in REACH_CONDITIONS:
         r = run_condition(name, over, seeds, episodes, "reach")
         results["reach"].append(r)
         arm = r.get("arm_a_frac", {}).get("iqm", float("nan"))
         print(f"[reach] {name:22s} return={r['return']['iqm']:+.3f} arm_A_frac={arm:.2f}",
               flush=True)
+    r = run_condition("mf_reinforce_E4", {}, seeds, episodes, "reach", model_free=True)
+    results["reach"].append(r)
+    print(f"[reach] {'mf_reinforce_E4':22s} return={r['return']['iqm']:+.3f}", flush=True)
 
     (RESULTS / "battery.json").write_text(json.dumps(results, indent=2))
     write_report(results, seeds, episodes)
