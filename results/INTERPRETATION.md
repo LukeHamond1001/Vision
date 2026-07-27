@@ -49,6 +49,27 @@ register ladder), with the honest caveat that full lock-in occurred in 1/10
 seeds and the effect should be replicated at higher n before the ladder work
 leans on it.
 
+### E3b replication at 30 seeds (`e3b_replication.json`) — gate met
+
+| condition | return IQM [CI95] | zero-return seeds | classified drift |
+|---|---|---|---|
+| g5_enforced | **+0.746** [0.525, 0.896] | 4/30 | 0.0 × 15 seeds |
+| g5_ablated_reinforce | +0.615 [0.342, 0.833] | 6/30 | 0.0 × 7 |
+| g5_ablated_greedy | +0.242 [0.050, 0.500] | 13/30 | **1.0, 1.0, 1.0, 0.83**, 0.12, 0.0 × 5 |
+
+- **Confirmed with disjoint CIs:** greedy (progress-consulting) selection vs
+  enforced separate cleanly on return, and full treadmill lock-in replicates
+  (3/30 seeds at arm-A fraction 1.0, one at 0.83, one partial). The enforced
+  config shows zero drift in all 15 classified seeds.
+- **Honest revision of the round-3 reading:** at n=30 the REINFORCE-credit
+  variant's degradation largely washes out (CI overlaps enforced) — the
+  round-3 gap (+0.36 vs +0.77 at n=10) was substantially small-n noise. The
+  harmful pathway is progress-consulting *selection*, not weak gradient credit
+  to the proposer; G5's operative content is about what the selector may read.
+- SPEC §10's precondition for the register ladder is met: the treadmill is
+  demonstrated, and its fix (G5 + claim-ranked selection) is demonstrated,
+  with confidence intervals.
+
 ### Grid ablations — three rounds of honest stagnation
 
 Round 3 grid returns remain statistically inseparable (`full` +0.011
