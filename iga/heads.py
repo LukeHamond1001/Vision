@@ -49,9 +49,55 @@ class FixedRewardHead:
         forward(p, i) − claim(i) == realized(p), exactly, per sample."""
         return self.realized(p) + self.claim(i)
 
+    @property
+    def effective_w(self) -> torch.Tensor:
+        """The fixed linear claim weights (for per-band slicing in the ladder)."""
+        return self.w
+
     def frozen_tensors(self) -> list[torch.Tensor]:
         return [self.site, self.w]
 
     def assert_parameter_free(self) -> None:
         for t in self.frozen_tensors():
             assert not t.requires_grad, "W1 violated: reward-head tensor requires grad"
+
+
+class SumHead:
+    """Weighted sum of FixedRewardHeads. Still W1/W4-compliant: realized is a
+    fixed nonlinear sum, and the claim Σ a_j·(w_j·i) is linear in i with fixed
+    effective weights, so exact subtraction carries over unchanged. Used for
+    evaluators with multiple pre-mapped salient sites (e.g. reward + gateway)."""
+
+    def __init__(self, heads: list[FixedRewardHead], weights: list[float]):
+        assert len(heads) == len(weights)
+        self.heads = heads
+        self.weights = [float(a) for a in weights]
+
+    def realized(self, p: torch.Tensor) -> torch.Tensor:
+        out = self.weights[0] * self.heads[0].realized(p)
+        for a, h in zip(self.weights[1:], self.heads[1:]):
+            out = out + a * h.realized(p)
+        return out
+
+    def claim(self, i: torch.Tensor) -> torch.Tensor:
+        out = self.weights[0] * self.heads[0].claim(i)
+        for a, h in zip(self.weights[1:], self.heads[1:]):
+            out = out + a * h.claim(i)
+        return out
+
+    def forward(self, p: torch.Tensor, i: torch.Tensor) -> torch.Tensor:
+        return self.realized(p) + self.claim(i)
+
+    def frozen_tensors(self) -> list[torch.Tensor]:
+        return [t for h in self.heads for t in h.frozen_tensors()]
+
+    @property
+    def effective_w(self) -> torch.Tensor:
+        out = self.weights[0] * self.heads[0].w
+        for a, h in zip(self.weights[1:], self.heads[1:]):
+            out = out + a * h.w
+        return out
+
+    def assert_parameter_free(self) -> None:
+        for h in self.heads:
+            h.assert_parameter_free()

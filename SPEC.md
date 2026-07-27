@@ -1,6 +1,6 @@
 # Imagination-Gated Agent — Design Specification
 
-**Version 0.1** · Status: draft for implementation · Codename: `iga` (placeholder)
+**Version 0.2-draft** · Status: v0.1 implemented & battery-tested; §10 ladder in progress · Codename: `iga` (placeholder)
 
 This document is the normative specification of the architecture. It exists because
 review showed the informal description admits multiple readings, only one of which
@@ -320,17 +320,49 @@ constraints:
 
 ---
 
-## 10. Roadmap: the register ladder (v0.2, gated on E1–E4)
+## 10. The register ladder (v0.2 — gate met: E3b confirmed at 30 seeds)
 
-Multi-timescale extension: goal registers at geometrically spaced hold-lengths
-τ_1 < τ_2 < … over a *banded* pre-mapped latent (bands with prescribed
-timescales, e.g. SIGReg-style pretraining extended with per-band temporal
-priors). Level-k targets live in band k, are held for τ_k (C2 per band), and
-carry their own potential in band-k coordinates — telescoping holds per band per
-window by the same §6.1 argument. Long-horizon prediction/selection is forced
-through slow bands. **Safety note:** the treadmill residual (§6.4) concentrates
-at the slowest level, where the progress pot H·w_p is largest — C7's value bar
-matters most exactly there. Do not build v0.2 until E3b passes at v0.1.
+Multi-timescale extension. The E3b precondition is satisfied
+(`results/e3b_replication.json`: treadmill lock-in under progress-consulting
+selection, zero drift under G5, disjoint CIs), so the following is now
+normative for v0.2. It adds four commitments on top of W1–W5 / C1–C7 / G1–G5,
+which all continue to hold per level.
+
+- **L1 — Banded frozen latent.** The pre-mapped latent is partitioned into K
+  disjoint bands (block structure); each band has its own frozen metric
+  d_k (the restriction of the frozen metric to its slice). Band k carries the
+  state components whose intrinsic timescale matches hold-length τ_k. In a
+  full system the bands come from pretraining with per-band temporal priors
+  (SIGReg-style with prescribed autocorrelation ladders); in the scaffold they
+  are a frozen block-diagonal stub with the same contract.
+
+- **L2 — One register per band, held-target per window.** Registers hold
+  targets g_k in band-k coordinates for geometrically spaced windows
+  τ_1 < τ_2 < … < τ_K. C2 applies per band: g_k MUST NOT be re-chosen inside
+  its own window; re-choice happens only at the window boundary. Φ_k is then
+  piecewise-constant-in-window, §6.1 telescoping holds per band per window,
+  and the cross-window residual per window is bounded by the band diameter —
+  the same discipline v0.1 applies to episodes, now applied per level.
+
+- **L3 — Composite imagination channels.** The imagination channels carry the
+  band-concatenated composite target i = g_1 ⊕ … ⊕ g_K. W4 and W5 are
+  unchanged over the composite: claims w±·i are linear in the whole vector
+  (so per-level claims superpose), and level k's proposer writes ONLY slice k.
+  Because claims evaluate the composite, a fast candidate is valued *in the
+  context of* the held slow targets — context coupling without violating
+  head linearity.
+
+- **L4 — Per-level G5, and C7 mandatory at the top.** Progress in band k pays
+  the policy only; no level's proposer receives progress credit or
+  progress-consulting selection (the E3b-confirmed failure). The value bar
+  (C7) is REQUIRED at the slowest level: the treadmill residual (§6.4)
+  concentrates there because the progress pot scales with τ_K.
+
+**v0.2 evaluation (E5).** Flat v0.1 agent vs ladder agent on a two-timescale
+environment (fast position + slow context that gates reward). Metrics: return,
+slow-transition achievement rate, and the per-band telescoping/hold structural
+tests. Exploratory at scaffold scale; the structural tests are the deliverable,
+the comparison is evidence-gathering.
 
 ---
 
