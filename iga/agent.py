@@ -52,6 +52,9 @@ class AgentConfig:
     use_value_bar: bool = True           # C7
     curiosity_mode: str = "oneshot"      # C6: 'oneshot' | 'never_dies' | 'off'
     pay_proposer_progress: bool = False  # G5 ABLATION: True is the broken variant
+    select_by_progress_history: bool = False  # G5 ABLATION (mechanistic): rank
+    #   targets by historically achieved window progress instead of claims —
+    #   "aim where we reliably make progress" is the treadmill made explicit.
 
 
 class Agent:
@@ -75,6 +78,7 @@ class Agent:
         self._pending_logp: torch.Tensor | None = None   # G5-ablation bookkeeping
         self._window_progress = 0.0
         self._baseline = 0.0             # REINFORCE variance baseline (neutral)
+        self._prog_history: dict[tuple, tuple[float, int]] = {}  # key -> (mean, n)
 
         # G5: two optimizers, disjoint parameter sets. Progress/realized train
         # the policy (trunk + action head); calibration trains the proposer.
@@ -147,7 +151,15 @@ class Agent:
                     claim_pos - claim_neg < self.cfg.value_bar:        # C7 value bar
                 diag["below_bar"] += 1
                 continue
-            score = claim_pos - claim_neg                              # claims rank (G1)
+            if self.cfg.select_by_progress_history:
+                # G5 ABLATION (mechanistic): selection consults achieved
+                # progress. Unseen neighborhoods score optimistically at their
+                # distance (their maximum progress pot) — so both arms get
+                # tried, then history takes over. This is the §6.4 selector.
+                mean, n = self._prog_history.get(self.cap.key(g), (dist, 0))
+                score = mean
+            else:
+                score = claim_pos - claim_neg                          # claims rank (G1)
             if best_score is None or score > best_score:
                 best, best_score, best_raw = g, score, raw
 
@@ -214,12 +226,20 @@ class Agent:
         self.opt_proposer.step()
         self._pending_logp = None
 
+    def _record_window_progress(self) -> None:
+        """Running mean of achieved window progress per target neighborhood.
+        Only consulted under the select_by_progress_history ablation."""
+        key = self.cap.key(self.register.target)
+        mean, n = self._prog_history.get(key, (0.0, 0))
+        self._prog_history[key] = ((mean * n + self._window_progress) / (n + 1), n + 1)
+
     def abandon(self) -> None:
         """Close the window without arrival (used by the hold-target ablation)."""
         if self.gate.open_ious:
             self.gate._ledger.pop()
         if self.cfg.pay_proposer_progress:
             self._pay_proposer_progress()
+        self._record_window_progress()
         self._pending_logp = None
         self.register.close()
 
@@ -231,6 +251,7 @@ class Agent:
             return None
         if self.cfg.pay_proposer_progress:                             # ablation pathway
             self._pay_proposer_progress()
+        self._record_window_progress()
         if not arrived:                                                # timeout: IOU dies unpaid
             self.gate._ledger.pop()
             self.register.close()

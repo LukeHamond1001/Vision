@@ -56,10 +56,12 @@ def build(seed: int, cfg_overrides: dict, env_kind: str = "grid"):
         pos_site, neg_site = latent.embed(env.arm_b), latent.embed(torch.tensor([0.5, 0.05]))
     gen = torch.Generator().manual_seed(seed + 1000)
     support = torch.stack([latent.embed(w) for w in torch.rand(256, 2, generator=gen)])
-    # sigma 0.25: evaluators localized enough that the linear proxies carry
-    # signal, overlapped enough that the A2 gap stays a real phenomenon.
+    # sigma 0.25 (pos): localized enough that the linear proxy carries signal,
+    # overlapped enough that the A2 gap stays a real phenomenon. sigma 0.15
+    # (neg): the aversive field must be narrow — a wide f- walls off the
+    # corridor and collapses learnability for every condition alike.
     head_pos = FixedRewardHead(pos_site, sigma=0.25, proxy_samples=support)
-    head_neg = FixedRewardHead(neg_site, sigma=0.25, proxy_samples=support)
+    head_neg = FixedRewardHead(neg_site, sigma=0.15, proxy_samples=support)
     overrides = dict(cfg_overrides)
     # A2-calibrated veto operating point (SPEC §8), unless the condition pins it.
     overrides.setdefault("veto_threshold", calibrate_threshold(head_neg, support))
@@ -164,8 +166,8 @@ GRID_CONDITIONS = [
 
 REACH_CONDITIONS = [                                     # E3b (§6.4)
     ("g5_enforced", {}),
-    ("g5_ablated", {"pay_proposer_progress": True}),
-    ("g5_ablated_no_bar", {"pay_proposer_progress": True, "use_value_bar": False}),
+    ("g5_ablated_reinforce", {"pay_proposer_progress": True}),
+    ("g5_ablated_greedy", {"select_by_progress_history": True, "use_value_bar": False}),
 ]
 
 
