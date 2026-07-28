@@ -67,8 +67,14 @@ trunk/policy and per-band progress.
   ladder_short 0.84 [0.830, 0.847] — banded CIs fully disjoint from flat by a
   wide margin, and the ladder's 80-ep lock-in seeds recovered with training
   (its CI tightened from [0.595, 0.857] to [0.821, 0.845]). The separation
-  replicates and grows with budget. 30-seed replication of flat vs
-  ladder_short running (`e5c_replication_n30.json`).
+  replicates and grows with budget.
+- **Replication at 30 seeds** (`e5c_replication_n30.json`, 30 × 150):
+  flat max_c **0.776 [0.769, 0.787]** vs ladder_short **0.839
+  [0.833, 0.846]** — tight, widely disjoint intervals. The banded-vs-flat
+  separation is confirmed at the same evidential grade as E3b. This is the
+  ladder's first replicated behavioral result: banded per-band progress
+  shaping sustains a slow variable ~0.06 past the flat architecture's
+  plateau, precisely across the region where evaluator guidance dies.
 - Returns 0.000 at 150 ep ⇒ the last mile is NOT a budget problem. Diagnosis:
   a chicken-and-egg created by the leash — targets are admissible only within
   0.15 of VISITED support, and high-charge support exists only at the pad, so
