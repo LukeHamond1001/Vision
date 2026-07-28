@@ -5,6 +5,52 @@ stable commentary). Newest round first.
 
 ---
 
+## Round 10 — 2026-07-28: the last mile falls — first completions
+
+The oldest open item (door completions: zero in every configuration across
+rounds 8–v0.4) is closed by one mechanism plus one bug chain, cleanly
+attributed (`v04_lastmile.json`, 12 × 150, champion leakin latent, both arms
+carrying the bug fixes):
+
+| condition | return IQM [CI95] | max_c |
+|---|---|---|
+| control (no gradient proposals) | 0.000 [0.0, 0.0] | 0.792 |
+| **gradient proposals** | **+0.031 [0.016, 0.042]** | 0.740 |
+
+**The mechanism — imagination climbs the frozen evaluator.** Candidate pools
+are augmented with steps along ∇(f+ − f−) from the current state: autograd
+through fixed functions only, nothing trained, every candidate still passes
+leash, veto, bar, and prospective ranking. This is prospective evaluation's
+natural completion (round 9 let selection EVALUATE imagined states with the
+frozen heads; round 10 lets imagination GENERATE candidates from them), and
+it is the sequencing layer: the gradient points padward at low charge and
+doorward at high charge, so phase switching emerges from evaluator structure
+— no new registers, no C2 exposure. Structural test pins the phase-switch
+property.
+
+**The bug chain that masked it** (found by a probe/field discrepancy: 0%
+doorward commits in the field vs decisive gradient-candidate wins in a
+controlled probe — the one differing variable was the register state):
+1. Slow arrive_eps 0.3 exceeded most charge-gaps, so every slow target
+   settled the instant it was committed — the slow register was closed
+   almost always.
+2. `compose()` filled closed slices with ZEROS — but a zero slice is not a
+   neutral absence, it is a target at the origin: the fast level ranked
+   candidates in a charge=0 context where the door bump is dead. Fix: the
+   neutral for an absent desire is the CURRENT state (the no-op want).
+After the fixes: doorward commits 0% → 86–91%; first positive returns.
+
+**Honest scope:** the completion rate is modest (~2–3 per seed over the
+scored half); the result is a mechanism-existence demonstration with clean
+attribution, not a solved benchmark. Raising the rate is engineering
+(budget, proposer exposure), distinct from the science.
+
+With this, the ChargeWorld program is end-to-end: charge discovery →
+sustained charging past the evaluator's guidance → phase-switched trip →
+door. Every stage's mechanism is identified and its ablation measured.
+
+---
+
 ## v0.4 round 1 — 2026-07-28: the deliberate objective works; hand-design
 ## still edges it at toy scale
 
