@@ -62,8 +62,39 @@ def make_pretrained_latent(seed: int = 0) -> PretrainedBandedLatent:
     return lat
 
 
+def make_leakfree_latent() -> PretrainedBandedLatent:
+    """Necessity ablation: the pretrained latent with the fast band made
+    c-blind (zero the charge column of the fast-band rows). If the v0.3 win
+    vanishes here, the cross-band leak is the active ingredient."""
+    base = make_pretrained_latent(seed=0)
+    W = base._W.clone()
+    W[base.band_slices[0], -1] = 0.0
+    lat = PretrainedBandedLatent(W, part_dims=[2, 1], band_dims=[6, 2])
+    return PretrainedBandedLatent(W / lat.step_scale(0), part_dims=[2, 1], band_dims=[6, 2])
+
+
+def make_leakin_latent(amp: float = 0.57, seed: int = 0) -> PretrainedBandedLatent:
+    """Sufficiency ablation: the RANDOM block latent with a synthetic charge
+    leak injected into the fast band at the pretrained latent's measured
+    amplitude. If the win appears here, the leak alone (no learned geometry)
+    suffices."""
+    rb = BandedLatent([2, 1], [6, 2], seed=0)
+    W = torch.zeros(8, 3)
+    W[0:6, 0:2] = rb._blocks[0]
+    W[6:8, 2:3] = rb._blocks[1]
+    gen = torch.Generator().manual_seed(seed + 11)
+    v = torch.randn(6, generator=gen)
+    W[0:6, 2] = v / torch.linalg.vector_norm(v) * amp
+    lat = PretrainedBandedLatent(W, part_dims=[2, 1], band_dims=[6, 2])
+    return PretrainedBandedLatent(W / lat.step_scale(0), part_dims=[2, 1], band_dims=[6, 2])
+
+
 def build(seed: int, cond: str):
-    if cond.startswith("pretrained"):
+    if cond == "pretrained_leakfree":
+        latent = make_leakfree_latent()
+    elif cond == "random_leakin":
+        latent = make_leakin_latent()
+    elif cond.startswith("pretrained"):
         latent = make_pretrained_latent(seed=0)   # one shared pretraining
     else:
         latent = BandedLatent([2, 1], [6, 2], seed=0)
@@ -110,6 +141,27 @@ def run_cond(cond: str, seeds: int, episodes: int, max_steps: int = 160) -> dict
 
 
 def main() -> None:
+    if len(sys.argv) > 1 and sys.argv[1] == "ablate":
+        # Mechanism identification (pre-registered): leak NECESSARY if
+        # pretrained_leakfree falls to ~random_now; leak SUFFICIENT if
+        # random_leakin rises to ~pretrained_now.
+        from .pretrain import band_routing_report
+        from .latent import BandedLatent as _BL
+        scratch = ChargeWorld(_BL([2, 1], [6, 2], seed=0), seed=99)
+        traj = collect_random_walk(scratch, 4000, seed=99)
+        for name, lat in (("leakfree", make_leakfree_latent()),
+                          ("leakin", make_leakin_latent())):
+            print(f"[v0.3:ablate] routing {name}: {band_routing_report(lat, traj)}", flush=True)
+        results = []
+        for cond in ("random_now", "random_leakin", "pretrained_now", "pretrained_leakfree"):
+            r = run_cond(cond, seeds=12, episodes=150)
+            results.append(r)
+            print(f"[v0.3:ablate] {cond:19s} max_c={r['max_c']['iqm']:.3f} "
+                  f"CI={[round(x, 3) for x in r['max_c']['ci95']]} "
+                  f"return={r['return']['iqm']:+.3f}", flush=True)
+        (RESULTS / "v03_leak_ablation.json").write_text(json.dumps(results, indent=2))
+        print("wrote results/v03_leak_ablation.json")
+        return
     quick = len(sys.argv) > 1 and sys.argv[1] == "quick"
     seeds, episodes = (3, 12) if quick else (12, 150)
     RESULTS.mkdir(exist_ok=True)
