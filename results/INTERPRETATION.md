@@ -5,6 +5,37 @@ stable commentary). Newest round first.
 
 ---
 
+## Round 4 — 2026-07-27: E5 ladder comparison (v0.2)
+
+`e5_ladder.json` (10 seeds × 60 ep) and `e5_ladder_easy.json` (8 seeds ×
+150 ep, nearer gate, larger sites): **flat and ladder agents both at zero
+return and ~zero zone-flip rate in all four cells.** Neither agent reliably
+reaches even the first-stage gate.
+
+Conclusion, now supported by three independent lines (grid battery stagnation
+across rounds 1–3, E5 default, E5 eased): **the scaffold's REINFORCE learner
+is the binding constraint for any compound-task behavioral comparison.** The
+reach environment learned well (up to +0.89 IQM) because a single
+claim-guided target chain with dense evaluator shaping suffices there; the
+two-zone task requires reaching a weakly-shaped intermediate gate and then
+re-targeting, which this learner cannot bootstrap at any tested budget.
+
+Consequences:
+- The E5 *behavioral* claim (ladder > flat on multi-timescale tasks) is
+  **untested, not falsified**. It is blocked on learner infrastructure — an
+  actor-critic policy learner (or equivalent sample-efficiency upgrade) is
+  the prerequisite, and the same upgrade unblocks the grid battery's return
+  rows. This is the single highest-leverage piece of infrastructure work in
+  the repo.
+- The v0.2 *structural* deliverables stand regardless: per-band telescoping,
+  hold discipline at boundaries, composite slice/claim superposition, and
+  per-proposer G5 are all enforced and tested (tests/test_ladder.py, 20/20
+  suite green). The ladder's safety argument never depended on E5 —
+  it inherits per level from the v0.1 theorems plus the E3b-confirmed
+  treadmill fix.
+
+---
+
 ## Round 3 — 2026-07-27 (10 seeds × 60 episodes)
 
 Changes vs round 2: hazard just off-diagonal with narrow aversive field
