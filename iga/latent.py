@@ -107,9 +107,15 @@ class BandedLatent(PremappedLatent):
         bv = self.band(b, k) if b.shape[-1] == self.latent_dim else b
         return torch.linalg.vector_norm(av - bv, dim=-1)
 
-    def compose(self, band_targets: list[torch.Tensor | None]) -> torch.Tensor:
-        """L3: composite target g_1 ⊕ ... ⊕ g_K (unset bands are zero)."""
-        out = torch.zeros(self.latent_dim)
+    def compose(self, band_targets: list[torch.Tensor | None],
+                fallback: torch.Tensor | None = None) -> torch.Tensor:
+        """L3: composite target g_1 ⊕ ... ⊕ g_K. Unset bands take the
+        FALLBACK state's slice (the current state = the no-op desire) — a
+        zero slice is not neutral, it is a target at the origin, and it
+        poisons every evaluation of the composite (round-10 bug: closed slow
+        registers made the fast level rank candidates in a charge=0 context,
+        killing doorward selection)."""
+        out = torch.zeros(self.latent_dim) if fallback is None else fallback.detach().clone()
         for k, g in enumerate(band_targets):
             if g is not None:
                 out[self.band_slices[k]] = g.detach()

@@ -30,7 +30,10 @@ from .trunk import ActionHead, SharedTrunk
 @dataclass
 class LadderConfig:
     holds: tuple = (12, 96)          # τ_1 < τ_2 (fast, slow), in steps
-    arrive_eps: tuple = (0.08, 0.3)  # per-band arrival radii
+    arrive_eps: tuple = (0.08, 0.05) # per-band arrival radii — the slow eps
+    #   must match the band's scale: at 0.3 (old default) any slow target
+    #   settled the instant it was committed, leaving the register closed and
+    #   the composite context-less almost always (round-10 bug).
     leash_radius: float = 0.15
     cap_radius: float = 0.1
     cap_max_updates: int = 2
@@ -122,7 +125,8 @@ class LadderAgent:
 
     def _composite(self) -> torch.Tensor:
         return self.latent.compose(
-            [r.target if r.open else None for r in self.registers])
+            [r.target if r.open else None for r in self.registers],
+            fallback=self.p)
 
     def _write_imagination(self) -> None:
         self.i = self._composite()
