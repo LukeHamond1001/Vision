@@ -5,6 +5,57 @@ stable commentary). Newest round first.
 
 ---
 
+## v0.3 round 1 — 2026-07-28: the pretrained latent wins, not how predicted
+
+OU-ladder pretraining (the session-opening proposal, weak/sketched form:
+per-band innovation losses at prescribed timescales + covariance whitening,
+linear encoder, frozen). Two pretraining pathologies found and fixed by
+measurement en route: coverage collapse (random policies never charge;
+whitening amplified c-noise 12× into the wrong band → coverage resets) and
+reset discontinuities poisoning the slow prior (→ episode-boundary masking).
+
+**Prediction 1 — band discovery: CONFIRMED.** With prescribed timescales and
+nothing else, charge routed into the slow band (corr 1.000, position-blind:
+slow-band position step-scale 0.009). The multi-timescale thesis's routing
+claim holds in miniature.
+
+**Prediction 2 — emergent scale: mechanism REFUTED by measurement.**
+Whitening equalizes (amplification ∝ 1/std) and coverage-uniform data gives
+charge and position similar stds — the representation does not supply the
+×3 slow-band weighting round 8 hand-tuned. Recorded tension: routing needs
+coverage-uniform marginals; amplification needs natural small-variance
+marginals; a linear whitened encoder cannot serve both from one dataset.
+(Escape routes: per-band variance targets ∝ τ instead of isotropic
+whitening; nonlinear encoders.)
+
+**Headline (`v03_representation.json`, 12 × 150, ladder_short, round-9
+mechanics):**
+
+| condition | max_c IQM [CI95] |
+|---|---|
+| random latent + hand weights (1,3) | 0.761 [0.742, 0.777] |
+| random latent, no weights | 0.750 [0.748, 0.758] |
+| **pretrained latent, no weights** | **0.782 [0.765, 0.799]** |
+
+The pretrained latent beats the random latent without any hand weighting
+(disjoint CIs) and edges the hand-weighted configuration — the first
+representation-side win — while the predicted mechanism is absent. Leading
+hypothesis for the actual mechanism: the CROSS-BAND LEAK (fast band carries
+charge at amplification 0.57, corr 0.836), which makes fast-band targets and
+fast-band progress charge-aware — a soft, learned coupling of the bands that
+the clean block-diagonal random latent cannot express. Status: hypothesis,
+not claim. **Named discriminating experiment (next session): leak-ablated
+pretrained latent (orthogonalize the fast band against c post-hoc) vs as-is
+— if the win vanishes, the leak is the ingredient and "clean band
+separation" was the wrong target all along; if it survives, the geometry
+conditioning itself helps.**
+
+Also standing: returns 0.000 in all conditions — the last mile (charge→door
+handoff) remains v0.3's open control-side item; hand weights matter little
+under round-9 mechanics at this budget.
+
+---
+
 ## Round 9 — 2026-07-27: three spec-level fixes, one hard lesson
 
 Instrumenting the ChargeWorld last mile (returns zero despite charge
