@@ -16,6 +16,7 @@ import torch
 
 from .constraints import CoverageCap, Curiosity, Leash
 from .gating import LearningGate, Signals
+from .learner import A2CCore
 from .heads import FixedRewardHead
 from .latent import PremappedLatent
 from .registers import GoalRegister
@@ -45,6 +46,7 @@ class AgentConfig:
 
     # --- ablation switches (SPEC §9 battery ONLY; deployed values are the
     # defaults). Each maps to a spec clause it disables or weakens.
+    learner: str = "a2c"                 # §5.4: 'a2c' | 'reinforce'
     cap_mode: str = "neighborhood"       # C1: 'neighborhood' | 'identity' | 'off'
     hold_target: bool = True             # C2: False => re-choose every step
     use_leash: bool = True               # C3
@@ -67,6 +69,8 @@ class Agent:
         self.trunk = SharedTrunk(cfg.latent_dim, cfg.latent_dim)
         self.action_head = ActionHead(feat=32, act_dim=cfg.act_dim)
         self.imagination_head = ImaginationHead(feat=32, latent_dim=cfg.latent_dim)
+        self.critic = torch.nn.Linear(32, 1)     # §5.4: policy-side value head
+        self.a2c = A2CCore()
 
         self.register = GoalRegister()
         self.leash = Leash(latent, cfg.leash_radius)
@@ -83,7 +87,8 @@ class Agent:
         # G5: two optimizers, disjoint parameter sets. Progress/realized train
         # the policy (trunk + action head); calibration trains the proposer.
         self.opt_policy = torch.optim.Adam(
-            list(self.trunk.parameters()) + list(self.action_head.parameters()), lr=cfg.lr_policy
+            list(self.trunk.parameters()) + list(self.action_head.parameters())
+            + list(self.critic.parameters()), lr=cfg.lr_policy
         )
         self.opt_proposer = torch.optim.Adam(self.imagination_head.parameters(), lr=cfg.lr_proposer)
 
@@ -183,19 +188,23 @@ class Agent:
         return diag
 
     # ------------------------------------------------------------------ traverse
-    def act(self) -> tuple[torch.Tensor, torch.Tensor]:
+    def act(self) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
         feats = self.trunk(self.p, self.i)
         dist = self.action_head.dist(feats)
         a = dist.sample()
         logp = dist.log_prob(a).sum()
-        return torch.tanh(a) * self.cfg.max_world_step, logp
+        entropy = dist.entropy().sum()
+        value = self.critic(feats).reshape(())
+        return torch.tanh(a) * self.cfg.max_world_step, logp, entropy, value
 
-    def learn_step(self, p_prev: torch.Tensor, p_now: torch.Tensor,
-                   logp: torch.Tensor) -> tuple[Signals, bool]:
-        """One policy update. C1 gates the IMAGINATION-DRIVEN component of the
+    def learn_step(self, p_prev: torch.Tensor, p_now: torch.Tensor, logp: torch.Tensor,
+                   entropy: torch.Tensor | None = None,
+                   value: torch.Tensor | None = None) -> tuple[Signals, bool]:
+        """One learning step. C1 gates the IMAGINATION-DRIVEN component of the
         signal (progress toward the imagined target); real-outcome learning is
-        never capped — SPEC signal 1 is 'used directly'. Returns (signals,
-        progress_capped)."""
+        never capped — SPEC signal 1 is 'used directly'. Under 'a2c' the step
+        is recorded and the update happens in finish_episode(); under
+        'reinforce' the update is immediate. Returns (signals, progress_capped)."""
         bonus = self.curiosity.bonus(p_now)
         self.curiosity.visit(p_now)                                    # C6: actual visit
         g = self.register.target if self.register.open else None
@@ -206,13 +215,22 @@ class Agent:
         if not capped and self.register.open:
             self.cap.record(p_now)
         total = (sig.realized_pos - sig.realized_neg) + self.cfg.w_prog * prog + sig.curiosity
-        advantage = total - self._baseline                             # variance baseline
-        self._baseline = 0.99 * self._baseline + 0.01 * total
-        loss = -advantage * logp                                       # REINFORCE scaffold
-        self.opt_policy.zero_grad()
-        loss.backward()
-        self.opt_policy.step()
+        if self.cfg.learner == "a2c" and entropy is not None and value is not None:
+            self.a2c.record(logp, value, entropy, total)
+        else:
+            advantage = total - self._baseline                         # variance baseline
+            self._baseline = 0.99 * self._baseline + 0.01 * total
+            loss = -advantage * logp                                   # REINFORCE fallback
+            self.opt_policy.zero_grad()
+            loss.backward()
+            self.opt_policy.step()
         return sig, capped
+
+    def finish_episode(self) -> None:
+        """§5.4: per-episode batched policy/critic update (no-op for REINFORCE)."""
+        if self.cfg.learner == "a2c":
+            params = [p for g in self.opt_policy.param_groups for p in g["params"]]
+            self.a2c.finish(self.opt_policy, params)
 
     # ------------------------------------------------------------------ arrive/calibrate
     def _pay_proposer_progress(self) -> None:
@@ -287,12 +305,12 @@ class Agent:
                         float(self.head_pos.claim(self.register.target)))
                 # else: goal-less wandering — realized + curiosity still teach
             p_prev = self.p
-            action, logp = self.act()
+            action, logp, entropy, value = self.act()
             p_now, real_reward, done, info = env.step(action)
             self.observe(p_now)
             if self.register.open:
                 self.register.tick()
-            _, capped = self.learn_step(p_prev, self.p, logp)
+            _, capped = self.learn_step(p_prev, self.p, logp, entropy, value)
             if capped:
                 stats["progress_capped"] += 1
             stats["return"] += real_reward
@@ -303,4 +321,5 @@ class Agent:
                 stats["settle_realized"].append(float(self.head_pos.realized(self.p)))
             if done:
                 break
+        self.finish_episode()
         return stats

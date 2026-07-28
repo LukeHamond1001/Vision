@@ -122,13 +122,22 @@ class TestGating(unittest.TestCase):
         if not agent.register.open:                           # force a target if filters blocked all
             agent.register.commit(agent.p + 0.01, window=10)
         p_prev = agent.p
-        action, logp = agent.act()
+        action, logp, entropy, value = agent.act()
         p_now, *_ = env.step(action)
         agent.observe(p_now)
-        agent.learn_step(p_prev, agent.p, logp)               # policy update ran
+        agent.learn_step(p_prev, agent.p, logp, entropy, value)
+        agent.finish_episode()                                # a2c update ran (§5.4)
         for prm in agent.imagination_head.parameters():
             self.assertTrue(prm.grad is None or torch.all(prm.grad == 0),
                             "G5 violated: progress gradient reached the proposer")
+
+    def test_5_4_critic_in_policy_optimizer_only(self):
+        _, _, _, _, agent = build_world()
+        critic_ids = {id(p) for p in agent.critic.parameters()}
+        pol = {id(p) for g in agent.opt_policy.param_groups for p in g["params"]}
+        pro = {id(p) for g in agent.opt_proposer.param_groups for p in g["params"]}
+        self.assertTrue(critic_ids <= pol)
+        self.assertTrue(critic_ids.isdisjoint(pro))
 
 
 class TestConstraints(unittest.TestCase):

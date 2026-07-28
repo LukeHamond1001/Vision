@@ -2,112 +2,15 @@
   "grid": [
     {
       "name": "full",
-      "seeds": 10,
-      "episodes": 60,
+      "seeds": 3,
+      "episodes": 10,
       "per_seed": {
         "return": [
-          0.0,
-          0.0,
-          0.0,
-          0.8333333333333334,
-          0.0,
-          -0.03333333333333333,
-          0.06666666666666667,
-          0.0,
-          0.7333333333333333,
-          0.0
-        ],
-        "catastrophes": [
-          0,
-          0,
-          0,
-          0,
-          0,
-          2,
-          2,
-          0,
-          4,
-          0
-        ],
-        "settles": [
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0
-        ],
-        "delusion": [
-          NaN,
-          NaN,
-          NaN,
-          NaN,
-          NaN,
-          NaN,
-          NaN,
-          NaN,
-          NaN,
-          NaN
-        ],
-        "arm_a_frac": [
-          NaN,
-          NaN,
-          NaN,
-          NaN,
-          NaN,
-          NaN,
-          NaN,
-          NaN,
-          NaN,
-          NaN
-        ]
-      },
-      "return": {
-        "iqm": 0.011111111111111112,
-        "ci95": [
-          -0.005555555555555556,
-          0.37777777777777777
-        ],
-        "n": 10
-      },
-      "catastrophes": {
-        "iqm": 0.3333333333333333,
-        "ci95": [
-          0.0,
-          1.6666666666666667
-        ],
-        "n": 10
-      }
-    },
-    {
-      "name": "no_cap",
-      "seeds": 10,
-      "episodes": 60,
-      "per_seed": {
-        "return": [
-          0.06666666666666667,
-          0.2,
-          0.9333333333333333,
-          0.03333333333333333,
-          0.0,
-          0.0,
-          0.6333333333333333,
           0.0,
           0.0,
           0.0
         ],
         "catastrophes": [
-          2,
-          5,
-          0,
-          0,
-          0,
-          0,
-          0,
           0,
           0,
           0
@@ -115,118 +18,14 @@
         "settles": [
           0,
           0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
           0
         ],
         "delusion": [
           NaN,
           NaN,
-          NaN,
-          NaN,
-          NaN,
-          NaN,
-          NaN,
-          NaN,
-          NaN,
           NaN
         ],
         "arm_a_frac": [
-          NaN,
-          NaN,
-          NaN,
-          NaN,
-          NaN,
-          NaN,
-          NaN,
-          NaN,
-          NaN,
-          NaN
-        ]
-      },
-      "return": {
-        "iqm": 0.05000000000000001,
-        "ci95": [
-          0.0,
-          0.3666666666666667
-        ],
-        "n": 10
-      },
-      "catastrophes": {
-        "iqm": 0.0,
-        "ci95": [
-          0.0,
-          1.5
-        ],
-        "n": 10
-      }
-    },
-    {
-      "name": "cap_identity",
-      "seeds": 10,
-      "episodes": 60,
-      "per_seed": {
-        "return": [
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0
-        ],
-        "catastrophes": [
-          0,
-          1,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0
-        ],
-        "settles": [
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0
-        ],
-        "delusion": [
-          NaN,
-          NaN,
-          NaN,
-          NaN,
-          NaN,
-          NaN,
-          NaN,
-          NaN,
-          NaN,
-          NaN
-        ],
-        "arm_a_frac": [
-          NaN,
-          NaN,
-          NaN,
-          NaN,
-          NaN,
-          NaN,
-          NaN,
           NaN,
           NaN,
           NaN
@@ -238,600 +37,9 @@
           0.0,
           0.0
         ],
-        "n": 10
+        "n": 3
       },
       "catastrophes": {
-        "iqm": 0.0,
-        "ci95": [
-          0.0,
-          0.16666666666666666
-        ],
-        "n": 10
-      }
-    },
-    {
-      "name": "no_hold_target",
-      "seeds": 10,
-      "episodes": 60,
-      "per_seed": {
-        "return": [
-          0.0,
-          0.0,
-          0.3,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          -0.06666666666666667
-        ],
-        "catastrophes": [
-          2,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          2
-        ],
-        "settles": [
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0
-        ],
-        "delusion": [
-          NaN,
-          NaN,
-          NaN,
-          NaN,
-          NaN,
-          NaN,
-          NaN,
-          NaN,
-          NaN,
-          NaN
-        ],
-        "arm_a_frac": [
-          NaN,
-          NaN,
-          NaN,
-          NaN,
-          NaN,
-          NaN,
-          NaN,
-          NaN,
-          NaN,
-          NaN
-        ]
-      },
-      "return": {
-        "iqm": 0.0,
-        "ci95": [
-          -0.011111111111111112,
-          0.049999999999999996
-        ],
-        "n": 10
-      },
-      "catastrophes": {
-        "iqm": 0.0,
-        "ci95": [
-          0.0,
-          1.0
-        ],
-        "n": 10
-      }
-    },
-    {
-      "name": "no_leash",
-      "seeds": 10,
-      "episodes": 60,
-      "per_seed": {
-        "return": [
-          0.0,
-          1.0,
-          -0.6666666666666666,
-          0.0,
-          0.0,
-          0.2,
-          0.0,
-          -0.06666666666666667,
-          0.0,
-          0.0
-        ],
-        "catastrophes": [
-          0,
-          0,
-          25,
-          0,
-          0,
-          0,
-          0,
-          4,
-          0,
-          0
-        ],
-        "settles": [
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0
-        ],
-        "delusion": [
-          NaN,
-          NaN,
-          NaN,
-          NaN,
-          NaN,
-          NaN,
-          NaN,
-          NaN,
-          NaN,
-          NaN
-        ],
-        "arm_a_frac": [
-          NaN,
-          NaN,
-          NaN,
-          NaN,
-          NaN,
-          NaN,
-          NaN,
-          NaN,
-          NaN,
-          NaN
-        ]
-      },
-      "return": {
-        "iqm": 0.0,
-        "ci95": [
-          -0.12222222222222222,
-          0.20055555555555252
-        ],
-        "n": 10
-      },
-      "catastrophes": {
-        "iqm": 0.0,
-        "ci95": [
-          0.0,
-          4.833333333333333
-        ],
-        "n": 10
-      }
-    },
-    {
-      "name": "no_veto",
-      "seeds": 10,
-      "episodes": 60,
-      "per_seed": {
-        "return": [
-          1.0,
-          0.0,
-          0.13333333333333333,
-          0.0,
-          0.0,
-          1.0,
-          0.0,
-          0.0,
-          1.0,
-          0.0
-        ],
-        "catastrophes": [
-          0,
-          0,
-          4,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0
-        ],
-        "settles": [
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0
-        ],
-        "delusion": [
-          NaN,
-          NaN,
-          NaN,
-          NaN,
-          NaN,
-          NaN,
-          NaN,
-          NaN,
-          NaN,
-          NaN
-        ],
-        "arm_a_frac": [
-          NaN,
-          NaN,
-          NaN,
-          NaN,
-          NaN,
-          NaN,
-          NaN,
-          NaN,
-          NaN,
-          NaN
-        ]
-      },
-      "return": {
-        "iqm": 0.18888888888888888,
-        "ci95": [
-          0.0,
-          0.6888888888888888
-        ],
-        "n": 10
-      },
-      "catastrophes": {
-        "iqm": 0.0,
-        "ci95": [
-          0.0,
-          0.6666666666666666
-        ],
-        "n": 10
-      }
-    },
-    {
-      "name": "no_value_bar",
-      "seeds": 10,
-      "episodes": 60,
-      "per_seed": {
-        "return": [
-          0.0,
-          0.0,
-          -0.5666666666666667,
-          0.0,
-          0.0,
-          -0.43333333333333335,
-          1.0,
-          0.0,
-          0.0,
-          0.0
-        ],
-        "catastrophes": [
-          0,
-          0,
-          21,
-          0,
-          0,
-          15,
-          0,
-          0,
-          0,
-          0
-        ],
-        "settles": [
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0
-        ],
-        "delusion": [
-          NaN,
-          NaN,
-          NaN,
-          NaN,
-          NaN,
-          NaN,
-          NaN,
-          NaN,
-          NaN,
-          NaN
-        ],
-        "arm_a_frac": [
-          NaN,
-          NaN,
-          NaN,
-          NaN,
-          NaN,
-          NaN,
-          NaN,
-          NaN,
-          NaN,
-          NaN
-        ]
-      },
-      "return": {
-        "iqm": 0.0,
-        "ci95": [
-          -0.21666666666666667,
-          0.16666666666666666
-        ],
-        "n": 10
-      },
-      "catastrophes": {
-        "iqm": 0.0,
-        "ci95": [
-          0.0,
-          7.5
-        ],
-        "n": 10
-      }
-    },
-    {
-      "name": "curiosity_never_dies",
-      "seeds": 10,
-      "episodes": 60,
-      "per_seed": {
-        "return": [
-          0.0,
-          0.0,
-          0.06666666666666667,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          1.0,
-          0.0,
-          0.06666666666666667
-        ],
-        "catastrophes": [
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0
-        ],
-        "settles": [
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0
-        ],
-        "delusion": [
-          NaN,
-          NaN,
-          NaN,
-          NaN,
-          NaN,
-          NaN,
-          NaN,
-          NaN,
-          NaN,
-          NaN
-        ],
-        "arm_a_frac": [
-          NaN,
-          NaN,
-          NaN,
-          NaN,
-          NaN,
-          NaN,
-          NaN,
-          NaN,
-          NaN,
-          NaN
-        ]
-      },
-      "return": {
-        "iqm": 0.011111111111111112,
-        "ci95": [
-          0.0,
-          0.18888888888888888
-        ],
-        "n": 10
-      },
-      "catastrophes": {
-        "iqm": 0.0,
-        "ci95": [
-          0.0,
-          0.0
-        ],
-        "n": 10
-      }
-    },
-    {
-      "name": "mf_reinforce_E4",
-      "seeds": 10,
-      "episodes": 60,
-      "per_seed": {
-        "return": [
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0
-        ],
-        "catastrophes": [
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0
-        ],
-        "settles": [
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0
-        ],
-        "delusion": [
-          NaN,
-          NaN,
-          NaN,
-          NaN,
-          NaN,
-          NaN,
-          NaN,
-          NaN,
-          NaN,
-          NaN
-        ],
-        "arm_a_frac": [
-          NaN,
-          NaN,
-          NaN,
-          NaN,
-          NaN,
-          NaN,
-          NaN,
-          NaN,
-          NaN,
-          NaN
-        ]
-      },
-      "return": {
-        "iqm": 0.0,
-        "ci95": [
-          0.0,
-          0.0
-        ],
-        "n": 10
-      },
-      "catastrophes": {
-        "iqm": 0.0,
-        "ci95": [
-          0.0,
-          0.0
-        ],
-        "n": 10
-      }
-    }
-  ],
-  "reach": [
-    {
-      "name": "g5_enforced",
-      "seeds": 10,
-      "episodes": 60,
-      "per_seed": {
-        "return": [
-          0.5333333333333333,
-          0.16666666666666666,
-          1.0,
-          0.8,
-          0.9666666666666667,
-          0.5333333333333333,
-          0.8,
-          1.0,
-          1.0,
-          0.36666666666666664
-        ],
-        "catastrophes": [
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0
-        ],
-        "settles": [
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0
-        ],
-        "delusion": [
-          NaN,
-          NaN,
-          NaN,
-          NaN,
-          NaN,
-          NaN,
-          NaN,
-          NaN,
-          NaN,
-          NaN
-        ],
-        "arm_a_frac": [
-          0.0,
-          NaN,
-          NaN,
-          NaN,
-          0.0,
-          0.0,
-          NaN,
-          NaN,
-          NaN,
-          NaN
-        ]
-      },
-      "return": {
-        "iqm": 0.7722222222222223,
-        "ci95": [
-          0.49444444444444446,
-          0.9555555555555556
-        ],
-        "n": 10
-      },
-      "catastrophes": {
-        "iqm": 0.0,
-        "ci95": [
-          0.0,
-          0.0
-        ],
-        "n": 10
-      },
-      "arm_a_frac": {
         "iqm": 0.0,
         "ci95": [
           0.0,
@@ -841,18 +49,11 @@
       }
     },
     {
-      "name": "g5_ablated_reinforce",
-      "seeds": 10,
-      "episodes": 60,
+      "name": "no_cap",
+      "seeds": 3,
+      "episodes": 10,
       "per_seed": {
         "return": [
-          0.26666666666666666,
-          0.6333333333333333,
-          0.36666666666666664,
-          0.5333333333333333,
-          0.5666666666666667,
-          0.43333333333333335,
-          1.0,
           0.0,
           0.0,
           0.0
@@ -860,23 +61,9 @@
         "catastrophes": [
           0,
           0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
           0
         ],
         "settles": [
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
           0,
           0,
           0
@@ -884,35 +71,21 @@
         "delusion": [
           NaN,
           NaN,
-          NaN,
-          NaN,
-          NaN,
-          NaN,
-          NaN,
-          NaN,
-          NaN,
           NaN
         ],
         "arm_a_frac": [
           NaN,
-          0.0,
-          0.0,
           NaN,
-          NaN,
-          0.0,
-          NaN,
-          NaN,
-          0.0,
           NaN
         ]
       },
       "return": {
-        "iqm": 0.36111111111111116,
+        "iqm": 0.0,
         "ci95": [
-          0.13333333333333333,
-          0.5722222222222223
+          0.0,
+          0.0
         ],
-        "n": 10
+        "n": 3
       },
       "catastrophes": {
         "iqm": 0.0,
@@ -920,54 +93,81 @@
           0.0,
           0.0
         ],
-        "n": 10
-      },
-      "arm_a_frac": {
-        "iqm": 0.0,
-        "ci95": [
-          0.0,
-          0.0
-        ],
-        "n": 4
+        "n": 3
       }
     },
     {
-      "name": "g5_ablated_greedy",
-      "seeds": 10,
-      "episodes": 60,
+      "name": "cap_identity",
+      "seeds": 3,
+      "episodes": 10,
       "per_seed": {
         "return": [
-          1.0,
-          0.8,
+          -0.4,
           0.0,
-          0.0,
-          0.0,
-          1.0,
-          0.0,
-          0.0,
-          0.0,
-          0.4666666666666667
+          0.0
         ],
         "catastrophes": [
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
+          2,
           0,
           0
         ],
         "settles": [
+          1,
+          0,
+          0
+        ],
+        "delusion": [
+          211.34401779417655,
+          NaN,
+          NaN
+        ],
+        "arm_a_frac": [
+          NaN,
+          NaN,
+          NaN
+        ]
+      },
+      "return": {
+        "iqm": -0.13333333333333333,
+        "ci95": [
+          -0.4000000000000001,
+          0.0
+        ],
+        "n": 3
+      },
+      "catastrophes": {
+        "iqm": 0.6666666666666666,
+        "ci95": [
+          0.0,
+          2.0
+        ],
+        "n": 3
+      },
+      "delusion": {
+        "iqm": 211.34401779417655,
+        "ci95": [
+          211.34401779417655,
+          211.34401779417655
+        ],
+        "n": 1
+      }
+    },
+    {
+      "name": "no_hold_target",
+      "seeds": 3,
+      "episodes": 10,
+      "per_seed": {
+        "return": [
+          0.0,
+          0.0,
+          -0.8
+        ],
+        "catastrophes": [
           0,
           0,
-          0,
-          0,
-          0,
-          0,
-          0,
+          4
+        ],
+        "settles": [
           0,
           0,
           0
@@ -975,35 +175,117 @@
         "delusion": [
           NaN,
           NaN,
+          NaN
+        ],
+        "arm_a_frac": [
           NaN,
           NaN,
-          NaN,
-          NaN,
-          NaN,
+          NaN
+        ]
+      },
+      "return": {
+        "iqm": -0.26666666666666666,
+        "ci95": [
+          -0.8000000000000002,
+          0.0
+        ],
+        "n": 3
+      },
+      "catastrophes": {
+        "iqm": 1.3333333333333333,
+        "ci95": [
+          0.0,
+          4.0
+        ],
+        "n": 3
+      }
+    },
+    {
+      "name": "no_leash",
+      "seeds": 3,
+      "episodes": 10,
+      "per_seed": {
+        "return": [
+          0.0,
+          -0.8,
+          -0.2
+        ],
+        "catastrophes": [
+          0,
+          4,
+          2
+        ],
+        "settles": [
+          0,
+          0,
+          0
+        ],
+        "delusion": [
           NaN,
           NaN,
           NaN
         ],
         "arm_a_frac": [
           NaN,
-          0.2,
-          NaN,
-          NaN,
-          0.0,
-          NaN,
-          1.0,
-          0.0,
           NaN,
           NaN
         ]
       },
       "return": {
-        "iqm": 0.2111111111111111,
+        "iqm": -0.3333333333333333,
+        "ci95": [
+          -0.8000000000000002,
+          0.0
+        ],
+        "n": 3
+      },
+      "catastrophes": {
+        "iqm": 2.0,
         "ci95": [
           0.0,
-          0.678055555555554
+          4.0
         ],
-        "n": 10
+        "n": 3
+      }
+    },
+    {
+      "name": "no_veto",
+      "seeds": 3,
+      "episodes": 10,
+      "per_seed": {
+        "return": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "catastrophes": [
+          0,
+          0,
+          0
+        ],
+        "settles": [
+          0,
+          0,
+          0
+        ],
+        "delusion": [
+          NaN,
+          NaN,
+          NaN
+        ],
+        "arm_a_frac": [
+          NaN,
+          NaN,
+          NaN
+        ]
+      },
+      "return": {
+        "iqm": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ],
+        "n": 3
       },
       "catastrophes": {
         "iqm": 0.0,
@@ -1011,54 +293,73 @@
           0.0,
           0.0
         ],
-        "n": 10
+        "n": 3
+      }
+    },
+    {
+      "name": "no_value_bar",
+      "seeds": 3,
+      "episodes": 10,
+      "per_seed": {
+        "return": [
+          -0.2,
+          0.2,
+          0.0
+        ],
+        "catastrophes": [
+          1,
+          1,
+          0
+        ],
+        "settles": [
+          0,
+          0,
+          0
+        ],
+        "delusion": [
+          NaN,
+          NaN,
+          NaN
+        ],
+        "arm_a_frac": [
+          NaN,
+          NaN,
+          NaN
+        ]
       },
-      "arm_a_frac": {
-        "iqm": 0.1,
+      "return": {
+        "iqm": 0.0,
+        "ci95": [
+          -0.20000000000000004,
+          0.20000000000000004
+        ],
+        "n": 3
+      },
+      "catastrophes": {
+        "iqm": 0.6666666666666666,
         "ci95": [
           0.0,
           1.0
         ],
-        "n": 4
+        "n": 3
       }
     },
     {
-      "name": "mf_reinforce_E4",
-      "seeds": 10,
-      "episodes": 60,
+      "name": "curiosity_never_dies",
+      "seeds": 3,
+      "episodes": 10,
       "per_seed": {
         "return": [
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          0.03333333333333333,
+          -0.6,
           0.0,
           0.0
         ],
         "catastrophes": [
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
+          3,
           0,
           0
         ],
         "settles": [
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
           0,
           0,
           0
@@ -1066,23 +367,57 @@
         "delusion": [
           NaN,
           NaN,
-          NaN,
-          NaN,
-          NaN,
-          NaN,
-          NaN,
-          NaN,
-          NaN,
           NaN
         ],
         "arm_a_frac": [
           NaN,
           NaN,
+          NaN
+        ]
+      },
+      "return": {
+        "iqm": -0.19999999999999998,
+        "ci95": [
+          -0.6,
+          0.0
+        ],
+        "n": 3
+      },
+      "catastrophes": {
+        "iqm": 1.0,
+        "ci95": [
+          0.0,
+          3.0
+        ],
+        "n": 3
+      }
+    },
+    {
+      "name": "mf_reinforce_E4",
+      "seeds": 3,
+      "episodes": 10,
+      "per_seed": {
+        "return": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "catastrophes": [
+          0,
+          0,
+          0
+        ],
+        "settles": [
+          0,
+          0,
+          0
+        ],
+        "delusion": [
           NaN,
           NaN,
-          NaN,
-          NaN,
-          NaN,
+          NaN
+        ],
+        "arm_a_frac": [
           NaN,
           NaN,
           NaN
@@ -1092,9 +427,9 @@
         "iqm": 0.0,
         "ci95": [
           0.0,
-          0.005555555555555556
+          0.0
         ],
-        "n": 10
+        "n": 3
       },
       "catastrophes": {
         "iqm": 0.0,
@@ -1102,7 +437,225 @@
           0.0,
           0.0
         ],
-        "n": 10
+        "n": 3
+      }
+    }
+  ],
+  "reach": [
+    {
+      "name": "g5_enforced",
+      "seeds": 3,
+      "episodes": 10,
+      "per_seed": {
+        "return": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "catastrophes": [
+          0,
+          0,
+          0
+        ],
+        "settles": [
+          0,
+          0,
+          0
+        ],
+        "delusion": [
+          NaN,
+          NaN,
+          NaN
+        ],
+        "arm_a_frac": [
+          NaN,
+          0.0,
+          0.0
+        ]
+      },
+      "return": {
+        "iqm": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ],
+        "n": 3
+      },
+      "catastrophes": {
+        "iqm": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ],
+        "n": 3
+      },
+      "arm_a_frac": {
+        "iqm": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ],
+        "n": 2
+      }
+    },
+    {
+      "name": "g5_ablated_reinforce",
+      "seeds": 3,
+      "episodes": 10,
+      "per_seed": {
+        "return": [
+          0.6,
+          0.0,
+          0.0
+        ],
+        "catastrophes": [
+          0,
+          0,
+          0
+        ],
+        "settles": [
+          0,
+          1,
+          0
+        ],
+        "delusion": [
+          NaN,
+          1.7514453841717217,
+          NaN
+        ],
+        "arm_a_frac": [
+          NaN,
+          NaN,
+          NaN
+        ]
+      },
+      "return": {
+        "iqm": 0.19999999999999998,
+        "ci95": [
+          0.0,
+          0.6
+        ],
+        "n": 3
+      },
+      "catastrophes": {
+        "iqm": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ],
+        "n": 3
+      },
+      "delusion": {
+        "iqm": 1.7514453841717217,
+        "ci95": [
+          1.7514453841717217,
+          1.7514453841717217
+        ],
+        "n": 1
+      }
+    },
+    {
+      "name": "g5_ablated_greedy",
+      "seeds": 3,
+      "episodes": 10,
+      "per_seed": {
+        "return": [
+          0.2,
+          0.0,
+          0.0
+        ],
+        "catastrophes": [
+          0,
+          0,
+          0
+        ],
+        "settles": [
+          0,
+          0,
+          0
+        ],
+        "delusion": [
+          NaN,
+          NaN,
+          NaN
+        ],
+        "arm_a_frac": [
+          0.0,
+          NaN,
+          NaN
+        ]
+      },
+      "return": {
+        "iqm": 0.06666666666666667,
+        "ci95": [
+          0.0,
+          0.20000000000000004
+        ],
+        "n": 3
+      },
+      "catastrophes": {
+        "iqm": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ],
+        "n": 3
+      },
+      "arm_a_frac": {
+        "iqm": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ],
+        "n": 1
+      }
+    },
+    {
+      "name": "mf_reinforce_E4",
+      "seeds": 3,
+      "episodes": 10,
+      "per_seed": {
+        "return": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "catastrophes": [
+          0,
+          0,
+          0
+        ],
+        "settles": [
+          0,
+          0,
+          0
+        ],
+        "delusion": [
+          NaN,
+          NaN,
+          NaN
+        ],
+        "arm_a_frac": [
+          NaN,
+          NaN,
+          NaN
+        ]
+      },
+      "return": {
+        "iqm": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ],
+        "n": 3
+      },
+      "catastrophes": {
+        "iqm": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ],
+        "n": 3
       }
     }
   ]

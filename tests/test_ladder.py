@@ -95,10 +95,11 @@ class TestLadder(unittest.TestCase):
         agent.registers[0].commit(agent.p[agent.latent.band_slices[0]] + 0.05, window=12)
         agent._write_imagination()
         p_prev = agent.p
-        action, logp = agent.act()
+        action, logp, entropy, value = agent.act()
         p_now, *_ = env.step(action)
         agent.observe(p_now)
-        agent.learn_step(p_prev, agent.p, logp)
+        agent.learn_step(p_prev, agent.p, logp, entropy, value)
+        agent.finish_episode()                                # a2c update ran (§5.4)
         for prm in agent.proposers.parameters():
             self.assertTrue(prm.grad is None or torch.all(prm.grad == 0))
 

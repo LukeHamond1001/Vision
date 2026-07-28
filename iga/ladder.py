@@ -22,6 +22,7 @@ import torch
 
 from .constraints import CoverageCap, Curiosity, Leash
 from .latent import BandedLatent
+from .learner import A2CCore
 from .registers import GoalRegister
 from .trunk import ActionHead, SharedTrunk
 
@@ -63,6 +64,8 @@ class LadderAgent:
         d = latent.latent_dim
         self.trunk = SharedTrunk(d, d)
         self.action_head = ActionHead(feat=32, act_dim=2)
+        self.critic = torch.nn.Linear(32, 1)     # §5.4: policy-side value head
+        self.a2c = A2CCore()
         self.proposers = torch.nn.ModuleList(
             [torch.nn.Linear(32, bd) for bd in latent.band_dims])
 
@@ -72,8 +75,8 @@ class LadderAgent:
         self.curiosity = Curiosity(latent, cfg.cap_radius, cfg.curiosity_bonus)
 
         self.opt_policy = torch.optim.Adam(
-            list(self.trunk.parameters()) + list(self.action_head.parameters()),
-            lr=cfg.lr_policy)
+            list(self.trunk.parameters()) + list(self.action_head.parameters())
+            + list(self.critic.parameters()), lr=cfg.lr_policy)
         self.opt_proposer = torch.optim.Adam(self.proposers.parameters(), lr=cfg.lr_proposer)
 
         self._gen = torch.Generator().manual_seed(cfg.seed)
@@ -160,9 +163,11 @@ class LadderAgent:
         feats = self.trunk(self.p, self.i)
         dist = self.action_head.dist(feats)
         a = dist.sample()
-        return torch.tanh(a) * self.cfg.max_world_step, dist.log_prob(a).sum()
+        return (torch.tanh(a) * self.cfg.max_world_step, dist.log_prob(a).sum(),
+                dist.entropy().sum(), self.critic(feats).reshape(()))
 
-    def learn_step(self, p_prev: torch.Tensor, p_now: torch.Tensor, logp) -> bool:
+    def learn_step(self, p_prev: torch.Tensor, p_now: torch.Tensor, logp,
+                   entropy=None, value=None) -> bool:
         bonus = self.curiosity.bonus(p_now)
         self.curiosity.visit(p_now)                             # C6
         prog = 0.0
@@ -178,12 +183,19 @@ class LadderAgent:
         with torch.no_grad():
             realized = float(self.head_pos.realized(p_now)) - float(self.head_neg.realized(p_now))
         total = realized + self.cfg.w_prog * use_prog + bonus
-        adv = total - self._baseline
-        self._baseline = 0.99 * self._baseline + 0.01 * total
-        self.opt_policy.zero_grad()
-        (-adv * logp).backward()
-        self.opt_policy.step()
+        if entropy is not None and value is not None:           # §5.4 a2c path
+            self.a2c.record(logp, value, entropy, total)
+        else:                                                   # REINFORCE fallback
+            adv = total - self._baseline
+            self._baseline = 0.99 * self._baseline + 0.01 * total
+            self.opt_policy.zero_grad()
+            (-adv * logp).backward()
+            self.opt_policy.step()
         return capped
+
+    def finish_episode(self) -> None:
+        params = [p for g in self.opt_policy.param_groups for p in g["params"]]
+        self.a2c.finish(self.opt_policy, params)
 
     # ---------------------------------------------------------------- arrive/calibrate
     def settle_levels(self) -> int:
@@ -222,16 +234,17 @@ class LadderAgent:
                 if not self.registers[k].open:
                     self.propose_level(k)
             p_prev = self.p
-            action, logp = self.act()
+            action, logp, entropy, value = self.act()
             p_now, r, done, info = env.step(action)
             self.observe(p_now)
             for reg in self.registers:
                 if reg.open:
                     reg.tick()
-            self.learn_step(p_prev, self.p, logp)
+            self.learn_step(p_prev, self.p, logp, entropy, value)
             stats["return"] += r
             stats["zone_flips"] += int(bool(info.get("zone_flip")))
             stats["settles"] += self.settle_levels()
             if done:
                 break
+        self.finish_episode()
         return stats

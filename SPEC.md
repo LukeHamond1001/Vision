@@ -226,6 +226,19 @@ calibrate  claim-vs-realized error trains the proposer (G5); C6 extinguishes
            the visited neighborhood's novelty
 ```
 
+### 5.4 The learner is pluggable — and the commitments are learner-independent
+
+The policy learner (REINFORCE, actor-critic, anything stronger) is policy-side
+machinery and MUST satisfy exactly three placement rules: the critic (or any
+learned value estimator) trains in the POLICY optimizer, disjoint from every
+proposer (G5); it predicts the *gated* signal, from which claims are already
+excluded (G1); and nothing it learns sits on a path into the reward heads
+(W1). Its returns are undiscounted within episodes (W3). Consequence for C1:
+a TD/bootstrapping critic is a learned estimator inside the learning signal,
+so if imagined-state updates (Dyna-style) are ever added, C1's original
+bootstrap-inflation rationale becomes live again and the cap MUST gate those
+imagined critic updates — today it gates the progress component only.
+
 ---
 
 ## 6. Formal properties and their exact preconditions
