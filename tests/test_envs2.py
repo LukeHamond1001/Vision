@@ -53,5 +53,28 @@ class TestProbeEnvs(unittest.TestCase):
         self.assertEqual(env.flips_this_episode, 2)
 
 
+    def test_charge_world_dynamics(self):
+        from iga.envs.chargeworld import ChargeWorld
+        latent = BandedLatent([2, 1], [6, 2])
+        env = ChargeWorld(latent)
+        env.reset()
+        env.pos = env.pad.clone()
+        for _ in range(10):
+            env.step(torch.zeros(2))
+        self.assertAlmostEqual(env.c, 0.20, places=5)          # charges on pad
+        env.pos = torch.tensor([0.5, 0.5])
+        env.step(torch.zeros(2))
+        self.assertAlmostEqual(env.c, 0.195, places=5)         # decays off pad
+        env.c = 0.79
+        env.pos = env.door.clone()
+        _, r, done, _ = env.step(torch.zeros(2))
+        self.assertEqual(r, 0.0)                               # door gated below threshold
+        env.c = 0.85
+        env.pos = env.door - 0.01
+        _, r, done, _ = env.step(torch.zeros(2))
+        self.assertEqual(r, 1.0)                               # opens at threshold
+        self.assertTrue(done)
+
+
 if __name__ == "__main__":
     unittest.main()

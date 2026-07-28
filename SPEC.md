@@ -381,9 +381,14 @@ which all continue to hold per level.
   band-concatenated composite target i = g_1 ⊕ … ⊕ g_K. W4 and W5 are
   unchanged over the composite: claims w±·i are linear in the whole vector
   (so per-level claims superpose), and level k's proposer writes ONLY slice k.
-  Because claims evaluate the composite, a fast candidate is valued *in the
-  context of* the held slow targets — context coupling without violating
-  head linearity.
+  *Correction (round 8):* linearity means a held slow slice contributes the
+  SAME additive constant to every fast candidate's claim — composite claims
+  can therefore never re-rank candidates within a level by slow context.
+  Context coupling flows through exactly two channels: the trunk/policy
+  (which conditions on the full composite) and the per-band progress
+  signals. Claims rank within-band content only; the earlier wording
+  ("a fast candidate is valued in the context of the held slow targets")
+  overstated what a linear head can do.
 
 - **L4 — Per-level G5, and C7 mandatory at the top.** Progress in band k pays
   the policy only; no level's proposer receives progress credit or
