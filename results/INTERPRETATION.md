@@ -5,6 +5,39 @@ stable commentary). Newest round first.
 
 ---
 
+## v0.4 round 1 — 2026-07-28: the deliberate objective works; hand-design
+## still edges it at toy scale
+
+Objective changes (from the round-2 mechanism identification): within-band
+whitening only (full whitening penalized the proven ingredient) + a context
+term targeting the fast band's relative charge-response (ratio form —
+normalization-invariant; the absolute form under-shot 3× through scale
+normalization and was caught in the routing report before any run).
+
+`v04_objective.json` (12 × 150 each): random_now 0.757 [0.743, 0.774];
+random_leakin 0.797 [0.788, 0.806]; **pretrained_v04 0.781 [0.764, 0.797]**.
+
+- The deliberate objective RECOVERS the representation win (clear of the
+  anchor's IQM, matches the accidental round-1 latent's 0.787) — the
+  coupling can be learned on purpose. The recipe is now complete and
+  reproducible: OU-ladder innovations + coverage resets + boundary masking
+  + within-band whitening + ratio-form context coupling.
+- It does NOT beat hand injection (0.781 vs 0.797, overlapping-at-the-edge
+  CIs, IQM below). Consistent with round 2: the leak is the whole story at
+  this scale, and learned routing's residual imperfection (fast-band c-corr
+  0.93 vs the injection's clean structure) only adds metric noise.
+- **Standing recommendation:** at toy scale, hand-design the banded latent
+  (blocks + explicit context projections). The learned objective's value
+  claim lives where hand-design is impossible — richer observations, unknown
+  slow variables — which is the honest scope for the next scale-up, not
+  something this testbed can settle.
+
+Still open (unchanged by v0.3–v0.4): the charge→door last mile — returns
+0.000 in every configuration ever run; goal sequencing / termination handoff
+remains the control-side program.
+
+---
+
 ## v0.3 round 2 — 2026-07-28: mechanism identified, both directions
 
 Leak ablation (`v03_leak_ablation.json`, 12 × 150 each, pre-registered):
