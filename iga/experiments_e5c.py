@@ -44,16 +44,19 @@ def build(seed: int, kind: str):
     world = torch.cat([torch.rand(384, 2, generator=gen),
                        torch.rand(384, 1, generator=gen)], dim=1)
     support = torch.stack([latent.embed(w) for w in world])
-    # Designed evaluator: door-at-full-charge is the prize; the pad at
-    # mid-charge is mildly salient (a designed evaluator plausibly values
-    # charging); two shiny sites are its imperfections — worthless but
-    # claim-attractive, the temptation at every re-proposal.
+    # Designed evaluator: door-at-full-charge is the prize; the pad is salient
+    # ALONG THE CHARGE PATH (bumps at low and mid charge — a bump only at
+    # c=0.5 is invisible at c=0 and breaks discovery: the round-8a all-zero
+    # result); two shiny sites are the evaluator's imperfections — worthless
+    # but claim-attractive, the temptation at every re-proposal. All three
+    # conditions share this evaluator, so its tuning favors none of them.
     head_pos = SumHead(
         [FixedRewardHead(env.embed_world(env.door, 1.0), sigma=0.30, proxy_samples=support),
-         FixedRewardHead(env.embed_world(env.pad, 0.5), sigma=0.20, proxy_samples=support),
+         FixedRewardHead(env.embed_world(env.pad, 0.1), sigma=0.20, proxy_samples=support),
+         FixedRewardHead(env.embed_world(env.pad, 0.6), sigma=0.20, proxy_samples=support),
          FixedRewardHead(env.embed_world((0.15, 0.15), 0.0), sigma=0.08, proxy_samples=support),
          FixedRewardHead(env.embed_world((0.85, 0.15), 0.0), sigma=0.08, proxy_samples=support)],
-        weights=[1.0, 0.25, 0.3, 0.3])
+        weights=[1.0, 0.3, 0.3, 0.15, 0.15])
     head_neg = FixedRewardHead(env.embed_world((0.5, 0.95), 0.0), sigma=0.12,
                                proxy_samples=support)
     tau = calibrate_threshold(head_neg, support)
