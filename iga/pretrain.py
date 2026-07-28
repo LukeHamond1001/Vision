@@ -61,7 +61,7 @@ def pretrain_ou_ladder(world_traj: torch.Tensor, band_dims: list[int],
                        lr: float = 1e-2, lam_cov: float = 1.0,
                        segment_len: int | None = None,
                        context_amp: float | None = None, lam_ctx: float = 5.0,
-                       seed: int = 0) -> torch.Tensor:
+                       context_mode: str = "column", seed: int = 0) -> torch.Tensor:
     """Learn a linear map W: world → latent under the OU-ladder objective.
     Returns W (latent_dim × world_dim), to be frozen by the caller.
 
@@ -117,12 +117,22 @@ def pretrain_ou_ladder(world_traj: torch.Tensor, band_dims: list[int],
             for sl in slices:                                # within-band whitening only
                 bd = sl.stop - sl.start
                 loss = loss + lam_cov * ((cov[sl, sl] - torch.eye(bd)) ** 2).sum()
-            # deliberate slow->fast context coupling at prescribed RELATIVE
-            # amplitude (c-response over position-response in the fast band) —
-            # ratio form is invariant to the post-training scale normalization
-            amp_c = torch.linalg.vector_norm(W[slices[0], -1]) / sd[-1]
-            amp_pos = torch.linalg.matrix_norm(W[slices[0], :-1] / sd[:-1], ord=2)
-            loss = loss + lam_ctx * (amp_c / amp_pos.clamp_min(1e-6) - context_amp) ** 2
+            if context_mode == "column":
+                # v0.4: couple to a DESIGNATED slow input column (last) —
+                # usable only when the slow variable is a known input. Ratio
+                # form is invariant to post-training scale normalization.
+                amp_c = torch.linalg.vector_norm(W[slices[0], -1]) / sd[-1]
+                amp_pos = torch.linalg.matrix_norm(W[slices[0], :-1] / sd[:-1], ord=2)
+                loss = loss + lam_ctx * (amp_c / amp_pos.clamp_min(1e-6) - context_amp) ** 2
+            else:
+                # v0.5 'band': couple the fast band to the LEARNED slow band —
+                # definable with no knowledge of which input carries the slow
+                # variable (the scale-up setting). Normalized cross-band
+                # coupling driven to the prescribed amplitude.
+                zf, zs = zc[:, slices[0]], zc[:, slices[1]]
+                cross = (zf.T @ zs) / (T - 1)
+                fro = torch.linalg.matrix_norm(cross) / (cross.shape[0] * cross.shape[1]) ** 0.5
+                loss = loss + lam_ctx * (fro - context_amp) ** 2
         opt.zero_grad()
         loss.backward()
         opt.step()

@@ -5,6 +5,42 @@ stable commentary). Newest round first.
 
 ---
 
+## v0.5 phase 1 — 2026-07-28: slow-structure discovery where hand-design
+## cannot play
+
+The scale-up's first question, answered (`v05_phase1_discovery.json`,
+held-out evaluation, true c used for evaluation only): from random walks in
+32-d entangled observations — charge multiplicatively modulates 25
+positional receptive fields plus indirect mixed features; NO input column is
+the slow variable — the OU-ladder recipe ('band' context mode: fast band
+coupled to the LEARNED slow band, definable with zero knowledge of c):
+
+| encoder | slow-band c-corr | fast-band c-corr |
+|---|---|---|
+| **OU-ladder (temporal prior)** | **0.988** | 0.643 |
+| PCA control (same data, same slicing) | 0.068 | 0.805 |
+
+All three pre-registered criteria PASS: P1 slow band tracks the
+never-designated slow variable (0.988 ≥ 0.9); P2 beats PCA by 0.92 ≫ 0.1;
+P3 routing, not mere capture (fast < slow). The PCA control is the
+instructive contrast: charge is high-variance (global illumination), so PCA
+CAPTURES it — in its top components, i.e. the fast slice (0.805) — but has
+no mechanism to ROUTE it; the arbitrary "slow" slice is c-blind. Temporal
+priors are what turn capture into routing.
+
+This is the regime the v0.4 verdict pointed to: with a 32-d nonlinear
+sensor, nobody can hand-write the block-diagonal encoder — the learned
+recipe is no longer competing with hand-design, and it delivers.
+
+**Deferred, explicitly:** the flinch's one-step lookahead is a
+linear-encoder privilege (embed_delta raises on the observation latent);
+the hazard-free HD testbed does not exercise C4, and a frozen forward model
+is the named requirement when it must. Phase 2 (behavioral: ladder on the
+discovered latent vs PCA latent, HD ChargeWorld) is wired conceptually and
+is the next build.
+
+---
+
 ## Round 10 — 2026-07-28: the last mile falls — first completions
 
 The oldest open item (door completions: zero in every configuration across

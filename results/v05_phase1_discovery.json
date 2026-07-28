@@ -1,0 +1,15 @@
+{
+  "ou": {
+    "band0_max_c_corr": 0.6428030133247375,
+    "band1_max_c_corr": 0.9879864454269409
+  },
+  "pca": {
+    "band0_max_c_corr": 0.8045081496238708,
+    "band1_max_c_corr": 0.06795361638069153
+  },
+  "criteria": {
+    "P1": true,
+    "P2": true,
+    "P3": true
+  }
+}
