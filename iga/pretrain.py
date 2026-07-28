@@ -195,6 +195,88 @@ def geodesic_pairs(obs: torch.Tensor, n_nodes: int = 400, k: int = 8,
     return node_idx, ii[ok], jj[ok], d[ok]
 
 
+class EncoderMLP(torch.nn.Module):
+    """Small nonlinear encoder, FROZEN after pretraining (v0.6). Frozen ≠
+    linear: W2's frozen metric and every frozen-latent constraint survive;
+    what linearity alone provided (exact embed_delta, chord-structure
+    inheritance from observation space) is either deferred or — for the
+    curvature ceiling — exactly what this class exists to escape."""
+
+    def __init__(self, in_dim: int, latent_dim: int, hidden: int = 64, seed: int = 0):
+        super().__init__()
+        torch.manual_seed(seed)
+        self.net = torch.nn.Sequential(
+            torch.nn.Linear(in_dim, hidden), torch.nn.Tanh(),
+            torch.nn.Linear(hidden, latent_dim))
+        self.register_buffer("mu", torch.zeros(in_dim))
+        self.register_buffer("sd", torch.ones(in_dim))
+        self.register_buffer("out_scale", torch.ones(()))
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        return self.net((x - self.mu) / self.sd) * self.out_scale
+
+    def freeze(self) -> None:
+        for p in self.parameters():
+            p.requires_grad_(False)
+
+
+def pretrain_mlp_encoder(world_traj: torch.Tensor, band_dims: list[int],
+                         taus: list[float], lags: list[int],
+                         segment_len: int | None = None,
+                         context_amp: float | None = 0.3, lam_ctx: float = 5.0,
+                         lam_cov: float = 1.0, geo: tuple | None = None,
+                         lam_geo: float = 5.0, epochs: int = 800,
+                         lr: float = 1e-3, seed: int = 0) -> EncoderMLP:
+    """v0.6: the full recipe over a nonlinear encoder — OU-ladder innovations
+    (boundary-masked), within-band whitening, band-mode context coupling, and
+    geodesic matching (feasible only now: linear maps cannot send equal
+    observation chords to unequal latent chords). Returns the FROZEN encoder."""
+    enc = EncoderMLP(world_traj.shape[1], sum(band_dims), seed=seed)
+    enc.mu.copy_(world_traj.mean(0))
+    enc.sd.copy_(world_traj.std(0).clamp_min(1e-6))
+    opt = torch.optim.Adam(enc.net.parameters(), lr=lr)
+    slices, off = [], 0
+    for bd in band_dims:
+        slices.append(slice(off, off + bd))
+        off += bd
+    T = world_traj.shape[0]
+    max_lag = max(lags)
+    idx = torch.arange(T - max_lag)
+    masks = {}
+    for lag in set(lags):
+        masks[lag] = (torch.ones(T - max_lag, dtype=torch.bool) if segment_len is None
+                      else (idx // segment_len) == ((idx + lag) // segment_len))
+    for _ in range(epochs):
+        z = enc(world_traj)
+        loss = torch.tensor(0.0)
+        for sl, tau, lag in zip(slices, taus, lags):
+            rho = float(torch.exp(torch.tensor(-lag / tau)))
+            m = masks[lag]
+            z0, z1 = z[:T - max_lag][m][:, sl], z[lag:T - max_lag + lag][m][:, sl]
+            loss = loss + ((z1 - rho * z0) ** 2).mean() / max(1 - rho ** 2, 1e-3)
+        if geo is not None and lam_geo > 0:
+            node_idx, gi, gj, dgeo = geo
+            zn = z[node_idx]
+            chord = torch.linalg.vector_norm(zn[gi] - zn[gj], dim=-1)
+            loss = loss + lam_geo * ((chord / chord.mean().clamp_min(1e-6)
+                                      - dgeo / dgeo.mean()) ** 2).mean()
+        zc = z - z.mean(0)
+        cov = (zc.T @ zc) / (T - 1)
+        for sl in slices:
+            bd = sl.stop - sl.start
+            loss = loss + lam_cov * ((cov[sl, sl] - torch.eye(bd)) ** 2).sum()
+        if context_amp is not None:
+            zf, zs = zc[:, slices[0]], zc[:, slices[1]]
+            cross = (zf.T @ zs) / (T - 1)
+            fro = torch.linalg.matrix_norm(cross) / (cross.shape[0] * cross.shape[1]) ** 0.5
+            loss = loss + lam_ctx * (fro - context_amp) ** 2
+        opt.zero_grad()
+        loss.backward()
+        opt.step()
+    enc.freeze()
+    return enc
+
+
 class PretrainedBandedLatent(BandedLatent):
     """BandedLatent whose embedding is a learned (then frozen) linear map
     rather than random orthonormal blocks. Bands are output slices; the

@@ -116,6 +116,9 @@ class ObservationLatent(BandedLatent):
             "nonlinear sensor: one-step lookahead needs a frozen forward model "
             "(SPEC C4 deferral — hazard-free testbed does not exercise it)")
 
+    def _post_scale(self, s: float) -> None:
+        self._W = self._W / s
+
     def step_scale(self, k: int | None = None) -> float:
         # empirical: median latent displacement per max-size world step,
         # probed on random states (frozen quantities only)
@@ -131,3 +134,27 @@ class ObservationLatent(BandedLatent):
             d = z1 - z0
             deltas.append(d if k is None else d[self.band_slices[k]])
         return float(torch.stack([torch.linalg.vector_norm(d) for d in deltas]).median() / 0.1)
+
+
+class NonlinearObservationLatent(ObservationLatent):
+    """v0.6: frozen MLP encoder over observations. Same contracts as
+    ObservationLatent (frozen metric, band slices, empirical step-scale,
+    embed_delta raises); the encoder is a frozen module rather than a
+    matrix — which is exactly what escapes the linear-chord ceiling."""
+
+    def __init__(self, encoder, band_dims: list[int], sensor: HDSensor):
+        BandedLatent.__init__(self, [2, 1], band_dims, seed=0)
+        self.world_dim = sensor.obs_dim
+        self.encoder = encoder            # frozen (EncoderMLP.freeze())
+        self.sensor = sensor
+
+    def embed_obs(self, o: torch.Tensor) -> torch.Tensor:
+        with torch.no_grad():
+            return self.encoder(o.reshape(self.world_dim))
+
+    def frozen_tensors(self) -> list[torch.Tensor]:
+        return list(self.encoder.parameters()) + list(self.encoder.buffers())
+
+    def _post_scale(self, s: float) -> None:
+        with torch.no_grad():
+            self.encoder.out_scale.copy_(self.encoder.out_scale / s)

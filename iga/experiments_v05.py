@@ -50,6 +50,21 @@ def collect_hd_walk(sensor: HDSensor, steps: int, coverage_reset_every: int = 10
     return torch.stack(obs), torch.tensor(cs)
 
 
+def band_c_corr_lat(lat, obs: torch.Tensor, c: torch.Tensor,
+                    band_dims=(6, 2)) -> dict:
+    """band_c_corr for any latent (matrix or frozen module)."""
+    with torch.no_grad():
+        z = torch.stack([lat.embed_obs(o) for o in obs])
+    out, off = {}, 0
+    for k, bd in enumerate(band_dims):
+        corr = torch.zeros(bd)
+        for j in range(bd):
+            corr[j] = torch.corrcoef(torch.stack([z[:, off + j], c]))[0, 1].abs()
+        out[f"band{k}_max_c_corr"] = float(corr.max())
+        off += bd
+    return out
+
+
 def band_c_corr(W: torch.Tensor, obs: torch.Tensor, c: torch.Tensor,
                 band_dims=(6, 2)) -> dict:
     z = obs @ W.T
@@ -74,7 +89,7 @@ def make_encoders(sensor: HDSensor, include_iso: bool = False):
     variants = {"ou": dict()}
     if include_iso == "iso":
         variants["ou_iso"] = dict(lam_iso=5.0)
-    elif include_iso == "geo" or include_iso is True:
+    elif include_iso == "geo":
         from .pretrain import geodesic_pairs
         variants["ou_geo"] = dict(geo=geodesic_pairs(obs), lam_geo=5.0)
     Ws = {name: pretrain_ou_ladder(obs, band_dims=[6, 2], taus=[10.0, 300.0],
@@ -89,6 +104,16 @@ def make_encoders(sensor: HDSensor, include_iso: bool = False):
     for name, W in Ws.items():
         lat = ObservationLatent(W, [6, 2], sensor)
         out[name] = ObservationLatent(W / lat.step_scale(0), [6, 2], sensor)
+    if include_iso == "mlp":
+        from .envs.hdcharge import NonlinearObservationLatent
+        from .pretrain import geodesic_pairs, pretrain_mlp_encoder
+        enc = pretrain_mlp_encoder(obs, band_dims=[6, 2], taus=[10.0, 300.0],
+                                   lags=[15, 15], segment_len=100,
+                                   context_amp=0.3, geo=geodesic_pairs(obs),
+                                   lam_geo=5.0, seed=0)
+        lat = NonlinearObservationLatent(enc, [6, 2], sensor)
+        lat._post_scale(lat.step_scale(0))
+        out["ou_mlp"] = lat
     return out
 
 
@@ -98,7 +123,8 @@ def build_phase2(seed: int, which: str, encoders) -> tuple:
     from .ladder import LadderAgent, LadderConfig
 
     lat = encoders[which]
-    env = HDChargeWorld(lat._W, [6, 2], sensor=lat.sensor, seed=seed)
+    W0 = getattr(lat, "_W", torch.zeros(8, lat.world_dim))   # MLP latents have no matrix
+    env = HDChargeWorld(W0, [6, 2], sensor=lat.sensor, seed=seed)
     env.latent = lat            # share the calibrated instance
     gen = torch.Generator().manual_seed(seed + 4000)
     world = torch.cat([torch.rand(384, 2, generator=gen),
@@ -143,10 +169,10 @@ def phase2(conds=("ou", "pca"), include_iso: bool = False,
 
     sensor = HDSensor()
     encoders = make_encoders(sensor, include_iso=include_iso)
-    # geometry + routing report per encoder (pre-registered gate for iso)
+    # geometry + routing report per encoder (pre-registered gates)
     obs_test, c_test = collect_hd_walk(sensor, steps=4000, seed=77)
     for name, lat in encoders.items():
-        r = band_c_corr(lat._W, obs_test, c_test)
+        r = band_c_corr_lat(lat, obs_test, c_test)
         far = float(torch.linalg.vector_norm(
             lat.embed(torch.tensor([0.5, 0.1, 0.0]))
             - lat.embed(torch.tensor([0.2, 0.8, 0.0]))))
