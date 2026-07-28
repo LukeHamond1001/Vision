@@ -60,6 +60,27 @@ trunk/policy and per-band progress.
   at 80 episodes. Extended run (150 ep) in flight; if completion appears,
   replicate at 30 seeds.
 
+### Extended run (`e5c_charge_150ep.json`, 12 × 150) — separation strengthens;
+### last mile is structural
+
+- max_c: flat 0.78 [0.765, 0.789] vs ladder 0.83 [0.821, 0.845] vs
+  ladder_short 0.84 [0.830, 0.847] — banded CIs fully disjoint from flat by a
+  wide margin, and the ladder's 80-ep lock-in seeds recovered with training
+  (its CI tightened from [0.595, 0.857] to [0.821, 0.845]). The separation
+  replicates and grows with budget. 30-seed replication of flat vs
+  ladder_short running (`e5c_replication_n30.json`).
+- Returns 0.000 at 150 ep ⇒ the last mile is NOT a budget problem. Diagnosis:
+  a chicken-and-egg created by the leash — targets are admissible only within
+  0.15 of VISITED support, and high-charge support exists only at the pad, so
+  the door trip must be walked before it can be targeted; and nothing in the
+  architecture proposes "now go" once "charge" is achieved. The slow register
+  can only re-propose c-targets; there is no goal-sequencing / termination-
+  handoff mechanism. That is the v0.3 design item: an achievement-conditioned
+  slow proposal (when a slow target settles, the next slow-level proposal
+  should be conditioned on the achieved state — the options/termination layer
+  the architecture currently lacks). Not a patch to rush: it touches C2's
+  held-target discipline and must preserve per-window telescoping.
+
 ---
 
 ## Round 7 — 2026-07-27: E2a completed; ladder honesty update
