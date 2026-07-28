@@ -1,6 +1,6 @@
 # Imagination-Gated Agent — Design Specification
 
-**Version 0.2-draft** · Status: v0.1 implemented & battery-tested; §10 ladder in progress · Codename: `iga` (placeholder)
+**Version 0.5-draft** · Status: v0.1–v0.4 implemented & battery-tested; ChargeWorld end-to-end (first completions, round 10) · Codename: `iga` (placeholder)
 
 This document is the normative specification of the architecture. It exists because
 review showed the informal description admits multiple readings, only one of which
@@ -143,8 +143,10 @@ underdetermined. Every formal property in §6 cites the commitments it needs.
 
 - **C4 — Asymmetric head trust, in BOTH tenses.** The negative head is acted
   on without world verification at two points:
-  (i) *prospective veto* — candidate targets whose claim `w−·g` exceeds the
-  A2-calibrated threshold are excluded at proposal time;
+  (i) *prospective veto* — candidate targets on which the fixed evaluator
+  `f−(g)` exceeds threshold are excluded at proposal time (round 9: `f−`
+  directly, on the f-scale — the linear-proxy form and its A2 calibration
+  are superseded for selection-side uses);
   (ii) *acting-time flinch* — before executing a step, the fixed evaluator
   `f−` is applied to the IMAGINED next state (one-step lookahead in the
   frozen latent); a firing lookahead vetoes the step (resample, then freeze).
@@ -235,12 +237,28 @@ underdetermined. Every formal property in §6 cites the commitments it needs.
   paid in exactly two currencies, both minted by the world:
   1. world-confirmed realized value of reached targets (G3), and
   2. calibration accuracy: `‖w±·i − f±(p_arrival)‖` as a supervised loss.
+  *Round-9 note:* currency 1 is load-bearing, not optional — with calibration
+  alone the proposer learns accuracy but never ambition, and candidate pools
+  lack valuable targets to rank (measured before/after implementing it).
+
+- **G6 — Imagination climbs the frozen evaluator (round 10).** Candidate
+  pools MUST include, alongside proposer samples, candidates stepped along
+  `∇(f+ − f−)` from the current state (per band, in the ladder). This is
+  parameter-free ambition — autograd through fixed functions, nothing
+  trained — and every gradient candidate still passes C3/C4/C5/C7 and
+  prospective ranking. It is the goal-SEQUENCING layer: where the evaluator
+  encodes phase structure (pad at low charge, door at high), the gradient
+  direction switches phases automatically, with no new registers and no C2
+  exposure. Measured: necessary for task completion (control at exactly zero
+  return with everything else fixed; +0.031 [0.016, 0.042] with it), and the
+  phase-switch property is pinned by a structural test.
 
 ### 5.3 The cycle
 
 ```
-propose    imagination emits candidates; claims w±·i rank them (live for selection,
-           dead for learning); C3 projects, C5 bounds distance, C7 applies value bar
+propose    imagination emits candidates — proposer samples PLUS evaluator-
+           gradient steps (G6); prospective evaluation f±(g) ranks them (G1);
+           C3 projects, C5 bounds distance, C7 applies the value bar
 commit     winner written to goal register with window; potential anchored (C2)
 traverse   policy acts; progress d(p_t,g) − d(p_{t+1},g) pays the policy (G2, G5);
            C1 caps per-neighborhood learning updates
@@ -402,11 +420,31 @@ which all continue to hold per level.
   piecewise-constant-in-window, §6.1 telescoping holds per band per window,
   and the cross-window residual per window is bounded by the band diameter —
   the same discipline v0.1 applies to episodes, now applied per level.
+  *Round-8 corollary — per-band progress weights:* slow-band progress is
+  intrinsically small per step; weight band-k progress ∝ τ_k (a bands-only
+  capability — flat agents cannot weight what they cannot separate), unless
+  the representation itself supplies the scale (v0.3–v0.4: possible but not
+  achieved by whitening on coverage-uniform data).
+  *Round-10 requirement — arrival radii scaled to band metrics:* each band's
+  arrive-eps MUST be small relative to that band's typical target gaps. An
+  eps exceeding the gap scale makes every commit settle instantly, leaving
+  the register closed and the composite context-less (the measured
+  last-mile blocker).
 
 - **L3 — Composite imagination channels.** The imagination channels carry the
   band-concatenated composite target i = g_1 ⊕ … ⊕ g_K. W4 and W5 are
   unchanged over the composite: claims w±·i are linear in the whole vector
   (so per-level claims superpose), and level k's proposer writes ONLY slice k.
+  *Round-10 requirement — composite neutrality:* a band with NO open register
+  takes the CURRENT state's slice, never zero. A zero slice is not a neutral
+  absence — it is a target at the origin, and it poisons every prospective
+  evaluation of the composite (measured: it suppressed doorward selection to
+  0% and masked G6 entirely). The no-op desire is the current state.
+  *Round-9 note — per-band leash:* C3's projection applies PER BAND (slice k
+  against band-k support). Composite projection lets one band's off-support
+  ambition consume the whole budget and drag the other bands' slices — a
+  further bands-only capability (flat agents cannot decompose their trust
+  region).
   *Correction (round 8):* linearity means a held slow slice contributes the
   SAME additive constant to every fast candidate's claim — composite claims
   can therefore never re-rank candidates within a level by slow context.
@@ -461,3 +499,14 @@ the comparison is evidence-gathering.
    backward pass is needed; it is a forward dot product (G1).
 7. Target selection "may aim at whatever it values most" — must additionally
    clear the C7 value bar and the C5 horizon bound.
+8. Claims as the selection currency — superseded (round 9): selection, veto,
+   and value bar use prospective evaluation `f±(g)`; the linear claim channel
+   is solely for exact subtraction and arrival auditing (G1).
+9. Clean band separation as the routing target — superseded (v0.3 leak
+   ablation): low-amplitude slow→fast context coupling in the EMBEDDING is
+   necessary and sufficient for the representation win; slice-level
+   disjointness (and all safety properties) unchanged (L1).
+10. Proposal pools from proposer noise alone — superseded (round 10):
+   evaluator-gradient candidates are required for sequencing (G6).
+11. Zero as the unset-band composite value — superseded (round 10): the
+   neutral is the current state (L3, composite neutrality).

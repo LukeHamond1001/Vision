@@ -56,10 +56,19 @@ the §6.4 treadmill; it is never a deployed configuration.
 - `iga/constraints.py` — leash, coverage cap, curiosity
 - `iga/gating.py` — three-signal gate, exact subtraction, IOU ledger
 - `iga/agent.py` — assembly, wiring assertions, the propose→…→calibrate cycle
-- `iga/envs/` — toy gridworld + adversarial probes (E3a implemented, E3b env)
-- `iga/audits.py` — A1 trigger set, A2 proxy gap + threshold calibration, A3 Lipschitz
-- `iga/experiments.py` — the SPEC §9 battery (ablations, seeds, IQM + bootstrap CIs)
-- `results/` — battery outputs (json + markdown report)
+- `iga/ladder.py` — the register ladder (SPEC §10): per-band registers,
+  weights, leashes, gradient proposals
+- `iga/learner.py` — pluggable policy learner (§5.4): episodic clipped
+  updates with GAE
+- `iga/pretrain.py` — OU-ladder latent pretraining (v0.3/v0.4 recipe:
+  innovations + coverage resets + boundary masking + within-band whitening +
+  context coupling)
+- `iga/envs/` — gridworld, trap corridor (E2a), reachability probe (E3b),
+  two/three-zone worlds (E5), charge world (E5c — end-to-end as of round 10)
+- `iga/audits.py` — A1 trigger set, A2 proxy gap, A3 Lipschitz (claims-channel
+  audits; selection-side uses read f± directly since round 9)
+- `iga/experiments*.py` — the SPEC §9/§10 batteries and probes
+- `results/` — outputs + `INTERPRETATION.md` (the honest round-by-round log)
 - `tests/` — structural tests keyed to spec clauses
 
 ## Deliberate scaffold simplifications
@@ -73,8 +82,16 @@ the §6.4 treadmill; it is never a deployed configuration.
 - E3b (reachability bias) ships as env + drift metric; the multi-seed
   experiment is evaluation work (SPEC §9), not scaffold work.
 
-## Next (SPEC §9)
+## Status (v0.5-draft)
 
-E1 seeds/CIs on small-delta ablations · E2 missing cells (forgone reward;
-named ceiling baseline) · E3 probes at scale · E4 external baseline — then the
-register ladder (SPEC §10), gated on E3b passing.
+E1–E4 complete (E2a with disjoint CIs via the C4 flinch; E3b confirmed under
+two learners). Ladder built and battle-tested; ChargeWorld end-to-end as of
+round 10 (first completions, +0.031 [0.016, 0.042] vs control 0.000, clean
+attribution to G6 gradient proposals + composite neutrality). Representation
+recipe validated (band discovery; leak mechanism identified both directions;
+learned coupling recovers the win, hand-design still edges it at toy scale).
+
+Open frontiers: representation scale-up (high-dim observations, unknown slow
+variables — where the learned pretraining recipe's value claim lives), and
+completion-rate engineering. See `results/INTERPRETATION.md` for the full
+round-by-round record, reversals included.

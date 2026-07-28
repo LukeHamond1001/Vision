@@ -83,6 +83,20 @@ class TestLadder(unittest.TestCase):
                             * comp[latent.band_slices[k]]).sum()) for k in range(2))
         self.assertAlmostEqual(float(head_pos.claim(comp)), manual, places=5)
 
+    def test_L3_composite_neutrality(self):
+        """Round 10: a band with no open register takes the CURRENT state's
+        slice, never zero — zero is a target at the origin, not an absence."""
+        latent, env, _, _, agent = build_twozone()
+        agent.observe(env.reset())
+        comp = agent._composite()                       # all registers closed
+        self.assertTrue(torch.allclose(comp, agent.p))
+        g_slow = torch.randn(2)
+        agent.registers[1].commit(g_slow, window=96)
+        comp2 = agent._composite()
+        self.assertTrue(torch.allclose(comp2[latent.band_slices[0]],
+                                       latent.band(agent.p, 0)))
+        self.assertTrue(torch.allclose(comp2[latent.band_slices[1]], g_slow))
+
     def test_L4_W1_wiring(self):
         _, _, head_pos, head_neg, agent = build_twozone()
         head_pos.assert_parameter_free()
