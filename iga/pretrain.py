@@ -62,6 +62,7 @@ def pretrain_ou_ladder(world_traj: torch.Tensor, band_dims: list[int],
                        segment_len: int | None = None,
                        context_amp: float | None = None, lam_ctx: float = 5.0,
                        context_mode: str = "column", lam_iso: float = 0.0,
+                       geo: tuple | None = None, lam_geo: float = 0.0,
                        seed: int = 0) -> torch.Tensor:
     """Learn a linear map W: world → latent under the OU-ladder objective.
     Returns W (latent_dim × world_dim), to be frozen by the caller.
@@ -121,6 +122,14 @@ def pretrain_ou_ladder(world_traj: torch.Tensor, band_dims: list[int],
             d = torch.linalg.vector_norm(z[1:T - max_lag + 1][m1] - z[:T - max_lag][m1],
                                          dim=-1)
             loss = loss + lam_iso * (d.var() / d.mean().clamp_min(1e-6) ** 2)
+        if lam_geo > 0 and geo is not None:
+            # v0.6: geodesic matching — normalized latent chords toward
+            # normalized graph geodesics (scale-free on both sides).
+            node_idx, gi, gj, dgeo = geo
+            zn = z[node_idx]
+            chord = torch.linalg.vector_norm(zn[gi] - zn[gj], dim=-1)
+            loss = loss + lam_geo * ((chord / chord.mean().clamp_min(1e-6)
+                                      - dgeo / dgeo.mean()) ** 2).mean()
         zc = z - z.mean(0)
         cov = (zc.T @ zc) / (T - 1)
         if context_amp is None:
@@ -154,6 +163,36 @@ def pretrain_ou_ladder(world_traj: torch.Tensor, band_dims: list[int],
     with torch.no_grad():
         W_final = (W / sd.unsqueeze(0)).detach().clone()
     return W_final
+
+
+def geodesic_pairs(obs: torch.Tensor, n_nodes: int = 400, k: int = 8,
+                   n_pairs: int = 4000, seed: int = 0):
+    """v0.6: geodesic distance targets from walk observations alone.
+
+    Subsample nodes, build a kNN graph with observation-space edge lengths
+    (local o-distances are trustworthy where sensors are locally faithful),
+    run vectorized Floyd–Warshall, and sample finite-distance pairs. Returns
+    (node_indices_into_obs, pair_i, pair_j, d_geo). Used by the geodesic-
+    matching objective term: latent CHORDS should match graph GEODESICS —
+    the curvature fix that step-norm homogenization (refuted) could not be."""
+    gen = torch.Generator().manual_seed(seed + 5000)
+    node_idx = torch.randperm(obs.shape[0], generator=gen)[:n_nodes]
+    X = obs[node_idx]
+    D = torch.cdist(X, X)
+    knn = D.topk(k + 1, largest=False).indices[:, 1:]
+    A = torch.full_like(D, float("inf"))
+    A[torch.arange(n_nodes)] = float("inf")
+    rows = torch.arange(n_nodes).unsqueeze(1).expand_as(knn)
+    A[rows.reshape(-1), knn.reshape(-1)] = D[rows.reshape(-1), knn.reshape(-1)]
+    A = torch.minimum(A, A.T)
+    A.fill_diagonal_(0.0)
+    for m in range(n_nodes):                       # min-plus Floyd–Warshall
+        A = torch.minimum(A, A[:, m:m + 1] + A[m:m + 1, :])
+    ii = torch.randint(0, n_nodes, (n_pairs,), generator=gen)
+    jj = torch.randint(0, n_nodes, (n_pairs,), generator=gen)
+    d = A[ii, jj]
+    ok = torch.isfinite(d) & (ii != jj)
+    return node_idx, ii[ok], jj[ok], d[ok]
 
 
 class PretrainedBandedLatent(BandedLatent):

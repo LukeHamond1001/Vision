@@ -71,9 +71,12 @@ def make_encoders(sensor: HDSensor, include_iso: bool = False):
     from .envs.hdcharge import ObservationLatent
 
     obs, _ = collect_hd_walk(sensor, steps=20000, seed=0)
-    variants = {"ou": dict(lam_iso=0.0)}
-    if include_iso:
+    variants = {"ou": dict()}
+    if include_iso == "iso":
         variants["ou_iso"] = dict(lam_iso=5.0)
+    elif include_iso == "geo" or include_iso is True:
+        from .pretrain import geodesic_pairs
+        variants["ou_geo"] = dict(geo=geodesic_pairs(obs), lam_geo=5.0)
     Ws = {name: pretrain_ou_ladder(obs, band_dims=[6, 2], taus=[10.0, 300.0],
                                    lags=[15, 15], segment_len=100,
                                    context_amp=0.3, context_mode="band",

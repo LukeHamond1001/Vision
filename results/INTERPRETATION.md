@@ -60,6 +60,23 @@ exactly where sensors are locally faithful). That is the v0.6 build; the
 pre-registered gate saved the 50-minute behavioral run it would have
 wasted.
 
+**Second gate result (same day): geodesic matching ALSO fails under the
+linear encoder** (start→pad 0.20, unchanged; routing survives 0.981) —
+and the two refutations converge on the actual ceiling. The saturated
+sensor gives all far pairs similar OBSERVATION-space chords while their
+geodesics differ ~3×; z = W·o means latent chords are linear images of
+o-chords, so no linear encoder can send equal input chords to unequal
+output chords. **The pathology is the encoder class, not the objective.**
+Curvature flattening requires a nonlinear encoder — and by the spec's own
+accounting that step is cheap: a frozen NONLINEAR encoder preserves W2
+(frozen metric — frozen ≠ linear), W4 (claims linear over latent
+coordinates), and every frozen-latent constraint; the only casualties are
+embed_delta (already formally deferred to a frozen forward model) and
+analytic convenience. The linear encoder was a scaffold simplification,
+never a commitment. **v0.6 build, restated: small frozen-after-training
+nonlinear encoder (MLP) under the full recipe + geodesic matching, then
+the three gates (routing, geometry, behavior) in order.**
+
 ---
 
 ## v0.5 phase 1 — 2026-07-28: slow-structure discovery where hand-design
