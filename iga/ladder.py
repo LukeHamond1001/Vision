@@ -37,6 +37,8 @@ class LadderConfig:
     curiosity_bonus: float = 0.1
     value_bar: float = 0.02          # C7; ALWAYS enforced at the top level (L4)
     veto_threshold: float = 10.0     # calibrate via A2 for real runs
+    flinch_threshold: float = 0.5    # C4 acting-time veto (see agent.py)
+    flinch_resamples: int = 4
     proposal_k: int = 12
     proposal_noise: float = 0.25
     w_prog: float = 1.0
@@ -160,10 +162,22 @@ class LadderAgent:
         return True
 
     # ---------------------------------------------------------------- traverse
+    def _flinches(self, world_action: torch.Tensor) -> bool:
+        """C4 acting-time veto via one-step lookahead (see agent.py)."""
+        with torch.no_grad():
+            p_hat = self.p + self.latent.embed_delta(world_action)
+            return float(self.head_neg.realized(p_hat)) > self.cfg.flinch_threshold
+
     def act(self):
         feats = self.trunk(self.p, self.i)
         dist = self.action_head.dist(feats)
         a = dist.sample()
+        for _ in range(self.cfg.flinch_resamples):
+            if not self._flinches(torch.tanh(a) * self.cfg.max_world_step):
+                break
+            a = dist.sample()
+        else:
+            a = torch.zeros_like(a)
         self._pending = (self.p, self.i, a)
         return (torch.tanh(a) * self.cfg.max_world_step, dist.log_prob(a).sum(),
                 dist.entropy().sum(), self.critic(feats).reshape(()))

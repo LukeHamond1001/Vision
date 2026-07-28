@@ -5,6 +5,64 @@ stable commentary). Newest round first.
 
 ---
 
+## Round 7 — 2026-07-27: E2a completed; ladder honesty update
+
+### E2a: the trust asymmetry, isolated at last (`e2a_trust.json`)
+
+Trap-corridor probe, 10 seeds × 60 episodes, all CIs disjoint where it counts:
+
+| cell | return IQM [CI95] | catastrophes/seed [CI95] |
+|---|---|---|
+| full (trap live, trust on) | **+0.039** [0.011, 0.061] | **0.0** [0.0, 0.0] |
+| no_veto (trap live, trust off) | −0.217 [−0.300, −0.117] | **7.8** [5.0, 10.2] |
+| paranoia (trap absent, alarm fires) | +0.028 [0.011, 0.089] | 0.0 [0.0, 0.0] |
+
+Trusting an accurate negative head without verification: complete protection
+(0 catastrophes in 600 episodes) at a paranoia price statistically
+indistinguishable from zero (full vs paranoia returns overlap). Without
+trust: ~8 deaths per seed and negative return. The confusion-matrix row that
+began as a single "11 → 0" cell in the original design table is now a
+three-cell result with intervals.
+
+Two failures en route were themselves findings:
+1. **Prospective target-vetoing alone is insufficient** (11.2 vs 14.8
+   catastrophes, overlapping): a learning policy's route is not fully
+   governed by its target chain. This motivated the C4 **acting-time
+   flinch** — one-step lookahead in the frozen latent, evaluated by the
+   fixed `f−` itself (not the linear proxy), acted on without verification.
+   Parameter-free end to end; a learned one-step model on this path would
+   make the flinch tamperable (now in SPEC §C4).
+2. **Evaluator-shape misspecification is exactly as dangerous as §7 says**:
+   a rectangular trap under a radial `f−` left lethal corners where the
+   innate aversion is silent — the flinch fired correctly everywhere the
+   evaluator could see and the agent died where it couldn't. Accidental,
+   and kept: it is the cleanest demonstration in the repo that the
+   pre-mapped evaluator's fidelity is the safety ceiling (W1's accepted
+   price made visible).
+
+### E5b: honesty update on the ladder (`e5b_threezone.json`)
+
+- E5-easy at n=12: flat +0.377 [0.26, 0.49] vs ladder +0.260 [0.08, 0.43] —
+  round 6's ladder-ahead reading was noise; if anything flat leads
+  (overlapping CIs). **No ladder advantage is demonstrated on any current
+  task.**
+- ThreeZone (two slow transitions): both agents at zero return, gate rates
+  0.22 vs 0.24 — unsolved by both; deeper timescale separation exceeds what
+  the current learner + exploration reach.
+- Standing conclusion: the ladder costs nothing measurable and inherits all
+  safety properties per level, but its *behavioral* case is unproven. The
+  discriminating experiment needs either curriculum/exploration work on
+  compound tasks, or a task where the slow variable is not reachable by
+  fast-chaining alone. Design question, recorded as the top v0.3 item.
+
+### E-item scoreboard after round 7
+
+E1 ✔ protocol · E2a ✔✔ complete with disjoint CIs · E3a ✔ structural ·
+E3b ✔✔ two learners · E4 ✔ baseline null · E5 ◐ live, no ladder advantage
+shown, discrimination task open.
+
+---
+
 ## Round 6 — 2026-07-27: GAE learner unblocks the compound tasks
 
 ### The learner saga (three iterations, one lesson)

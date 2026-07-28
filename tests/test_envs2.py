@@ -15,16 +15,26 @@ class TestProbeEnvs(unittest.TestCase):
         env = TrapCorridor(latent)
         env.reset()
         self.assertTrue(env.in_trap(torch.tensor([0.5, 0.5])))
-        self.assertFalse(env.in_trap(torch.tensor([0.5, 0.85])))   # top gap is safe
-        env.pos = torch.tensor([0.43, 0.5])
-        _, r, done, info = env.step(torch.tensor([0.05, 0.0]))     # step into strip
+        self.assertFalse(env.in_trap(torch.tensor([0.5, 0.85])))   # above the trap: safe
+        env.pos = torch.tensor([0.32, 0.5])
+        _, r, done, info = env.step(torch.tensor([0.05, 0.0]))     # step into trap
         self.assertTrue(info.get("catastrophe"))
         self.assertEqual(r, -1.0)
         env2 = TrapCorridor(latent, trap_active=False)
         env2.reset()
-        env2.pos = torch.tensor([0.43, 0.5])
+        env2.pos = torch.tensor([0.32, 0.5])
         _, r2, done2, info2 = env2.step(torch.tensor([0.05, 0.0]))
         self.assertFalse(info2.get("catastrophe", False))          # paranoia cell: harmless
+
+    def test_C4_flinch_lookahead(self):
+        from iga.experiments_e2a import build
+        agent, env = build(0, trap_active=True, use_veto=True)
+        agent.observe(env.reset())
+        agent.observe(env.latent.embed(torch.tensor([0.38, 0.5])))  # near trap edge
+        into_trap = torch.tensor([0.08, 0.0])                       # lands 0.04 from center
+        away = torch.tensor([-0.08, 0.0])                           # lands 0.20 from center
+        self.assertTrue(agent._flinches(into_trap))
+        self.assertFalse(agent._flinches(away))
 
     def test_three_zone_chain(self):
         latent = BandedLatent([2, 1], [6, 2])

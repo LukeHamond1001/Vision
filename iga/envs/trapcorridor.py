@@ -24,11 +24,16 @@ from ..latent import PremappedLatent
 
 class TrapCorridor:
     def __init__(self, latent: PremappedLatent, trap_center=(0.5, 0.5),
-                 trap_half=(0.06, 0.28), reward_site=(0.9, 0.5), start=(0.1, 0.5),
+                 trap_radius: float = 0.16, reward_site=(0.9, 0.5), start=(0.1, 0.5),
                  site_radius: float = 0.08, trap_active: bool = True, seed: int = 0):
+        # Radial trap, matching the radial pre-mapped evaluator: E2a's story is
+        # "ACCURATE innate aversion, trusted without verification". (An earlier
+        # rectangular trap under a radial f− accidentally demonstrated §7's
+        # misspecification lock-in instead — lethal corners where the evaluator
+        # is silent. Instructive, but a different experiment.)
         self.latent = latent
         self.trap_center = torch.tensor(trap_center)
-        self.trap_half = torch.tensor(trap_half)
+        self.trap_radius = trap_radius
         self.reward_site = torch.tensor(reward_site)
         self.start = torch.tensor(start)
         self.site_radius = site_radius
@@ -36,7 +41,7 @@ class TrapCorridor:
         self.pos = self.start.clone()
 
     def in_trap(self, pos: torch.Tensor) -> bool:
-        return bool(torch.all((pos - self.trap_center).abs() <= self.trap_half))
+        return bool(torch.linalg.vector_norm(pos - self.trap_center) < self.trap_radius)
 
     def reset(self) -> torch.Tensor:
         self.pos = self.start.clone()

@@ -34,6 +34,8 @@ class AgentConfig:
     curiosity_bonus: float = 0.1
     value_bar: float = 0.05          # C7: v_min
     veto_threshold: float = 0.5      # C4: prospective veto on claim− (battery calibrates via A2)
+    flinch_threshold: float = 0.5    # C4 acting-time veto: f− on the imagined next state
+    flinch_resamples: int = 4        # resample budget before freezing in place
     proposal_k: int = 16
     proposal_noise: float = 0.2
     window: int = 24                 # commitment window (steps)
@@ -189,10 +191,26 @@ class Agent:
         return diag
 
     # ------------------------------------------------------------------ traverse
+    def _flinches(self, world_action: torch.Tensor) -> bool:
+        """C4 acting-time veto: evaluate the fixed negative head on the
+        IMAGINED next state (one-step lookahead in the frozen latent) and act
+        on it without world verification. Parameter-free end to end, so the
+        flinch inherits the reward pathway's tamper-proofness."""
+        with torch.no_grad():
+            p_hat = self.p + self.latent.embed_delta(world_action)
+            return float(self.head_neg.realized(p_hat)) > self.cfg.flinch_threshold
+
     def act(self) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
         feats = self.trunk(self.p, self.i)
         dist = self.action_head.dist(feats)
         a = dist.sample()
+        if self.cfg.use_veto:                    # one trust switch covers both vetoes
+            for _ in range(self.cfg.flinch_resamples):
+                if not self._flinches(torch.tanh(a) * self.cfg.max_world_step):
+                    break
+                a = dist.sample()
+            else:
+                a = torch.zeros_like(a)          # freeze in place: the flinch itself
         logp = dist.log_prob(a).sum()
         entropy = dist.entropy().sum()
         value = self.critic(feats).reshape(())

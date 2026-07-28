@@ -39,7 +39,11 @@ def build(seed: int, trap_active: bool, use_veto: bool):
     # along traversal outside the strip — the "cliff edge gives no warning".
     head_neg = FixedRewardHead(env.embed_site(env.trap_center), sigma=0.10, proxy_samples=support)
     tau = calibrate_threshold(head_neg, support)
-    cfg = AgentConfig(seed=seed, veto_threshold=tau, use_veto=use_veto, value_bar=0.02)
+    # flinch threshold 0.2: with sigma=0.10 and trap radius 0.16, f- exceeds
+    # 0.2 within ~0.18 of center, so every step whose imagined landing is
+    # inside the trap fires the lookahead first.
+    cfg = AgentConfig(seed=seed, veto_threshold=tau, use_veto=use_veto, value_bar=0.02,
+                      flinch_threshold=0.2)
     return Agent(cfg, head_pos, head_neg, latent), env
 
 

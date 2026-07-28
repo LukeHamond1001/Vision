@@ -141,13 +141,27 @@ underdetermined. Every formal property in §6 cites the commitments it needs.
   *Known residual:* an optimizing proposer selects the worst point on the leash
   boundary; audit A3 bounds the reward error there.
 
-- **C4 — Asymmetric head trust.** The negative head's veto gates **action**
-  immediately, without world verification. The positive head's claims gate
-  **nothing**: value is credited to learning only on world confirmation (G3).
+- **C4 — Asymmetric head trust, in BOTH tenses.** The negative head is acted
+  on without world verification at two points:
+  (i) *prospective veto* — candidate targets whose claim `w−·g` exceeds the
+  A2-calibrated threshold are excluded at proposal time;
+  (ii) *acting-time flinch* — before executing a step, the fixed evaluator
+  `f−` is applied to the IMAGINED next state (one-step lookahead in the
+  frozen latent); a firing lookahead vetoes the step (resample, then freeze).
+  Measured motivation (results/e2a_trust.json, round 7): target-vetoing alone
+  reduced but did not prevent traversal catastrophes (11.2 vs 14.8 per seed) —
+  the route of a *learning* policy is not fully governed by its target chain.
+  The flinch's lookahead MUST be parameter-free (exact under a linear frozen
+  embedding; otherwise a FROZEN one-step model — a learned model on this path
+  makes the flinch tamperable and breaks the W1-style purity it inherits).
+  The positive head's claims gate **nothing**: value is credited to learning
+  only on world confirmation (G3).
   *Structural caveat:* a veto on an *imagined* target is a judgment by the linear
   term `w−·i` — a proxy for the nonlinear evaluator `f−(p)`, which never runs on a
   region the agent never visits. Proxy false alarms are therefore expected and
-  permanent unless overridden; see G4 (distal observation) and audit A2.
+  permanent unless overridden; see G4 (distal observation) and audit A2. The
+  flinch narrows this gap at the one-step horizon, where `f−` itself (not the
+  proxy) evaluates the imagined state.
 
 - **C5 — Horizon-conditioned targeting.** Admissible targets sit at distance ≤ H,
   the remaining-time budget; the committed target's distance is the planning

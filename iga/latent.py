@@ -44,6 +44,14 @@ class PremappedLatent:
         with torch.no_grad():
             return tuple(torch.floor(z / radius).to(torch.int64).tolist())
 
+    def embed_delta(self, world_delta: torch.Tensor) -> torch.Tensor:
+        """Latent displacement of a world-space action (C4 flinch lookahead).
+        Exact here because the embedding is linear; a nonlinear system needs a
+        FROZEN one-step model in its place — a learned one on this path would
+        make the flinch tamperable."""
+        with torch.no_grad():
+            return (self._embed @ world_delta.reshape(self.world_dim))
+
     def frozen_tensors(self) -> list[torch.Tensor]:
         return [self._embed]
 
@@ -113,3 +121,10 @@ class BandedLatent(PremappedLatent):
     def step_scale(self, k: int | None = None) -> float:
         blocks = self._blocks if k is None else [self._blocks[k]]
         return max(float(torch.linalg.matrix_norm(b, ord=2)) for b in blocks)
+
+    def embed_delta(self, world_delta: torch.Tensor) -> torch.Tensor:
+        """Actions move only part 0 (position); other bands are unmoved."""
+        with torch.no_grad():
+            out = torch.zeros(self.latent_dim)
+            out[self.band_slices[0]] = self._blocks[0] @ world_delta.reshape(self.part_dims[0])
+            return out
