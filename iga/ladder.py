@@ -42,6 +42,12 @@ class LadderConfig:
     proposal_k: int = 12
     proposal_noise: float = 0.25
     w_prog: float = 1.0
+    # Per-band progress weights (L2 corollary): slow-band progress is
+    # intrinsically small per step (slow variables move slowly) — weighting by
+    # hold-length ratio keeps per-window progress budgets comparable across
+    # bands. This is a capability ONLY the banded architecture has: a flat
+    # agent cannot weight what it cannot separate.
+    w_prog_bands: tuple = (1.0, 3.0)
     lr_policy: float = 3e-3
     lr_proposer: float = 3e-3
     max_world_step: float = 0.1
@@ -190,8 +196,9 @@ class LadderAgent:
         for k, r in enumerate(self.registers):                  # Σ_k per-band progress (L2)
             if r.open:
                 with torch.no_grad():
-                    prog += float(self.latent.band_distance(p_prev, r.target, k)
-                                  - self.latent.band_distance(p_now, r.target, k))
+                    prog += self.cfg.w_prog_bands[k] * float(
+                        self.latent.band_distance(p_prev, r.target, k)
+                        - self.latent.band_distance(p_now, r.target, k))
         capped = not self.cap.allow(p_now)                      # C1 gates progress only
         use_prog = 0.0 if capped else prog
         if not capped and any(r.open for r in self.registers):
