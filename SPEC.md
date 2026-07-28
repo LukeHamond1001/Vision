@@ -233,7 +233,13 @@ machinery and MUST satisfy exactly three placement rules: the critic (or any
 learned value estimator) trains in the POLICY optimizer, disjoint from every
 proposer (G5); it predicts the *gated* signal, from which claims are already
 excluded (G1); and nothing it learns sits on a path into the reward heads
-(W1). Its returns are undiscounted within episodes (W3). Consequence for C1:
+(W1). The reward STREAM remains undiscounted (W3); the learner's advantage
+estimator MAY use γ<1 (e.g. GAE) as a bias-variance knob — under an
+effectively discounted learner the potential-based loop residual is bounded
+and strictly dominated by monotone gap-closing (Abel summation caps total
+extractable shaping at the true initial gap), so non-farmability is preserved
+and only the "telescopes to exactly zero" wording is γ=1-specific.
+Consequence for C1:
 a TD/bootstrapping critic is a learned estimator inside the learning signal,
 so if imagined-state updates (Dyna-style) are ever added, C1's original
 bootstrap-inflation rationale becomes live again and the cap MUST gate those

@@ -19,15 +19,27 @@ import torch
 
 
 class EpisodicLearner:
-    """Store the episode's transitions; K clipped-surrogate epochs at the end."""
+    """Store the episode's transitions; K clipped-surrogate epochs at the end.
+
+    Credit assignment is GAE(γ, λ): the REWARD STREAM stays undiscounted
+    (W3 — the shaping construction is γ=1), but the learner's advantage
+    estimator uses γ<1 as a bias-variance knob. Safety note (SPEC §5.4):
+    under an effectively discounted learner, potential-based loops earn a
+    bounded residual that is strictly dominated by monotone gap-closing
+    (Abel summation: total extractable shaping ≤ the true initial gap), so
+    non-farmability is preserved; only the 'telescopes to exactly zero'
+    wording is γ=1-specific."""
 
     def __init__(self, epochs: int = 4, clip: float = 0.2, value_coef: float = 0.5,
-                 entropy_coef: float = 1e-3, grad_clip: float = 1.0):
+                 entropy_coef: float = 1e-3, grad_clip: float = 1.0,
+                 gamma: float = 0.9, lam: float = 0.8):
         self.epochs = epochs
         self.clip = clip
         self.value_coef = value_coef
         self.entropy_coef = entropy_coef
         self.grad_clip = grad_clip
+        self.gamma = gamma
+        self.lam = lam
         self._p: list[torch.Tensor] = []
         self._i: list[torch.Tensor] = []
         self._a: list[torch.Tensor] = []      # raw (pre-squash) sampled actions
@@ -48,24 +60,35 @@ class EpisodicLearner:
         p = torch.stack(self._p)
         i = torch.stack(self._i)
         a = torch.stack(self._a)
-        rtg = torch.tensor(self._totals).flip(0).cumsum(0).flip(0)   # W3: γ = 1
+        r = torch.tensor(self._totals)
         with torch.no_grad():
-            dist0 = agent.action_head.dist(agent.trunk(p, i))
+            feats0 = agent.trunk(p, i)
+            dist0 = agent.action_head.dist(feats0)
             logp_old = dist0.log_prob(a).sum(-1)
+            v0 = agent.critic(feats0).squeeze(-1)
+        # GAE(γ, λ) with terminal V = 0 (episodic).
+        T = len(r)
+        adv = torch.zeros(T)
+        gae = 0.0
+        for t in reversed(range(T)):
+            v_next = float(v0[t + 1]) if t + 1 < T else 0.0
+            delta = float(r[t]) + self.gamma * v_next - float(v0[t])
+            gae = delta + self.gamma * self.lam * gae
+            adv[t] = gae
+        v_target = adv + v0                                  # fixed across epochs
+        if T > 1 and float(adv.std()) > 1e-6:
+            adv = (adv - adv.mean()) / (adv.std() + 1e-6)
         for _ in range(self.epochs):
             feats = agent.trunk(p, i)
             dist = agent.action_head.dist(feats)
             logp = dist.log_prob(a).sum(-1)
             entropy = dist.entropy().sum(-1)
             values = agent.critic(feats).squeeze(-1)
-            adv = rtg - values.detach()
-            if len(adv) > 1 and float(adv.std()) > 1e-6:
-                adv = (adv - adv.mean()) / (adv.std() + 1e-6)
             ratio = torch.exp(logp - logp_old)
             surr = torch.min(ratio * adv,
                              torch.clamp(ratio, 1 - self.clip, 1 + self.clip) * adv)
             loss = (-surr.mean()
-                    + self.value_coef * ((values - rtg) ** 2).mean()
+                    + self.value_coef * ((values - v_target) ** 2).mean()
                     - self.entropy_coef * entropy.mean())
             optimizer.zero_grad()
             loss.backward()
