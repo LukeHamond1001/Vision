@@ -42,6 +42,8 @@ class LadderConfig:
     veto_threshold: float = 0.5      # f-scale (prospective evaluation, round 9)
     flinch_threshold: float = 0.5    # C4 acting-time veto (see agent.py)
     flinch_resamples: int = 4
+    use_flinch: bool = True          # False where embed_delta's precondition
+    #   fails (nonlinear sensor, no frozen forward model — SPEC C4 deferral)
     grad_proposals: bool = False     # round 10: imagination climbs the frozen
     #   evaluator — candidates stepped along ∇(f+−f−) from the current state.
     #   Parameter-free ambition; fixes proposal coverage in high-dim pools.
@@ -217,12 +219,13 @@ class LadderAgent:
         feats = self.trunk(self.p, self.i)
         dist = self.action_head.dist(feats)
         a = dist.sample()
-        for _ in range(self.cfg.flinch_resamples):
-            if not self._flinches(torch.tanh(a) * self.cfg.max_world_step):
-                break
-            a = dist.sample()
-        else:
-            a = torch.zeros_like(a)
+        if self.cfg.use_flinch:
+            for _ in range(self.cfg.flinch_resamples):
+                if not self._flinches(torch.tanh(a) * self.cfg.max_world_step):
+                    break
+                a = dist.sample()
+            else:
+                a = torch.zeros_like(a)
         self._pending = (self.p, self.i, a)
         return (torch.tanh(a) * self.cfg.max_world_step, dist.log_prob(a).sum(),
                 dist.entropy().sum(), self.critic(feats).reshape(()))

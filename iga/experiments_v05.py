@@ -63,7 +63,110 @@ def band_c_corr(W: torch.Tensor, obs: torch.Tensor, c: torch.Tensor,
     return out
 
 
+def make_encoders(sensor: HDSensor):
+    """Train the OU encoder and the PCA control on the same walk; normalize
+    both so fast-band step-scale ≈ 1 (identical calibration — the comparison
+    isolates ROUTING quality, nothing else)."""
+    from .envs.hdcharge import ObservationLatent
+
+    obs, _ = collect_hd_walk(sensor, steps=20000, seed=0)
+    W_ou = pretrain_ou_ladder(obs, band_dims=[6, 2], taus=[10.0, 300.0],
+                              lags=[15, 15], segment_len=100,
+                              context_amp=0.3, context_mode="band", seed=0)
+    mu = obs.mean(0)
+    _, _, V = torch.pca_lowrank(obs - mu, q=8)
+    W_pca = V.T.contiguous()
+    out = {}
+    for name, W in (("ou", W_ou), ("pca", W_pca)):
+        lat = ObservationLatent(W, [6, 2], sensor)
+        out[name] = ObservationLatent(W / lat.step_scale(0), [6, 2], sensor)
+    return out
+
+
+def build_phase2(seed: int, which: str, encoders) -> tuple:
+    from .envs.hdcharge import HDChargeWorld
+    from .heads import FixedRewardHead, SumHead
+    from .ladder import LadderAgent, LadderConfig
+
+    lat = encoders[which]
+    env = HDChargeWorld(lat._W, [6, 2], sensor=lat.sensor, seed=seed)
+    env.latent = lat            # share the calibrated instance
+    gen = torch.Generator().manual_seed(seed + 4000)
+    world = torch.cat([torch.rand(384, 2, generator=gen),
+                       torch.rand(384, 1, generator=gen)], dim=1)
+    support = torch.stack([lat.embed(w) for w in world])
+    # Long-range geometry calibration (identical procedure both arms):
+    # learned latents warp far distances (RBF saturation compresses them —
+    # measured far/step ratio 2.8 in OU vs ~7.6 rigid), so every
+    # distance-valued parameter is scaled by the latent's measured
+    # start->pad distance relative to the rigid-world 0.76.
+    with torch.no_grad():
+        rho = float(torch.linalg.vector_norm(
+            env.embed_world(env.start, 0.0) - env.embed_world(env.pad, 0.0))) / 0.76
+    head_pos = SumHead(
+        [FixedRewardHead(env.embed_world(env.door, 1.0), sigma=0.30 * rho, proxy_samples=support),
+         FixedRewardHead(env.embed_world(env.pad, 0.1), sigma=0.20 * rho, proxy_samples=support),
+         FixedRewardHead(env.embed_world(env.pad, 0.6), sigma=0.20 * rho, proxy_samples=support)],
+        weights=[1.0, 0.3, 0.3])
+    head_neg = FixedRewardHead(env.embed_world((0.5, 0.95), 0.0), sigma=0.12 * rho,
+                               proxy_samples=support)
+    # arrive-eps calibrated to the MEASURED slow-band charge amplitude
+    # (round-10 requirement: radii scaled to band metrics, applied
+    # prospectively; identical procedure for both encoders)
+    with torch.no_grad():
+        amp_slow = float(torch.linalg.vector_norm(
+            (env.embed_world((0.5, 0.5), 1.0)
+             - env.embed_world((0.5, 0.5), 0.0))[lat.band_slices[1]]))
+    eps_slow = max(0.05 * max(amp_slow, 1e-3), 0.01)
+    agent = LadderAgent(
+        LadderConfig(seed=seed, veto_threshold=0.5, holds=(12, 12),
+                     arrive_eps=(0.08 * rho, eps_slow), w_prog_bands=(1.0, 1.0),
+                     leash_radius=0.15 * rho, cap_radius=max(0.1 * rho, 0.02),
+                     grad_proposals=True, use_flinch=False),
+        head_pos, head_neg, lat)
+    return agent, env
+
+
+def phase2() -> None:
+    import numpy as np
+    from .experiments import bootstrap_ci, iqm
+
+    sensor = HDSensor()
+    encoders = make_encoders(sensor)
+    results = []
+    for which in ("ou", "pca"):
+        per_seed = {"return": [], "max_c": []}
+        for s in range(12):
+            agent, env = build_phase2(s, which, encoders)
+            ret, mc, scored = 0.0, 0.0, 0
+            for ep in range(150):
+                stats = agent.run_episode(env, max_steps=160)
+                if ep >= 75:
+                    ret += stats["return"]
+                    mc += env.max_c
+                    scored += 1
+            per_seed["return"].append(ret / scored)
+            per_seed["max_c"].append(mc / scored)
+        row = {"which": which, "per_seed": per_seed}
+        for m in ("return", "max_c"):
+            v = np.array(per_seed[m])
+            lo, hi = bootstrap_ci(v)
+            row[m] = {"iqm": iqm(v), "ci95": [lo, hi]}
+        results.append(row)
+        print(f"[v0.5:p2] {which:4s} max_c={row['max_c']['iqm']:.3f} "
+              f"CI={[round(x, 3) for x in row['max_c']['ci95']]} "
+              f"return={row['return']['iqm']:+.3f} "
+              f"CI={[round(x, 3) for x in row['return']['ci95']]}", flush=True)
+    (RESULTS / "v05_phase2_behavior.json").write_text(json.dumps(results, indent=2))
+    print("wrote results/v05_phase2_behavior.json")
+
+
 def main() -> None:
+    import sys
+    if len(sys.argv) > 1 and sys.argv[1] == "phase2":
+        RESULTS.mkdir(exist_ok=True)
+        phase2()
+        return
     RESULTS.mkdir(exist_ok=True)
     sensor = HDSensor()
     obs, c = collect_hd_walk(sensor, steps=20000, seed=0)
