@@ -5,6 +5,42 @@ stable commentary). Newest round first.
 
 ---
 
+## v0.3 round 2 — 2026-07-28: mechanism identified, both directions
+
+Leak ablation (`v03_leak_ablation.json`, 12 × 150 each, pre-registered):
+
+| condition | max_c IQM [CI95] | reading |
+|---|---|---|
+| random_now | 0.757 [0.743, 0.774] | anchor (replicates round 1) |
+| random_leakin | **0.797 [0.788, 0.806]** | **leak SUFFICIENT** — synthetic 0.57-amp charge projection into the fast band reproduces and exceeds the full win on the untrained latent |
+| pretrained_now | 0.787 [0.780, 0.795] | anchor (replicates round 1) |
+| pretrained_leakfree | **0.744 [0.728, 0.757]** | **leak NECESSARY** — c-blind fast band collapses the win to the random anchor |
+
+The v0.3 representation win reduces entirely to one interpretable
+ingredient: a low-amplitude copy of the slow variable in the fast band's
+coordinates. The learned geometry contributes nothing beyond delivering it
+(leakfree ≈ random; hand-injected leak ≥ learned leak). Consequences:
+
+1. **Clean band separation was the wrong routing target.** L1's slice
+   structure and every safety property stand unchanged (writers, leashes,
+   holds, metrics are slice-level); what falls is the aesthetic that band k
+   should carry ONLY its timescale's variables. The winning representation
+   entangles slow context into fast distances — making fast targets, fast
+   progress, and prospective evaluation slow-aware with no controller
+   change. SPEC L1 amended: **cross-band value coupling belongs in the
+   metric, not the selector.**
+2. **The OU-ladder objective succeeded despite itself**: covariance
+   whitening penalizes exactly the cross-band covariance that constitutes
+   the leak — the ingredient survived training rather than being produced
+   by it. A v0.4 objective should make the slow→fast context projection a
+   deliberate term. The slow band's purity (position-blind) held in every
+   winning configuration and should be kept.
+3. Still standing: returns 0.000 in every condition ever run — the
+   charge→door handoff (goal sequencing) remains the open control-side
+   item, untouched by representation changes.
+
+---
+
 ## v0.3 round 1 — 2026-07-28: the pretrained latent wins, not how predicted
 
 OU-ladder pretraining (the session-opening proposal, weak/sketched form:

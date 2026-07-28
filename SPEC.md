@@ -377,6 +377,23 @@ which all continue to hold per level.
   full system the bands come from pretraining with per-band temporal priors
   (SIGReg-style with prescribed autocorrelation ladders); in the scaffold they
   are a frozen block-diagonal stub with the same contract.
+  *v0.3 revision (leak ablation, `v03_leak_ablation.json`) — clean
+  world-variable separation is the wrong routing target.* Bands remain
+  disjoint SLICES (slice writers, per-band leashes/holds/metrics all
+  unchanged — the safety story does not move), but the winning embedding
+  routes a LOW-AMPLITUDE COPY of slower variables into faster bands
+  (measured: charge into the fast band at ~0.57 amplification is necessary
+  AND sufficient for the representation win, with disjoint CIs both ways).
+  Effect: fast-band distances become slow-context-aware, so fast targets
+  implicitly specify slow state, fast progress pays for slow gains inside
+  every fast window, and prospective evaluation over fast candidates sees
+  slow context — the composite coupling that L3's linearity correction
+  proved claims cannot provide, delivered through geometry instead.
+  **Cross-band value coupling belongs in the metric, not the selector.**
+  Pretraining objectives SHOULD make this deliberate (a slow→fast context
+  projection term) rather than relying on it surviving whitening's
+  cross-band decorrelation by accident; the slow band itself stays pure
+  (its position-blindness held in every winning configuration).
 
 - **L2 — One register per band, held-target per window.** Registers hold
   targets g_k in band-k coordinates for geometrically spaced windows
