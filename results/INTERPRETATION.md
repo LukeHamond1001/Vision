@@ -5,6 +5,65 @@ stable commentary). Newest round first.
 
 ---
 
+## Round 9 — 2026-07-27: three spec-level fixes, one hard lesson
+
+Instrumenting the ChargeWorld last mile (returns zero despite charge
+mastery) produced a diagnosis chain, three spec-level corrections, and a
+regression that reframes the headline result. In order:
+
+1. **Selection, not policy, blocked the last mile** (commit hook: 4–8% of
+   high-charge fast commits pointed doorward; seeds with chance doorward
+   commits completed).
+2. **The linear-ranking degeneracy (G1 correction)**: ranking by w·g orders
+   every candidate pool by projection onto ONE fixed global direction —
+   state-independent, unimodal, incapable of phase structure. Selection,
+   prospective veto, and value bar moved to prospective evaluation: f±
+   applied to the imagined target (the flinch's move, one hop earlier; kills
+   the A2 proxy gap for selection).
+3. **Composite-leash interference (C3 per band)**: a held slow target above
+   achieved support made every fast composite off-manifold; projection spent
+   the budget on the c-dimension and dragged position slices padward
+   (doorward commits ~1%). Per-band projection — another bands-only
+   capability — fixed it.
+4. **G5 currency 1 had never been implemented**: proposers were trained for
+   calibration accuracy only, never ambition. Implemented as specified
+   (REINFORCE on proposal log-prob × realized value at arrival). Doorward
+   selection rose to 17% best-seed; still no cold completions.
+5. **Warm-start curriculum failed**: 30% warm episodes DILUTED phase-1
+   learning (cold max_c fell to 0.69 for both agents); cold completions
+   zero. Curriculum-dilution is real; the idea is retired.
+6. **Regression check (`e5c_round9_regression.json`)**: under round-9
+   mechanics, the round-8 separation is GONE — flat 0.744 [0.730, 0.763] vs
+   ladder_short 0.758 [0.741, 0.770], and both below round-8 levels.
+
+### The lesson: the broken ranking was an accidental global compass
+
+Linear claim-ranking pointed toward the fitted value mass from anywhere on
+the map. It was provably incapable of phase structure — the round-9 critique
+stands — but it supplied global direction that honest local evaluation (f±
+beyond bump reach ≈ 0, ranking ≈ noise) does not. Removing it hurt both
+agents' charging and erased the differential high-charge region where
+per-band shaping paid. **Status of the headline claim, restated honestly:**
+the banded-vs-flat separation is demonstrated at n=30 under round-8
+mechanics (`e5c_replication_n30.json`) and is not reproduced under round-9
+mechanics. It is real but mechanics-conditioned; the repo keeps the
+spec-true mechanics rather than the metric-flattering broken ones.
+
+### v0.3's sharpened question
+
+Where should GLOBAL direction legitimately come from? Candidates, in rough
+order of appeal: (a) the proposer's learned ambition (currency 1, with more
+exposure); (b) evaluator design that tiles space (multi-scale bumps =
+designed global guidance — but this shades into hand-crafting solutions);
+(c) frontier-directed proposals from the curiosity table (novelty gradient
+as compass); (d) **a pretrained latent in which local value evaluation is
+globally informative — smoother, longer-range structure in f±'s domain.
+This is the SIGReg thread again**: the representation, not the controller,
+may be where global direction has to live. Recommended v0.3 order: (a)
+cheaply (longer currency-1 exposure), then (d) as the real program.
+
+---
+
 ## Round 8 — 2026-07-27: charge world — first banded-vs-flat separation
 
 ### Why this task (and why the zone worlds never could discriminate)
