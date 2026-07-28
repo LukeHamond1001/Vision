@@ -5,6 +5,66 @@ stable commentary). Newest round first.
 
 ---
 
+## Round 6 — 2026-07-27: GAE learner unblocks the compound tasks
+
+### The learner saga (three iterations, one lesson)
+
+v1 (one-update-per-episode a2c) cut gradient throughput ~80× → reach
+regressed 12×. v2 (PPO-lite on undiscounted returns-to-go) restored
+throughput but broke credit assignment — with a cold critic, per-episode
+advantage normalization of γ=1 returns-to-go makes advantage a function of
+step position, not action quality → reach stayed at +0.04. v3 (GAE γ=0.9,
+λ=0.8, terminal V=0) fixes credit assignment; targeted 3-seed checks (4 min)
+found the working setting before any hour-scale run. The lesson worth
+keeping: the reward stream's γ=1 is a SPEC commitment; the learner's γ is a
+bias-variance dial between myopic credit (dense-shaping regimes) and
+propagation (compound tasks) — γ=0.9 serves both. Wiring commitments and all
+21 structural tests were untouched through all three learner swaps: §5.4's
+learner-independence claim is now demonstrated, not asserted.
+
+### E5 is live: both agents now solve the compound task
+
+E5-easy: flat +0.390 [0.06, 0.56], ladder +0.450 [0.25, 0.54]; flip rates
+0.94 / 0.91. E5-default: +0.050 vs +0.078, flip rates 0.41 / 0.48. The
+ladder is directionally ahead with a much better lower bound on the easy
+variant, but CIs overlap at n=8: **no ladder>flat separation claim yet** —
+the honest statement is "both learn; ladder ≥ flat; needs more seeds and a
+task with deeper timescale separation to discriminate." That the ladder is
+not WORSE while carrying stricter constraints is itself informative.
+
+### The treadmill reproduces under a second learner — and harder
+
+`g5_ablated_greedy` under GAE: **arm-A drift 0.67 of classified commits**
+(vs 0.10 IQM under REINFORCE at 10 seeds; 3/30 full lock-ins in the 30-seed
+replication). Enforced and reinforce-credit conditions: 0.00, again. The
+§6.4 phenomenon is learner-robust, which upgrades the E3b result from "an
+artifact of one learner" to a property of progress-consulting selection.
+Return separation between reach conditions washed out at this budget under
+GAE (+0.12–0.16 all cells) — the drift metric, not return, is now the
+discriminating instrument there.
+
+### Grid: the guardrails' currency is catastrophes, not return
+
+Returns remain inseparable (all CIs straddle ~0), but the catastrophe column
+now has structure: `full` 0.2 per seed; `no_cap` **4.2**; `no_leash` 1.8.
+Under a determined (GAE) learner, uncapped progress-shaping drives committed
+corridors straight through the hazard — C1 and C3 are measurably protective
+in exactly the currency guardrails should be measured in. Two rows stay
+honestly open: `no_veto` ≈ `full` (0.2 vs 0.2 — the prospective veto still
+does not govern traversal exposure; E2a needs a probe where the negative
+claim gates an approach decision), and E4 stays flat zero (the machinery,
+not the optimizer, is what learns at this scale).
+
+### Status vs SPEC §9/§10 after round 6
+
+- E1 protocol: operating as designed (rank only where CIs separate). ✔
+- E2a: veto cell still unisolated — carried forward with a concrete design. ✘
+- E3a: structural test. ✔  E3b: confirmed under two learners. ✔✔
+- E4: baseline flat under all learners. ✔
+- E5: live; directional; discrimination needs seeds + deeper-timescale task. ◐
+
+---
+
 ## Round 4 — 2026-07-27: E5 ladder comparison (v0.2)
 
 `e5_ladder.json` (10 seeds × 60 ep) and `e5_ladder_easy.json` (8 seeds ×
