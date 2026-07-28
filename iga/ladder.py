@@ -22,7 +22,7 @@ import torch
 
 from .constraints import CoverageCap, Curiosity, Leash
 from .latent import BandedLatent
-from .learner import A2CCore
+from .learner import EpisodicLearner
 from .registers import GoalRegister
 from .trunk import ActionHead, SharedTrunk
 
@@ -65,7 +65,8 @@ class LadderAgent:
         self.trunk = SharedTrunk(d, d)
         self.action_head = ActionHead(feat=32, act_dim=2)
         self.critic = torch.nn.Linear(32, 1)     # §5.4: policy-side value head
-        self.a2c = A2CCore()
+        self.core = EpisodicLearner()
+        self._pending: tuple | None = None
         self.proposers = torch.nn.ModuleList(
             [torch.nn.Linear(32, bd) for bd in latent.band_dims])
 
@@ -163,6 +164,7 @@ class LadderAgent:
         feats = self.trunk(self.p, self.i)
         dist = self.action_head.dist(feats)
         a = dist.sample()
+        self._pending = (self.p, self.i, a)
         return (torch.tanh(a) * self.cfg.max_world_step, dist.log_prob(a).sum(),
                 dist.entropy().sum(), self.critic(feats).reshape(()))
 
@@ -183,8 +185,9 @@ class LadderAgent:
         with torch.no_grad():
             realized = float(self.head_pos.realized(p_now)) - float(self.head_neg.realized(p_now))
         total = realized + self.cfg.w_prog * use_prog + bonus
-        if entropy is not None and value is not None:           # §5.4 a2c path
-            self.a2c.record(logp, value, entropy, total)
+        if self._pending is not None:                           # §5.4 episodic path
+            self.core.record(*self._pending, total)
+            self._pending = None
         else:                                                   # REINFORCE fallback
             adv = total - self._baseline
             self._baseline = 0.99 * self._baseline + 0.01 * total
@@ -195,7 +198,7 @@ class LadderAgent:
 
     def finish_episode(self) -> None:
         params = [p for g in self.opt_policy.param_groups for p in g["params"]]
-        self.a2c.finish(self.opt_policy, params)
+        self.core.finish(self, self.opt_policy, params)
 
     # ---------------------------------------------------------------- arrive/calibrate
     def settle_levels(self) -> int:

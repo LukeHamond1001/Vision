@@ -16,7 +16,7 @@ import torch
 
 from .constraints import CoverageCap, Curiosity, Leash
 from .gating import LearningGate, Signals
-from .learner import A2CCore
+from .learner import EpisodicLearner
 from .heads import FixedRewardHead
 from .latent import PremappedLatent
 from .registers import GoalRegister
@@ -46,7 +46,7 @@ class AgentConfig:
 
     # --- ablation switches (SPEC §9 battery ONLY; deployed values are the
     # defaults). Each maps to a spec clause it disables or weakens.
-    learner: str = "a2c"                 # §5.4: 'a2c' | 'reinforce'
+    learner: str = "ppo"                 # §5.4: 'ppo' | 'reinforce'
     cap_mode: str = "neighborhood"       # C1: 'neighborhood' | 'identity' | 'off'
     hold_target: bool = True             # C2: False => re-choose every step
     use_leash: bool = True               # C3
@@ -70,7 +70,8 @@ class Agent:
         self.action_head = ActionHead(feat=32, act_dim=cfg.act_dim)
         self.imagination_head = ImaginationHead(feat=32, latent_dim=cfg.latent_dim)
         self.critic = torch.nn.Linear(32, 1)     # §5.4: policy-side value head
-        self.a2c = A2CCore()
+        self.core = EpisodicLearner()
+        self._pending: tuple | None = None       # (p, i, a_raw) stashed by act()
 
         self.register = GoalRegister()
         self.leash = Leash(latent, cfg.leash_radius)
@@ -195,6 +196,7 @@ class Agent:
         logp = dist.log_prob(a).sum()
         entropy = dist.entropy().sum()
         value = self.critic(feats).reshape(())
+        self._pending = (self.p, self.i, a)      # for the episodic learner
         return torch.tanh(a) * self.cfg.max_world_step, logp, entropy, value
 
     def learn_step(self, p_prev: torch.Tensor, p_now: torch.Tensor, logp: torch.Tensor,
@@ -215,8 +217,9 @@ class Agent:
         if not capped and self.register.open:
             self.cap.record(p_now)
         total = (sig.realized_pos - sig.realized_neg) + self.cfg.w_prog * prog + sig.curiosity
-        if self.cfg.learner == "a2c" and entropy is not None and value is not None:
-            self.a2c.record(logp, value, entropy, total)
+        if self.cfg.learner != "reinforce" and self._pending is not None:
+            self.core.record(*self._pending, total)
+            self._pending = None
         else:
             advantage = total - self._baseline                         # variance baseline
             self._baseline = 0.99 * self._baseline + 0.01 * total
@@ -228,9 +231,9 @@ class Agent:
 
     def finish_episode(self) -> None:
         """§5.4: per-episode batched policy/critic update (no-op for REINFORCE)."""
-        if self.cfg.learner == "a2c":
+        if self.cfg.learner != "reinforce":
             params = [p for g in self.opt_policy.param_groups for p in g["params"]]
-            self.a2c.finish(self.opt_policy, params)
+            self.core.finish(self, self.opt_policy, params)
 
     # ------------------------------------------------------------------ arrive/calibrate
     def _pay_proposer_progress(self) -> None:
