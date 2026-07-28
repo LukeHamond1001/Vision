@@ -109,7 +109,7 @@ def make_pretrained_v04_latent() -> PretrainedBandedLatent:
 def build(seed: int, cond: str):
     if cond == "pretrained_leakfree":
         latent = make_leakfree_latent()
-    elif cond == "random_leakin":
+    elif cond.startswith("random_leakin") or cond == "leakin_gradprop":
         latent = make_leakin_latent()
     elif cond == "pretrained_v04":
         latent = make_pretrained_v04_latent()
@@ -133,7 +133,8 @@ def build(seed: int, cond: str):
                                proxy_samples=support)
     w_bands = (1.0, 3.0) if cond == "random_handw" else (1.0, 1.0)
     agent = LadderAgent(LadderConfig(seed=seed, veto_threshold=0.5, holds=(12, 12),
-                                     w_prog_bands=w_bands),
+                                     w_prog_bands=w_bands,
+                                     grad_proposals=cond.endswith("_gradprop")),
                         head_pos, head_neg, latent)
     return agent, env
 
@@ -180,6 +181,22 @@ def main() -> None:
                   f"return={r['return']['iqm']:+.3f}", flush=True)
         (RESULTS / "v03_leak_ablation.json").write_text(json.dumps(results, indent=2))
         print("wrote results/v03_leak_ablation.json")
+        return
+    if len(sys.argv) > 1 and sys.argv[1] == "lastmile":
+        # Round 10 (pre-registered): gradient-augmented proposals on the
+        # champion latent. If returns finally go positive under gradprop and
+        # not the control, the last mile falls to evaluator-gradient
+        # sequencing; max_c must not regress.
+        results = []
+        for cond in ("random_leakin", "leakin_gradprop"):
+            r = run_cond(cond, seeds=12, episodes=150)
+            results.append(r)
+            print(f"[v0.4:lastmile] {cond:16s} return={r['return']['iqm']:+.3f} "
+                  f"CI={[round(x, 3) for x in r['return']['ci95']]} "
+                  f"max_c={r['max_c']['iqm']:.3f} "
+                  f"CI={[round(x, 3) for x in r['max_c']['ci95']]}", flush=True)
+        (RESULTS / "v04_lastmile.json").write_text(json.dumps(results, indent=2))
+        print("wrote results/v04_lastmile.json")
         return
     if len(sys.argv) > 1 and sys.argv[1] == "v04":
         # Pre-registered: pretrained_v04 >= random_leakin means the deliberate

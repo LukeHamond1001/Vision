@@ -53,6 +53,40 @@ class TestProbeEnvs(unittest.TestCase):
         self.assertEqual(env.flips_this_episode, 2)
 
 
+    def test_round10_gradient_candidates_phase_switch(self):
+        """The evaluator-gradient pool IS the sequencing mechanism: it must
+        point padward at low charge and doorward at high charge."""
+        from iga.experiments_v03 import build as build_v03
+        from iga.ladder import LadderConfig
+        agent, env = build_v03(0, "random_now")
+        agent.cfg.grad_proposals = True
+        lat = env.latent
+
+        def grad_dir_at(pos, c):
+            agent.observe(env.embed_world(pos, c))
+            agent.registers[1].commit(lat.band(env.embed_world(pos, min(1.0, c + 0.2)), 1),
+                                      window=12)
+            agent._write_imagination()
+            cands = agent._gradient_candidates(0)
+            agent.registers[1].close()
+            self.assertTrue(cands)
+            step = cands[-1] - lat.band(agent.p, 0)
+            return step
+
+        pad_l, door_l = lat.band(env.embed_world(env.pad, 0.2), 0), \
+            lat.band(env.embed_world(env.door, 0.9), 0)
+        mid = (0.5, 0.55)
+        # low charge: step should reduce distance to the pad's fast-band coords
+        s_low = grad_dir_at(mid, 0.1)
+        here = lat.band(env.embed_world(mid, 0.1), 0)
+        self.assertLess(float(torch.linalg.vector_norm(here + s_low - pad_l)),
+                        float(torch.linalg.vector_norm(here - pad_l)))
+        # high charge: step should reduce distance to the door's fast-band coords
+        s_high = grad_dir_at(mid, 0.9)
+        here_h = lat.band(env.embed_world(mid, 0.9), 0)
+        self.assertLess(float(torch.linalg.vector_norm(here_h + s_high - door_l)),
+                        float(torch.linalg.vector_norm(here_h - door_l)))
+
     def test_charge_world_dynamics(self):
         from iga.envs.chargeworld import ChargeWorld
         latent = BandedLatent([2, 1], [6, 2])

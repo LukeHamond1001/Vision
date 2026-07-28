@@ -36,6 +36,8 @@ class AgentConfig:
     veto_threshold: float = 0.5      # C4: prospective veto on claim− (battery calibrates via A2)
     flinch_threshold: float = 0.5    # C4 acting-time veto: f− on the imagined next state
     flinch_resamples: int = 4        # resample budget before freezing in place
+    grad_proposals: bool = False     # round 10: candidates along ∇(f+−f−) (see ladder.py)
+    grad_steps: tuple = (0.05, 0.1, 0.15, 0.2)
     proposal_k: int = 16
     proposal_noise: float = 0.2
     window: int = 24                 # commitment window (steps)
@@ -138,12 +140,20 @@ class Agent:
         candidates = self.imagination_head.propose(
             feats.detach(), self.cfg.proposal_k, self.cfg.proposal_noise, self._gen
         )
-        diag = {"proposed": self.cfg.proposal_k, "vetoed": 0, "off_horizon": 0, "below_bar": 0}
+        pool = [candidates[k] for k in range(candidates.shape[0])]
+        if self.cfg.grad_proposals:                        # round 10 (see ladder.py)
+            x = self.p.detach().clone().requires_grad_(True)
+            val = self.head_pos.realized(x) - self.head_neg.realized(x)
+            val.backward()
+            n = float(torch.linalg.vector_norm(x.grad))
+            if n > 1e-8:
+                ghat = (x.grad / n).detach()
+                pool.extend(self.p + s * ghat for s in self.cfg.grad_steps)
+        diag = {"proposed": len(pool), "vetoed": 0, "off_horizon": 0, "below_bar": 0}
         h_latent = horizon_steps * self.cfg.max_world_step * self.latent.step_scale()
 
         best, best_score, best_raw = None, None, None
-        for k in range(candidates.shape[0]):
-            raw = candidates[k]
+        for raw in pool:
             g = self.leash.project(raw) if self.cfg.use_leash else raw.detach()  # C3
             with torch.no_grad():
                 # Prospective evaluation (round 9): the fixed NONLINEAR

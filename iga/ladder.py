@@ -39,6 +39,10 @@ class LadderConfig:
     veto_threshold: float = 0.5      # f-scale (prospective evaluation, round 9)
     flinch_threshold: float = 0.5    # C4 acting-time veto (see agent.py)
     flinch_resamples: int = 4
+    grad_proposals: bool = False     # round 10: imagination climbs the frozen
+    #   evaluator — candidates stepped along ∇(f+−f−) from the current state.
+    #   Parameter-free ambition; fixes proposal coverage in high-dim pools.
+    grad_steps: tuple = (0.05, 0.1, 0.15, 0.2)
     proposal_k: int = 12
     proposal_noise: float = 0.25
     w_prog: float = 1.0
@@ -124,6 +128,27 @@ class LadderAgent:
         self.i = self._composite()
 
     # ---------------------------------------------------------------- propose/commit
+    def _gradient_candidates(self, k: int) -> list[torch.Tensor]:
+        """Round 10: candidates stepped along the frozen evaluator's gradient
+        in band k, from the CURRENT state under the held composite. Autograd
+        through fixed functions only — nothing is trained; every candidate
+        still passes leash, veto, bar, and prospective ranking. This is the
+        sequencing mechanism: the gradient points padward at low charge and
+        doorward at high charge, so phase switching emerges from evaluator
+        structure with no new registers."""
+        comp = self._composite()
+        comp[self.latent.band_slices[k]] = self.latent.band(self.p, k)
+        x = comp.detach().clone().requires_grad_(True)
+        val = self.head_pos.realized(x) - self.head_neg.realized(x)
+        val.backward()
+        g = x.grad[self.latent.band_slices[k]]
+        n = float(torch.linalg.vector_norm(g))
+        if n < 1e-8:
+            return []
+        ghat = (g / n).detach()
+        here = self.latent.band(self.p, k)
+        return [here + s * ghat for s in self.cfg.grad_steps]
+
     def propose_level(self, k: int) -> bool:
         """Propose and commit for band k (its window must be closed). Slice-k
         candidates are valued as part of the full composite (L3)."""
@@ -131,9 +156,12 @@ class LadderAgent:
         base = self.proposers[k](feats.detach())               # G5: detached input
         noise = torch.randn(self.cfg.proposal_k, base.shape[-1],
                             generator=self._gen) * self.cfg.proposal_noise
+        pool = [c for c in (base.unsqueeze(0) + noise)]
+        if self.cfg.grad_proposals:
+            pool.extend(self._gradient_candidates(k))
         best, best_score = None, None
         top_level = (k == self.K - 1)
-        for c in (base.unsqueeze(0) + noise):
+        for c in pool:
             comp = self._composite()
             # C3 per band (round 9): project ONLY slice k against band-k
             # support; held slices stay as committed. Composite projection let
