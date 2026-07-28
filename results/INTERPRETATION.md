@@ -45,6 +45,21 @@ uniform long-range metric → isometry regularization; known band
 amplitudes → measured calibration) become explicit objective terms or
 measured preconditions under learned representations.
 
+**v0.6 gate result (same day): step-scale hypothesis REFUTED before the
+behavioral run.** With lam_iso=5.0, routing survives (0.988) but the
+geometry gate fails outright — start→pad 0.20 vs 0.21 without the term.
+Diagnosis: per-step norms were already homogeneous (the sensor's RBF grid
+is uniform, so LOCAL scale is fine everywhere); the long-range collapse is
+CURVATURE — the embedded manifold bends, so Euclidean chords between far
+points undershoot path distances regardless of step uniformity. The
+variance penalty targeted the wrong invariant. **Redirect: geodesic
+matching** (Isomap-style: k-NN graph over walk observations, graph
+geodesics, regularize latent Euclidean distances toward geodesic
+distances on sampled pairs — local observation-space edges are trustworthy
+exactly where sensors are locally faithful). That is the v0.6 build; the
+pre-registered gate saved the 50-minute behavioral run it would have
+wasted.
+
 ---
 
 ## v0.5 phase 1 — 2026-07-28: slow-structure discovery where hand-design

@@ -61,7 +61,8 @@ def pretrain_ou_ladder(world_traj: torch.Tensor, band_dims: list[int],
                        lr: float = 1e-2, lam_cov: float = 1.0,
                        segment_len: int | None = None,
                        context_amp: float | None = None, lam_ctx: float = 5.0,
-                       context_mode: str = "column", seed: int = 0) -> torch.Tensor:
+                       context_mode: str = "column", lam_iso: float = 0.0,
+                       seed: int = 0) -> torch.Tensor:
     """Learn a linear map W: world → latent under the OU-ladder objective.
     Returns W (latent_dim × world_dim), to be frozen by the caller.
 
@@ -95,7 +96,7 @@ def pretrain_ou_ladder(world_traj: torch.Tensor, band_dims: list[int],
     max_lag = max(lags)
     idx = torch.arange(T - max_lag)
     masks = {}
-    for lag in set(lags):
+    for lag in set(lags) | ({1} if lam_iso > 0 else set()):
         if segment_len is None:
             masks[lag] = torch.ones(T - max_lag, dtype=torch.bool)
         else:
@@ -109,6 +110,17 @@ def pretrain_ou_ladder(world_traj: torch.Tensor, band_dims: list[int],
             z0, z1 = z[:T - max_lag][m][:, sl], z[lag:T - max_lag + lag][m][:, sl]
             innov = ((z1 - rho * z0) ** 2).mean() / max(1 - rho ** 2, 1e-3)
             loss = loss + innov
+        if lam_iso > 0:
+            # v0.6: homogeneous step-scale regularization. Learned encoders
+            # warp long-range geometry LOCALLY (measured: far/step 2.8 vs
+            # rigid 7.6 — v0.5 phase 2's routing-without-competence result);
+            # penalize the squared coefficient of variation of per-step
+            # displacement norms — scale-invariant, so it shapes UNIFORMITY
+            # without fighting whitening's scale.
+            m1 = masks[1]
+            d = torch.linalg.vector_norm(z[1:T - max_lag + 1][m1] - z[:T - max_lag][m1],
+                                         dim=-1)
+            loss = loss + lam_iso * (d.var() / d.mean().clamp_min(1e-6) ** 2)
         zc = z - z.mean(0)
         cov = (zc.T @ zc) / (T - 1)
         if context_amp is None:

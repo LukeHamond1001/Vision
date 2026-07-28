@@ -63,21 +63,27 @@ def band_c_corr(W: torch.Tensor, obs: torch.Tensor, c: torch.Tensor,
     return out
 
 
-def make_encoders(sensor: HDSensor):
-    """Train the OU encoder and the PCA control on the same walk; normalize
-    both so fast-band step-scale ≈ 1 (identical calibration — the comparison
-    isolates ROUTING quality, nothing else)."""
+def make_encoders(sensor: HDSensor, include_iso: bool = False):
+    """Train the OU encoder(s) and the PCA control on the same walk; normalize
+    all so fast-band step-scale ≈ 1 (identical calibration — the comparison
+    isolates ROUTING quality, nothing else). `include_iso` adds the v0.6
+    isometry-regularized variant."""
     from .envs.hdcharge import ObservationLatent
 
     obs, _ = collect_hd_walk(sensor, steps=20000, seed=0)
-    W_ou = pretrain_ou_ladder(obs, band_dims=[6, 2], taus=[10.0, 300.0],
-                              lags=[15, 15], segment_len=100,
-                              context_amp=0.3, context_mode="band", seed=0)
+    variants = {"ou": dict(lam_iso=0.0)}
+    if include_iso:
+        variants["ou_iso"] = dict(lam_iso=5.0)
+    Ws = {name: pretrain_ou_ladder(obs, band_dims=[6, 2], taus=[10.0, 300.0],
+                                   lags=[15, 15], segment_len=100,
+                                   context_amp=0.3, context_mode="band",
+                                   seed=0, **kw)
+          for name, kw in variants.items()}
     mu = obs.mean(0)
     _, _, V = torch.pca_lowrank(obs - mu, q=8)
-    W_pca = V.T.contiguous()
+    Ws["pca"] = V.T.contiguous()
     out = {}
-    for name, W in (("ou", W_ou), ("pca", W_pca)):
+    for name, W in Ws.items():
         lat = ObservationLatent(W, [6, 2], sensor)
         out[name] = ObservationLatent(W / lat.step_scale(0), [6, 2], sensor)
     return out
@@ -127,14 +133,24 @@ def build_phase2(seed: int, which: str, encoders) -> tuple:
     return agent, env
 
 
-def phase2() -> None:
+def phase2(conds=("ou", "pca"), include_iso: bool = False,
+           outfile: str = "v05_phase2_behavior.json") -> None:
     import numpy as np
     from .experiments import bootstrap_ci, iqm
 
     sensor = HDSensor()
-    encoders = make_encoders(sensor)
+    encoders = make_encoders(sensor, include_iso=include_iso)
+    # geometry + routing report per encoder (pre-registered gate for iso)
+    obs_test, c_test = collect_hd_walk(sensor, steps=4000, seed=77)
+    for name, lat in encoders.items():
+        r = band_c_corr(lat._W, obs_test, c_test)
+        far = float(torch.linalg.vector_norm(
+            lat.embed(torch.tensor([0.5, 0.1, 0.0]))
+            - lat.embed(torch.tensor([0.2, 0.8, 0.0]))))
+        print(f"[v0.5:geom] {name:6s} slow-corr={r['band1_max_c_corr']:.3f} "
+              f"far/step={far:.2f} (rigid ~0.76)", flush=True)
     results = []
-    for which in ("ou", "pca"):
+    for which in conds:
         per_seed = {"return": [], "max_c": []}
         for s in range(12):
             agent, env = build_phase2(s, which, encoders)
@@ -157,8 +173,8 @@ def phase2() -> None:
               f"CI={[round(x, 3) for x in row['max_c']['ci95']]} "
               f"return={row['return']['iqm']:+.3f} "
               f"CI={[round(x, 3) for x in row['return']['ci95']]}", flush=True)
-    (RESULTS / "v05_phase2_behavior.json").write_text(json.dumps(results, indent=2))
-    print("wrote results/v05_phase2_behavior.json")
+    (RESULTS / outfile).write_text(json.dumps(results, indent=2))
+    print(f"wrote results/{outfile}")
 
 
 def main() -> None:
@@ -166,6 +182,14 @@ def main() -> None:
     if len(sys.argv) > 1 and sys.argv[1] == "phase2":
         RESULTS.mkdir(exist_ok=True)
         phase2()
+        return
+    if len(sys.argv) > 1 and sys.argv[1] == "iso":
+        # v0.6 isometry experiment: does homogenizing the step scale convert
+        # routing into competence? Pre-registered gates printed by the
+        # geometry report; behavioral comparison ou_iso vs ou.
+        RESULTS.mkdir(exist_ok=True)
+        phase2(conds=("ou_iso", "ou"), include_iso=True,
+               outfile="v06_isometry.json")
         return
     RESULTS.mkdir(exist_ok=True)
     sensor = HDSensor()
