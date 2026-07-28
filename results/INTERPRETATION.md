@@ -5,6 +5,63 @@ stable commentary). Newest round first.
 
 ---
 
+## Round 8 — 2026-07-27: charge world — first banded-vs-flat separation
+
+### Why this task (and why the zone worlds never could discriminate)
+
+The zone worlds' slow variable is discrete: slow-band progress toward a held
+target is a STEP FUNCTION, paying only at the flip instant — the ladder's
+signature mechanism (dense progress toward a held slow goal) structurally
+cannot fire there. ChargeWorld's slow variable is continuous with
+sustain/decay dynamics (charging pad raises c, everywhere else decays it;
+door pays only at c ≥ 0.8), so a held c-target converts into a per-step pull.
+A spec correction fell out of the same analysis (SPEC L3): linear claims mean
+a held slow slice offsets every fast candidate equally — composite claims can
+NEVER re-rank within a level; context coupling flows only through the
+trunk/policy and per-band progress.
+
+### Three pre-registered iterations, each instructive
+
+1. **Discovery gradient** (8a): a pad bump at c=0.5 is invisible at c=0
+   (value ~0.01) while shiny sites pay 0.3/step realized — training REMOVED
+   pad contact (max_c 0.00 everywhere). Second demonstration (after E2a's
+   trap shape) that the pre-mapped evaluator caps not just safety but
+   discoverability. Fix: tile the charge path (bumps at c=0.1 and 0.6).
+2. **Drowned signal** (8b): all three conditions then charged to max_c ≈0.78
+   and plateaued exactly where evaluator guidance dies — slow-band progress
+   (0.02/step) was inaudible against realized gradients ~10× larger. The
+   ladder's mechanism existed and was too quiet.
+3. **Per-band progress weights** (8c, L2 corollary): weighting band progress
+   by hold-length ratio — a capability ONLY banded architectures have (flat
+   cannot weight what it cannot separate).
+
+### The result (`e5c_charge.json`, 12 seeds × 80 ep)
+
+| condition | max_c IQM [CI95] | per-seed pattern |
+|---|---|---|
+| flat | 0.76 [0.728, 0.771] | uniform 0.66–0.82, never crosses |
+| ladder (τ_slow=40) | 0.83 [0.595, 0.857] | 10/12 at 0.78–0.88; **2 lock-in failures (0.16, 0.0)** |
+| ladder_short (τ_slow=12) | **0.80 [0.777, 0.823]** | 12/12 clean, no failures |
+
+- **First behavioral separation between banded and flat**: ladder_short's CI
+  clears flat's ([0.777, 0.823] vs [0.728, 0.771]); both banded variants
+  cross the door threshold flat never reaches.
+- **Pre-registered reading applies**: ladder_short ≈ ladder ⇒ the active
+  ingredient is PER-BAND PROGRESS SHAPING, not commitment persistence. The
+  bands' contribution is expressing a signal flat cannot express — the slow
+  pull that keeps paying after evaluator guidance dies (the 0.78 → 0.86
+  stretch).
+- **Persistence is two-sided**: long holds added 2/12 catastrophic lock-ins
+  (a wrong slow target held for 40 steps repeatedly walls off exploration)
+  without median benefit — C2's anticipated trade, now measured. At this
+  scale, short holds + per-band weights is the winning configuration.
+- **Returns still 0.000 in all conditions**: the charge→door last mile (leave
+  the pad attractor with c ≥ ~0.86, traverse a realized valley) is unlearned
+  at 80 episodes. Extended run (150 ep) in flight; if completion appears,
+  replicate at 30 seeds.
+
+---
+
 ## Round 7 — 2026-07-27: E2a completed; ladder honesty update
 
 ### E2a: the trust asymmetry, isolated at last (`e2a_trust.json`)
