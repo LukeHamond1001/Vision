@@ -5,6 +5,48 @@ stable commentary). Newest round first.
 
 ---
 
+## v0.5 phase 2 — 2026-07-28: routing transfers, competence does not
+
+Behavioral run on the discovered latent (`v05_phase2_behavior.json`,
+12 × 150, identical calibration both arms — step-scale normalization,
+measured slow-band arrive-eps, long-range geometry scaling):
+
+| encoder | max_c IQM [CI95] | vs hand latents (same dynamics) |
+|---|---|---|
+| OU (routing 0.988) | 0.035 [0.026, 0.046] | 0.74–0.84 |
+| PCA (routing 0.068) | 0.000 [0.0, 0.333] | — |
+
+The pre-registered ORDERING holds (OU's CI excludes zero; PCA's IQM is
+exactly zero): phase-1 routing quality predicts the behavioral ordering.
+But the honest headline is the MAGNITUDE: near-perfect slow-structure
+routing bought almost no competence. The discovery→control pipeline
+transfers which-band-is-which; it does not transfer the metric properties
+the control stack silently assumes.
+
+Diagnosis (probe-measured en route): learned latents are NOT
+quasi-isometric to the world. RBF saturation compresses long range
+(start→pad = 2.8 step-lengths vs 7.6 rigid), and the warp is LOCAL —
+gradient directions weaken nonuniformly with range, curiosity
+neighborhoods of fixed radius cover wildly different world-areas across
+the space, leash support and evaluator σ mean different things in
+different regions. The global scalar calibration (ρ) fixed the average
+scale and could not fix the nonuniformity. Every v0.1–v0.4 mechanism was
+built on hand latents that were quasi-isometric BY CONSTRUCTION — a hidden
+precondition the scale-up has now surfaced and priced.
+
+**Named v0.6 lever — homogeneous step-scale regularization:** add to the
+pretraining objective a term penalizing the variance of per-step latent
+displacement norms across the walk (‖z_{t+1} − z_t‖ should be homogeneous
+for the environment's uniform-scale dynamics). Measurable from walk data
+alone, no world knowledge; directly targets the measured pathology. The
+scale-up's running pattern, now three entries long: properties hand
+latents give for free (exact action lookahead → frozen forward model;
+uniform long-range metric → isometry regularization; known band
+amplitudes → measured calibration) become explicit objective terms or
+measured preconditions under learned representations.
+
+---
+
 ## v0.5 phase 1 — 2026-07-28: slow-structure discovery where hand-design
 ## cannot play
 
