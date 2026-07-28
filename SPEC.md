@@ -1,6 +1,6 @@
 # Imagination-Gated Agent — Design Specification
 
-**Version 0.5-draft** · Status: v0.1–v0.4 implemented & battery-tested; ChargeWorld end-to-end (first completions, round 10) · Codename: `iga` (placeholder)
+**Version 0.6-draft** · Status: v0.1–v0.6 implemented & battery-tested; ChargeWorld end-to-end on hand latents (round 10) AND on a fully learned representation (v0.6 behavioral gate) · Codename: `iga` (placeholder)
 
 This document is the normative specification of the architecture. It exists because
 review showed the informal description admits multiple readings, only one of which
@@ -468,7 +468,70 @@ the comparison is evidence-gathering.
 
 ---
 
-## 11. Prior-art positioning (one line each)
+## 11. Learned pre-mapped latents (v0.6 — the scale-up contract)
+
+Everything in §§2–10 assumed a pre-mapped latent; v0.3–v0.6 established how
+that latent may be LEARNED without forfeiting the architecture's guarantees.
+Measured end-to-end: from 32-d entangled observations with no designated
+slow variable, the recipe below discovers and geometrizes a banded latent
+that, frozen, carries the full control stack to task completion
+(`results/v06_mlp_behavior.json`; causal chain routing → geometry →
+behavior measured at every link).
+
+- **R1 — Learned, then FROZEN. Frozen ≠ linear.** What the constraints
+  consume is frozenness: W2's metric, C1/C6 neighborhood keys, C3 leash
+  support, and W4's claims-over-latent-coordinates all survive any frozen
+  encoder, linear or not. Linearity additionally provided two conveniences,
+  now priced: exact action lookahead (C4's flinch — under a nonlinear
+  encoder it REQUIRES a frozen one-step model, and MUST raise rather than
+  silently approximate until one exists), and inherited chord structure
+  (whose absence is exactly the curvature pathology R2's geodesic term
+  exists to fix — provably unfixable within the linear class, since a
+  linear map cannot send equal input chords to unequal output chords).
+
+- **R2 — The pretraining recipe** (each component forced by a measured
+  failure; drop one and its failure returns):
+  1. OU-ladder innovation losses at prescribed per-band timescales — the
+     routing mechanism (band discovery: slow variable → slow band with no
+     designation).
+  2. Coverage resets in collection — without them, undersampled slow
+     variables whiten into misrouted noise.
+  3. Episode-boundary masking — teleports are coverage devices, not
+     dynamics; scoring across them poisons the slow prior.
+  4. WITHIN-band whitening only — full whitening penalizes the cross-band
+     context coupling that is necessary and sufficient for the
+     representation win (L1 revision).
+  5. Deliberate slow→fast context coupling, 'band' mode (fast band coupled
+     to the LEARNED slow band) — definable with zero knowledge of which
+     input carries slow structure.
+  6. Geodesic matching (kNN graph over observations → graph geodesics →
+     scale-free latent-chord matching) — the metric-flattening term;
+     mandatory for nonlinear encoders, futile for linear ones.
+
+- **R3 — The freebies law.** Every property a hand-built latent provides by
+  construction becomes, under a learned latent, an explicit objective term
+  or a measured precondition. Instances measured so far: action lookahead →
+  frozen forward model (deferred, loudly); band amplitudes → measured
+  calibration of arrival radii; long-range metric → geodesic matching plus
+  a geometry gate; uniform scale → identical-procedure distance-parameter
+  calibration. Treat any new hand-latent convenience as a debt this law
+  will call.
+
+- **R4 — The three-gate discipline** (normative for any representation
+  change): (i) routing gate — slow-band correlation with the slow variable
+  on HELD-OUT data, threshold pre-registered; (ii) geometry gate —
+  long-range chord ratio against the rigid reference; (iii) only if both
+  pass, the behavioral gate. Gates are cheap; behavioral runs are earned.
+  Track record: two hypotheses refuted at (ii) for minutes of compute; the
+  one that passed both delivered the end-to-end result.
+
+Open at v0.6, recorded honestly: geometry is partially flattened (0.44 of
+rigid 0.76); routing pays a small toll for it (0.988 → 0.907); half the
+seeds fail to discover the slow behavior at scaffold budget — an
+EXPLORATION-layer variance (the frozen encoder is shared across seeds), and
+the named next campaign.
+
+## 12. Prior-art positioning (one line each)
 
 | component | status | nearest neighbors |
 |---|---|---|
