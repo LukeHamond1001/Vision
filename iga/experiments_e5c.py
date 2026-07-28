@@ -37,9 +37,9 @@ from .ladder import LadderAgent, LadderConfig
 from .latent import BandedLatent
 
 
-def build(seed: int, kind: str):
+def build(seed: int, kind: str, warm_start_prob: float = 0.0):
     latent = BandedLatent(part_dims=[2, 1], band_dims=[6, 2], seed=0)
-    env = ChargeWorld(latent)
+    env = ChargeWorld(latent, warm_start_prob=warm_start_prob, seed=seed)
     gen = torch.Generator().manual_seed(seed + 4000)
     world = torch.cat([torch.rand(384, 2, generator=gen),
                        torch.rand(384, 1, generator=gen)], dim=1)
@@ -59,7 +59,7 @@ def build(seed: int, kind: str):
         weights=[1.0, 0.3, 0.3, 0.15, 0.15])
     head_neg = FixedRewardHead(env.embed_world((0.5, 0.95), 0.0), sigma=0.12,
                                proxy_samples=support)
-    tau = calibrate_threshold(head_neg, support)
+    tau = 0.5  # f-scale veto (prospective evaluation, round 9)
     if kind == "flat":
         agent = Agent(AgentConfig(seed=seed, veto_threshold=tau, value_bar=0.02),
                       head_pos, head_neg, latent)
@@ -91,7 +91,49 @@ def run_kind(kind: str, seeds: int, episodes: int, max_steps: int = 160) -> dict
     return out
 
 
+def run_warm(kind: str, seeds: int, episodes: int, warm: float = 0.3,
+             max_steps: int = 160) -> dict:
+    """Warm-start curriculum condition (round 9): warm episodes rehearse the
+    charge->door phase; COLD episodes only are scored — the discriminating
+    question is whether rehearsed completion transfers to cold starts, which
+    requires sustaining c past threshold+trip-cost (banded can; flat's cold
+    ceiling 0.776 < 0.8 cannot)."""
+    per_seed = {"cold_return": [], "cold_completions": [], "max_c": []}
+    for s in range(seeds):
+        agent, env = build(s, kind, warm_start_prob=warm)
+        ret, comp, mc, scored = 0.0, 0, 0.0, 0
+        for ep in range(episodes):
+            stats = agent.run_episode(env, max_steps=max_steps)
+            if ep >= episodes // 2 and not env.warm:
+                ret += stats["return"]
+                comp += int(stats["return"] > 0)
+                mc += env.max_c
+                scored += 1
+        per_seed["cold_return"].append(ret / max(scored, 1))
+        per_seed["cold_completions"].append(comp / max(scored, 1))
+        per_seed["max_c"].append(mc / max(scored, 1))
+    out = {"kind": kind, "seeds": seeds, "episodes": episodes, "warm": warm,
+           "per_seed": per_seed}
+    for m in ("cold_return", "cold_completions", "max_c"):
+        v = np.array(per_seed[m])
+        lo, hi = bootstrap_ci(v)
+        out[m] = {"iqm": iqm(v), "ci95": [lo, hi]}
+    return out
+
+
 def main() -> None:
+    if len(sys.argv) > 1 and sys.argv[1] == "warm":
+        results = []
+        for kind in ("flat", "ladder_short"):
+            r = run_warm(kind, seeds=12, episodes=150)
+            results.append(r)
+            print(f"[E5c:warm] {kind:12s} cold_return={r['cold_return']['iqm']:+.3f} "
+                  f"CI={[round(x, 3) for x in r['cold_return']['ci95']]} "
+                  f"cold_completions={r['cold_completions']['iqm']:.2f} "
+                  f"max_c={r['max_c']['iqm']:.2f}", flush=True)
+        (RESULTS / "e5c_warmstart.json").write_text(json.dumps(results, indent=2))
+        print("wrote results/e5c_warmstart.json")
+        return
     quick = len(sys.argv) > 1 and sys.argv[1] == "quick"
     seeds, episodes = (3, 12) if quick else (12, 80)
     RESULTS.mkdir(exist_ok=True)

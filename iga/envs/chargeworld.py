@@ -27,8 +27,14 @@ from ..latent import BandedLatent
 class ChargeWorld:
     def __init__(self, latent: BandedLatent, pad=(0.2, 0.8), pad_radius: float = 0.12,
                  door=(0.8, 0.8), door_radius: float = 0.09, start=(0.5, 0.1),
-                 charge_rate: float = 0.02, decay: float = 0.005,
-                 threshold: float = 0.8, seed: int = 0):
+                 charge_rate: float = 0.02, decay: float = 0.002,
+                 threshold: float = 0.8, warm_start_prob: float = 0.0, seed: int = 0):
+        # decay 0.002 (round 9): at 0.005 the pad->door trip (~12 steps) cost
+        # 0.06 charge, requiring departure at c >= 0.86 — beyond what ANY
+        # tested agent sustains, making completion near-infeasible across the
+        # board. At 0.002 the trip costs ~0.024 (depart >= 0.83 suffices);
+        # sustained charging remains necessary and temptation still costs.
+        # Condition-neutral: shared by every agent in every comparison.
         assert latent.part_dims == [2, 1]
         self.latent = latent
         self.pad = torch.tensor(pad)
@@ -39,16 +45,28 @@ class ChargeWorld:
         self.charge_rate = charge_rate
         self.decay = decay
         self.threshold = threshold
+        self.warm_start_prob = warm_start_prob
+        self._gen = torch.Generator().manual_seed(seed + 7000)
         self.pos = self.start.clone()
         self.c = 0.0
+        self.warm = False
 
     def _world(self) -> torch.Tensor:
         return torch.cat([self.pos, torch.tensor([self.c])])
 
     def reset(self) -> torch.Tensor:
-        self.pos = self.start.clone()
-        self.c = 0.0
-        self.max_c = 0.0
+        # Warm-start curriculum (round 9): with probability warm_start_prob
+        # the episode begins charged at the pad, rehearsing the charge->door
+        # phase directly. Condition-neutral (shared by every agent); the
+        # discriminating comparison scores COLD episodes only.
+        self.warm = bool(torch.rand((), generator=self._gen) < self.warm_start_prob)
+        if self.warm:
+            self.pos = self.pad.clone()
+            self.c = 0.85
+        else:
+            self.pos = self.start.clone()
+            self.c = 0.0
+        self.max_c = self.c
         return self.latent.embed(self._world())
 
     def step(self, action: torch.Tensor):

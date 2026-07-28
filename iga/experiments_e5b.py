@@ -40,7 +40,7 @@ def build(seed: int, kind: str):
         weights=[1.0, 0.25, 0.3])
     head_neg = FixedRewardHead(env.embed_world((0.5, 0.95), 0.0), sigma=0.15,
                                proxy_samples=support)
-    tau = calibrate_threshold(head_neg, support)
+    tau = 0.5  # f-scale veto (prospective evaluation, round 9)
     if kind == "ladder":
         agent = LadderAgent(LadderConfig(seed=seed, veto_threshold=tau, holds=(12, 120)),
                             head_pos, head_neg, latent)

@@ -38,7 +38,7 @@ def build(seed: int, trap_active: bool, use_veto: bool):
     # Narrow aversive field: fires on in-strip targets, silent at the gaps and
     # along traversal outside the strip — the "cliff edge gives no warning".
     head_neg = FixedRewardHead(env.embed_site(env.trap_center), sigma=0.10, proxy_samples=support)
-    tau = calibrate_threshold(head_neg, support)
+    tau = 0.5  # f-scale veto (prospective evaluation, round 9)
     # flinch threshold 0.2: with sigma=0.10 and trap radius 0.16, f- exceeds
     # 0.2 within ~0.18 of center, so every step whose imagined landing is
     # inside the trap fires the lookahead first.

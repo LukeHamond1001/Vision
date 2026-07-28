@@ -199,9 +199,18 @@ underdetermined. Every formal property in §6 cites the commitments it needs.
   learning-signal use of the reward heads' outputs. Under W4 this is an algebraic
   identity (compute `f±(p) = R±(p,i) − w±·i`, or read `f±(p)` directly), exact
   per-sample, independent of correlations or distribution. The claim exists to
-  (a) rank candidate targets at proposal time and (b) be audited at arrival —
-  which is why it is wired in and subtracted, rather than not wired in at all:
-  make the dangerous quantity visible, then remove it identically.
+  be logged (IOU) and audited at arrival — make the dangerous quantity visible,
+  then remove it identically.
+  *Round-9 correction — selection is NOT the claim's job.* Ranking candidates
+  by `w·g` orders every pool by projection onto ONE fixed global direction:
+  state-independent and unimodal by construction, incapable of expressing
+  phase structure ("pad first, then door" — measured: 4–8% doorward commits
+  at high charge). Candidate ranking, the prospective veto (C4-i), and the
+  value bar (C7) therefore use **prospective evaluation**: the fixed
+  NONLINEAR evaluators `f±` applied to the imagined target — the same move
+  as the C4 flinch, one hop earlier, parameter-free, and free of the A2
+  proxy gap. The linear claim channel's sole remaining roles are exact
+  subtraction and arrival auditing.
 
 - **G2 — Progress is the one controlled channel.** Imagination chooses *where*
   the potential points (subject to C3, C5, C7); the potential pays only for real,

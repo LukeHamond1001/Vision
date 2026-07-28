@@ -36,7 +36,7 @@ class LadderConfig:
     cap_max_updates: int = 2
     curiosity_bonus: float = 0.1
     value_bar: float = 0.02          # C7; ALWAYS enforced at the top level (L4)
-    veto_threshold: float = 10.0     # calibrate via A2 for real runs
+    veto_threshold: float = 0.5      # f-scale (prospective evaluation, round 9)
     flinch_threshold: float = 0.5    # C4 acting-time veto (see agent.py)
     flinch_resamples: int = 4
     proposal_k: int = 12
@@ -93,6 +93,7 @@ class LadderAgent:
         self.i = torch.zeros(d)
         self._ious: dict[int, LevelIOU] = {}
         self._baseline = 0.0
+        self.commit_hook = None          # probes may observe (level, target)
         self.assert_wiring()
 
     # ---------------------------------------------------------------- wiring
@@ -134,33 +135,39 @@ class LadderAgent:
         top_level = (k == self.K - 1)
         for c in (base.unsqueeze(0) + noise):
             comp = self._composite()
-            comp[self.latent.band_slices[k]] = c.detach()
-            comp = self.leash.project(comp)                     # C3 (composite; see module note)
-            for j, r in enumerate(self.registers):              # re-impose held slices
-                if j != k and r.open:
-                    comp[self.latent.band_slices[j]] = r.target
-            g_k = comp[self.latent.band_slices[k]]
+            # C3 per band (round 9): project ONLY slice k against band-k
+            # support; held slices stay as committed. Composite projection let
+            # a held slow target's off-support ambition eat the whole leash
+            # budget and drag the fast slice with it.
+            g_k = self.leash.project_slice(c.detach(), self.latent.band_slices[k])
+            comp[self.latent.band_slices[k]] = g_k
             with torch.no_grad():
-                claim_pos = float(self.head_pos.claim(comp))
-                claim_neg = float(self.head_neg.claim(comp))
+                # Prospective evaluation (round 9; see agent.py): fixed
+                # nonlinear evaluators on the imagined composite. Linear
+                # claims rank by a single fixed direction and cannot express
+                # phase structure ("pad first, then door").
+                f_pos = float(self.head_pos.realized(comp))
+                f_neg = float(self.head_neg.realized(comp))
                 dist_k = float(self.latent.band_distance(self.p, comp, k))
-            if claim_neg > self.cfg.veto_threshold:             # C4 prospective veto
+            if f_neg > self.cfg.veto_threshold:                 # C4 prospective veto
                 continue
             h_k = self.cfg.holds[k] * self.cfg.max_world_step * self.latent.step_scale(k)
             if dist_k > h_k:                                    # C5 per-band horizon
                 continue
-            if (top_level or True) and claim_pos - claim_neg < self.cfg.value_bar:
+            if (top_level or True) and f_pos - f_neg < self.cfg.value_bar:
                 # C7: mandatory at top level (L4); scaffold keeps it on for
                 # all levels — fast-level relaxation is a battery knob, not
                 # a default.
                 continue
-            score = claim_pos - claim_neg                       # claims rank (G1)
+            score = f_pos - f_neg                               # prospective rank
             if best_score is None or score > best_score:
                 best, best_score = g_k.clone(), score
         if best is None:
             return False
         self.registers[k].commit(best, window=self.cfg.holds[k])   # L2/C2 per band
         self._write_imagination()
+        if self.commit_hook is not None:
+            self.commit_hook(k, best.detach())
         comp = self._composite()
         self._ious[k] = LevelIOU(features=feats.detach().clone(),
                                  claim_pos=float(self.head_pos.claim(comp)),
@@ -235,11 +242,25 @@ class LadderAgent:
                 continue
             iou = self._ious.pop(k, None)
             if arrived and iou is not None:
+                # G5 — the proposer's two currencies, both minted by the world:
+                # (1) realized value of the REACHED target (REINFORCE on the
+                #     proposal log-prob, weighted by f± at arrival — pays
+                #     ambition, world-confirmed by construction);
+                # (2) calibration accuracy of the claim (pays honesty).
+                # Currency (1) was unimplemented until round 9 — proposers
+                # learned accuracy but never ambition, leaving proposal pools
+                # without valuable candidates to rank.
+                with torch.no_grad():
+                    realized_net = (float(self.head_pos.realized(self.p))
+                                    - float(self.head_neg.realized(self.p)))
                 err = float(self.head_pos.realized(self.p)) - iou.claim_pos
-                w_slice = self.head_pos.effective_w[self.latent.band_slices[k]]
                 g_prop = self.proposers[k](iou.features)
+                dist_prop = torch.distributions.Normal(g_prop, self.cfg.proposal_noise)
+                logp = dist_prop.log_prob(r.target).sum()
+                w_slice = self.head_pos.effective_w[self.latent.band_slices[k]]
                 target = torch.tensor(float((w_slice * r.target).sum()) + err)
-                loss = ((g_prop * w_slice).sum() - target) ** 2
+                loss = (-realized_net * logp                                 # currency 1
+                        + ((g_prop * w_slice).sum() - target) ** 2)          # currency 2
                 self.opt_proposer.zero_grad()
                 loss.backward()
                 self.opt_proposer.step()

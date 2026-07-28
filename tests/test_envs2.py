@@ -64,7 +64,7 @@ class TestProbeEnvs(unittest.TestCase):
         self.assertAlmostEqual(env.c, 0.20, places=5)          # charges on pad
         env.pos = torch.tensor([0.5, 0.5])
         env.step(torch.zeros(2))
-        self.assertAlmostEqual(env.c, 0.195, places=5)         # decays off pad
+        self.assertAlmostEqual(env.c, 0.198, places=5)         # decays off pad
         env.c = 0.79
         env.pos = env.door.clone()
         _, r, done, _ = env.step(torch.zeros(2))

@@ -146,17 +146,24 @@ class Agent:
             raw = candidates[k]
             g = self.leash.project(raw) if self.cfg.use_leash else raw.detach()  # C3
             with torch.no_grad():
-                claim_pos = float(self.head_pos.claim(g))
-                claim_neg = float(self.head_neg.claim(g))
+                # Prospective evaluation (round 9): the fixed NONLINEAR
+                # evaluators applied to the imagined target — the same move as
+                # the C4 flinch, one hop earlier. Linear claims cannot rank:
+                # w·g orders every candidate pool by projection onto ONE fixed
+                # global direction, state-independent by construction. The
+                # claim channel remains solely the exact-subtraction currency
+                # (G1); selection and veto read f± directly (no proxy gap).
+                f_pos = float(self.head_pos.realized(g))
+                f_neg = float(self.head_neg.realized(g))
                 dist = float(self.latent.distance(self.p, g))
-            if self.cfg.use_veto and claim_neg > self.cfg.veto_threshold:  # C4 veto
+            if self.cfg.use_veto and f_neg > self.cfg.veto_threshold:  # C4 veto
                 diag["vetoed"] += 1
                 continue
             if dist > h_latent:                                        # C5 horizon bound
                 diag["off_horizon"] += 1
                 continue
             if self.cfg.use_value_bar and \
-                    claim_pos - claim_neg < self.cfg.value_bar:        # C7 value bar
+                    f_pos - f_neg < self.cfg.value_bar:                # C7 value bar
                 diag["below_bar"] += 1
                 continue
             if self.cfg.select_by_progress_history:
@@ -167,7 +174,7 @@ class Agent:
                 mean, n = self._prog_history.get(self.cap.key(g), (dist, 0))
                 score = mean
             else:
-                score = claim_pos - claim_neg                          # claims rank (G1)
+                score = f_pos - f_neg                                  # prospective rank
             if best_score is None or score > best_score:
                 best, best_score, best_raw = g, score, raw
 
@@ -295,14 +302,22 @@ class Agent:
             self.gate._ledger.pop()
             self.register.close()
             return None
+        g_committed = self.register.target
         iou, err_pos, err_neg = self.gate.settle(self.p)
-        # G5: the proposer's calibration loss — its output at the recorded
-        # (detached) features should have claimed what reality delivered.
+        # G5 — both proposer currencies, world-minted (see ladder.py):
+        # (1) realized value of the reached target via REINFORCE on the
+        #     proposal log-prob; (2) calibration accuracy of the claim.
+        with torch.no_grad():
+            realized_net = (float(self.head_pos.realized(self.p))
+                            - float(self.head_neg.realized(self.p)))
         g_prop = self.imagination_head(iou.propose_features)
+        dist_prop = torch.distributions.Normal(g_prop, self.cfg.proposal_noise)
+        logp = dist_prop.log_prob(g_committed).sum()
         target_pos = torch.tensor(iou.claim_pos + err_pos)
         target_neg = torch.tensor(iou.claim_neg + err_neg)
-        loss = (self.head_pos.claim(g_prop) - target_pos) ** 2 + \
-               (self.head_neg.claim(g_prop) - target_neg) ** 2
+        loss = (-realized_net * logp
+                + (self.head_pos.claim(g_prop) - target_pos) ** 2
+                + (self.head_neg.claim(g_prop) - target_neg) ** 2)
         self.opt_proposer.zero_grad()
         loss.backward()
         self.opt_proposer.step()

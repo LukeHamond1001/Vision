@@ -63,8 +63,8 @@ def build(seed: int, cfg_overrides: dict, env_kind: str = "grid"):
     head_pos = FixedRewardHead(pos_site, sigma=0.25, proxy_samples=support)
     head_neg = FixedRewardHead(neg_site, sigma=0.15, proxy_samples=support)
     overrides = dict(cfg_overrides)
-    # A2-calibrated veto operating point (SPEC §8), unless the condition pins it.
-    overrides.setdefault("veto_threshold", calibrate_threshold(head_neg, support))
+    # Veto is f-scale under prospective evaluation (round 9): no proxy, no calibration.
+    overrides.setdefault("veto_threshold", 0.5)
     cfg = AgentConfig(seed=seed, **overrides)
     agent = Agent(cfg, head_pos, head_neg, latent)
     return agent, env

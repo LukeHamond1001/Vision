@@ -50,6 +50,24 @@ class Leash:
             direction = (g.detach() - nearest) / dist
             return nearest + direction * self.radius
 
+    def project_slice(self, v: torch.Tensor, sl: slice) -> torch.Tensor:
+        """Per-band projection (round 9): project a band-local vector to within
+        `radius` of the band's OWN support slice. A composite projection lets
+        one band's off-support ambition (a held slow target above achieved
+        charge) consume the whole budget and drag the other bands' slices —
+        measured as doorward fast commits collapsing to ~1%. Per-band trust
+        regions are a bands-only capability: a flat agent cannot decompose its
+        leash any more than its progress signal."""
+        with torch.no_grad():
+            s = self.support()[:, sl]
+            d = torch.linalg.vector_norm(s - v.unsqueeze(0), dim=-1)
+            j = int(torch.argmin(d))
+            nearest, dist = s[j], float(d[j])
+            if dist <= self.radius:
+                return v.detach().clone()
+            direction = (v.detach() - nearest) / dist
+            return nearest + direction * self.radius
+
 
 class CoverageCap:
     """C1: at most `max_updates` learning updates per frozen-latent
