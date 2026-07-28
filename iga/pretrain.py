@@ -59,8 +59,9 @@ def collect_random_walk(env, steps: int, max_world_step: float = 0.1,
 def pretrain_ou_ladder(world_traj: torch.Tensor, band_dims: list[int],
                        taus: list[float], lags: list[int], epochs: int = 400,
                        lr: float = 1e-2, lam_cov: float = 1.0,
-                       segment_len: int | None = None, seed: int = 0,
-                       ) -> torch.Tensor:
+                       segment_len: int | None = None,
+                       context_amp: float | None = None, lam_ctx: float = 5.0,
+                       seed: int = 0) -> torch.Tensor:
     """Learn a linear map W: world → latent under the OU-ladder objective.
     Returns W (latent_dim × world_dim), to be frozen by the caller.
 
@@ -68,7 +69,15 @@ def pretrain_ou_ladder(world_traj: torch.Tensor, band_dims: list[int],
     that span a reset are MASKED OUT (episode-boundary masking) — teleports
     are coverage devices, not dynamics, and scoring across them poisons the
     slow prior (measured: charge's effective lag-15 autocorrelation fell
-    below the slow band's target and routing inverted)."""
+    below the slow band's target and routing inverted).
+
+    `context_amp` (v0.4, from the round-2 leak ablation): if set, the
+    objective DELIBERATELY couples the slowest world variable (last input
+    column) into the FAST band at this world-unit amplitude, and covariance
+    whitening applies WITHIN bands only — full whitening penalizes exactly
+    the cross-band coupling that the ablation proved necessary and
+    sufficient for the representation win. Cross-band value coupling belongs
+    in the metric (SPEC L1, v0.3 revision)."""
     torch.manual_seed(seed)
     world_dim = world_traj.shape[1]
     latent_dim = sum(band_dims)
@@ -102,7 +111,18 @@ def pretrain_ou_ladder(world_traj: torch.Tensor, band_dims: list[int],
             loss = loss + innov
         zc = z - z.mean(0)
         cov = (zc.T @ zc) / (T - 1)
-        loss = loss + lam_cov * ((cov - torch.eye(latent_dim)) ** 2).sum()
+        if context_amp is None:
+            loss = loss + lam_cov * ((cov - torch.eye(latent_dim)) ** 2).sum()
+        else:
+            for sl in slices:                                # within-band whitening only
+                bd = sl.stop - sl.start
+                loss = loss + lam_cov * ((cov[sl, sl] - torch.eye(bd)) ** 2).sum()
+            # deliberate slow->fast context coupling at prescribed RELATIVE
+            # amplitude (c-response over position-response in the fast band) —
+            # ratio form is invariant to the post-training scale normalization
+            amp_c = torch.linalg.vector_norm(W[slices[0], -1]) / sd[-1]
+            amp_pos = torch.linalg.matrix_norm(W[slices[0], :-1] / sd[:-1], ord=2)
+            loss = loss + lam_ctx * (amp_c / amp_pos.clamp_min(1e-6) - context_amp) ** 2
         opt.zero_grad()
         loss.backward()
         opt.step()

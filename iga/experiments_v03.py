@@ -89,11 +89,30 @@ def make_leakin_latent(amp: float = 0.57, seed: int = 0) -> PretrainedBandedLate
     return PretrainedBandedLatent(W / lat.step_scale(0), part_dims=[2, 1], band_dims=[6, 2])
 
 
+def make_pretrained_v04_latent() -> PretrainedBandedLatent:
+    """v0.4 objective: within-band whitening + deliberate slow->fast context
+    coupling at the round-2-measured amplitude. The question it answers:
+    does LEARNING the winning ingredient match hand-injecting it?"""
+    if "v04" in _PRETRAINED_CACHE:
+        return _PRETRAINED_CACHE["v04"]
+    scratch_env = ChargeWorld(BandedLatent([2, 1], [6, 2], seed=0), seed=0)
+    traj = collect_random_walk(scratch_env, steps=20000, seed=0)
+    W = pretrain_ou_ladder(traj, band_dims=[6, 2], taus=[10.0, 300.0],
+                           lags=[15, 15], segment_len=100,
+                           context_amp=0.6, seed=0)
+    lat = PretrainedBandedLatent(W, part_dims=[2, 1], band_dims=[6, 2])
+    lat = PretrainedBandedLatent(W / lat.step_scale(0), part_dims=[2, 1], band_dims=[6, 2])
+    _PRETRAINED_CACHE["v04"] = lat
+    return lat
+
+
 def build(seed: int, cond: str):
     if cond == "pretrained_leakfree":
         latent = make_leakfree_latent()
     elif cond == "random_leakin":
         latent = make_leakin_latent()
+    elif cond == "pretrained_v04":
+        latent = make_pretrained_v04_latent()
     elif cond.startswith("pretrained"):
         latent = make_pretrained_latent(seed=0)   # one shared pretraining
     else:
@@ -161,6 +180,26 @@ def main() -> None:
                   f"return={r['return']['iqm']:+.3f}", flush=True)
         (RESULTS / "v03_leak_ablation.json").write_text(json.dumps(results, indent=2))
         print("wrote results/v03_leak_ablation.json")
+        return
+    if len(sys.argv) > 1 and sys.argv[1] == "v04":
+        # Pre-registered: pretrained_v04 >= random_leakin means the deliberate
+        # objective learns the coupling at least as well as hand-injection;
+        # pretrained_v04 < random_leakin means hand-design wins at this scale.
+        from .pretrain import band_routing_report
+        from .latent import BandedLatent as _BL
+        scratch = ChargeWorld(_BL([2, 1], [6, 2], seed=0), seed=99)
+        traj = collect_random_walk(scratch, 4000, seed=99)
+        print(f"[v0.4] routing: {band_routing_report(make_pretrained_v04_latent(), traj)}",
+              flush=True)
+        results = []
+        for cond in ("random_now", "random_leakin", "pretrained_v04"):
+            r = run_cond(cond, seeds=12, episodes=150)
+            results.append(r)
+            print(f"[v0.4] {cond:16s} max_c={r['max_c']['iqm']:.3f} "
+                  f"CI={[round(x, 3) for x in r['max_c']['ci95']]} "
+                  f"return={r['return']['iqm']:+.3f}", flush=True)
+        (RESULTS / "v04_objective.json").write_text(json.dumps(results, indent=2))
+        print("wrote results/v04_objective.json")
         return
     quick = len(sys.argv) > 1 and sys.argv[1] == "quick"
     seeds, episodes = (3, 12) if quick else (12, 150)
