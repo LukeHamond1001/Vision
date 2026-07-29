@@ -292,7 +292,8 @@ class EncoderCNN(torch.nn.Module):
     at sensor scale, and pixels revoke it. Architecture must re-state the
     factorization the objective alone cannot identify."""
 
-    def __init__(self, band_dims=(5, 3), size: int = 64, seed: int = 0):
+    def __init__(self, band_dims=(5, 3), size: int = 64, seed: int = 0,
+                 slow_mode: str = "photo"):
         super().__init__()
         torch.manual_seed(seed)
         self.trunk = torch.nn.Sequential(
@@ -312,7 +313,18 @@ class EncoderCNN(torch.nn.Module):
         # A pathway that cannot represent position cannot be recruited
         # against the prior: identifiability by construction, exactly where
         # needed.
-        self.slow_head = torch.nn.Linear(6, band_dims[1])
+        #
+        # v0.8 — the incapacity LIBRARY: `slow_mode` selects the pathway.
+        #   'photo'  raw per-channel mean/std (6-d): identifies photometric
+        #            slow variables; INVARIANT to spatial-configuration ones
+        #            (designed negative control in BankWorld).
+        #   'region' fixed 4x4 grayscale region means (16-d): admits spatial-
+        #            configuration variables — and re-admits coarse position,
+        #            so the temporal prior must sort them (the middle rung
+        #            between full capacity and pure incapacity).
+        self.slow_mode = slow_mode
+        self.slow_head = torch.nn.Linear(6 if slow_mode == "photo" else 16,
+                                         band_dims[1])
         self.register_buffer("out_scale", torch.ones(()))
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
@@ -321,7 +333,11 @@ class EncoderCNN(torch.nn.Module):
             x = x.unsqueeze(0)
         h = self.trunk(x)
         z_fast = self.fast_head(h)
-        stats = torch.cat([x.mean(dim=(2, 3)), x.std(dim=(2, 3))], dim=-1)
+        if self.slow_mode == "photo":
+            stats = torch.cat([x.mean(dim=(2, 3)), x.std(dim=(2, 3))], dim=-1)
+        else:                                    # 'region': fixed 4x4 pooling
+            g = x.mean(dim=1, keepdim=True)      # grayscale
+            stats = torch.nn.functional.adaptive_avg_pool2d(g, 4).flatten(1)
         z_slow = self.slow_head(stats)
         z = torch.cat([z_fast, z_slow], dim=-1) * self.out_scale
         return z.squeeze(0) if single else z
@@ -338,11 +354,13 @@ def pretrain_cnn_encoder(frames: torch.Tensor, band_dims: list[int],
                          lam_cov: float = 1.0, geo: tuple | None = None,
                          lam_geo: float = 5.0, epochs: int = 300,
                          batch: int = 1024, lr: float = 3e-4, seed: int = 0,
-                         device: str = "cpu", log_every: int = 50) -> EncoderCNN:
+                         device: str = "cpu", log_every: int = 50,
+                         slow_mode: str = "photo") -> EncoderCNN:
     """The R2 recipe over a conv encoder on rendered frames. Minibatched over
     contiguous windows so the temporal terms stay valid; geodesic pairs are
     computed by the CALLER (kNN on downsampled frames) and passed in."""
-    enc = EncoderCNN(band_dims=tuple(band_dims), size=frames.shape[-1], seed=seed).to(device)
+    enc = EncoderCNN(band_dims=tuple(band_dims), size=frames.shape[-1], seed=seed,
+                     slow_mode=slow_mode).to(device)
     opt = torch.optim.Adam(enc.parameters(), lr=lr)
     slices, off = [], 0
     for bd in band_dims:
