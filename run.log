@@ -112,3 +112,4 @@
 [v0.7:hb] pca seed 4 ep 30 (12850s)
 [v0.7:hb] pca seed 4 ep 60 (12996s)
 [v0.7:hb] pca seed 4 ep 90 (13124s)
+[v0.7] pca seed 4: max_c=0.04 ret=+0.000 (13155s)
