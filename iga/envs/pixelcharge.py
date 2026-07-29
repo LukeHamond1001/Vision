@@ -63,8 +63,8 @@ class PixelObservationLatent(BandedLatent):
 
     def embed_obs(self, frame: torch.Tensor) -> torch.Tensor:
         with torch.no_grad():
-            dev = next(self.encoder.parameters()).device
-            return self.encoder(frame.to(dev)).cpu()
+            ts = list(self.encoder.parameters()) or list(self.encoder.buffers())
+            return self.encoder(frame.to(ts[0].device)).cpu()
 
     def embed(self, world_state: torch.Tensor) -> torch.Tensor:
         w = world_state.reshape(3)
