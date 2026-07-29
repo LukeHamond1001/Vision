@@ -220,6 +220,10 @@ def main() -> None:
             per_seed["max_c"].append(mc / scored)
             print(f"[v0.7] {which} seed {s}: max_c={per_seed['max_c'][-1]:.2f} "
                   f"ret={per_seed['return'][-1]:+.3f} ({time.time()-t0:.0f}s)", flush=True)
+            with open(RESULTS / "v07_behavior_progress.jsonl", "a") as fh:
+                fh.write(json.dumps({"which": which, "seed": s,
+                                     "max_c": per_seed["max_c"][-1],
+                                     "return": per_seed["return"][-1]}) + "\n")
         row = {"which": which, "per_seed": per_seed}
         import numpy as np
         for m in ("return", "max_c"):
