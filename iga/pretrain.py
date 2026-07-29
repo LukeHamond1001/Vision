@@ -304,7 +304,15 @@ class EncoderCNN(torch.nn.Module):
             torch.nn.Flatten(),
             torch.nn.Linear(feat_spatial, 128), torch.nn.Tanh(),
             torch.nn.Linear(128, band_dims[0]))
-        self.slow_head = torch.nn.Linear(32, band_dims[1])      # GAP features only
+        # Round 6: the slow head reads FIXED raw-image photometric statistics
+        # (per-channel mean and std) — no learned spatial pathway at all.
+        # GAP-over-trunk (round 5) still leaked position: the shared trunk
+        # learns channels like "agent in upper half" whose global average IS
+        # a position feature (probe: slow dims went to y at 0.62, x at 0.41).
+        # A pathway that cannot represent position cannot be recruited
+        # against the prior: identifiability by construction, exactly where
+        # needed.
+        self.slow_head = torch.nn.Linear(6, band_dims[1])
         self.register_buffer("out_scale", torch.ones(()))
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
@@ -313,7 +321,8 @@ class EncoderCNN(torch.nn.Module):
             x = x.unsqueeze(0)
         h = self.trunk(x)
         z_fast = self.fast_head(h)
-        z_slow = self.slow_head(h.mean(dim=(2, 3)))             # global average pool
+        stats = torch.cat([x.mean(dim=(2, 3)), x.std(dim=(2, 3))], dim=-1)
+        z_slow = self.slow_head(stats)
         z = torch.cat([z_fast, z_slow], dim=-1) * self.out_scale
         return z.squeeze(0) if single else z
 
