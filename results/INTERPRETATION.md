@@ -5,6 +5,48 @@ stable commentary). Newest round first.
 
 ---
 
+## v0.7 (pixels, GPU) — 2026-07-28/29: the identifiability crisis, found
+## and (tentatively) fixed
+
+First cloud campaign: RunPod A5000 pods, self-terminating, results returned
+as git branches; failed gate attempts cost ~$0.01 / ~3 min each. Five rounds:
+
+1. **r1 (gates FAIL, routing 0.274)**: recipe that scored 0.907–0.988 on the
+   32-d sensor collapses on 64×64×3 frames where charge = global
+   illumination.
+2. **r2 batching hypothesis REFUTED**: contiguous-window minibatches replaced
+   with random-pair sampling — identical loss plateau (8.454), identical
+   routing. (The batching fix is kept — it is correct — but it was not the
+   binding failure.)
+3. **r3 coarse-position-impostor hypothesis REFUTED**: slow lag 15→60 +
+   wider slow band — identical plateau, routing 0.312.
+4. **r4 instrumented (probe table): the real mechanism.** At full training,
+   EVERY latent dim is uncorrelated with EVERY generator (c/x/y/brightness
+   all ≤ 0.26) while the loss sits at its near-ideal value (~8 = innovation
+   floor for 8 unit-variance dims). The objective is genuinely satisfied by
+   arbitrary timescale-matched NONLINEAR MIXTURES of the generators.
+   Smoking-gun signature: the barely-trained encoder routes BETTER (0.70)
+   than the fully-trained one (0.27) — training actively destroys generator
+   alignment. **Freebies-law entry (the largest): encoder capacity was an
+   implicit identifiability prior.** The sensor-era successes were linear/
+   near-linear encoders whose poverty forced generator-aligned solutions;
+   temporal moment-matching alone does not identify generators once the
+   encoder is expressive (consistent with nonlinear-ICA theory: temporal
+   structure buys identifiability only under specific estimation forms).
+5. **r5 fix — factorization as architecture**: band-structured heads. The
+   slow band reads ONLY global-average-pooled channel statistics (slow
+   variables as global spatial statistics: illumination lives there, coarse
+   position cancels under pooling); the fast band keeps spatial structure.
+   Tiny-scale routing PASSES for the first time in the campaign (0.949 vs
+   PCA 0.318, correctly banded). Full-scale run in flight.
+
+Also banked from this campaign: batch composition is objective design at
+scale (r2's fix, correct even though non-binding); the cloud gate loop
+itself (fix → push → pod → gate → branch) as the R4 discipline's
+scale-form.
+
+---
+
 ## v0.6 behavioral gate — 2026-07-28: the causal chain closes
 
 `v06_mlp_behavior.json` (12 × 150, identical calibration): the frozen
