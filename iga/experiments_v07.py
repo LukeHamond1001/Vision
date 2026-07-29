@@ -40,18 +40,19 @@ def collect_pixel_walk(steps: int, size: int = 64, coverage_reset_every: int = 1
     renderer = PixelRenderer(size)
     gen = torch.Generator().manual_seed(seed)
     env.reset()
-    frames, cs = [], []
+    frames, cs, ps = [], [], []
     for t in range(steps):
         a = (torch.rand(2, generator=gen) * 2 - 1) * 0.1
         env.step(a)
         f = renderer.render(env.pos, env.c, env.pad, env.door, env.threshold)
         frames.append((f * 255).to(torch.uint8))
         cs.append(env.c)
+        ps.append(env.pos.clone())
         if (t + 1) % coverage_reset_every == 0:
             env.reset()
             env.pos = torch.rand(2, generator=gen)
             env.c = float(torch.rand((), generator=gen))
-    return torch.stack(frames), torch.tensor(cs)
+    return torch.stack(frames), torch.tensor(cs), torch.stack(ps)
 
 
 def encode_all(encoder, frames_u8: torch.Tensor, batch: int = 512) -> torch.Tensor:
@@ -143,8 +144,8 @@ def main() -> None:
     print(f"[v0.7] device={DEVICE} mode={mode}", flush=True)
 
     steps = 2000 if tiny else 30000
-    frames, c_true = collect_pixel_walk(steps, seed=0)
-    frames_test, c_test = collect_pixel_walk(400 if tiny else 4000, seed=77)
+    frames, c_true, _ = collect_pixel_walk(steps, seed=0)
+    frames_test, c_test, pos_test = collect_pixel_walk(400 if tiny else 4000, seed=77)
     print(f"[v0.7] walk collected {frames.shape} in {time.time()-t0:.0f}s", flush=True)
 
     # geodesics on downsampled grayscale (locally valid pixel metric)
@@ -161,11 +162,21 @@ def main() -> None:
                                device=DEVICE, log_every=20 if tiny else 100)
     print(f"[v0.7] pretraining done at {time.time()-t0:.0f}s", flush=True)
 
+    torch.save(enc.state_dict(), RESULTS / "v07_encoder.pt")    # always save
     pca = PixelPCA(frames)
     report = {}
     for name, e in (("cnn", enc), ("pca", pca)):
         z = encode_all(e, frames_test)
         report[name] = band_corr(z, c_test)
+    # DIAGNOSTIC: what did each latent dim actually learn?
+    z = encode_all(enc, frames_test)
+    bright = frames_test.float().div(255.0).mean((1, 2, 3))
+    gens = {"c": c_test, "x": pos_test[:, 0], "y": pos_test[:, 1], "bright": bright}
+    print("[v0.7:probe] dim | " + " | ".join(f"{k:>6s}" for k in gens), flush=True)
+    for j in range(z.shape[1]):
+        row = [abs(float(torch.corrcoef(torch.stack([z[:, j], v]))[0, 1])) for v in gens.values()]
+        band = "slow" if j >= 5 else "fast"
+        print(f"[v0.7:probe] z{j} ({band}) | " + " | ".join(f"{r:6.2f}" for r in row), flush=True)
     lat = build_latent(enc)
     far = float(torch.linalg.vector_norm(
         lat.embed(torch.tensor([0.5, 0.1, 0.0])) - lat.embed(torch.tensor([0.2, 0.8, 0.0]))))
