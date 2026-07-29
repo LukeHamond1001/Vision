@@ -277,6 +277,103 @@ def pretrain_mlp_encoder(world_traj: torch.Tensor, band_dims: list[int],
     return enc
 
 
+class EncoderCNN(torch.nn.Module):
+    """Conv encoder for pixel observations (v0.7). Frozen after pretraining;
+    same R1 contract as EncoderMLP."""
+
+    def __init__(self, latent_dim: int = 8, size: int = 64, seed: int = 0):
+        super().__init__()
+        torch.manual_seed(seed)
+        self.net = torch.nn.Sequential(
+            torch.nn.Conv2d(3, 16, 4, stride=2, padding=1), torch.nn.ReLU(),   # 32
+            torch.nn.Conv2d(16, 32, 4, stride=2, padding=1), torch.nn.ReLU(),  # 16
+            torch.nn.Conv2d(32, 32, 4, stride=2, padding=1), torch.nn.ReLU(),  # 8
+            torch.nn.Flatten(),
+            torch.nn.Linear(32 * (size // 8) ** 2, 128), torch.nn.Tanh(),
+            torch.nn.Linear(128, latent_dim))
+        self.register_buffer("out_scale", torch.ones(()))
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        single = x.dim() == 3
+        if single:
+            x = x.unsqueeze(0)
+        z = self.net(x) * self.out_scale
+        return z.squeeze(0) if single else z
+
+    def freeze(self) -> None:
+        for p in self.parameters():
+            p.requires_grad_(False)
+
+
+def pretrain_cnn_encoder(frames: torch.Tensor, band_dims: list[int],
+                         taus: list[float], lags: list[int],
+                         segment_len: int | None = None,
+                         context_amp: float | None = 0.3, lam_ctx: float = 5.0,
+                         lam_cov: float = 1.0, geo: tuple | None = None,
+                         lam_geo: float = 5.0, epochs: int = 300,
+                         batch: int = 1024, lr: float = 3e-4, seed: int = 0,
+                         device: str = "cpu", log_every: int = 50) -> EncoderCNN:
+    """The R2 recipe over a conv encoder on rendered frames. Minibatched over
+    contiguous windows so the temporal terms stay valid; geodesic pairs are
+    computed by the CALLER (kNN on downsampled frames) and passed in."""
+    enc = EncoderCNN(sum(band_dims), size=frames.shape[-1], seed=seed).to(device)
+    opt = torch.optim.Adam(enc.parameters(), lr=lr)
+    slices, off = [], 0
+    for bd in band_dims:
+        slices.append(slice(off, off + bd))
+        off += bd
+    T = frames.shape[0]
+    max_lag = max(lags)
+    gen = torch.Generator().manual_seed(seed + 77)
+    node_idx = gi = gj = dgeo = None
+    if geo is not None:
+        node_idx, gi, gj, dgeo = geo
+        node_frames = frames[node_idx].to(device)
+        dgeo = dgeo.to(device)
+    for ep in range(epochs):
+        start = int(torch.randint(0, T - batch - max_lag, (1,), generator=gen))
+        if segment_len is not None:                      # align to segment starts
+            start = (start // segment_len) * segment_len
+        idx0 = torch.arange(start, start + batch)
+        x0 = frames[idx0].to(device)
+        z0_all = enc(x0)
+        loss = torch.tensor(0.0, device=device)
+        for sl, tau, lag in zip(slices, taus, lags):
+            rho = float(torch.exp(torch.tensor(-lag / tau)))
+            x1 = frames[idx0 + lag].to(device)
+            z1 = enc(x1)
+            if segment_len is not None:
+                m = ((idx0 - 0) // segment_len) == ((idx0 + lag) // segment_len)
+            else:
+                m = torch.ones(batch, dtype=torch.bool)
+            innov = ((z1[m][:, sl] - rho * z0_all[m][:, sl]) ** 2).mean() \
+                / max(1 - rho ** 2, 1e-3)
+            loss = loss + innov
+        zc = z0_all - z0_all.mean(0)
+        cov = (zc.T @ zc) / (batch - 1)
+        for sl in slices:
+            bd = sl.stop - sl.start
+            loss = loss + lam_cov * ((cov[sl, sl] - torch.eye(bd, device=device)) ** 2).sum()
+        if context_amp is not None:
+            zf, zs = zc[:, slices[0]], zc[:, slices[1]]
+            cross = (zf.T @ zs) / (batch - 1)
+            fro = torch.linalg.matrix_norm(cross) / (cross.shape[0] * cross.shape[1]) ** 0.5
+            loss = loss + lam_ctx * (fro - context_amp) ** 2
+        if geo is not None:
+            zn = enc(node_frames)
+            chord = torch.linalg.vector_norm(zn[gi] - zn[gj], dim=-1)
+            loss = loss + lam_geo * ((chord / chord.mean().clamp_min(1e-6)
+                                      - dgeo / dgeo.mean()) ** 2).mean()
+        opt.zero_grad()
+        loss.backward()
+        opt.step()
+        if log_every and ep % log_every == 0:
+            print(f"[pretrain-cnn] epoch {ep} loss {float(loss):.4f}", flush=True)
+    enc.to("cpu")
+    enc.freeze()
+    return enc
+
+
 class PretrainedBandedLatent(BandedLatent):
     """BandedLatent whose embedding is a learned (then frozen) linear map
     rather than random orthonormal blocks. Bands are output slices; the
