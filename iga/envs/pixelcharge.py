@@ -81,8 +81,17 @@ class PixelObservationLatent(BandedLatent):
     def _post_scale(self, s: float) -> None:
         with torch.no_grad():
             self.encoder.out_scale.copy_(self.encoder.out_scale / s)
+        self._ss_cache = {}
 
     def step_scale(self, k: int | None = None) -> float:
+        # memoized: this is an EMPIRICAL PROBE (dozens of renders+encodes);
+        # uncached it was called per-proposal via the C5 horizon check and
+        # dominated episode cost ~100x (round-17 telemetry: ~200ms/step)
+        cache = getattr(self, '_ss_cache', None)
+        if cache is None:
+            cache = self._ss_cache = {}
+        if k in cache:
+            return cache[k]
         gen = torch.Generator().manual_seed(123)
         pts = torch.rand(48, 2, generator=gen)
         cs = torch.rand(48, generator=gen)
@@ -95,7 +104,9 @@ class PixelObservationLatent(BandedLatent):
             d = z1 - z0
             norms.append(torch.linalg.vector_norm(
                 d if k is None else d[self.band_slices[k]]))
-        return float(torch.stack(norms).median() / 0.1)
+        val = float(torch.stack(norms).median() / 0.1)
+        cache[k] = val
+        return val
 
 
 class PixelChargeWorld:

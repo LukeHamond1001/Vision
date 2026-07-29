@@ -118,6 +118,7 @@ class ObservationLatent(BandedLatent):
 
     def _post_scale(self, s: float) -> None:
         self._W = self._W / s
+        self._ss_cache = {}
 
     def step_scale(self, k: int | None = None) -> float:
         # empirical: median latent displacement per max-size world step,
@@ -158,3 +159,4 @@ class NonlinearObservationLatent(ObservationLatent):
     def _post_scale(self, s: float) -> None:
         with torch.no_grad():
             self.encoder.out_scale.copy_(self.encoder.out_scale / s)
+        self._ss_cache = {}
