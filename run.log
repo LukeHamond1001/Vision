@@ -95,3 +95,4 @@
 [v0.7] pca seed 0: max_c=0.07 ret=+0.000 (11634s)
 [v0.7:hb] pca seed 1 ep 0 (11645s)
 [v0.7:hb] pca seed 1 ep 30 (11734s)
+[v0.7:hb] pca seed 1 ep 60 (11846s)
