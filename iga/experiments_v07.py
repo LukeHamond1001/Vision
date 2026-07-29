@@ -162,7 +162,7 @@ def main() -> None:
 
     enc = pretrain_cnn_encoder(frames.float().div(255.0), band_dims=[5, 3],
                                taus=[10.0, 300.0], lags=[15, 60], segment_len=100,
-                               context_amp=0.3, geo=geo, lam_geo=5.0,
+                               context_amp=0.3, geo=geo, lam_geo=15.0,
                                epochs=60 if tiny else 1500,
                                batch=256 if tiny else 1024,
                                device=DEVICE, log_every=20 if tiny else 100)
