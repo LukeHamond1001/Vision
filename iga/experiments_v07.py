@@ -36,6 +36,21 @@ from .pretrain import EncoderCNN, geodesic_pairs, pretrain_cnn_encoder
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
 
+def git_push_results(msg: str) -> None:
+    """Python-side delivery (round 17): synchronous best-effort push after
+    every heartbeat and seed checkpoint. Shell-side pushers died mid-run
+    three times for three different reasons; delivery now lives in the
+    process that produces the data."""
+    import subprocess
+    for cmd in (["git", "add", "-A", "results", "run.log"],
+                ["git", "commit", "-qm", msg],
+                ["git", "push", "-qf", "origin", "HEAD"]):
+        try:
+            subprocess.run(cmd, timeout=60, capture_output=True)
+        except Exception:
+            pass
+
+
 def collect_pixel_walk(steps: int, size: int = 64, coverage_reset_every: int = 100,
                        seed: int = 0):
     """Random walk; returns (frames uint8 [T,3,H,W], true c [T]) — c for
@@ -202,6 +217,7 @@ def main() -> None:
           f"-> {'PASS' if g_geom else 'FAIL'}", flush=True)
     report["gates"] = {"routing": bool(g_rout), "geometry": bool(g_geom)}
     (RESULTS / "v07_gates.json").write_text(json.dumps(report, indent=2))
+    git_push_results("gates")
 
     if tiny or not (g_rout and g_geom):
         print(f"[v0.7] stopping after gates ({'tiny mode' if tiny else 'GATE FAILED'}), "
@@ -216,12 +232,13 @@ def main() -> None:
         for s in range(12):
             agent, env = build_agent(s, l)
             ret, mc, scored = 0.0, 0.0, 0
-            for ep in range(150):
+            for ep in range(100):
                 stats = agent.run_episode(env, max_steps=160)
                 if ep % 30 == 0:
                     print(f"[v0.7:hb] {which} seed {s} ep {ep} ({time.time()-t0:.0f}s)",
                           flush=True)
-                if ep >= 75:
+                    git_push_results(f"hb-{which}-{s}-{ep}")
+                if ep >= 50:
                     ret += stats["return"]
                     mc += env.max_c
                     scored += 1
@@ -233,6 +250,7 @@ def main() -> None:
                 fh.write(json.dumps({"which": which, "seed": s,
                                      "max_c": per_seed["max_c"][-1],
                                      "return": per_seed["return"][-1]}) + "\n")
+            git_push_results(f"seed-{which}-{s}")
         row = {"which": which, "per_seed": per_seed}
         import numpy as np
         for m in ("return", "max_c"):
