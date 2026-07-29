@@ -27,3 +27,4 @@
 [v0.7:probe] z7 (slow) |   0.98 |   0.26 |   0.15 |   0.98
 [v0.7] routing: cnn slow=0.977 fast=0.623 | pca slow=0.071 -> PASS
 [v0.7] geometry: far/step=4.6 (rigid ~7.6, linear ceiling 2.8) -> PASS
+[v0.7:hb] cnn seed 0 ep 0 (637s)
