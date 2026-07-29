@@ -1,0 +1,15 @@
+[v0.7] device=cuda mode=full
+[v0.7] walk collected torch.Size([30000, 3, 64, 64]) in 134s
+[pretrain-cnn] epoch 0 loss 11.4687
+[pretrain-cnn] epoch 100 loss 8.4786
+[pretrain-cnn] epoch 200 loss 4.9923
+[pretrain-cnn] epoch 300 loss 4.8086
+[pretrain-cnn] epoch 400 loss 4.7136
+[pretrain-cnn] epoch 500 loss 4.7424
+[pretrain-cnn] epoch 600 loss 4.6850
+[pretrain-cnn] epoch 700 loss 4.6744
+[pretrain-cnn] epoch 800 loss 4.6732
+[pretrain-cnn] epoch 900 loss 4.6024
+[pretrain-cnn] epoch 1000 loss 4.6367
+[pretrain-cnn] epoch 1100 loss 4.6309
+[pretrain-cnn] epoch 1200 loss 4.5466
