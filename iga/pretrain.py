@@ -330,25 +330,32 @@ def pretrain_cnn_encoder(frames: torch.Tensor, band_dims: list[int],
         node_idx, gi, gj, dgeo = geo
         node_frames = frames[node_idx].to(device)
         dgeo = dgeo.to(device)
+    # Batch composition IS objective design at scale (v0.7 freebies-law
+    # entry): full-batch statistics were a small-data freebie. Contiguous
+    # windows make within-batch samples near-duplicates (effective n ~ the
+    # handful of coverage segments spanned) and the distributional terms
+    # train on noise — measured on GPU as routing collapse (0.274 vs 0.9+).
+    # Temporal terms draw RANDOM within-segment (t, t+lag) pairs across the
+    # whole walk; distributional terms draw an INDEPENDENT uniform subset.
+    valid = {}
+    for lag in set(lags):
+        idx = torch.arange(T - max_lag)
+        if segment_len is not None:
+            keep = (idx // segment_len) == ((idx + lag) // segment_len)
+            valid[lag] = idx[keep]
+        else:
+            valid[lag] = idx
     for ep in range(epochs):
-        start = int(torch.randint(0, T - batch - max_lag, (1,), generator=gen))
-        if segment_len is not None:                      # align to segment starts
-            start = (start // segment_len) * segment_len
-        idx0 = torch.arange(start, start + batch)
-        x0 = frames[idx0].to(device)
-        z0_all = enc(x0)
         loss = torch.tensor(0.0, device=device)
         for sl, tau, lag in zip(slices, taus, lags):
             rho = float(torch.exp(torch.tensor(-lag / tau)))
-            x1 = frames[idx0 + lag].to(device)
-            z1 = enc(x1)
-            if segment_len is not None:
-                m = ((idx0 - 0) // segment_len) == ((idx0 + lag) // segment_len)
-            else:
-                m = torch.ones(batch, dtype=torch.bool)
-            innov = ((z1[m][:, sl] - rho * z0_all[m][:, sl]) ** 2).mean() \
-                / max(1 - rho ** 2, 1e-3)
+            pick = valid[lag][torch.randint(0, valid[lag].shape[0], (batch,), generator=gen)]
+            z0 = enc(frames[pick].to(device))
+            z1 = enc(frames[pick + lag].to(device))
+            innov = ((z1[:, sl] - rho * z0[:, sl]) ** 2).mean() / max(1 - rho ** 2, 1e-3)
             loss = loss + innov
+        stat = torch.randint(0, T, (batch,), generator=gen)
+        z0_all = enc(frames[stat].to(device))
         zc = z0_all - z0_all.mean(0)
         cov = (zc.T @ zc) / (batch - 1)
         for sl in slices:
