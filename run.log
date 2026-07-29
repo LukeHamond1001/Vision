@@ -70,3 +70,4 @@
 [v0.7:hb] cnn seed 8 ep 0 (7755s)
 [v0.7:hb] cnn seed 8 ep 30 (7980s)
 [v0.7:hb] cnn seed 8 ep 60 (8257s)
+[v0.7:hb] cnn seed 8 ep 90 (8537s)
