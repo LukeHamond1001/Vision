@@ -48,6 +48,11 @@ class LadderConfig:
     #   evaluator — candidates stepped along ∇(f+−f−) from the current state.
     #   Parameter-free ambition; fixes proposal coverage in high-dim pools.
     grad_steps: tuple = (0.05, 0.1, 0.15, 0.2)
+    frontier_proposals: bool = False # G7 (exploration campaign): imagination
+    #   seeks the frontier — candidates just beyond support whose curiosity
+    #   cells are unextinguished; ranked by value + prospective novelty.
+    #   Non-farmable by construction: novelty dies on arrival (C6).
+    frontier_k: int = 4
     proposal_k: int = 12
     proposal_noise: float = 0.25
     w_prog: float = 1.0
@@ -155,6 +160,35 @@ class LadderAgent:
         here = self.latent.band(self.p, k)
         return [here + s * ghat for s in self.cfg.grad_steps]
 
+    def _frontier_candidates(self, k: int) -> list[torch.Tensor]:
+        """G7: imagination seeks the frontier. Candidates one leash-step
+        beyond random support points, kept only if their curiosity cell is
+        UNEXTINGUISHED. Parameter-free (frozen latent + cell table + support
+        buffer); every gate still applies except the value bar, which they
+        pass through prospective NOVELTY instead of value — non-farmable
+        because arrival extinguishes the cell (C6), so no frontier target
+        can pay twice. This is the discovery-phase compass the evaluator
+        cannot provide beyond its bumps' reach (measured: failing seeds
+        touch 5-6x fewer cells and never find the pad)."""
+        try:
+            support = self.leash.support()
+        except AssertionError:
+            return []
+        gen = self._gen
+        out = []
+        for _ in range(self.cfg.frontier_k * 3):
+            if len(out) >= self.cfg.frontier_k:
+                break
+            s = support[int(torch.randint(0, support.shape[0], (1,), generator=gen))]
+            direction = torch.randn(self.latent.band_dims[k], generator=gen)
+            direction = direction / torch.linalg.vector_norm(direction).clamp_min(1e-8)
+            cand = s[self.latent.band_slices[k]] + direction * self.leash.radius
+            comp = self._composite()
+            comp[self.latent.band_slices[k]] = cand
+            if self.curiosity.bonus(comp) > 0:               # unvisited cell only
+                out.append(cand)
+        return out
+
     def propose_level(self, k: int) -> bool:
         """Propose and commit for band k (its window must be closed). Slice-k
         candidates are valued as part of the full composite (L3)."""
@@ -165,6 +199,8 @@ class LadderAgent:
         pool = [c for c in (base.unsqueeze(0) + noise)]
         if self.cfg.grad_proposals:
             pool.extend(self._gradient_candidates(k))
+        if self.cfg.frontier_proposals:
+            pool.extend(self._frontier_candidates(k))
         best, best_score = None, None
         top_level = (k == self.K - 1)
         for c in pool:
@@ -188,12 +224,12 @@ class LadderAgent:
             h_k = self.cfg.holds[k] * self.cfg.max_world_step * self.latent.step_scale(k)
             if dist_k > h_k:                                    # C5 per-band horizon
                 continue
-            if (top_level or True) and f_pos - f_neg < self.cfg.value_bar:
-                # C7: mandatory at top level (L4); scaffold keeps it on for
-                # all levels — fast-level relaxation is a battery knob, not
-                # a default.
+            novelty = self.curiosity.bonus(comp) if self.cfg.frontier_proposals else 0.0
+            if f_pos - f_neg < self.cfg.value_bar and novelty <= 0:
+                # C7: value bar, passable through prospective NOVELTY (G7) —
+                # novelty is one-shot by C6, so this lane cannot be farmed.
                 continue
-            score = f_pos - f_neg                               # prospective rank
+            score = f_pos - f_neg + novelty                     # prospective rank
             if best_score is None or score > best_score:
                 best, best_score = g_k.clone(), score
         if best is None:
