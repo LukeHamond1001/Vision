@@ -60,11 +60,13 @@ def collect_pixel_walk(steps: int, size: int = 64, coverage_reset_every: int = 1
 
 
 def encode_all(encoder, frames_u8: torch.Tensor, batch: int = 512) -> torch.Tensor:
+    ts = list(encoder.parameters()) or list(encoder.buffers())
+    dev = ts[0].device
     out = []
     with torch.no_grad():
         for i in range(0, frames_u8.shape[0], batch):
-            x = frames_u8[i:i + batch].float().div_(255.0)
-            out.append(encoder(x))
+            x = frames_u8[i:i + batch].float().div_(255.0).to(dev)
+            out.append(encoder(x).cpu())
     return torch.cat(out)
 
 
