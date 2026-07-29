@@ -1,0 +1,21 @@
+[v0.7] device=cuda mode=full
+[v0.7] walk collected torch.Size([30000, 3, 64, 64]) in 28s
+[pretrain-cnn] epoch 0 loss 9.0412
+[pretrain-cnn] epoch 100 loss 8.4745
+[pretrain-cnn] epoch 200 loss 8.4630
+[pretrain-cnn] epoch 300 loss 8.4591
+[pretrain-cnn] epoch 400 loss 8.4583
+[pretrain-cnn] epoch 500 loss 8.4569
+[pretrain-cnn] epoch 600 loss 8.4559
+[pretrain-cnn] epoch 700 loss 8.4555
+[pretrain-cnn] epoch 800 loss 8.4555
+[pretrain-cnn] epoch 900 loss 8.4552
+[pretrain-cnn] epoch 1000 loss 8.4545
+[pretrain-cnn] epoch 1100 loss 8.4543
+[pretrain-cnn] epoch 1200 loss 8.4542
+[pretrain-cnn] epoch 1300 loss 8.4541
+[pretrain-cnn] epoch 1400 loss 8.4539
+[v0.7] pretraining done at 227s
+[v0.7] routing: cnn slow=0.295 fast=0.090 | pca slow=0.071 -> FAIL
+[v0.7] geometry: far/step=0.3 (rigid ~7.6, linear ceiling 2.8) -> FAIL
+[v0.7] stopping after gates (GATE FAILED), 228s total
