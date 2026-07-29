@@ -148,11 +148,17 @@ def main() -> None:
     frames_test, c_test, pos_test = collect_pixel_walk(400 if tiny else 4000, seed=77)
     print(f"[v0.7] walk collected {frames.shape} in {time.time()-t0:.0f}s", flush=True)
 
-    # geodesics on downsampled grayscale (locally valid pixel metric)
-    small = torch.nn.functional.avg_pool2d(
-        frames.float().div(255.0).mean(1, keepdim=True), 4).flatten(1)
-    geo = geodesic_pairs(small, n_nodes=150 if tiny else 400, k=8,
-                         n_pairs=1000 if tiny else 4000)
+    # Geodesic graph (round 8): pixel distance between dot positions
+    # SATURATES once discs stop overlapping (~0.07 world), so node spacing
+    # must sit inside the overlap radius and the local metric must be
+    # full-res — else kNN shortcuts through photometric look-alikes and the
+    # targets compress (measured: corr(dgeo,|dpos|) 0.12 -> 0.69, far/near
+    # 1.8 -> 4.4 with dense nodes + k=4 + illum-normalized full-res).
+    f = frames.float().div(255.0)
+    fn = (f / f.mean(dim=(1, 2, 3), keepdim=True).clamp_min(1e-4)).flatten(1)
+    geo = geodesic_pairs(fn, n_nodes=400 if tiny else 1000, k=4,
+                         n_pairs=1500 if tiny else 6000)
+    del f, fn
 
     enc = pretrain_cnn_encoder(frames.float().div(255.0), band_dims=[5, 3],
                                taus=[10.0, 300.0], lags=[15, 60], segment_len=100,
