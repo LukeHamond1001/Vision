@@ -395,8 +395,14 @@ def pretrain_cnn_encoder(frames: torch.Tensor, band_dims: list[int],
         if geo is not None:
             zn = enc(node_frames)
             chord = torch.linalg.vector_norm(zn[gi] - zn[gj], dim=-1)
-            loss = loss + lam_geo * ((chord / chord.mean().clamp_min(1e-6)
-                                      - dgeo / dgeo.mean()) ** 2).mean()
+            # Round 7: far-field weighting. Mean-normalized ratio matching is
+            # satisfiable by the mid-range while far chords stay squashed —
+            # and the far field is exactly what the geometry gate (and the
+            # evaluator's long-range guidance) needs. Weight each pair by its
+            # normalized geodesic target.
+            dn = dgeo / dgeo.mean()
+            loss = loss + lam_geo * (dn.detach()
+                                     * (chord / chord.mean().clamp_min(1e-6) - dn) ** 2).mean()
         opt.zero_grad()
         loss.backward()
         opt.step()
