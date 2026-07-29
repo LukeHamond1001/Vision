@@ -35,3 +35,4 @@
 [v0.7:hb] cnn seed 1 ep 0 (1521s)
 [v0.7:hb] cnn seed 1 ep 30 (1749s)
 [v0.7:hb] cnn seed 1 ep 60 (2029s)
+[v0.7:hb] cnn seed 1 ep 90 (2307s)
