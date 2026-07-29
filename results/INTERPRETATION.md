@@ -5,6 +5,66 @@ stable commentary). Newest round first.
 
 ---
 
+## v0.7 VERDICT — 2026-07-29: the pipeline holds on pixels
+
+Round 18 (`v07_behavior_final.jsonl`, `v07_summary.json`; 12 CNN seeds,
+8 PCA seeds — the 4h cap cut the last four control seeds, immaterial to a
+categorical result; python-side delivery preserved everything):
+
+| encoder | sustained charging (scored-half avg max_c > 0.3) | charging averages |
+|---|---|---|
+| **CNN (discovered latent)** | **6 / 12** | 0.54 – 0.77 |
+| PCA control | **0 / 8** | best 0.21 (noise; one single-episode fluke) |
+
+- **The pre-registered separation confirms on rendered frames.** A
+  representation discovered entirely from pixels — charge never designated,
+  identifiable by architectural construction (raw-photometric slow head),
+  fast prior matched to content, geodesics from a saturation-aware graph —
+  supports sustained slow-variable control in half its seeds; the
+  non-temporal control supports it in none. The v0.6 bimodality (6/12,
+  exploration-phase variance) replicates cross-substrate almost
+  ratio-for-ratio.
+- No completions at this budget/config (100 eps, no per-band weights) —
+  the hand-latent era's plateau regime; max_c is the discriminating metric,
+  as in round 8. Completions are an engineering knob (budget, weights),
+  not the scientific question this campaign asked.
+- Gates: routing 0.977 / geometry 4.4–4.6, FOUR consecutive confirmations
+  across hosts — boringly reproducible, the best kind of result.
+
+### The campaign in one table (18 rounds, ~$4.20 total)
+
+Science (all pre-registered, penny-scale gate rounds):
+r1 recipe collapses on pixels → r2 batching refuted (kept: correct) →
+r3 impostor-lag refuted → r4 probe: IDENTIFIABILITY CRISIS (mixtures satisfy
+temporal objectives; capacity was the prior) → r5 GAP heads (trunk
+recruitment defeats bias) → r6 raw-photometric slow head: identifiability
+BY CONSTRUCTION, routing passes and holds → r7 far-field weighting refuted →
+r8 geodesic targets repaired (saturation radius: node spacing inside
+feature-overlap) → r9 λ refuted → r10 FAST PRIOR MISMATCH found (τ must
+match content's mixing time) — both gates pass.
+
+Operations (the expensive lessons):
+all-or-nothing delivery → incremental pushes → shell pushers die (3 modes) →
+python-side delivery; safety caps must never outrun delivery; probes
+promoted from O(1) to O(dozens-of-renders) must be memoized (the 70×
+step-scale fix — "costs don't announce themselves when an abstraction's
+implementation changes class").
+
+### What v0.7 adds to the freebies-law ledger (final form)
+
+1. Encoder capacity was an identifiability prior → identifiability must be
+   architectural (incapacity where it counts).
+2. Full-batch statistics were a small-data freebie → batch composition is
+   objective design.
+3. Observation metrics are faithful only within a feature-overlap radius →
+   graph geometry must sample inside it.
+4. Band timescales are measurements, not choices → a too-fast prior warps
+   geometry to satisfy itself.
+5. (ops) Cheap probes, all-or-nothing delivery, and short-run assumptions
+   are all freebies that scale revokes.
+
+---
+
 ## v0.7 (pixels, GPU) — 2026-07-28/29: the identifiability crisis, found
 ## and (tentatively) fixed
 
