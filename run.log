@@ -13,3 +13,17 @@
 [pretrain-cnn] epoch 1000 loss 4.6367
 [pretrain-cnn] epoch 1100 loss 4.6309
 [pretrain-cnn] epoch 1200 loss 4.5466
+[pretrain-cnn] epoch 1300 loss 4.5221
+[pretrain-cnn] epoch 1400 loss 4.4855
+[v0.7] pretraining done at 671s
+[v0.7:probe] dim |      c |      x |      y | bright
+[v0.7:probe] z0 (fast) |   0.19 |   0.01 |   0.74 |   0.21
+[v0.7:probe] z1 (fast) |   0.45 |   0.17 |   0.19 |   0.45
+[v0.7:probe] z2 (fast) |   0.47 |   0.56 |   0.32 |   0.48
+[v0.7:probe] z3 (fast) |   0.62 |   0.64 |   0.39 |   0.60
+[v0.7:probe] z4 (fast) |   0.38 |   0.43 |   0.36 |   0.38
+[v0.7:probe] z5 (slow) |   0.91 |   0.26 |   0.09 |   0.92
+[v0.7:probe] z6 (slow) |   0.80 |   0.17 |   0.24 |   0.82
+[v0.7:probe] z7 (slow) |   0.98 |   0.26 |   0.15 |   0.98
+[v0.7] routing: cnn slow=0.977 fast=0.617 | pca slow=0.071 -> PASS
+[v0.7] geometry: far/step=4.4 (rigid ~7.6, linear ceiling 2.8) -> PASS
