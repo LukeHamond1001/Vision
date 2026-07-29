@@ -207,7 +207,7 @@ def main() -> None:
     results = []
     for which, l in conds.items():
         per_seed = {"return": [], "max_c": []}
-        for s in range(24):
+        for s in range(12):
             agent, env = build_agent(s, l)
             ret, mc, scored = 0.0, 0.0, 0
             for ep in range(150):
