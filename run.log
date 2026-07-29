@@ -32,3 +32,4 @@
 [v0.7:hb] cnn seed 0 ep 60 (1146s)
 [v0.7:hb] cnn seed 0 ep 90 (1423s)
 [v0.7] cnn seed 0: max_c=0.00 ret=+0.000 (1510s)
+[v0.7:hb] cnn seed 1 ep 0 (1521s)
