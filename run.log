@@ -1,0 +1,29 @@
+[v0.7] device=cuda mode=full
+[v0.7] walk collected torch.Size([30000, 3, 64, 64]) in 118s
+[pretrain-cnn] epoch 0 loss 11.4687
+[pretrain-cnn] epoch 100 loss 8.4788
+[pretrain-cnn] epoch 200 loss 4.9931
+[pretrain-cnn] epoch 300 loss 4.8054
+[pretrain-cnn] epoch 400 loss 4.7089
+[pretrain-cnn] epoch 500 loss 4.7412
+[pretrain-cnn] epoch 600 loss 4.6852
+[pretrain-cnn] epoch 700 loss 4.6702
+[pretrain-cnn] epoch 800 loss 4.6724
+[pretrain-cnn] epoch 900 loss 4.6015
+[pretrain-cnn] epoch 1000 loss 4.6323
+[pretrain-cnn] epoch 1100 loss 4.6300
+[pretrain-cnn] epoch 1200 loss 4.5448
+[pretrain-cnn] epoch 1300 loss 4.5475
+[pretrain-cnn] epoch 1400 loss 4.4971
+[v0.7] pretraining done at 622s
+[v0.7:probe] dim |      c |      x |      y | bright
+[v0.7:probe] z0 (fast) |   0.20 |   0.01 |   0.74 |   0.21
+[v0.7:probe] z1 (fast) |   0.47 |   0.19 |   0.19 |   0.46
+[v0.7:probe] z2 (fast) |   0.46 |   0.56 |   0.31 |   0.47
+[v0.7:probe] z3 (fast) |   0.62 |   0.62 |   0.39 |   0.60
+[v0.7:probe] z4 (fast) |   0.39 |   0.45 |   0.35 |   0.39
+[v0.7:probe] z5 (slow) |   0.91 |   0.26 |   0.09 |   0.92
+[v0.7:probe] z6 (slow) |   0.80 |   0.17 |   0.24 |   0.82
+[v0.7:probe] z7 (slow) |   0.98 |   0.26 |   0.15 |   0.98
+[v0.7] routing: cnn slow=0.977 fast=0.623 | pca slow=0.071 -> PASS
+[v0.7] geometry: far/step=4.6 (rigid ~7.6, linear ceiling 2.8) -> PASS
