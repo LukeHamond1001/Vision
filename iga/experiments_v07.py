@@ -87,7 +87,7 @@ class PixelPCA(torch.nn.Module):
         return z.squeeze(0) if single else z
 
 
-def band_corr(z: torch.Tensor, c: torch.Tensor, band_dims=(6, 2)) -> dict:
+def band_corr(z: torch.Tensor, c: torch.Tensor, band_dims=(5, 3)) -> dict:
     out, off = {}, 0
     for k, bd in enumerate(band_dims):
         corr = torch.zeros(bd)
@@ -100,7 +100,7 @@ def band_corr(z: torch.Tensor, c: torch.Tensor, band_dims=(6, 2)) -> dict:
 
 def build_latent(encoder, size: int = 64) -> PixelObservationLatent:
     scratch = ChargeWorld(BandedLatent([2, 1], [6, 2], seed=0))
-    lat = PixelObservationLatent(encoder, [6, 2], PixelRenderer(size),
+    lat = PixelObservationLatent(encoder, [5, 3], PixelRenderer(size),
                                  scratch.pad, scratch.door, scratch.threshold)
     lat._post_scale(lat.step_scale(0))
     return lat
@@ -153,8 +153,8 @@ def main() -> None:
     geo = geodesic_pairs(small, n_nodes=150 if tiny else 400, k=8,
                          n_pairs=1000 if tiny else 4000)
 
-    enc = pretrain_cnn_encoder(frames.float().div(255.0), band_dims=[6, 2],
-                               taus=[10.0, 300.0], lags=[15, 15], segment_len=100,
+    enc = pretrain_cnn_encoder(frames.float().div(255.0), band_dims=[5, 3],
+                               taus=[10.0, 300.0], lags=[15, 60], segment_len=100,
                                context_amp=0.3, geo=geo, lam_geo=5.0,
                                epochs=60 if tiny else 1500,
                                batch=256 if tiny else 1024,
