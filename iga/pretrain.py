@@ -408,9 +408,8 @@ def pretrain_cnn_encoder(frames: torch.Tensor, band_dims: list[int],
         opt.step()
         if log_every and ep % log_every == 0:
             print(f"[pretrain-cnn] epoch {ep} loss {float(loss):.4f}", flush=True)
-    enc.to("cpu")
     enc.freeze()
-    return enc
+    return enc          # stays on training device; callers move frames to it
 
 
 class PretrainedBandedLatent(BandedLatent):

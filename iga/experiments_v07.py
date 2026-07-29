@@ -19,7 +19,11 @@ import json
 import sys
 import time
 
+import os
+
 import torch
+
+torch.set_num_threads(max(1, (os.cpu_count() or 4) // 2))
 
 from .envs.chargeworld import ChargeWorld
 from .envs.pixelcharge import PixelChargeWorld, PixelObservationLatent, PixelRenderer
@@ -212,6 +216,9 @@ def main() -> None:
             ret, mc, scored = 0.0, 0.0, 0
             for ep in range(150):
                 stats = agent.run_episode(env, max_steps=160)
+                if ep % 30 == 0:
+                    print(f"[v0.7:hb] {which} seed {s} ep {ep} ({time.time()-t0:.0f}s)",
+                          flush=True)
                 if ep >= 75:
                     ret += stats["return"]
                     mc += env.max_c
