@@ -6,3 +6,4 @@
 {"which": "cnn", "seed": 5, "max_c": 0.7190800000000003, "return": 0.0}
 {"which": "cnn", "seed": 6, "max_c": 0.7034000000000005, "return": 0.0}
 {"which": "cnn", "seed": 7, "max_c": 0.6414000000000003, "return": 0.0}
+{"which": "cnn", "seed": 8, "max_c": 0.0, "return": 0.0}
