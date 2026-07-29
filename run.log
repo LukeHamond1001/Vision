@@ -50,3 +50,4 @@
 [v0.7:hb] cnn seed 4 ep 0 (4183s)
 [v0.7:hb] cnn seed 4 ep 30 (4407s)
 [v0.7:hb] cnn seed 4 ep 60 (4685s)
+[v0.7:hb] cnn seed 4 ep 90 (4967s)
