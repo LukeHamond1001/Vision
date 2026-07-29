@@ -279,25 +279,42 @@ def pretrain_mlp_encoder(world_traj: torch.Tensor, band_dims: list[int],
 
 class EncoderCNN(torch.nn.Module):
     """Conv encoder for pixel observations (v0.7). Frozen after pretraining;
-    same R1 contract as EncoderMLP."""
+    same R1 contract as EncoderMLP.
 
-    def __init__(self, latent_dim: int = 8, size: int = 64, seed: int = 0):
+    Band-structured heads (round 5 — the identifiability fix): the slow band
+    reads ONLY global-average-pooled channel statistics (translation-
+    invariant global features — where slow variables like illumination live,
+    and where coarse position largely cancels); the fast band keeps the
+    spatial flatten. Measured motivation: with an unstructured head, full
+    training satisfies the temporal objective with arbitrary timescale-
+    matched nonlinear mixtures uncorrelated with EVERY generator (probe
+    table, run r4) — encoder capacity was an implicit identifiability prior
+    at sensor scale, and pixels revoke it. Architecture must re-state the
+    factorization the objective alone cannot identify."""
+
+    def __init__(self, band_dims=(5, 3), size: int = 64, seed: int = 0):
         super().__init__()
         torch.manual_seed(seed)
-        self.net = torch.nn.Sequential(
+        self.trunk = torch.nn.Sequential(
             torch.nn.Conv2d(3, 16, 4, stride=2, padding=1), torch.nn.ReLU(),   # 32
             torch.nn.Conv2d(16, 32, 4, stride=2, padding=1), torch.nn.ReLU(),  # 16
-            torch.nn.Conv2d(32, 32, 4, stride=2, padding=1), torch.nn.ReLU(),  # 8
+            torch.nn.Conv2d(32, 32, 4, stride=2, padding=1), torch.nn.ReLU())  # 8
+        feat_spatial = 32 * (size // 8) ** 2
+        self.fast_head = torch.nn.Sequential(
             torch.nn.Flatten(),
-            torch.nn.Linear(32 * (size // 8) ** 2, 128), torch.nn.Tanh(),
-            torch.nn.Linear(128, latent_dim))
+            torch.nn.Linear(feat_spatial, 128), torch.nn.Tanh(),
+            torch.nn.Linear(128, band_dims[0]))
+        self.slow_head = torch.nn.Linear(32, band_dims[1])      # GAP features only
         self.register_buffer("out_scale", torch.ones(()))
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         single = x.dim() == 3
         if single:
             x = x.unsqueeze(0)
-        z = self.net(x) * self.out_scale
+        h = self.trunk(x)
+        z_fast = self.fast_head(h)
+        z_slow = self.slow_head(h.mean(dim=(2, 3)))             # global average pool
+        z = torch.cat([z_fast, z_slow], dim=-1) * self.out_scale
         return z.squeeze(0) if single else z
 
     def freeze(self) -> None:
@@ -316,7 +333,7 @@ def pretrain_cnn_encoder(frames: torch.Tensor, band_dims: list[int],
     """The R2 recipe over a conv encoder on rendered frames. Minibatched over
     contiguous windows so the temporal terms stay valid; geodesic pairs are
     computed by the CALLER (kNN on downsampled frames) and passed in."""
-    enc = EncoderCNN(sum(band_dims), size=frames.shape[-1], seed=seed).to(device)
+    enc = EncoderCNN(band_dims=tuple(band_dims), size=frames.shape[-1], seed=seed).to(device)
     opt = torch.optim.Adam(enc.parameters(), lr=lr)
     slices, off = [], 0
     for bd in band_dims:
