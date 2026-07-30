@@ -102,13 +102,13 @@ def render_act(rec: dict, path: str, panels: str, title: str = "") -> None:
         game = _upscale(rec["frames"][t + 1])
         if panels == "gauges":
             series = [("slow band (2 dims) — never told what daylight is",
-                       z[1:t + 2, 6:8], "tab:blue"),
+                       z[1:t + 2, 18:20], "tab:blue"),
                       ("daylight (ground truth, eval-only)", day[:t + 1], "tab:orange"),
-                      ("mid band (2 dims)", z[1:t + 2, 4:6], "tab:green"),
-                      ("fast band (4 dims)", z[1:t + 2, 0:4], "tab:gray")]
+                      ("mid band (2 dims)", z[1:t + 2, 16:18], "tab:green"),
+                      ("fast band (4 dims)", z[1:t + 2, 0:6], "tab:gray")]
         elif panels == "meters":
-            series = [("mid dim 0", z[1:t + 2, 4], "tab:green"),
-                      ("mid dim 1", z[1:t + 2, 5], "tab:olive"),
+            series = [("mid dim 0", z[1:t + 2, 16], "tab:green"),
+                      ("mid dim 1", z[1:t + 2, 17], "tab:olive"),
                       ("food (truth)", food[:t + 1], "tab:red"),
                       ("drink (truth)", drink[:t + 1], "tab:blue")]
         else:  # register
@@ -165,10 +165,10 @@ def main() -> None:
     from .experiments import RESULTS
     out = RESULTS / "video"
     out.mkdir(exist_ok=True, parents=True)
-    enc = EncoderCrafter((4, 2, 2), seed=0)
+    enc = EncoderCrafter((16, 2, 2), seed=0)
     enc.load_state_dict(torch.load(RESULTS / "v09_encoder.pt", map_location="cpu"))
     enc.freeze()
-    mid = slice(4, 6)
+    mid = slice(16, 18)
     if mode == "smoke":
         pol = CrafterPolicy(seed=0)   # untrained policy: mechanics test only
         rec = record_rollout(enc, pol, torch.zeros(2), mid, seed=3, max_steps=240)

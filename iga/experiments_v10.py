@@ -48,7 +48,7 @@ from .experiments import RESULTS
 from .experiments_v07 import git_push_results
 
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
-BANDS = (4, 2, 2)
+BANDS = (16, 2, 2)   # matches phase-1 round 6
 MID = slice(BANDS[0], BANDS[0] + BANDS[1])
 
 

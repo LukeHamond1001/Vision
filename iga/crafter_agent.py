@@ -31,7 +31,7 @@ import torch
 class CrafterPolicy(torch.nn.Module):
     """Categorical policy + critic over the frozen 8-d latent."""
 
-    def __init__(self, z_dim: int = 8, n_actions: int = 17, seed: int = 0):
+    def __init__(self, z_dim: int = 20, n_actions: int = 17, seed: int = 0):
         super().__init__()
         torch.manual_seed(seed + 500)
         self.pi = torch.nn.Sequential(
@@ -156,7 +156,7 @@ def train_arm(enc, g_mid, mid_slice, wiring: bool, seed: int,
     import crafter
     env = crafter.Env(seed=seed * 31)   # SAME world sequence for both arms:
     # the paired difference isolates the reward wiring, nothing else
-    policy = CrafterPolicy(seed=seed).to(device)
+    policy = CrafterPolicy(int(sum(enc.band_dims)), seed=seed).to(device)
     opt = torch.optim.Adam(policy.parameters(), lr=3e-4)
     survivals, food_fracs = [], []
     seen: set = set()                   # one-shot curiosity cells, per arm
@@ -220,7 +220,7 @@ def record_rollout(enc, policy, g_mid, mid_slice, seed: int = 0,
 
 
 class QNet(torch.nn.Module):
-    def __init__(self, z_dim: int = 8, n_actions: int = 17, seed: int = 0):
+    def __init__(self, z_dim: int = 20, n_actions: int = 17, seed: int = 0):
         super().__init__()
         torch.manual_seed(seed + 900)
         self.f = torch.nn.Sequential(
@@ -247,14 +247,16 @@ def train_arm_dqn(enc, g_mid, mid_slice, wiring: bool, seed: int,
     from .crafter_support import SLOW_EMA_TAU, slow_stats
     alpha = 1.0 / SLOW_EMA_TAU
     env = crafter.Env(seed=seed * 31)
-    q, qt = QNet(seed=seed).to(device), QNet(seed=seed).to(device)
+    zd = int(sum(enc.band_dims))
+    q, qt = QNet(zd, seed=seed).to(device), QNet(zd, seed=seed).to(device)
     qt.load_state_dict(q.state_dict())
     opt = torch.optim.Adam(q.parameters(), lr=lr)
     gen = torch.Generator().manual_seed(seed + 123)
     rng = torch.Generator().manual_seed(seed + 321)
     cap = 100_000
-    Z = torch.zeros(cap, 8); A = torch.zeros(cap, dtype=torch.long)
-    R = torch.zeros(cap); Z2 = torch.zeros(cap, 8); D = torch.zeros(cap)
+    zd = int(sum(enc.band_dims))
+    Z = torch.zeros(cap, zd); A = torch.zeros(cap, dtype=torch.long)
+    R = torch.zeros(cap); Z2 = torch.zeros(cap, zd); D = torch.zeros(cap)
     ptr, filled = 0, 0
     survivals, food_fracs = [], []
     step_total = 0

@@ -35,7 +35,13 @@ from .experiments import RESULTS
 from .experiments_v07 import PixelPCA, encode_all, git_push_results
 
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
-BANDS = (4, 2, 2)
+BANDS = (16, 2, 2)   # round 6: fast band 4->16. Behavioral runs 1-2
+# (PPO and replay-DQN, both flat at up-to-250k steps with a verified
+# -0.984-aligned dense reward) localized the ceiling to PERCEPTION: the
+# policy cannot navigate-to/face water from a direction-blind state; 4
+# fast dims cannot carry egocentric geometry. The spec's fast band is
+# capacity-unconstrained by design — (4,2,2) was frugality, not doctrine.
+# Slow/mid pathways and their gates are untouched.
 
 
 def main() -> None:
