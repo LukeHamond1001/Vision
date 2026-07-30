@@ -81,8 +81,8 @@ def main() -> None:
     print("[v1.0] phase-1 encoder loaded (frozen)", flush=True)
 
     from .crafter_support import ema_slow_stats
-    frames, truth, ep_w = collect_crafter_walk(3000 if tiny else 20000, seed=123,
-                                               phase_random=True)
+    frames, truth, ep_w, _ = collect_crafter_walk(3000 if tiny else 20000,
+                                                  seed=123, phase_random=True)
     slow_w = ema_slow_stats(frames, ep_w, device=DEVICE)
     with torch.no_grad():
         z_walk = torch.cat([enc(frames[i:i + 512].float().div(255.0).to(DEVICE),

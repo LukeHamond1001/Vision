@@ -51,10 +51,10 @@ def main() -> None:
     t0 = time.time()
     print(f"[v0.9] device={DEVICE} mode={mode}", flush=True)
 
-    frames, truth, ep_ids = collect_crafter_walk(2000 if tiny else 40000, seed=0,
-                                                 phase_random=True)
-    frames_t, truth_t, ep_t = collect_crafter_walk(500 if tiny else 5000, seed=77,
-                                                   phase_random=True)
+    frames, truth, ep_ids, acts = collect_crafter_walk(
+        2000 if tiny else 40000, seed=0, phase_random=True)
+    frames_t, truth_t, ep_t, _ = collect_crafter_walk(
+        500 if tiny else 5000, seed=77, phase_random=True)
     tt = float(torch.corrcoef(torch.stack([truth_t["daylight"],
                                            truth_t["food"]]))[0, 1])
     print(f"[v0.9] truth collinearity daylight-food (phase-randomized): "
@@ -82,7 +82,8 @@ def main() -> None:
                                    epochs=60 if tiny else 1500,
                                    batch=256 if tiny else 512,
                                    device=DEVICE,
-                                   log_every=20 if tiny else 100)
+                                   log_every=20 if tiny else 100,
+                                   actions=acts, lam_fwd=1.0)
     print(f"[v0.9] pretraining done ({time.time()-t0:.0f}s)", flush=True)
     torch.save(enc.state_dict(), RESULTS / "v09_encoder.pt")
 

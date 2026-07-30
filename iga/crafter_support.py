@@ -39,14 +39,16 @@ def collect_crafter_walk(steps: int, seed: int = 0,
     import crafter
     rng = np.random.default_rng(seed)
     env = crafter.Env(seed=seed)
-    frames, ep_ids = [], []
+    frames, ep_ids, acts = [], [], []
     truth = {k: [] for k in ("daylight", "food", "drink", "energy", "health")}
     ep = 0
     obs = env.reset()
     if phase_random:
         env._step = int(rng.integers(0, 300))
     for t in range(steps):
-        obs, r, done, info = env.step(int(rng.integers(0, env.action_space.n)))
+        a = int(rng.integers(0, env.action_space.n))
+        obs, r, done, info = env.step(a)
+        acts.append(a)
         frames.append(torch.from_numpy(obs.copy()).permute(2, 0, 1))
         inv = info["inventory"]
         truth["daylight"].append(float(env._world.daylight))
@@ -61,7 +63,7 @@ def collect_crafter_walk(steps: int, seed: int = 0,
             if phase_random:
                 env._step = int(rng.integers(0, 300))
     return (torch.stack(frames), {k: torch.tensor(v) for k, v in truth.items()},
-            torch.tensor(ep_ids))
+            torch.tensor(ep_ids), torch.tensor(acts))
 
 
 def measure_rho(series: torch.Tensor, ep_ids: torch.Tensor, lag: int) -> float:
@@ -183,14 +185,34 @@ def pretrain_crafter_encoder(frames_u8: torch.Tensor, ep_ids: torch.Tensor,
                              taus=(5.0, 60.0, 150.0), lags=(5, 20, 40),
                              lam_cov: float = 1.0, epochs: int = 1200,
                              batch: int = 512, lr: float = 3e-4, seed: int = 0,
-                             device: str = "cpu", log_every: int = 100
+                             device: str = "cpu", log_every: int = 100,
+                             actions: torch.Tensor | None = None,
+                             lam_fwd: float = 1.0, n_actions: int = 17
                              ) -> EncoderCrafter:
     """OU-ladder innovations per band (episode-masked random pairs) +
     within-band whitening. No geodesic term in phase 1 (routing only);
     no cross-band context term (routing separation is the claim under test).
-    Slow-pathway features are EMA'd once up front (round 4)."""
+    Slow-pathway features are EMA'd once up front (round 4).
+
+    Round 7: ACTION-CONDITIONED one-step forward model on the fast band
+    (the component deferred since v0.5 — C4 flinch's frozen model). The
+    trunk autopsy showed the smoothness objective learns zero object
+    features anywhere (trunk probes 0.11-0.18); predicting z_fast(t+1)
+    from (z_fast(t), a_t) is the architecture's own forcing function for
+    action-relevant perception (approach geometry, facing, obstacles).
+    The predictor is auxiliary (kept for the future flinch); action
+    sensitivity is INSTRUMENTED — the term must beat shuffled actions or
+    it has degenerated to smoothness."""
     enc = EncoderCrafter(band_dims, seed=seed).to(device)
-    opt = torch.optim.Adam(enc.parameters(), lr=lr)
+    inv = None
+    params = list(enc.parameters())
+    if actions is not None and lam_fwd > 0:
+        torch.manual_seed(seed + 300)
+        inv = torch.nn.Sequential(
+            torch.nn.Linear(2 * band_dims[0], 64), torch.nn.ReLU(),
+            torch.nn.Linear(64, n_actions)).to(device)
+        params += list(inv.parameters())
+    opt = torch.optim.Adam(params, lr=lr)
     slow_feats = ema_slow_stats(frames_u8, ep_ids, device=device)
     slices, off = [], 0
     for bd in band_dims:
@@ -200,8 +222,8 @@ def pretrain_crafter_encoder(frames_u8: torch.Tensor, ep_ids: torch.Tensor,
     max_lag = max(lags)
     gen = torch.Generator().manual_seed(seed + 77)
     valid = {}
-    for lag in set(lags):
-        idx = torch.arange(T - max_lag)
+    for lag in set(lags) | {1}:
+        idx = torch.arange(T - max(max_lag, 1))
         keep = ep_ids[idx] == ep_ids[idx + lag]
         valid[lag] = idx[keep]
     for ep in range(epochs):
@@ -216,6 +238,17 @@ def pretrain_crafter_encoder(frames_u8: torch.Tensor, ep_ids: torch.Tensor,
             rho = float(torch.exp(torch.tensor(-lag / tau)))
             loss = loss + ((z1[:, sl] - rho * z0[:, sl]) ** 2).mean() \
                 / max(1 - rho ** 2, 1e-3)
+        if inv is not None:
+            p1 = valid[1][torch.randint(0, valid[1].shape[0], (batch,),
+                                        generator=gen)]
+            zf0 = enc(frames_u8[p1].float().div(255.0).to(device),
+                      slow_feats=slow_feats[p1])[:, :band_dims[0]]
+            zf1 = enc(frames_u8[p1 + 1].float().div(255.0).to(device),
+                      slow_feats=slow_feats[p1 + 1])[:, :band_dims[0]]
+            logits = inv(torch.cat([zf0, zf1], dim=1))
+            a_true = actions[p1].to(device)
+            loss = loss + lam_fwd * torch.nn.functional.cross_entropy(logits,
+                                                                      a_true)
         stat = torch.randint(0, T, (batch,), generator=gen)
         z = enc(frames_u8[stat].float().div(255.0).to(device),
                 slow_feats=slow_feats[stat])
@@ -228,7 +261,13 @@ def pretrain_crafter_encoder(frames_u8: torch.Tensor, ep_ids: torch.Tensor,
         loss.backward()
         opt.step()
         if log_every and ep % log_every == 0:
-            print(f"[v0.9:pretrain] epoch {ep} loss {float(loss):.4f}", flush=True)
+            sens = ""
+            if inv is not None:
+                with torch.no_grad():
+                    acc = float((logits.argmax(1) == a_true).float().mean())
+                sens = f" inv-acc {acc:.3f} (chance {1/n_actions:.3f})"
+            print(f"[v0.9:pretrain] epoch {ep} loss {float(loss):.4f}{sens}",
+                  flush=True)
     # Round 5: slow-head restarts with unsupervised selection. The slow
     # pathway (linear on precomputed EMA stats) is fully separable from the
     # other bands, and its optimization is basin-sensitive (measured local
