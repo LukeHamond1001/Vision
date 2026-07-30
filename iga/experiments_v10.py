@@ -68,10 +68,13 @@ def main() -> None:
     enc = enc.to(DEVICE)
     print("[v1.0] phase-1 encoder loaded (frozen)", flush=True)
 
-    frames, truth, _ = collect_crafter_walk(3000 if tiny else 20000, seed=123,
-                                            phase_random=True)
+    from .crafter_support import ema_slow_stats
+    frames, truth, ep_w = collect_crafter_walk(3000 if tiny else 20000, seed=123,
+                                               phase_random=True)
+    slow_w = ema_slow_stats(frames, ep_w, device=DEVICE)
     with torch.no_grad():
-        z_walk = torch.cat([enc(frames[i:i + 512].float().div(255.0).to(DEVICE)).cpu()
+        z_walk = torch.cat([enc(frames[i:i + 512].float().div(255.0).to(DEVICE),
+                                slow_feats=slow_w[i:i + 512]).cpu()
                             for i in range(0, frames.shape[0], 512)])
     g_mid = estimate_register_target(z_walk, truth, MID)
     n_wellfed = int(((truth["food"] >= 8) & (truth["drink"] >= 8)).sum())

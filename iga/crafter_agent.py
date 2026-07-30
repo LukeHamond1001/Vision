@@ -64,12 +64,16 @@ def run_wired_episode(env, enc, policy, g_mid, mid_slice,
     """One episode. Returns (transitions dict, survival_steps, truth_log).
     wiring=True: reward = register progress in the frozen mid band.
     wiring=False: reward = Crafter's native reward. Same everything else."""
+    from .crafter_support import SLOW_EMA_TAU, slow_stats
+    alpha = 1.0 / SLOW_EMA_TAU
     obs = env.reset()
     zs, acts, logps, rews = [], [], [], []
     food_hi = 0
     frame = torch.from_numpy(obs.copy()).permute(2, 0, 1).float().div(255.0)
     with torch.no_grad():
-        z = enc(frame.to(device)).cpu()
+        es = slow_stats(frame.unsqueeze(0).to(device))   # online EMA state,
+        # reset at episode start — mirrors ema_slow_stats exactly
+        z = enc(frame.to(device), slow_feats=es).cpu()
     phi = float(torch.linalg.vector_norm(z[mid_slice] - g_mid))
     t = 0
     for t in range(max_steps):
@@ -80,7 +84,8 @@ def run_wired_episode(env, enc, policy, g_mid, mid_slice,
         obs, r_native, done, info = env.step(int(a))
         frame = torch.from_numpy(obs.copy()).permute(2, 0, 1).float().div(255.0)
         with torch.no_grad():
-            z_next = enc(frame.to(device)).cpu()
+            es = (1 - alpha) * es + alpha * slow_stats(frame.unsqueeze(0).to(device))
+            z_next = enc(frame.to(device), slow_feats=es).cpu()
         phi_next = float(torch.linalg.vector_norm(z_next[mid_slice] - g_mid))
         r = (phi - phi_next) if wiring else float(r_native)
         zs.append(z); acts.append(a.cpu()); logps.append(logp.cpu())

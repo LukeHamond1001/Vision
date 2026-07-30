@@ -28,7 +28,8 @@ import torch
 
 torch.set_num_threads(max(1, (os.cpu_count() or 4) // 2))
 
-from .crafter_support import (collect_crafter_walk, measure_rho, partial_corr,
+from .crafter_support import (collect_crafter_walk, ema_slow_stats,
+                              measure_rho, partial_corr,
                               pretrain_crafter_encoder, routing_matrix)
 from .experiments import RESULTS
 from .experiments_v07 import PixelPCA, encode_all, git_push_results
@@ -79,7 +80,11 @@ def main() -> None:
     print(f"[v0.9] pretraining done ({time.time()-t0:.0f}s)", flush=True)
     torch.save(enc.state_dict(), RESULTS / "v09_encoder.pt")
 
-    z = encode_all(enc, frames_t)
+    slow_t = ema_slow_stats(frames_t, ep_t, device=DEVICE)
+    with torch.no_grad():
+        z = torch.cat([enc(frames_t[i:i + 512].float().div(255.0).to(DEVICE),
+                           slow_feats=slow_t[i:i + 512]).cpu()
+                       for i in range(0, frames_t.shape[0], 512)])
     matrix = routing_matrix(z, truth_t, BANDS)
     pca = PixelPCA(frames)
     zp = encode_all(pca, frames_t)

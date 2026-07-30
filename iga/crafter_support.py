@@ -75,6 +75,46 @@ def measure_rho(series: torch.Tensor, ep_ids: torch.Tensor, lag: int) -> float:
 
 
 HUD_ROWS = slice(47, 56)
+SLOW_EMA_TAU = 10.0   # round 4: frozen exponential smoother in the slow
+# pathway. Round-3 dissection: the trained slow band was the green-blue
+# composition axis (|corr| 0.94-0.99 with blueness, own rho@40 only
+# 0.33-0.39 — FASTER than daylight's 0.715): whitening's variance
+# preference beat the innovation term. Measured cure: after EMA(tau~10),
+# per-step composition flicker dies and the stat space's top-variance
+# direction BECOMES daylight (PC1 corr 0.71 -> 0.83). The EMA is the OU
+# prior expressed architecturally — a slow band that cannot represent
+# fast content. Parameter-free, frozen, episode-masked.
+
+
+def slow_stats(x: torch.Tensor) -> torch.Tensor:
+    """Raw slow-pathway features: per-channel mean/std + p10/p50/p90 over
+    WORLD rows only (rows 0:47 — the HUD is a dashboard, not photometry)."""
+    world = x[:, :, :HUD_ROWS.start, :]
+    flat = world.flatten(2)
+    qs = torch.quantile(flat, torch.tensor([0.1, 0.5, 0.9], device=x.device),
+                        dim=2)
+    return torch.cat([world.mean(dim=(2, 3)), world.std(dim=(2, 3)),
+                      qs.permute(1, 0, 2).flatten(1)], dim=-1)
+
+
+def ema_slow_stats(frames_u8: torch.Tensor, ep_ids: torch.Tensor,
+                   tau: float = SLOW_EMA_TAU, batch: int = 512,
+                   device: str = "cpu") -> torch.Tensor:
+    """EMA(tau) of slow_stats over the walk, resetting at episode
+    boundaries. Returns [T, 15] on CPU — precomputed once, indexed by
+    training pairs and eval alike."""
+    raw = torch.cat([slow_stats(frames_u8[i:i + batch].float().div(255.0)
+                                .to(device)).cpu()
+                     for i in range(0, frames_u8.shape[0], batch)])
+    alpha = 1.0 / tau
+    out = torch.empty_like(raw)
+    prev = raw[0]
+    for t in range(raw.shape[0]):
+        if t and int(ep_ids[t]) != int(ep_ids[t - 1]):
+            prev = raw[t]
+        prev = (1 - alpha) * prev + alpha * raw[t]
+        out[t] = prev
+    return out
 
 
 class EncoderCrafter(torch.nn.Module):
@@ -114,19 +154,21 @@ class EncoderCrafter(torch.nn.Module):
         self.slow_head = torch.nn.Linear(15, band_dims[2])
         self.register_buffer("out_scale", torch.ones(()))
 
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
+    def forward(self, x: torch.Tensor,
+                slow_feats: torch.Tensor | None = None) -> torch.Tensor:
+        """slow_feats: precomputed EMA'd slow-pathway features ([B,15] or
+        [15]). When omitted, raw per-frame stats are used (stateless
+        fallback) — training, eval, and online callers all pass the EMA
+        so every path sees the same slow pathway (round 4)."""
         single = x.dim() == 3
         if single:
             x = x.unsqueeze(0)
+            if slow_feats is not None and slow_feats.dim() == 1:
+                slow_feats = slow_feats.unsqueeze(0)
         z_fast = self.fast_head(self.trunk(x))
         strip = x[:, :, HUD_ROWS, :]
         z_mid = self.mid_head(strip.flatten(1))
-        world = x[:, :, :HUD_ROWS.start, :]
-        flat = world.flatten(2)
-        qs = torch.quantile(flat, torch.tensor([0.1, 0.5, 0.9], device=x.device),
-                            dim=2)                       # [3, B, C]
-        stats = torch.cat([world.mean(dim=(2, 3)), world.std(dim=(2, 3)),
-                           qs.permute(1, 0, 2).flatten(1)], dim=-1)
+        stats = slow_stats(x) if slow_feats is None else slow_feats.to(x.device)
         z_slow = self.slow_head(stats)
         z = torch.cat([z_fast, z_mid, z_slow], dim=-1) * self.out_scale
         return z.squeeze(0) if single else z
@@ -145,9 +187,11 @@ def pretrain_crafter_encoder(frames_u8: torch.Tensor, ep_ids: torch.Tensor,
                              ) -> EncoderCrafter:
     """OU-ladder innovations per band (episode-masked random pairs) +
     within-band whitening. No geodesic term in phase 1 (routing only);
-    no cross-band context term (routing separation is the claim under test)."""
+    no cross-band context term (routing separation is the claim under test).
+    Slow-pathway features are EMA'd once up front (round 4)."""
     enc = EncoderCrafter(band_dims, seed=seed).to(device)
     opt = torch.optim.Adam(enc.parameters(), lr=lr)
+    slow_feats = ema_slow_stats(frames_u8, ep_ids, device=device)
     slices, off = [], 0
     for bd in band_dims:
         slices.append(slice(off, off + bd))
@@ -165,13 +209,16 @@ def pretrain_crafter_encoder(frames_u8: torch.Tensor, ep_ids: torch.Tensor,
         for sl, tau, lag in zip(slices, taus, lags):
             pick = valid[lag][torch.randint(0, valid[lag].shape[0], (batch,),
                                             generator=gen)]
-            z0 = enc(frames_u8[pick].float().div(255.0).to(device))
-            z1 = enc(frames_u8[pick + lag].float().div(255.0).to(device))
+            z0 = enc(frames_u8[pick].float().div(255.0).to(device),
+                     slow_feats=slow_feats[pick])
+            z1 = enc(frames_u8[pick + lag].float().div(255.0).to(device),
+                     slow_feats=slow_feats[pick + lag])
             rho = float(torch.exp(torch.tensor(-lag / tau)))
             loss = loss + ((z1[:, sl] - rho * z0[:, sl]) ** 2).mean() \
                 / max(1 - rho ** 2, 1e-3)
         stat = torch.randint(0, T, (batch,), generator=gen)
-        z = enc(frames_u8[stat].float().div(255.0).to(device))
+        z = enc(frames_u8[stat].float().div(255.0).to(device),
+                slow_feats=slow_feats[stat])
         zc = z - z.mean(0)
         cov = (zc.T @ zc) / (batch - 1)
         for sl in slices:
