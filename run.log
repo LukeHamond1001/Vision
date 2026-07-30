@@ -5,3 +5,4 @@
 [v0.8] pca    slow: b=0.131
 [v0.8] P-photo (control MUST fail, <0.4): VIOLATED
 [v0.8] P-region (>=0.7 and routed):       FAIL
+[v0.8] done 1981s
