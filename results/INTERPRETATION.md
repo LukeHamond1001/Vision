@@ -5,6 +5,49 @@ stable commentary). Newest round first.
 
 ---
 
+## v0.9 round 6 + trunk autopsy — 2026-07-30: capacity was not the
+## constraint; the OBJECTIVE is. Temporal routing ≠ task perception.
+
+**Round 6 verdict** (pod `nz8t07fesqu9kf`, 1132 s, (16,2,2)): G-mid
+invariant — **0.99/0.99, partial 0.994, mid-daylight leak 0.03** (five
+consecutive full-scale passes; the HUD pathway is bulletproof). G-part
+PASS. G-slow 0.72 (documented basin spread 0.72–0.80; stays
+failed-honest). And the pre-registered **G-perception FAILS harder
+than (4,2,2)**: water 0.70 (was 0.80), tree 0.11 (was 0.21), cow 0.23.
+Sixteen fast dims did not buy object perception.
+
+**Trunk autopsy** ($0): ridge probes from the frozen 128-d conv trunk —
+water 0.14, tree 0.18, cow 0.12, zombie 0.11. **The encoder never
+learned object features at any layer**; even the banded water signal
+(0.70) rides the photometric slow pathway, not the conv stack. Cause:
+the trunk's only gradient is the τ=5 innovation + whitening loss, which
+is satisfiable entirely with smooth terrain/lighting mixtures — sparse
+object contrasts contribute nothing to it, and fast-flickering
+presences (cow in view) are selected AGAINST. DQN control arm for the
+record: quarters [170,169,171,168] — symmetric null, no reward
+asymmetry.
+
+**The law, sharpest form of the campaign: temporal-prior discovery
+recovers slow structure; it does not create task perception. Toy
+worlds bundle the two for free (their smooth content IS the control
+state); a real benchmark unbundles them.** This is the paper-grade
+finding of the behavioral phase — measured from both sides (reward
+verified aligned at −0.984; two learners; perception gates; trunk
+autopsy).
+
+**Round 7 (next): the deferred component arrives on schedule.** The
+action-conditioned one-step forward model — explicitly deferred since
+v0.5 (C4 flinch needs it) — is the architecture's own forcing function
+for action-relevant features: predicting next fast features GIVEN the
+action demands approach geometry, facing, obstacles. Design: auxiliary
+predictor MLP on the fast band at lag 1, joint with the OU recipe;
+action-sensitivity logged (predictor must beat shuffled actions, else
+the term degenerates to smoothness). Pre-registered gates: G-mid and
+G-part must hold; G-perception same bar (water ≥ 0.8, tree ≥ 0.4);
+G-slow reported.
+
+---
+
 ## v1.0 runs 1–2 verdict — 2026-07-30: the ceiling is PERCEPTION, not
 ## reward, not learner; round 6 sizes the fast band to the control task
 
