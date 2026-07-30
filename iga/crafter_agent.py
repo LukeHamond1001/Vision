@@ -163,3 +163,42 @@ def iqm(xs) -> float:
     k = len(v) // 4
     core = v[k:len(v) - k] if len(v) >= 4 else v
     return float(core.mean())
+
+
+def record_rollout(enc, policy, g_mid, mid_slice, seed: int = 0,
+                   max_steps: int = 1000, device: str = "cpu") -> dict:
+    """Run one greedy-ish episode and record everything the demo video
+    needs: frames, latent trace, register distance, truth meters. Returns
+    dict of tensors/lists; save with torch.save for the render script."""
+    import crafter
+    from .crafter_support import SLOW_EMA_TAU, slow_stats
+    alpha = 1.0 / SLOW_EMA_TAU
+    env = crafter.Env(seed=seed)
+    obs = env.reset()
+    frame = torch.from_numpy(obs.copy()).permute(2, 0, 1).float().div(255.0)
+    with torch.no_grad():
+        es = slow_stats(frame.unsqueeze(0).to(device))
+        z = enc(frame.to(device), slow_feats=es).cpu()
+    rec = {"frames": [obs.copy()], "z": [z.clone()],
+           "phi": [float(torch.linalg.vector_norm(z[mid_slice] - g_mid))],
+           "food": [], "drink": [], "daylight": [], "health": []}
+    for t in range(max_steps):
+        with torch.no_grad():
+            a = int(policy.dist(z.to(device)).sample())
+        obs, r, done, info = env.step(a)
+        frame = torch.from_numpy(obs.copy()).permute(2, 0, 1).float().div(255.0)
+        with torch.no_grad():
+            es = (1 - alpha) * es + alpha * slow_stats(frame.unsqueeze(0).to(device))
+            z = enc(frame.to(device), slow_feats=es).cpu()
+        inv = info["inventory"]
+        rec["frames"].append(obs.copy())
+        rec["z"].append(z.clone())
+        rec["phi"].append(float(torch.linalg.vector_norm(z[mid_slice] - g_mid)))
+        rec["food"].append(float(inv.get("food", 0)))
+        rec["drink"].append(float(inv.get("drink", 0)))
+        rec["daylight"].append(float(env._world.daylight))
+        rec["health"].append(float(inv.get("health", 0)))
+        if done:
+            break
+    rec["survival"] = len(rec["food"])
+    return rec
