@@ -5,6 +5,49 @@ stable commentary). Newest round first.
 
 ---
 
+## v0.9 round 7 — 2026-07-30: ALL THREE PHASE-1 GATES PASS; inverse
+## dynamics wakes the trunk; water DIRECTION is readable; run 3 launched
+
+**Round 7** (pod `gy68eac7fqnggq`, 1210 s, inverse dynamics on the fast
+band): **G-slow PASS 0.83** (beats PCA by 0.33; partial 0.839; meter
+leak 0.11/0.07 — first pass of the campaign, within the documented
+0.72–0.83 basin spread and with every pre-registered clause met),
+**G-mid PASS 0.99/0.99** (partial 0.992, sixth consecutive),
+**G-part PASS**. The round-7 encoder replaces round 5 as the phase-1
+final artifact.
+
+**Perception after inverse dynamics:** water crossed its clause
+(**0.828**, from 0.70) and the trunk itself woke up (water-from-trunk
+0.14 → 0.52); zombie 0.32 → 0.55. Tree flat (0.115), cow flat (0.12) —
+G-perception still FAILS on the tree clause. inv-acc plateaued at
+0.088 vs chance 0.059.
+
+**Two-masters hypothesis REFUTED by A/B** ($0, 10k frames): dropping
+the fast band's OU term entirely changes nothing (inv-acc 0.097 both;
+probes statistically identical). The binding constraint is the 16-d
+bottleneck (and Crafter's action set being mostly visual no-ops under
+random play), not objective interference. Also on the refutation
+ledger: the forward-model design self-refuted in one smoke
+(action-sensitivity 1.00 — a jointly trained encoder is REWARDED for
+action-independent features; inverse dynamics is the correct forcing
+direction).
+
+**The direction discovery** ($0): water DIRECTION probes from the
+round-7 latent — left 0.74, right 0.70, up 0.75, down 0.52. The latent
+carries coarse egocentric geometry for water. The drink chain is
+measured end-to-end for the first time: thirst state (mid 0.99) +
+water direction (0.5–0.75) + water presence (0.83).
+
+**Run 3 pre-registration** (pod `tbhx36nsyu75qx`, replay DQN, 300k
+steps/arm, 10 seeds, round-7 encoder): G-behav unchanged (IQM ratio
+≥ 1.15, paired-diff CI > 0). Mechanism prediction on record:
+**drink-frac separates in wiring-on; food-frac does not (cow-blind).**
+If G-behav passes with the drink signature, the story is complete; if
+it fails with drink-frac also flat, the perception boundary stands as
+the honest terminus and the demo pivots to the routing story.
+
+---
+
 ## v0.9 round 6 + trunk autopsy — 2026-07-30: capacity was not the
 ## constraint; the OBJECTIVE is. Temporal routing ≠ task perception.
 
