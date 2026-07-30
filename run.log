@@ -1,0 +1,7 @@
+[v1.0] device=cuda mode=full seeds=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+/workspace/iga/iga/experiments_v10.py:65: FutureWarning: You are using `torch.load` with `weights_only=False` (the current default value), which uses the default pickle module implicitly. It is possible to construct malicious pickle data which will execute arbitrary code during unpickling (See https://github.com/pytorch/pytorch/blob/main/SECURITY.md#untrusted-models for more details). In a future release, the default value for `weights_only` will be flipped to `True`. This limits the functions that could be executed during unpickling. Arbitrary objects will no longer be allowed to be loaded via this mode unless they are explicitly allowlisted by the user via `torch.serialization.add_safe_globals`. We recommend you start setting `weights_only=True` for any use case where you don't have full control of the loaded file. Please open an issue on GitHub for any issues related to this experimental feature.
+  state = torch.load(RESULTS / "v09_encoder.pt", map_location="cpu")
+[v1.0] phase-1 encoder loaded (frozen)
+[v1.0] register target [9.143735885620117, 7.598325729370117] (well-fed frames in walk: 8578)
+[v1.0] seed 1 wiring=1 last3rd survival 198 food_frac 0.58 (666s)
+[v1.0] seed 1 wiring=0 last3rd survival 170 food_frac 0.69 (977s)
