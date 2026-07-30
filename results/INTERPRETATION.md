@@ -5,6 +5,63 @@ stable commentary). Newest round first.
 
 ---
 
+## v0.9 rounds 2–3 — 2026-07-30: G-mid holds at scale; the slow band's
+## two confounds are measured, not guessed
+
+**Round 2** (pod `4sr5zs0m834tqq`, 693 s, ~$0.13): **G-mid PASS at full
+scale** — raw-strip mid head reads food 0.95 / drink 0.95. The
+pooling-destroyed-the-numerals diagnosis is confirmed on the real run.
+**G-slow FAIL, worse** — slow-daylight 0.44 (round 1: 0.54), while fast
+(0.67) and mid (0.74) carry daylight better than the pathway designed
+for it. Percentile enrichment did not help. Tiny-scale had predicted
+0.65: tiny overestimates the slow band because 60 epochs sit near init;
+1500 epochs converge to the objective's true preference. Tiny smoke
+validates mechanisms (mid 0.96 → 0.95), not slow-band outcomes.
+
+**The $0 instrument round** (local, 6k frames) replaced two guesses
+with two measurements:
+
+1. *Ceiling probe:* a supervised linear readout gets daylight **0.968**
+   from exactly the 15 stats the slow head receives. The inputs were
+   never the problem; the objective was failing to select the signal.
+2. *Innovation-loss table at the trained ρ:* every direction in stat
+   space scores ~2.2–3.0 (all stat readouts are daylight + fast
+   composition flicker — the scrolling viewport makes composition noise
+   FAST, refuting my "composition is slower" hypothesis)… while
+   **food, readable through the HUD rows included in the "global"
+   stats, scores 0.298 — ten times better.** Innovation minimization
+   did exactly its job: it read the meter dashboard. Round 2's slow
+   band correlations (food 0.53 > daylight 0.44) are the objective
+   obeying its input, not a mystery. Law: **a pathway is only as
+   incapable as its input — "global world photometry" must not include
+   a dashboard.** Fix (round 3): slow stats over world rows only
+   (rows 0:47); world-only food ceiling collapses to 0.24.
+
+**The collinearity discovery** (bigger than a leak): in random play,
+measured truth-truth correlations are food–drink **0.982**,
+daylight–meters **0.85** — Crafter always spawns at morning, so every
+survival variable is a monotone function of life-age. Under that
+collinearity the routing matrix cannot attribute a band to a variable:
+off-diagonals are bounded below by diagonal × truth-corr, and
+"leak" readings (mid-daylight 0.74, slow-food 0.53) were largely
+truth-correlation, not routing failure. Protocol fix with zero policy
+change: **phase-randomized walks** — daylight is a pure function of
+`env._step` (300-step cycle), so each life starts at a uniform-random
+time of day. Measured effect: daylight–food collinearity 0.854 → 0.403.
+Instrument fix: **partial correlations** (slow-daylight given best
+meter; mid-meter given daylight) added to the matrix, with a new
+pre-registered advisory gate G-part (both ≥ 0.5) written before the
+round-3 run. Phase 1 owns its data protocol; phase 2 (behavior) will
+run standard Crafter.
+
+Round-3 smoke after both fixes: mid-meter partial **0.91** (near-pure
+attribution), slow-food 0.20 (contamination gone), slow-daylight
+awaiting full scale (tiny is not predictive for slow). Pod
+`ro43h3621hgpdh` in flight. Prediction on record: slow-daylight rises
+toward the 0.84 world-only ceiling; G-mid unaffected.
+
+---
+
 ## v0.9 — 2026-07-30: first contact with Crafter (round 1 FAIL ×2,
 ## round 2 in flight)
 
