@@ -23,3 +23,6 @@
 [v1.0] seed 9 wiring=0 last3rd survival 185 food_frac 0.62 (6003s)
 [v1.0] seed 10 wiring=1 last3rd survival 164 food_frac 0.74 (6315s)
 [v1.0] seed 10 wiring=0 last3rd survival 165 food_frac 0.68 (6625s)
+[v1.0] IQM survival wiring-on 172 CI [166,179]  wiring-off 171 CI [167,176]
+[v1.0] ratio 1.00  paired-diff CI [-5,8]
+[v1.0] G-behav (ratio>=1.15, diff CI>0): FAIL
