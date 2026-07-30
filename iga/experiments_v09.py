@@ -28,7 +28,7 @@ import torch
 
 torch.set_num_threads(max(1, (os.cpu_count() or 4) // 2))
 
-from .crafter_support import (collect_crafter_walk, measure_rho,
+from .crafter_support import (collect_crafter_walk, measure_rho, partial_corr,
                               pretrain_crafter_encoder, routing_matrix)
 from .experiments import RESULTS
 from .experiments_v07 import PixelPCA, encode_all, git_push_results
@@ -44,8 +44,14 @@ def main() -> None:
     t0 = time.time()
     print(f"[v0.9] device={DEVICE} mode={mode}", flush=True)
 
-    frames, truth, ep_ids = collect_crafter_walk(2000 if tiny else 40000, seed=0)
-    frames_t, truth_t, ep_t = collect_crafter_walk(500 if tiny else 5000, seed=77)
+    frames, truth, ep_ids = collect_crafter_walk(2000 if tiny else 40000, seed=0,
+                                                 phase_random=True)
+    frames_t, truth_t, ep_t = collect_crafter_walk(500 if tiny else 5000, seed=77,
+                                                   phase_random=True)
+    tt = float(torch.corrcoef(torch.stack([truth_t["daylight"],
+                                           truth_t["food"]]))[0, 1])
+    print(f"[v0.9] truth collinearity daylight-food (phase-randomized): "
+          f"{tt:+.3f}", flush=True)
     print(f"[v0.9] walk {frames.shape} episodes={int(ep_ids.max())+1} "
           f"({time.time()-t0:.0f}s)", flush=True)
     for var in ("daylight", "food", "drink"):
@@ -88,17 +94,36 @@ def main() -> None:
         print(f"[v0.9]   {band:5s} {row}", flush=True)
     print(f"[v0.9] pca best daylight dim: {pca_day:.3f}", flush=True)
 
+    # Partial-corr attribution (round 3, pre-registered before the run):
+    # collinearity-robust routing — the slow band must carry daylight BEYOND
+    # what meters explain, and the mid band meters beyond daylight.
+    off = BANDS[0]
+    best_meter = truth_t["food"] if matrix["mid_food"] >= matrix["mid_drink"] \
+        else truth_t["drink"]
+    p_slow = max(abs(partial_corr(z[:, off + BANDS[1] + j], truth_t["daylight"],
+                                  best_meter)) for j in range(BANDS[2]))
+    p_mid = max(abs(partial_corr(z[:, off + j], best_meter,
+                                 truth_t["daylight"])) for j in range(BANDS[1]))
+    print(f"[v0.9] partial: slow-daylight|meter {p_slow:.3f}  "
+          f"mid-meter|daylight {p_mid:.3f}", flush=True)
+
     g_slow = matrix["slow_daylight"] >= 0.8 and \
         matrix["slow_daylight"] - pca_day >= 0.1
     g_mid = max(matrix["mid_food"], matrix["mid_drink"]) >= 0.8
+    g_part = p_slow >= 0.5 and p_mid >= 0.5
     print(f"[v0.9] G-slow (daylight >=0.8, beats pca): "
           f"{'PASS' if g_slow else 'FAIL'}", flush=True)
     print(f"[v0.9] G-mid  (best meter >=0.8):          "
           f"{'PASS' if g_mid else 'FAIL'}", flush=True)
+    print(f"[v0.9] G-part (partials >=0.5):            "
+          f"{'PASS' if g_part else 'FAIL'}", flush=True)
 
     matrix["pca_daylight"] = pca_day
     matrix["taus"] = list(taus)
-    matrix["gates"] = {"slow": bool(g_slow), "mid": bool(g_mid)}
+    matrix["partials"] = {"slow_daylight_given_meter": float(p_slow),
+                          "mid_meter_given_daylight": float(p_mid)}
+    matrix["gates"] = {"slow": bool(g_slow), "mid": bool(g_mid),
+                      "part": bool(g_part)}
     (RESULTS / "v09_routing.json").write_text(json.dumps(matrix, indent=2))
     git_push_results("v09-verdicts")
     print(f"[v0.9] done {time.time()-t0:.0f}s", flush=True)

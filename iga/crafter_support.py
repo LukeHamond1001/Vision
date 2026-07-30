@@ -21,9 +21,21 @@ import numpy as np
 import torch
 
 
-def collect_crafter_walk(steps: int, seed: int = 0):
+def collect_crafter_walk(steps: int, seed: int = 0,
+                         phase_random: bool = False):
     """Random-policy Crafter play. Returns (frames uint8 [T,3,64,64],
-    truth dict of [T] tensors, episode_ids [T])."""
+    truth dict of [T] tensors, episode_ids [T]).
+
+    phase_random: start each life at a uniform-random time of day (offset
+    env._step; daylight is a pure function of it, 300-step cycle). Crafter
+    always spawns at morning, so in random play EVERY truth variable is a
+    monotone function of life-age — measured truth-truth correlations:
+    food-drink 0.98, daylight-meters 0.85. Under that collinearity the
+    routing matrix cannot attribute a band to a variable (off-diagonals are
+    bounded below by diagonal x truth-corr). Randomizing the spawn phase
+    breaks daylight out of the lockstep with zero policy change. Protocol
+    note: phase 1 (discovery) owns its data protocol; phase 2 (behavior)
+    runs standard Crafter."""
     import crafter
     rng = np.random.default_rng(seed)
     env = crafter.Env(seed=seed)
@@ -31,6 +43,8 @@ def collect_crafter_walk(steps: int, seed: int = 0):
     truth = {k: [] for k in ("daylight", "food", "drink", "energy", "health")}
     ep = 0
     obs = env.reset()
+    if phase_random:
+        env._step = int(rng.integers(0, 300))
     for t in range(steps):
         obs, r, done, info = env.step(int(rng.integers(0, env.action_space.n)))
         frames.append(torch.from_numpy(obs.copy()).permute(2, 0, 1))
@@ -44,6 +58,8 @@ def collect_crafter_walk(steps: int, seed: int = 0):
         if done:
             ep += 1
             obs = env.reset()
+            if phase_random:
+                env._step = int(rng.integers(0, 300))
     return (torch.stack(frames), {k: torch.tensor(v) for k, v in truth.items()},
             torch.tensor(ep_ids))
 
@@ -88,6 +104,13 @@ class EncoderCrafter(torch.nn.Module):
         # at 0.54); illumination shifts all percentiles together while
         # composition changes their spread — linear contrasts can isolate the
         # common shift. Still global, still position-incapable.
+        # Round 3: stats over WORLD ROWS ONLY (0:47). Full-frame stats
+        # included the HUD, whose meters are the SLOWEST readable signal
+        # (innovation loss 0.30 vs daylight-direction 2.26 at the trained
+        # rho) — so innovation minimization dutifully read the meters
+        # through the contamination (slow-food 0.53 > slow-daylight 0.44).
+        # A pathway is only as incapable as its input: 'global world
+        # photometry' must not include a dashboard.
         self.slow_head = torch.nn.Linear(15, band_dims[2])
         self.register_buffer("out_scale", torch.ones(()))
 
@@ -98,10 +121,11 @@ class EncoderCrafter(torch.nn.Module):
         z_fast = self.fast_head(self.trunk(x))
         strip = x[:, :, HUD_ROWS, :]
         z_mid = self.mid_head(strip.flatten(1))
-        flat = x.flatten(2)
+        world = x[:, :, :HUD_ROWS.start, :]
+        flat = world.flatten(2)
         qs = torch.quantile(flat, torch.tensor([0.1, 0.5, 0.9], device=x.device),
                             dim=2)                       # [3, B, C]
-        stats = torch.cat([x.mean(dim=(2, 3)), x.std(dim=(2, 3)),
+        stats = torch.cat([world.mean(dim=(2, 3)), world.std(dim=(2, 3)),
                            qs.permute(1, 0, 2).flatten(1)], dim=-1)
         z_slow = self.slow_head(stats)
         z = torch.cat([z_fast, z_mid, z_slow], dim=-1) * self.out_scale
@@ -160,6 +184,17 @@ def pretrain_crafter_encoder(frames_u8: torch.Tensor, ep_ids: torch.Tensor,
             print(f"[v0.9:pretrain] epoch {ep} loss {float(loss):.4f}", flush=True)
     enc.freeze()
     return enc
+
+
+def partial_corr(a: torch.Tensor, b: torch.Tensor, c: torch.Tensor) -> float:
+    """corr(a, b | c): residualize both against c (linear), correlate.
+    The collinearity-robust attribution instrument."""
+    c1 = torch.stack([c, torch.ones_like(c)], 1)
+    ra = a - c1 @ torch.linalg.lstsq(c1, a.unsqueeze(1)).solution.squeeze(1)
+    rb = b - c1 @ torch.linalg.lstsq(c1, b.unsqueeze(1)).solution.squeeze(1)
+    if float(ra.std()) < 1e-6 or float(rb.std()) < 1e-6:
+        return float("nan")
+    return float(torch.corrcoef(torch.stack([ra, rb]))[0, 1])
 
 
 def routing_matrix(z: torch.Tensor, truth: dict, band_dims=(4, 2, 2)) -> dict:
