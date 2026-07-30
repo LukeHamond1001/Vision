@@ -5,3 +5,5 @@
 [v1.0] register target [9.143735885620117, 7.598325729370117] (well-fed frames in walk: 8578)
 [v1.0] seed 1 wiring=1 last3rd survival 198 food_frac 0.58 (666s)
 [v1.0] seed 1 wiring=0 last3rd survival 170 food_frac 0.69 (977s)
+[v1.0] seed 2 wiring=1 last3rd survival 178 food_frac 0.64 (1293s)
+[v1.0] seed 2 wiring=0 last3rd survival 178 food_frac 0.66 (1608s)
