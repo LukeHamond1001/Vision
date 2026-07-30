@@ -76,10 +76,19 @@ class EncoderCrafter(torch.nn.Module):
             torch.nn.Flatten(),
             torch.nn.Linear(32 * 8 * 8, 128), torch.nn.Tanh())
         self.fast_head = torch.nn.Linear(128, band_dims[0])
-        # mid: fixed 2x8 region grid over the HUD strip, per channel -> 48-d
-        self.mid_head = torch.nn.Linear(48, band_dims[1])
-        # slow: global per-channel mean/std -> 6-d
-        self.slow_head = torch.nn.Linear(6, band_dims[2])
+        # mid (round 2): RAW HUD-strip pixels -> linear. The 2x8 pooled grid
+        # destroyed the meter NUMERALS (4x5px digits average to near-equal
+        # luminance; mid-band meter corr collapsed to 0.22). Incapacity that
+        # matters = spatial confinement to the HUD; linear template matching
+        # over the raw strip reads digits while still seeing no world.
+        self.mid_head = torch.nn.Linear(9 * 64 * 3, band_dims[1])
+        # slow (round 2): global photometric stats enriched with per-channel
+        # luminance percentiles (p10/p50/p90). Crafter's viewport SCROLLS, so
+        # mean/std alone is a terrain-composition signal (daylight corr stuck
+        # at 0.54); illumination shifts all percentiles together while
+        # composition changes their spread — linear contrasts can isolate the
+        # common shift. Still global, still position-incapable.
+        self.slow_head = torch.nn.Linear(15, band_dims[2])
         self.register_buffer("out_scale", torch.ones(()))
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
@@ -88,9 +97,12 @@ class EncoderCrafter(torch.nn.Module):
             x = x.unsqueeze(0)
         z_fast = self.fast_head(self.trunk(x))
         strip = x[:, :, HUD_ROWS, :]
-        grid = torch.nn.functional.adaptive_avg_pool2d(strip, (2, 8)).flatten(1)
-        z_mid = self.mid_head(grid)
-        stats = torch.cat([x.mean(dim=(2, 3)), x.std(dim=(2, 3))], dim=-1)
+        z_mid = self.mid_head(strip.flatten(1))
+        flat = x.flatten(2)
+        qs = torch.quantile(flat, torch.tensor([0.1, 0.5, 0.9], device=x.device),
+                            dim=2)                       # [3, B, C]
+        stats = torch.cat([x.mean(dim=(2, 3)), x.std(dim=(2, 3)),
+                           qs.permute(1, 0, 2).flatten(1)], dim=-1)
         z_slow = self.slow_head(stats)
         z = torch.cat([z_fast, z_mid, z_slow], dim=-1) * self.out_scale
         return z.squeeze(0) if single else z
