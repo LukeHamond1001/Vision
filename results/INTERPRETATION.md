@@ -5,6 +5,49 @@ stable commentary). Newest round first.
 
 ---
 
+## v0.9 PHASE-1 CLOSE — 2026-07-30: the 0.79 asymptote is the finding
+
+**Round 5 verdict** (pod `vf6wrcwcqjz4vt`, 910 s, ~$0.17): slow-daylight
+**0.787** — restarts produced nothing at pod scale (six restarts, loss
+spread 0.026, all the same basin). Two independent full-scale rounds now
+agree (0.796, 0.787): **the population optimum of [innovation
+minimization + whitening on EMA'd world-photometric stats] carries
+daylight at ≈0.79, not ≥0.8.** The local replica's 0.845 was
+small-sample structure (12k frames); more data sharpens the objective
+toward its true optimum, which slightly prefers a composition-mixed
+direction that is marginally slower than the daylight readout. The
+supervised ceiling (0.98) is real but is not this objective's optimum.
+
+**The refutation ledger for the slow band** (all measured, mostly $0):
+two-sided innovation matching (worse, 0.62–0.69); single slow dim
+(worse, 0.72–0.74); EMA τ=30/60 (equal/worse); input subsets incl. the
+p90 upper-envelope hypothesis (p90-only 0.61 — bright texels flicker
+with composition); slow-band lag 80/100/150 (flat 0.844–0.850 local);
+restart argmin-loss selection (worked at 12k, did not transfer to 40k).
+Six levers, honestly spent. G-slow stays FAILED at 0.787 — no goalpost
+moves. Both readings reported: against the pre-registered 0.8 bar it
+misses by 0.013; against the v0.7-style control-separation reading it
+is decisive (PCA 0.382, margin 0.405; partial slow-daylight|meter
+0.780).
+
+**Phase-1 final artifact = round-5 encoder** (merged to main):
+routing matrix — mid **food 0.98 / drink 0.99, partial 0.989** (three
+consecutive full-scale passes: 0.95 → 0.99 → 0.98); slow daylight
+0.787 partial 0.780; fast diffuse. Gates: G-mid PASS, G-part PASS,
+G-slow FAIL (asymptote quantified). Campaign law, candidate for the
+spec's learned-latent contract: **an unsupervised routing objective
+converges to ITS optimum, not to the generator variable; the residual
+gap (here 0.79 vs 0.98 supervised) is a property of the
+pathway+objective pair and must be measured and reported, not
+iterated into submission.** Total phase-1 spend ≈ $1.15, five pod
+rounds, ~9 instrument passes.
+
+Phase 2 proceeds on this encoder: its dependency is the mid band
+(registers on meter goals; daylight is uncontrollable), which is the
+strongest artifact of the campaign.
+
+---
+
 ## v0.9 rounds 4→5 — 2026-07-30: 0.7962 vs a bar of 0.8000, and the
 ## local replica that turned the last gap into a measurement
 
