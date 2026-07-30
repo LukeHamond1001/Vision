@@ -60,10 +60,18 @@ def estimate_register_target(z_walk: torch.Tensor, truth: dict,
 
 def run_wired_episode(env, enc, policy, g_mid, mid_slice,
                       wiring: bool, max_steps: int = 1000,
-                      seed_action: int = 0, device: str = "cpu"):
+                      seed_action: int = 0, device: str = "cpu",
+                      seen: set | None = None, nov_bonus: float = 0.0):
     """One episode. Returns (transitions dict, survival_steps, truth_log).
     wiring=True: reward = register progress in the frozen mid band.
-    wiring=False: reward = Crafter's native reward. Same everything else."""
+    wiring=False: reward = Crafter's native reward. Same everything else.
+
+    seen/nov_bonus: SPEC one-shot curiosity, given to BOTH arms
+    identically (phase-2 revision 1). Cell key = coarse discretization of
+    the full frozen latent; a cell pays nov_bonus exactly once per arm
+    and never again — self-retiring novelty (measured deficit: 0-3
+    controllable reward events per episode under raw exploration;
+    entropy collapse on noise)."""
     from .crafter_support import SLOW_EMA_TAU, slow_stats
     alpha = 1.0 / SLOW_EMA_TAU
     obs = env.reset()
@@ -88,6 +96,11 @@ def run_wired_episode(env, enc, policy, g_mid, mid_slice,
             z_next = enc(frame.to(device), slow_feats=es).cpu()
         phi_next = float(torch.linalg.vector_norm(z_next[mid_slice] - g_mid))
         r = (phi - phi_next) if wiring else float(r_native)
+        if seen is not None and nov_bonus > 0:
+            cell = tuple(torch.round(z_next * 2.0).to(torch.int64).tolist())
+            if cell not in seen:
+                seen.add(cell)
+                r += nov_bonus
         zs.append(z); acts.append(a.cpu()); logps.append(logp.cpu())
         rews.append(r)
         if float(info["inventory"].get("food", 0)) >= 6:
@@ -104,7 +117,7 @@ def run_wired_episode(env, enc, policy, g_mid, mid_slice,
 def ppo_update(policy: CrafterPolicy, opt: torch.optim.Optimizer, batch: dict,
                gamma: float = 0.9, lam: float = 0.8, epochs: int = 4,
                clip: float = 0.2, value_coef: float = 0.5,
-               entropy_coef: float = 1e-3, device: str = "cpu") -> None:
+               entropy_coef: float = 5e-3, device: str = "cpu") -> None:
     """Categorical PPO-lite mirror of EpisodicLearner.finish: GAE(γ,λ) on
     the undiscounted reward stream, K clipped epochs, advantage-normalized."""
     z = batch["z"].to(device)
@@ -138,7 +151,7 @@ def ppo_update(policy: CrafterPolicy, opt: torch.optim.Optimizer, batch: dict,
 
 def train_arm(enc, g_mid, mid_slice, wiring: bool, seed: int,
               episodes: int, max_steps: int = 1000,
-              device: str = "cpu") -> dict:
+              device: str = "cpu", nov_bonus: float = 0.5) -> dict:
     """One seed, one arm. Returns survival + meter-hold trajectories."""
     import crafter
     env = crafter.Env(seed=seed * 31)   # SAME world sequence for both arms:
@@ -146,10 +159,12 @@ def train_arm(enc, g_mid, mid_slice, wiring: bool, seed: int,
     policy = CrafterPolicy(seed=seed).to(device)
     opt = torch.optim.Adam(policy.parameters(), lr=3e-4)
     survivals, food_fracs = [], []
+    seen: set = set()                   # one-shot curiosity cells, per arm
     for ep in range(episodes):
         batch, alive, ffrac = run_wired_episode(
             env, enc, policy, g_mid, mid_slice, wiring,
-            max_steps=max_steps, device=device)
+            max_steps=max_steps, device=device,
+            seen=seen, nov_bonus=nov_bonus)
         ppo_update(policy, opt, batch, device=device)
         survivals.append(alive)
         food_fracs.append(ffrac)

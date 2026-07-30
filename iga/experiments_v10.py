@@ -7,6 +7,14 @@ Pre-registered gates (written 2026-07-30, before any full-scale run):
   G-behav  IQM over seeds of last-third mean survival, wiring-on vs
            wiring-off: ratio >= 1.15 AND the 95% bootstrap CI of the
            per-seed paired difference excludes 0.
+
+Revision 1 (2026-07-30, after run 1 [pod qjch0plmkcwy3k] FAILED G-behav
+with FLAT learning curves in BOTH arms — measured: 0-3 controllable
+reward events/episode, entropy collapse-on-noise 2.82->1.0): add the
+SPEC's one-shot latent curiosity to BOTH arms identically + entropy
+floor 5e-3 + budget 150->500 episodes. The ablation contrast is
+unchanged (arms differ only in the persistent reward stream). Gate
+unchanged.
   Report   full per-seed table (survival + food-hold fraction), IQM +
            bootstrap CIs both arms, rliable-style. Both arms share the
            SAME frozen encoder, policy class, learner, and inputs; only
@@ -57,7 +65,8 @@ def main() -> None:
     RESULTS.mkdir(exist_ok=True)
     t0 = time.time()
     seeds = range(1, 3 if tiny else 11)
-    episodes = 6 if tiny else 150
+    episodes = 6 if tiny else 500   # revision 1: measured exploration
+    # deficit (0-3 controllable reward events/episode; flat curves at 150)
     max_steps = 150 if tiny else 1000
     print(f"[v1.0] device={DEVICE} mode={mode} seeds={list(seeds)}", flush=True)
 
