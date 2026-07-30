@@ -1,0 +1,40 @@
+[v0.9] device=cuda mode=full
+[v0.9] truth collinearity daylight-food (phase-randomized): -0.085
+[v0.9] walk torch.Size([40000, 3, 64, 64]) episodes=419 (746s)
+[v0.9] coverage daylight: min=0.00 max=1.00
+[v0.9] coverage food: min=0.00 max=9.00
+[v0.9] coverage drink: min=0.00 max=9.00
+[v0.9] measured rho: daylight@40=0.628 food@20=0.968 -> taus=(5.0, 614.0, 85.9)
+[v0.9:pretrain] epoch 0 loss 22.9261 inv-acc 0.070 (chance 0.059)
+[v0.9:pretrain] epoch 100 loss 20.4662 inv-acc 0.086 (chance 0.059)
+[v0.9:pretrain] epoch 200 loss 16.4578 inv-acc 0.066 (chance 0.059)
+[v0.9:pretrain] epoch 300 loss 10.5441 inv-acc 0.094 (chance 0.059)
+[v0.9:pretrain] epoch 400 loss 8.4632 inv-acc 0.113 (chance 0.059)
+[v0.9:pretrain] epoch 500 loss 7.7929 inv-acc 0.084 (chance 0.059)
+[v0.9:pretrain] epoch 600 loss 7.4009 inv-acc 0.092 (chance 0.059)
+[v0.9:pretrain] epoch 700 loss 7.0506 inv-acc 0.088 (chance 0.059)
+[v0.9:pretrain] epoch 800 loss 7.3008 inv-acc 0.105 (chance 0.059)
+[v0.9:pretrain] epoch 900 loss 7.1432 inv-acc 0.096 (chance 0.059)
+[v0.9:pretrain] epoch 1000 loss 7.2923 inv-acc 0.088 (chance 0.059)
+[v0.9:pretrain] epoch 1100 loss 7.0759 inv-acc 0.088 (chance 0.059)
+[v0.9:pretrain] epoch 1200 loss 6.9498 inv-acc 0.086 (chance 0.059)
+[v0.9:pretrain] epoch 1300 loss 6.8091 inv-acc 0.088 (chance 0.059)
+[v0.9:pretrain] epoch 1400 loss 6.9325 inv-acc 0.088 (chance 0.059)
+[v0.9:pretrain] slow restart 0 loss 1.5310
+[v0.9:pretrain] slow restart 1 loss 1.5425
+[v0.9:pretrain] slow restart 2 loss 1.5336
+[v0.9:pretrain] slow restart 3 loss 1.5408
+[v0.9:pretrain] slow restart 4 loss 1.5473
+[v0.9:pretrain] slow restart 5 loss 1.5290
+[v0.9:pretrain] slow head <- argmin restart (loss 1.5290)
+[v0.9] pretraining done (1206s)
+[v0.9] routing matrix (band x variable, max |corr|):
+[v0.9]   fast  {'daylight': 0.33, 'food': 0.27, 'drink': 0.25, 'energy': 0.29, 'health': 0.2}
+[v0.9]   mid   {'daylight': 0.1, 'food': 0.99, 'drink': 0.99, 'energy': 0.21, 'health': 0.28}
+[v0.9]   slow  {'daylight': 0.83, 'food': 0.11, 'drink': 0.07, 'energy': 0.05, 'health': 0.2}
+[v0.9] pca best daylight dim: 0.499
+[v0.9] partial: slow-daylight|meter 0.839  mid-meter|daylight 0.992
+[v0.9] G-slow (daylight >=0.8, beats pca): PASS
+[v0.9] G-mid  (best meter >=0.8):          PASS
+[v0.9] G-part (partials >=0.5):            PASS
+[v0.9] done 1210s

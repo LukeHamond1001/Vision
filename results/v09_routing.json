@@ -1,31 +1,31 @@
 {
-  "fast_daylight": 0.5366461277008057,
-  "fast_food": 0.46844610571861267,
-  "fast_drink": 0.47508206963539124,
-  "fast_energy": 0.4318310022354126,
-  "fast_health": 0.2282455414533615,
-  "mid_daylight": 0.2046065330505371,
-  "mid_food": 0.9778684973716736,
-  "mid_drink": 0.9890608191490173,
-  "mid_energy": 0.34309637546539307,
-  "mid_health": 0.12510769069194794,
-  "slow_daylight": 0.7868980765342712,
-  "slow_food": 0.3850443363189697,
-  "slow_drink": 0.331086128950119,
-  "slow_energy": 0.06342919915914536,
-  "slow_health": 0.19701744616031647,
-  "pca_daylight": 0.3816124200820923,
+  "fast_daylight": 0.33145737648010254,
+  "fast_food": 0.2725212872028351,
+  "fast_drink": 0.24892869591712952,
+  "fast_energy": 0.28937894105911255,
+  "fast_health": 0.19813068211078644,
+  "mid_daylight": 0.09836519509553909,
+  "mid_food": 0.9888187050819397,
+  "mid_drink": 0.9923637509346008,
+  "mid_energy": 0.21399450302124023,
+  "mid_health": 0.27657949924468994,
+  "slow_daylight": 0.8316925764083862,
+  "slow_food": 0.1099027618765831,
+  "slow_drink": 0.06657193601131439,
+  "slow_energy": 0.0479481965303421,
+  "slow_health": 0.19926214218139648,
+  "pca_daylight": 0.49906763434410095,
   "taus": [
     5.0,
-    661.9145240031391,
-    98.56160969212557
+    614.0261218464168,
+    85.88647740631686
   ],
   "partials": {
-    "slow_daylight_given_meter": 0.7801394462585449,
-    "mid_meter_given_daylight": 0.9887763857841492
+    "slow_daylight_given_meter": 0.8388118743896484,
+    "mid_meter_given_daylight": 0.9922974705696106
   },
   "gates": {
-    "slow": false,
+    "slow": true,
     "mid": true,
     "part": true
   }

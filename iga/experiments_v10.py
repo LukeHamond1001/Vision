@@ -113,6 +113,7 @@ def main() -> None:
             row = {"seed": seed, "wiring": wiring,
                    "survival_last3rd": float(np.mean(out["survival"][-k:])),
                    "food_frac_last3rd": float(np.mean(out["food_frac"][-k:])),
+                   "drink_frac_last3rd": float(np.mean(out.get("drink_frac", [0])[-k:])),
                    "survival_all": out["survival"],
                    "food_frac_all": [round(f, 3) for f in out["food_frac"]]}
             rows.append(row)

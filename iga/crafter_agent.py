@@ -258,7 +258,7 @@ def train_arm_dqn(enc, g_mid, mid_slice, wiring: bool, seed: int,
     Z = torch.zeros(cap, zd); A = torch.zeros(cap, dtype=torch.long)
     R = torch.zeros(cap); Z2 = torch.zeros(cap, zd); D = torch.zeros(cap)
     ptr, filled = 0, 0
-    survivals, food_fracs = [], []
+    survivals, food_fracs, drink_fracs = [], [], []
     step_total = 0
     while step_total < total_steps:
         obs = env.reset()
@@ -267,7 +267,7 @@ def train_arm_dqn(enc, g_mid, mid_slice, wiring: bool, seed: int,
             es = slow_stats(frame.unsqueeze(0).to(device))
             z = enc(frame.to(device), slow_feats=es).cpu()
         phi = float(torch.linalg.vector_norm(z[mid_slice] - g_mid))
-        alive, food_hi = 0, 0
+        alive, food_hi, drink_hi = 0, 0, 0
         for t in range(max_steps):
             eps = max(0.1, 1.0 - 0.9 * step_total / eps_decay_steps)
             if float(torch.rand((), generator=rng)) < eps:
@@ -290,6 +290,8 @@ def train_arm_dqn(enc, g_mid, mid_slice, wiring: bool, seed: int,
             step_total += 1
             if float(info["inventory"].get("food", 0)) >= 6:
                 food_hi += 1
+            if float(info["inventory"].get("drink", 0)) >= 6:
+                drink_hi += 1
             if filled >= 2000 and step_total % 4 == 0:
                 idx = torch.randint(0, filled, (128,), generator=gen)
                 zb, ab, rb = Z[idx].to(device), A[idx].to(device), R[idx].to(device)
@@ -308,11 +310,14 @@ def train_arm_dqn(enc, g_mid, mid_slice, wiring: bool, seed: int,
                 break
         survivals.append(alive)
         food_fracs.append(food_hi / max(alive, 1))
+        drink_fracs.append(drink_hi / max(alive, 1))
         if log and len(survivals) % 100 == 0:
             import numpy as _np
             print(f"[dqn] {'ON ' if wiring else 'OFF'} ep {len(survivals)} "
                   f"steps {step_total} eps {eps:.2f} "
                   f"surv(last50) {_np.mean(survivals[-50:]):.0f} "
-                  f"food%(last50) {_np.mean(food_fracs[-50:]):.2f}", flush=True)
+                  f"food%(last50) {_np.mean(food_fracs[-50:]):.2f} "
+                  f"drink%(last50) {_np.mean(drink_fracs[-50:]):.2f}", flush=True)
     return {"survival": survivals, "food_frac": food_fracs,
+            "drink_frac": drink_fracs,
             "policy_state": {k: v.cpu() for k, v in q.state_dict().items()}}
