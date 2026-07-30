@@ -41,7 +41,8 @@ import torch
 
 torch.set_num_threads(max(1, (os.cpu_count() or 4) // 2))
 
-from .crafter_agent import estimate_register_target, iqm, train_arm
+from .crafter_agent import (estimate_register_target, iqm, train_arm,
+                            train_arm_dqn)
 from .crafter_support import EncoderCrafter, collect_crafter_walk
 from .experiments import RESULTS
 from .experiments_v07 import git_push_results
@@ -61,14 +62,16 @@ def bootstrap_ci(xs, n=4000, seed=0, q=(2.5, 97.5)):
 
 def main() -> None:
     mode = sys.argv[1] if len(sys.argv) > 1 else "tiny"
+    learner = sys.argv[2] if len(sys.argv) > 2 else "dqn"   # run 2 default
     tiny = mode == "tiny"
     RESULTS.mkdir(exist_ok=True)
     t0 = time.time()
     seeds = range(1, 3 if tiny else 11)
-    episodes = 6 if tiny else 500   # revision 1: measured exploration
-    # deficit (0-3 controllable reward events/episode; flat curves at 150)
+    episodes = 6 if tiny else 500
     max_steps = 150 if tiny else 1000
-    print(f"[v1.0] device={DEVICE} mode={mode} seeds={list(seeds)}", flush=True)
+    total_steps = 4000 if tiny else 300_000   # dqn budget per arm
+    print(f"[v1.0] device={DEVICE} mode={mode} learner={learner} "
+          f"seeds={list(seeds)}", flush=True)
 
     enc = EncoderCrafter(BANDS, seed=0)
     state = torch.load(RESULTS / "v09_encoder.pt", map_location="cpu")
@@ -95,9 +98,15 @@ def main() -> None:
     log = (RESULTS / "v10_behavior.jsonl").open("w")
     for seed in seeds:
         for wiring in (True, False):
-            out = train_arm(enc, g_mid, MID, wiring, seed=seed,
-                            episodes=episodes, max_steps=max_steps,
-                            device=DEVICE)
+            if learner == "dqn":
+                out = train_arm_dqn(enc, g_mid, MID, wiring, seed=seed,
+                                    total_steps=total_steps,
+                                    max_steps=max_steps, device=DEVICE,
+                                    log=True)
+            else:
+                out = train_arm(enc, g_mid, MID, wiring, seed=seed,
+                                episodes=episodes, max_steps=max_steps,
+                                device=DEVICE)
             torch.save(out.pop("policy_state"),
                        RESULTS / f"v10_policy_s{seed}_{'on' if wiring else 'off'}.pt")
             k = max(1, len(out["survival"]) // 3)
