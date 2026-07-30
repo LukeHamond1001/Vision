@@ -9,3 +9,5 @@
 [v1.0] seed 2 wiring=0 last3rd survival 178 food_frac 0.66 (1608s)
 [v1.0] seed 3 wiring=1 last3rd survival 168 food_frac 0.72 (1918s)
 [v1.0] seed 3 wiring=0 last3rd survival 174 food_frac 0.63 (2232s)
+[v1.0] seed 4 wiring=1 last3rd survival 159 food_frac 0.70 (2543s)
+[v1.0] seed 4 wiring=0 last3rd survival 174 food_frac 0.67 (2857s)
