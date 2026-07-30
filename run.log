@@ -27,3 +27,4 @@
 [v0.9] pca best daylight dim: 0.353
 [v0.9] G-slow (daylight >=0.8, beats pca): FAIL
 [v0.9] G-mid  (best meter >=0.8):          PASS
+[v0.9] done 693s
