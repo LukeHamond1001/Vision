@@ -5,6 +5,61 @@ stable commentary). Newest round first.
 
 ---
 
+## v0.9 — 2026-07-30: first contact with Crafter (round 1 FAIL ×2,
+## round 2 in flight)
+
+Phase 1 (routing discovery on a recognized benchmark) round 1, pod
+`2mw62w2c6dmtkc` (938 s, ~$0.18): **both gates failed**, and the probe
+matrix localized each failure to a specific pathway flaw — the
+instrument-first discipline transfers to observations nobody designed.
+
+Round-1 matrix (max |corr|, held-out episodes): mid band nearly dead
+across all variables (food 0.22, drink 0.20); slow-daylight 0.54 (beats
+PCA 0.35 but far under the 0.8 gate); fast band diffusely captures
+everything (0.40–0.58). Measured ρs behaved: daylight@40 = 0.755,
+food@20 = 0.965 → taus (5, 558, 142) — note food is *slower* than
+daylight in random play; the "mid" band is actually the slowest. Taus
+are measurements; the band names are just labels.
+
+**Diagnosis 1 — pooling destroyed the numerals (mid).** Crafter renders
+meter values as ~4×5 px digits beside fixed icons; a 2×8 average-pool
+grid over the HUD strip reduces each digit to a mean luminance that is
+nearly identical for 8, 6, 9. The pathway was incapacity-OVERSHOT:
+confined to the right region but too coarse to represent the value
+written there. Fix: raw HUD-strip pixels → linear head. Linear template
+matching reads digits; the incapacity that matters (spatial confinement
+— the head still cannot see the world) is preserved. Law candidate:
+**an incapacity prior must be stated relative to the signal's carrier —
+region confinement is the prior; resolution inside the region is not
+part of it, and pooling past the carrier's granularity is a second,
+unintended incapacity.**
+
+**Diagnosis 2 — the viewport scrolls (slow).** Global mean/std over a
+scrolling window is a terrain-composition signal (grass vs stone vs
+water dominating the view); daylight is one mixed factor. Our toy
+renderers held composition static — another freebie exposed by the real
+benchmark (freebies law, ops column grows: static scene composition).
+Fix: enrich the photometric stats with per-channel luminance
+percentiles (p10/p50/p90). Illumination shifts all percentiles
+together; composition changes their spread — a linear head gains the
+contrasts needed to isolate the common shift. Still global, still
+position-incapable.
+
+Tiny smoke after both fixes: mid reads food/drink at **0.96** (from
+0.22 — the digits really were the story), slow-daylight 0.65 at smoke
+scale (round-1 full-scale was 0.54 with the old stats). G-mid passes on
+CPU; G-slow needs the full run. Round 2 = pod `4sr5zs0m834tqq`, same
+gates, two band-local changes each isolated by its own gate.
+
+Cross-band note for honesty: at smoke scale the mid band also carries
+daylight ~0.9 — within short random-play lives, meters decay while
+daylight advances, so the HUD strip is temporally correlated with
+daylight (and Crafter dims the whole frame at night, HUD included).
+Leaks are reported, not hidden; the gates test routing of the claimed
+variables, and phase 2's registers will read the bands we point at.
+
+---
+
 ## v0.8 — 2026-07-29: the incapacity library, entry two (mixed) and the
 ## nuisance ladder
 
