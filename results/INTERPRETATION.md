@@ -5,6 +5,52 @@ stable commentary). Newest round first.
 
 ---
 
+## v0.9 rounds 3→4 — 2026-07-30: attribution is clean; the last enemy
+## is whitening's variance preference
+
+**Round 3 verdict** (pod `ro43h3621hgpdh`, 1105 s, ~$0.21): the
+protocol + charter fixes did exactly what the instruments predicted.
+**G-mid PASS, near-perfect:** food 0.99 / drink 0.99, daylight leak
+0.74 → 0.15, partial mid-meter|daylight **0.991** — the mid band is now
+a pure meter register. **G-part PASS** (0.663 / 0.991). **G-slow FAIL
+but transformed:** 0.44 → 0.67, now beating PCA by 0.25 with meter
+content down to 0.35 — the band genuinely tracks daylight, just not
+hard enough. Phase randomization also made the test harsher and more
+honest: collinearity 0.16, measured daylight ρ@40 dropped to 0.649
+(mixed phases), τ_slow 93.
+
+**Round-3 dissection** (encoder artifact probed locally, $0): the
+trained slow dims are the **green–blue color axis** — |corr| 0.94–0.99
+with view blueness, own ρ@40 only 0.33–0.39, *faster than daylight's
+0.715*. So minimization did NOT pick the slowest direction; the
+whitening term's variance preference dominated and picked the largest
+photometric axis (water-vs-grass composition + night tint), which
+carries daylight incidentally. Meanwhile the supervised ceiling on the
+phase-randomized protocol is **0.984** (and enrichment is pointless:
+7 percentiles 0.986, log-space 0.801 — inputs are settled).
+
+**Round 4, the measured cure: a frozen EMA(τ=10) inside the slow
+pathway.** Composition flicker is fast (green ρ@40 = 0.25); daylight
+survives smoothing. Measured on EMA'd stats: the top-variance direction
+of the standardized stat space goes from day-corr 0.710 (raw) to
+**0.834–0.844** (EMA τ=10–30) — after smoothing, daylight IS the
+dominant variance direction, so both the whitening term and the
+innovation term point the same way. The EMA is the OU prior expressed
+architecturally — a slow band constitutionally unable to represent fast
+content — parameter-free, frozen, episode-masked, applied identically
+in pretraining (precomputed), eval, and the phase-2 online loop.
+Library lesson if it holds: **when a pathway's charter is a timescale,
+enforce the timescale in the pathway, not just in the loss.**
+
+Phase-2 machinery built and smoke-tested in the pod gaps: categorical
+PPO-lite over the frozen 8-d latent, register-progress reward
+(potential-based; total return telescopes to φ₀−φ_T — die-with-empty-
+meters is the strict minimum, nothing farmable), arms paired on
+identical world sequences, G-behav pre-registered (IQM ratio ≥ 1.15,
+paired-diff CI > 0) before any full run.
+
+---
+
 ## v0.9 rounds 2–3 — 2026-07-30: G-mid holds at scale; the slow band's
 ## two confounds are measured, not guessed
 
