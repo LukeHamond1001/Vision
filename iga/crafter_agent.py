@@ -321,3 +321,135 @@ def train_arm_dqn(enc, g_mid, mid_slice, wiring: bool, seed: int,
     return {"survival": survivals, "food_frac": food_fracs,
             "drink_frac": drink_fracs,
             "policy_state": {k: v.cpu() for k, v in q.state_dict().items()}}
+
+
+class PixelQNet(torch.nn.Module):
+    """Standard small conv Q-net on raw 64x64 frames (published-regime
+    capacity). The discovered latent is NOT the policy state in v1.1 —
+    it is the REWARD substrate (registers/wiring), which is the
+    architecture's actual claim. Runs 1-3 measured the cost of conflating
+    the two roles."""
+
+    def __init__(self, n_actions: int = 17, seed: int = 0):
+        super().__init__()
+        torch.manual_seed(seed + 1300)
+        self.f = torch.nn.Sequential(
+            torch.nn.Conv2d(3, 32, 4, stride=2, padding=1), torch.nn.ReLU(),
+            torch.nn.Conv2d(32, 64, 4, stride=2, padding=1), torch.nn.ReLU(),
+            torch.nn.Conv2d(64, 64, 4, stride=2, padding=1), torch.nn.ReLU(),
+            torch.nn.Flatten(),
+            torch.nn.Linear(64 * 8 * 8, 512), torch.nn.ReLU(),
+            torch.nn.Linear(512, n_actions))
+
+    def forward(self, x):
+        return self.f(x)
+
+
+def train_arm_pixel_dqn(enc, g_mid, mid_slice, reward_mode: str, seed: int,
+                        total_steps: int = 1_000_000, max_steps: int = 1000,
+                        gamma: float = 0.99, lr: float = 1e-4, nstep: int = 3,
+                        eps_decay_steps: int = 300_000, batch: int = 128,
+                        device: str = "cpu", log_every_eps: int = 50) -> dict:
+    """v1.1 three-arm design. reward_mode in {'wired','native','zero'}:
+    wired  = register progress in the frozen discovered latent's mid band
+             (no env reward, no labels — wire it, don't train it)
+    native = Crafter's built-in reward (strong baseline)
+    zero   = no reward (isolates 'because of the wired reward')
+    Same pixel Q-net, same worlds, same exploration in every arm."""
+    import crafter
+    from .crafter_support import SLOW_EMA_TAU, slow_stats
+    alpha = 1.0 / SLOW_EMA_TAU
+    env = crafter.Env(seed=seed * 31)
+    q, qt = PixelQNet(seed=seed).to(device), PixelQNet(seed=seed).to(device)
+    qt.load_state_dict(q.state_dict())
+    opt = torch.optim.Adam(q.parameters(), lr=lr)
+    gen = torch.Generator().manual_seed(seed + 123)
+    rng = torch.Generator().manual_seed(seed + 321)
+    cap = 100_000
+    F0 = torch.zeros(cap, 3, 64, 64, dtype=torch.uint8)
+    F1 = torch.zeros(cap, 3, 64, 64, dtype=torch.uint8)
+    A = torch.zeros(cap, dtype=torch.long)
+    R = torch.zeros(cap); D = torch.zeros(cap)
+    ptr, filled = 0, 0
+    survivals, food_fracs, drink_fracs = [], [], []
+    step_total = 0
+    while step_total < total_steps:
+        obs = env.reset()
+        frame_u8 = torch.from_numpy(obs.copy()).permute(2, 0, 1)
+        if reward_mode == "wired":
+            with torch.no_grad():
+                f = frame_u8.float().div(255.0)
+                es = slow_stats(f.unsqueeze(0).to(device))
+                z = enc(f.to(device), slow_feats=es).cpu()
+            phi = float(torch.linalg.vector_norm(z[mid_slice] - g_mid))
+        alive, food_hi, drink_hi = 0, 0, 0
+        pend = []   # n-step pending transitions
+        for t in range(max_steps):
+            eps = max(0.05, 1.0 - 0.95 * step_total / eps_decay_steps)
+            if float(torch.rand((), generator=rng)) < eps:
+                a = int(torch.randint(0, 17, (), generator=rng))
+            else:
+                with torch.no_grad():
+                    a = int(q(frame_u8.float().div(255.0).unsqueeze(0)
+                              .to(device)).argmax())
+            obs, r_native, done, info = env.step(a)
+            frame2_u8 = torch.from_numpy(obs.copy()).permute(2, 0, 1)
+            if reward_mode == "wired":
+                with torch.no_grad():
+                    f2 = frame2_u8.float().div(255.0)
+                    es = (1 - alpha) * es + alpha * slow_stats(f2.unsqueeze(0).to(device))
+                    z2 = enc(f2.to(device), slow_feats=es).cpu()
+                phi2 = float(torch.linalg.vector_norm(z2[mid_slice] - g_mid))
+                r = phi - phi2
+                phi = phi2
+            elif reward_mode == "native":
+                r = float(r_native)
+            else:
+                r = 0.0
+            pend.append([frame_u8, a, r, frame2_u8, float(done)])
+            if len(pend) >= nstep or done:
+                while pend and (len(pend) >= nstep or done):
+                    Rn, g_ = 0.0, 1.0
+                    for k in range(min(nstep, len(pend))):
+                        Rn += g_ * pend[k][2]; g_ *= gamma
+                    last = pend[min(nstep, len(pend)) - 1]
+                    F0[ptr] = pend[0][0]; A[ptr] = pend[0][1]; R[ptr] = Rn
+                    F1[ptr] = last[3]; D[ptr] = last[4]
+                    ptr = (ptr + 1) % cap; filled = min(filled + 1, cap)
+                    pend.pop(0)
+                    if not done:
+                        break
+            frame_u8 = frame2_u8
+            alive += 1; step_total += 1
+            if float(info["inventory"].get("food", 0)) >= 6: food_hi += 1
+            if float(info["inventory"].get("drink", 0)) >= 6: drink_hi += 1
+            if filled >= 5000 and step_total % 4 == 0:
+                idx = torch.randint(0, filled, (batch,), generator=gen)
+                f0 = F0[idx].float().div(255.0).to(device)
+                f1 = F1[idx].float().div(255.0).to(device)
+                ab, rb, db = A[idx].to(device), R[idx].to(device), D[idx].to(device)
+                with torch.no_grad():
+                    a2 = q(f1).argmax(1)
+                    tgt = rb + (gamma ** nstep) * (1 - db) * \
+                        qt(f1).gather(1, a2.unsqueeze(1)).squeeze(1)
+                pred = q(f0).gather(1, ab.unsqueeze(1)).squeeze(1)
+                loss = torch.nn.functional.smooth_l1_loss(pred, tgt)
+                opt.zero_grad(); loss.backward()
+                torch.nn.utils.clip_grad_norm_(q.parameters(), 10.0)
+                opt.step()
+            if step_total % 2000 == 0:
+                qt.load_state_dict(q.state_dict())
+            if done:
+                break
+        survivals.append(alive)
+        food_fracs.append(food_hi / max(alive, 1))
+        drink_fracs.append(drink_hi / max(alive, 1))
+        if log_every_eps and len(survivals) % log_every_eps == 0:
+            import numpy as _np
+            print(f"[px] {reward_mode:6s} ep {len(survivals)} steps {step_total} "
+                  f"eps {eps:.2f} surv(last30) {_np.mean(survivals[-30:]):.0f} "
+                  f"food% {_np.mean(food_fracs[-30:]):.2f} "
+                  f"drink% {_np.mean(drink_fracs[-30:]):.2f}", flush=True)
+    return {"survival": survivals, "food_frac": food_fracs,
+            "drink_frac": drink_fracs,
+            "policy_state": {k: v.cpu() for k, v in q.state_dict().items()}}
