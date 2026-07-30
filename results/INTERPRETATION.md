@@ -5,6 +5,50 @@ stable commentary). Newest round first.
 
 ---
 
+## v0.9 rounds 4→5 — 2026-07-30: 0.7962 vs a bar of 0.8000, and the
+## local replica that turned the last gap into a measurement
+
+**Round 4 verdict** (pod `jsf2mvhc6nw991`, 834 s, ~$0.16): the EMA did
+what its measurement promised. Slow-daylight **0.67 → 0.7962**, partial
+0.663 → **0.798**, meter content 0.35 → 0.29, PCA beaten by 0.29; mid
+band steady at 0.97/0.98 (partial 0.984). G-part PASS. **G-slow FAIL
+by 0.0038.** The bar stays at 0.8 — no goalpost moves; the miss is a
+fact about optimization, and it was measured rather than argued:
+
+**The local replica.** The slow pathway (linear head on precomputed
+EMA'd stats) is fully separable from the joint loss, so its exact
+training replays locally in seconds. Local mean over 3 seeds: 0.797 —
+replicating the pod's 0.796 almost exactly. The sweep then refuted two
+standing hypotheses and confirmed one:
+- *Two-sided innovation matching* (match innovation variance instead of
+  minimizing it): WORSE (means 0.62–0.69, high variance). Refuted as
+  this pathway's cure; minimize+EMA is the right family here.
+- *Single slow dim* (remove whitening's split pressure): WORSE
+  (0.72–0.74). The second dim protects the first by absorbing
+  orthogonal drift.
+- *The gap is basin variance*: identical config lands 0.72–0.84 by
+  seed. And the objective itself knows: across 6 restarts, the
+  argmin of the FULL-DATA unsupervised loss (innovation + whitening —
+  truth touches nothing) picked the best-daylight basin (0.845), and
+  the one bad basin (0.752) had visibly elevated loss.
+
+**Round 5** (pod `vf6wrcwcqjz4vt`, in flight): k=6 slow-head restarts
+after the joint pretrain, argmin-loss winner spliced into the encoder.
+Same objective, better optimization. Tiny smoke: slow-daylight 0.77
+with meter content 0.08 — the cleanest smoke reading of the campaign.
+Prediction on record: full-scale slow-daylight ≈ 0.84, all three
+phase-1 gates pass.
+
+Also measured while pods ran — the phase-2 perception ledger (round-3
+encoder, semantic labels, eval-only): water-near readable at **0.80**
+from the full latent (the photometric slow band doubles as a water
+sensor), meter state 0.99 (mid), zombie-near 0.44, **cow-near 0.02 —
+the latent is cow-blind.** So the wiring's survival channel is
+drink-holding + meter awareness; if G-behav fails on food-death, the
+named next lever is fast-band capacity, not reward design.
+
+---
+
 ## v0.9 rounds 3→4 — 2026-07-30: attribution is clean; the last enemy
 ## is whitening's variance preference
 
