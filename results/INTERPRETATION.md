@@ -5,6 +5,44 @@ stable commentary). Newest round first.
 
 ---
 
+## v1.0 runs 1–2 verdict — 2026-07-30: the ceiling is PERCEPTION, not
+## reward, not learner; round 6 sizes the fast band to the control task
+
+**Run 1 final** (pod `qjch0plmkcwy3k`, 6632 s, ~$1.27): a perfect null.
+IQM survival 172 vs 171, ratio 1.00, paired-diff CI [−5, 8]. G-behav
+FAIL as the partials predicted; 10-seed negative baseline table on the
+branch. At 150 episodes of on-policy PPO, the reward stream does not
+matter because nothing learns.
+
+**Learner swap #4 verdict (local, $0): replay double-DQN is ALSO flat.**
+Wiring-on, 250k steps, ε annealed to 0.10 by 100k: survival quarters
+[168, 173, 169, 173], food% [0.69, 0.66, 0.66, 0.65]. 150k near-greedy
+steps produced zero improvement over random. With (a) a dense reward
+verified aligned at corr −0.984, (b) replay reusing every rare event,
+(c) meter state readable at 0.99 in the input — a Q-function that
+converges to "no action changes expected return" is likely CORRECT
+given the state. The run-2 pod (same config, 10 seeds) was killed
+mid-run once its local twin proved the null (~$0.50 spent).
+
+**The perception localization.** To exploit the meter wiring the agent
+must navigate-to and FACE water/food sources. The perception ledger:
+water-NEAR 0.80 (presence, not direction), cow 0.02, tree 0.21. The
+latent carries no egocentric geometry — 4 fast dims trained for τ=5
+smoothness cannot hold "water is to my left." The toy worlds never
+exposed this: their fast content WAS position, and goals were
+positional. Freebies-law entry: **control-sufficiency of the fast band
+is a task property — capacity must be sized to the control problem,
+and toy-world frugality does not transfer.** The spec's fast band is
+explicitly capacity-unconstrained; (4,2,2) was frugality, not doctrine.
+
+**Round 6** (pod `nz8t07fesqu9kf`, in flight): band_dims (16,2,2),
+slow/mid pathways untouched. Phase-1 gates re-verified at full scale;
+then the pre-registered perception gate on the artifact (ridge from
+full z: water ≥ 0.8 AND tree ≥ 0.4); then behavioral run 3 under the
+replay learner. Each link measured before the next spend.
+
+---
+
 ## v1.0 phase-2 run 1 — 2026-07-30: flat in BOTH arms; the learner is
 ## the bottleneck, and the wiring is provably not
 
