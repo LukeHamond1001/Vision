@@ -1,3 +1,4 @@
 [v0.8] device=cuda mode=full
 [v0.8] walk torch.Size([30000, 3, 64, 64]) in 905s (b coverage: min=0 max=6)
 [v0.8] photo  slow: b=0.617 x=0.17 y=0.07 | fast b=0.87 (1437s)
+[v0.8] region slow: b=0.758 x=0.25 y=0.42 | fast b=0.82 (1971s)
