@@ -136,7 +136,8 @@ def train_arm(enc, g_mid, mid_slice, wiring: bool, seed: int,
               device: str = "cpu") -> dict:
     """One seed, one arm. Returns survival + meter-hold trajectories."""
     import crafter
-    env = crafter.Env(seed=seed * 31 + (7 if wiring else 11))
+    env = crafter.Env(seed=seed * 31)   # SAME world sequence for both arms:
+    # the paired difference isolates the reward wiring, nothing else
     policy = CrafterPolicy(seed=seed).to(device)
     opt = torch.optim.Adam(policy.parameters(), lr=3e-4)
     survivals, food_fracs = [], []
