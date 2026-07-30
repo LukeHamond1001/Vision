@@ -26,3 +26,4 @@
 [v1.0] IQM survival wiring-on 172 CI [166,179]  wiring-off 171 CI [167,176]
 [v1.0] ratio 1.00  paired-diff CI [-5,8]
 [v1.0] G-behav (ratio>=1.15, diff CI>0): FAIL
+[v1.0] done 6632s
