@@ -153,7 +153,8 @@ def train_arm(enc, g_mid, mid_slice, wiring: bool, seed: int,
         ppo_update(policy, opt, batch, device=device)
         survivals.append(alive)
         food_fracs.append(ffrac)
-    return {"survival": survivals, "food_frac": food_fracs}
+    return {"survival": survivals, "food_frac": food_fracs,
+            "policy_state": {k: v.cpu() for k, v in policy.state_dict().items()}}
 
 
 def iqm(xs) -> float:

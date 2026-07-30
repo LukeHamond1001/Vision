@@ -89,6 +89,8 @@ def main() -> None:
             out = train_arm(enc, g_mid, MID, wiring, seed=seed,
                             episodes=episodes, max_steps=max_steps,
                             device=DEVICE)
+            torch.save(out.pop("policy_state"),
+                       RESULTS / f"v10_policy_s{seed}_{'on' if wiring else 'off'}.pt")
             k = max(1, len(out["survival"]) // 3)
             row = {"seed": seed, "wiring": wiring,
                    "survival_last3rd": float(np.mean(out["survival"][-k:])),
