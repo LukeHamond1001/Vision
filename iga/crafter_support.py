@@ -229,6 +229,50 @@ def pretrain_crafter_encoder(frames_u8: torch.Tensor, ep_ids: torch.Tensor,
         opt.step()
         if log_every and ep % log_every == 0:
             print(f"[v0.9:pretrain] epoch {ep} loss {float(loss):.4f}", flush=True)
+    # Round 5: slow-head restarts with unsupervised selection. The slow
+    # pathway (linear on precomputed EMA stats) is fully separable from the
+    # other bands, and its optimization is basin-sensitive (measured local
+    # replica: held-out daylight 0.72-0.84 across seeds at identical
+    # config; the pod's single seed landed 0.7962 vs the 0.8 gate). Train
+    # k fresh heads (seconds), keep the argmin of the FULL-DATA objective
+    # (innovation + whitening — no truth anywhere). Measured: argmin-loss
+    # picked the best-daylight basin (0.845) out of 6.
+    sl_slow, tau_sl, lag_sl = slices[-1], taus[-1], lags[-1]
+    bd = sl_slow.stop - sl_slow.start
+    rho_sl = float(torch.exp(torch.tensor(-lag_sl / tau_sl)))
+    vs = valid[lag_sl]
+    F = slow_feats.to(device)
+    best_head, best_L = None, float("inf")
+    for r in range(6):
+        torch.manual_seed(seed + 900 + r)
+        head = torch.nn.Linear(F.shape[1], bd).to(device)
+        hopt = torch.optim.Adam(head.parameters(), lr=lr)
+        hgen = torch.Generator().manual_seed(seed + 1000 + r)
+        for hep in range(epochs):
+            pick = vs[torch.randint(0, vs.shape[0], (batch,), generator=hgen)]
+            z0, z1 = head(F[pick]), head(F[pick + lag_sl])
+            hl = (((z1 - rho_sl * z0) ** 2).mean(0)
+                  / max(1 - rho_sl ** 2, 1e-3)).sum() / bd
+            st = torch.randint(0, T, (batch,), generator=hgen)
+            z = head(F[st]); zc = z - z.mean(0)
+            hl = hl + (((zc.T @ zc) / (batch - 1)
+                        - torch.eye(bd, device=device)) ** 2).sum()
+            hopt.zero_grad(); hl.backward(); hopt.step()
+        with torch.no_grad():
+            z0, z1 = head(F[vs]), head(F[vs + lag_sl])
+            innov = (((z1 - rho_sl * z0) ** 2).mean(0)
+                     / max(1 - rho_sl ** 2, 1e-3)).sum() / bd
+            z = head(F); zc = z - z.mean(0)
+            cov = (zc.T @ zc) / (F.shape[0] - 1)
+            L = float(innov + ((cov - torch.eye(bd, device=device)) ** 2).sum())
+        print(f"[v0.9:pretrain] slow restart {r} loss {L:.4f}", flush=True)
+        if L < best_L:
+            best_L, best_head = L, head
+    with torch.no_grad():
+        enc.slow_head.weight.copy_(best_head.weight)
+        enc.slow_head.bias.copy_(best_head.bias)
+    print(f"[v0.9:pretrain] slow head <- argmin restart (loss {best_L:.4f})",
+          flush=True)
     enc.freeze()
     return enc
 
