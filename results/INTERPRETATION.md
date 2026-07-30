@@ -5,6 +5,47 @@ stable commentary). Newest round first.
 
 ---
 
+## v1.0 phase-2 run 1 — 2026-07-30: flat in BOTH arms; the learner is
+## the bottleneck, and the wiring is provably not
+
+Run 1 (pod `qjch0plmkcwy3k`, 10 seeds × 2 arms, 150 episodes each,
+G-behav as pre-registered): partials through seed 6 showed **no
+separation** (ON 174 vs OFF 171) — and the within-arm learning curves
+are FLAT in both arms (mean improvement ON −4, OFF −1 steps; meter
+holding unchanged). Both arms sit at the random-policy baseline. The
+gate fails honestly, and the failure localizes to the learning setup,
+not the architecture contrast.
+
+**The instrument chain ($0, local):**
+1. Deep-instrumented wiring-on run: controllable reward events (eat/
+   drink reaching the mid band) occur **0–3 times per episode**; the
+   rest of the stream is a constant −0.013 decay drip. Policy entropy
+   collapses 2.82 → 1.0 over 200 episodes with zero reward improvement
+   — commitment to noise.
+2. Revision-1 package (SPEC one-shot latent curiosity both arms +
+   entropy floor 5e-3 + more episodes) — **REFUTED locally**: survival
+   thirds [176, 188, 174] vs [188, 188, 183]. Curiosity does not
+   manufacture the missing events.
+3. Wiring alignment verified before blaming the reward:
+   **corr(φ, food+drink) = −0.984**, monotone (φ 3.95 → 0.26 across
+   starving → well-fed). The register-progress reward is a near-ideal
+   dense meter signal. The reward is right; the learner can't use it.
+4. Context: published Crafter PPO baselines need ~1M steps to learn
+   reliable eat/drink from pixels; our budget was 25–85k. The toy-world
+   budgets silently transferred into phase 2 — another freebies-law
+   instance (sample-complexity is benchmark-sized, not toy-sized).
+
+**Learner swap #4 (SPEC §5.4 pluggable learner):** replay double-DQN
+over the frozen 8-d latent (64-64 net, cap 100k, batch 128 every 4
+steps, double targets @1k, ε 1.0→0.1 over 100k, γ=0.97 as a learner
+knob). On-policy episodic PPO discards each rare event after one
+update; replay reuses it thousands of times; ε-greedy explores without
+auxiliary bonuses. Same learner both arms; the contrast stays
+reward-only. Local pre-test in flight (250k steps/arm) before any pod
+relaunch.
+
+---
+
 ## v0.9 PHASE-1 CLOSE — 2026-07-30: the 0.79 asymptote is the finding
 
 **Round 5 verdict** (pod `vf6wrcwcqjz4vt`, 910 s, ~$0.17): slow-daylight
