@@ -5,6 +5,41 @@ stable commentary). Newest round first.
 
 ---
 
+## v0.8 — 2026-07-29: the incapacity library, entry two (mixed) and the
+## nuisance ladder
+
+BankWorld: slow variable = banked count (spatial configuration; dots
+relocate, luminance-identical). Designed negative control: v0.7's
+raw-photometric pathway. Full-scale verdicts (`v08_library.json`):
+photo-slow 0.617 (control VIOLATED), region-slow 0.758 (clears the
+v0.7-style absolute criterion — PCA control 0.131 — but misses the stricter
+pre-registered routing clause), fast band captures b at 0.82–0.87 in both.
+
+**The nuisance ladder (six rungs, the round's real finding):** edge
+clipping → saturation micro-leaks (0.1–1% global shifts amplified to corr
+0.96 by whitened readouts) → common-mode jitter defeated by null-space
+contrasts → per-channel gain defeated by within-channel (mean,std)
+contrasts → gain+offset closes the linear null space → the CLAMP reopens it
+nonlinearly (saturation statistics depend on configuration in a
+gain-modulated way; residual 0.617). Law: **a pathway is only as incapable
+as the invariant subspace its nuisance model fails to span — and bounded
+rendering leaks through nonlinearity even when linear null spaces are
+closed.** Constructive incapacity is adversarial.
+
+Second lesson: capture ≠ routing, and criteria must be
+precedent-disciplined — the v0.8 routing clause (slow > fast) was stricter
+than v0.7's gate ever was; under v0.7's criterion region passes. Both
+readings reported.
+
+**Named next experiment — counting as an incapacity prior:** a fixed-filter
+blob-count head (frozen DoG detector, threshold, spatial sum; optionally
+per-region). Incapable of position by summation algebra, photometrically
+robust by thresholding, matched to set-cardinality by construction — the
+first library entry that is not a pooling variant. Gates: photo & region as
+measured baselines; blob-count slow-b ≥ 0.9 with position ≤ 0.3.
+
+---
+
 ## v0.7 VERDICT — 2026-07-29: the pipeline holds on pixels
 
 Round 18 (`v07_behavior_final.jsonl`, `v07_summary.json`; 12 CNN seeds,
