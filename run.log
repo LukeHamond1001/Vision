@@ -5,3 +5,35 @@
 [v0.9] coverage food: min=0.00 max=9.00
 [v0.9] coverage drink: min=0.00 max=9.00
 [v0.9] measured rho: daylight@40=0.672 food@20=0.965 -> taus=(5.0, 564.5, 100.8)
+[v0.9:pretrain] epoch 0 loss 20.0819
+[v0.9:pretrain] epoch 100 loss 16.9722
+[v0.9:pretrain] epoch 200 loss 12.0630
+[v0.9:pretrain] epoch 300 loss 7.6796
+[v0.9:pretrain] epoch 400 loss 5.3145
+[v0.9:pretrain] epoch 500 loss 4.7410
+[v0.9:pretrain] epoch 600 loss 4.4729
+[v0.9:pretrain] epoch 700 loss 4.4124
+[v0.9:pretrain] epoch 800 loss 4.0260
+[v0.9:pretrain] epoch 900 loss 4.0730
+[v0.9:pretrain] epoch 1000 loss 4.1359
+[v0.9:pretrain] epoch 1100 loss 4.1495
+[v0.9:pretrain] epoch 1200 loss 4.0781
+[v0.9:pretrain] epoch 1300 loss 3.9481
+[v0.9:pretrain] epoch 1400 loss 4.0238
+[v0.9:pretrain] slow restart 0 loss 1.5050
+[v0.9:pretrain] slow restart 1 loss 1.5231
+[v0.9:pretrain] slow restart 2 loss 1.5064
+[v0.9:pretrain] slow restart 3 loss 1.5170
+[v0.9:pretrain] slow restart 4 loss 1.5235
+[v0.9:pretrain] slow restart 5 loss 1.5110
+[v0.9:pretrain] slow head <- argmin restart (loss 1.5050)
+[v0.9] pretraining done (1129s)
+[v0.9] routing matrix (band x variable, max |corr|):
+[v0.9]   fast  {'daylight': 0.41, 'food': 0.25, 'drink': 0.23, 'energy': 0.21, 'health': 0.14}
+[v0.9]   mid   {'daylight': 0.03, 'food': 0.99, 'drink': 0.99, 'energy': 0.37, 'health': 0.17}
+[v0.9]   slow  {'daylight': 0.72, 'food': 0.28, 'drink': 0.27, 'energy': 0.1, 'health': 0.2}
+[v0.9] pca best daylight dim: 0.458
+[v0.9] partial: slow-daylight|meter 0.729  mid-meter|daylight 0.994
+[v0.9] G-slow (daylight >=0.8, beats pca): FAIL
+[v0.9] G-mid  (best meter >=0.8):          PASS
+[v0.9] G-part (partials >=0.5):            PASS
