@@ -90,6 +90,8 @@ def main() -> None:
     for arm in ARMS:
         t1 = time.time()
 
+        pushed = [0]
+
         def cb(steps, stats, _arm=arm, _t1=t1):
             if stats["survival"] and steps % (n_envs * 2560) == 0:
                 print(f"[v1.2] {_arm} steps {steps} eps "
@@ -97,6 +99,15 @@ def main() -> None:
                       f"surv(last50) {np.mean(stats['survival'][-50:]):.0f} "
                       f"slept(last50) {np.mean(stats['slept'][-50:]):.1f} "
                       f"({time.time()-_t1:.0f}s)", flush=True)
+            if steps - pushed[0] >= 400_000:   # mid-arm heartbeat for the
+                pushed[0] = steps              # pilot's tripwires
+                import subprocess
+                subprocess.run(["git", "add", "-A", "run.log"],
+                               capture_output=True)
+                subprocess.run(["git", "commit", "-qm",
+                                f"hb-{_arm}-{steps}"], capture_output=True)
+                subprocess.run(["git", "push", "-qf", "origin", "HEAD"],
+                               capture_output=True)
 
         out = run_ppo_arm(enc, g, MID, arm, seed=seed,
                           total_steps=total_steps, n_envs=n_envs,
