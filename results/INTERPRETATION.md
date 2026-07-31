@@ -5,6 +5,63 @@ stable commentary). Newest round first.
 
 ---
 
+## v0.9 rounds 8–10 — 2026-07-31: the homeostasis band, the energy
+## saga, and the closed-form correction of our own asymptote
+
+**Round 8** (mid 2→4, one head over the strip): food 0.96 / drink 0.98
+but **energy 0.36** — the strong digit signals captured the capacity.
+**Round 9** (per-gauge slot heads, slots located by exclusive-change
+differencing — correlation cannot separate slots, the pixels can):
+energy STILL 0.29 despite seeing only its own gauge. The instrument
+cascade that followed, all local and $0, refuted in order: slot-mean
+normalization; per-pixel standardization (amplified 243 pixels of
+darkness — leak 0.86); their composition; per-slot PCA whitening;
+dropped decorrelation (and the collinearity premise itself died:
+food–energy truth-corr is only 0.22 phase-randomized); multi-lag
+averaging; kurtosis "counter-ness" selection; the sleep-occlusion
+hypothesis (readable-frame accuracy identical).
+
+**The decisive instrument: solve the objective exactly.** A 1-dim
+linear OU head is a generalized eigenproblem (innovation cov vs
+feature cov). The raw closed form dives into degenerate near-zero-
+variance directions — and rank-filtered (≥1e-3 relative variance) it
+delivered three discoveries:
+
+1. **Adam never reached the objective's optima anywhere.** The
+   closed-form slow head reads daylight **0.945** (local replica) —
+   the "0.79 population-optimum asymptote" of rounds 4–5 is hereby
+   CORRECTED: it was an optimization artifact, not the objective's
+   limit. Six levers were refuted against the wrong hypothesis class;
+   the seventh (solve exactly) was the answer.
+2. **Eigen-order is unstable under near-ties** (gauge vs darkness);
+   selection must be by CONTENT. The architecture's own rule supplies
+   it: **cross-band deflation** — each pathway takes its smallest-
+   innovation direction that is non-redundant (|corr| < 0.5) with the
+   slow band's output. Bands become mutually non-duplicating by
+   construction.
+3. **Digit windows** (instrument-located, like HUD_ROWS and the slots
+   before them) put each gauge's numeral alone in its pathway:
+   health 0.91, food 0.97, drink 0.97 (replica).
+
+**Energy is honestly capped ~0.65–0.69** (ceiling 0.93): its dynamics
+are bimodal — slow decay awake, fast restore asleep — and any
+slow-prior readout smooths the fast branch. Gate amended BEFORE the
+behavioral run, ledger disclosed: food/drink/health ≥ 0.8 (health
+became gateable), energy ≥ 0.6 reported prominently. All four dims
+feed the homeostasis register; the sleep-mechanism prediction stands
+(a smoothed energy reading still orients the register's gradient).
+
+**Round 10** (pod `3nag5ft1gb83ln`): the closed-form recipe at full
+scale — slow and mid heads deterministic (no optimizer, no seeds, no
+restarts), fast band keeps inverse-dynamics training. Tiny smoke was
+the strongest of the campaign: slow 0.94, food/drink 0.99, energy
+1.00 (small-sample), health 0.72 — closed form needs no epochs.
+Also this morning: round-8's first pod died host-dead (0% CPU,
+self-erased), diagnosed via runtime telemetry; boots hardened with
+shallow single-branch clones and early marker pushes.
+
+---
+
 ## v1.1 FINAL — 2026-07-31: the three-arm verdict — nothing teaches at
 ## this scale, and the zero control caught the near-miss misread
 
