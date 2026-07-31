@@ -336,6 +336,7 @@ def closed_form_head(X: torch.Tensor, ep_ids: torch.Tensor, lag: int,
     innovation direction with |corr| < 0.5 against every column of
     `deflate` (cross-band non-redundancy). Returns (weight, bias) with
     unit output variance on the walk."""
+    X = X.double()                       # eigh stability: float64 + ridge
     mu = X.mean(0)
     Xc = X - mu
     rho = float(torch.exp(torch.tensor(-lag / tau)))
@@ -344,6 +345,8 @@ def closed_form_head(X: torch.Tensor, ep_ids: torch.Tensor, lag: int,
     d = Xc[v + lag] - rho * Xc[v]
     A = (d.T @ d) / d.shape[0]
     B = (Xc.T @ Xc) / Xc.shape[0]
+    B = B + (1e-6 * float(B.diagonal().mean().clamp_min(1e-12))) \
+        * torch.eye(B.shape[0], dtype=B.dtype)
     eb, Vb = torch.linalg.eigh(B)
     keep = eb > var_floor * eb.max()
     P = Vb[:, keep]
@@ -359,12 +362,12 @@ def closed_form_head(X: torch.Tensor, ep_ids: torch.Tensor, lag: int,
             if red >= 0.5:
                 continue
         sd = z.std().clamp_min(1e-8)
-        w = w / sd
-        return w, float(-(mu @ w))
+        w = (w / sd)
+        return w.float(), float(-(mu @ w))
     w = P @ (Bih @ Va[:, 0])
     sd = (Xc @ w).std().clamp_min(1e-8)
-    w = w / sd
-    return w, float(-(mu @ w))
+    w = (w / sd)
+    return w.float(), float(-(mu @ w))
 
 
 def partial_corr(a: torch.Tensor, b: torch.Tensor, c: torch.Tensor) -> float:
