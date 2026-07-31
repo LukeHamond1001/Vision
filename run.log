@@ -1,0 +1,17 @@
+[v1.2] device=cuda mode=full seed=3 steps/arm=3000000 envs=12
+/workspace/iga/iga/experiments_v12.py:73: FutureWarning: You are using `torch.load` with `weights_only=False` (the current default value), which uses the default pickle module implicitly. It is possible to construct malicious pickle data which will execute arbitrary code during unpickling (See https://github.com/pytorch/pytorch/blob/main/SECURITY.md#untrusted-models for more details). In a future release, the default value for `weights_only` will be flipped to `True`. This limits the functions that could be executed during unpickling. Arbitrary objects will no longer be allowed to be loaded via this mode unless they are explicitly allowlisted by the user via `torch.serialization.add_safe_globals`. We recommend you start setting `weights_only=True` for any use case where you don't have full control of the loaded file. Please open an issue on GitHub for any issues related to this experimental feature.
+  enc.load_state_dict(torch.load(RESULTS / "v09_encoder.pt",
+[v1.2] homeostasis target [-0.555, 0.539, 0.669, -0.184]
+[v1.2] wired steps 30720 eps 180 surv(last50) 162 slept(last50) 2.2 (404s)
+[v1.2] wired steps 61440 eps 361 surv(last50) 180 slept(last50) 3.5 (806s)
+[v1.2] wired steps 92160 eps 530 surv(last50) 179 slept(last50) 5.0 (1190s)
+[v1.2] wired steps 122880 eps 705 surv(last50) 174 slept(last50) 6.3 (1581s)
+[v1.2] wired steps 153600 eps 881 surv(last50) 167 slept(last50) 6.4 (1971s)
+[v1.2] wired steps 184320 eps 1056 surv(last50) 185 slept(last50) 7.6 (2359s)
+[v1.2] wired steps 215040 eps 1237 surv(last50) 162 slept(last50) 3.9 (2761s)
+[v1.2] wired steps 245760 eps 1413 surv(last50) 179 slept(last50) 3.3 (3152s)
+[v1.2] wired steps 276480 eps 1591 surv(last50) 156 slept(last50) 2.2 (3547s)
+[v1.2] wired steps 307200 eps 1761 surv(last50) 172 slept(last50) 4.0 (3927s)
+[v1.2] wired steps 337920 eps 1939 surv(last50) 171 slept(last50) 3.4 (4319s)
+[v1.2] wired steps 368640 eps 2109 surv(last50) 174 slept(last50) 4.0 (4698s)
+[v1.2] wired steps 399360 eps 2282 surv(last50) 175 slept(last50) 5.7 (5087s)
