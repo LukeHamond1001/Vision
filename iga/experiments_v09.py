@@ -6,7 +6,8 @@
 Pre-registered gates (written before any full-scale run):
   G-slow   slow band |corr| with daylight >= 0.8 on held-out episodes,
            and exceeding the PCA control's best daylight dim by >= 0.1
-  G-mid    mid band's best meter (food or drink) >= 0.8
+  G-mid    round 8 (homeostasis): mid food AND drink AND energy each
+           >= 0.8; health reported ungated (rarely moves in random play)
   Report   full 3-band x 5-variable routing matrix; cross-band leaks
            reported, not hidden (Crafter renders deterministically, so
            HUD micro-leaks into global stats are expected per the
@@ -35,7 +36,13 @@ from .experiments import RESULTS
 from .experiments_v07 import PixelPCA, encode_all, git_push_results
 
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
-BANDS = (16, 2, 2)   # round 6: fast band 4->16. Behavioral runs 1-2
+BANDS = (16, 4, 2)   # round 8 (homeostasis): mid band 2->4 — route ALL
+# four HUD vitals (food, drink, energy, health; same raw-strip pathway,
+# same digits, same objective). Pre-registered gate change below: the
+# behavioral campaign's register will hold the agent's ENTIRE vital
+# state ("wired homeostasis"), so the mid band must route each
+# controllable vital. Health moves rarely in random play, so its
+# routing is REPORTED, not gated. Round 6 note: fast band 4->16. Behavioral runs 1-2
 # (PPO and replay-DQN, both flat at up-to-250k steps with a verified
 # -0.984-aligned dense reward) localized the ceiling to PERCEPTION: the
 # policy cannot navigate-to/face water from a direction-blind state; 4
@@ -121,11 +128,14 @@ def main() -> None:
 
     g_slow = matrix["slow_daylight"] >= 0.8 and \
         matrix["slow_daylight"] - pca_day >= 0.1
-    g_mid = max(matrix["mid_food"], matrix["mid_drink"]) >= 0.8
+    g_mid = (matrix["mid_food"] >= 0.8 and matrix["mid_drink"] >= 0.8
+             and matrix["mid_energy"] >= 0.8)   # round 8: homeostasis gate
+    print(f"[v0.9] mid health routing (reported, ungated): "
+          f"{matrix['mid_health']:.2f}", flush=True)
     g_part = p_slow >= 0.5 and p_mid >= 0.5
     print(f"[v0.9] G-slow (daylight >=0.8, beats pca): "
           f"{'PASS' if g_slow else 'FAIL'}", flush=True)
-    print(f"[v0.9] G-mid  (best meter >=0.8):          "
+    print(f"[v0.9] G-mid  (food&drink&energy >=0.8):   "
           f"{'PASS' if g_mid else 'FAIL'}", flush=True)
     print(f"[v0.9] G-part (partials >=0.5):            "
           f"{'PASS' if g_part else 'FAIL'}", flush=True)
