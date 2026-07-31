@@ -351,3 +351,4 @@
 [px] zero   ep 5700 steps 991174 eps 0.05 surv(last30) 177 food% 0.64 drink% 0.57
 [px] zero   ep 5750 steps 1000017 eps 0.05 surv(last30) 170 food% 0.66 drink% 0.56
 [v1.1] seed 3 arm zero: last3rd survival 175 food% 0.65 drink% 0.57 (52060s)
+[v1.1] done 52062s
