@@ -5,3 +5,36 @@
 [v0.9] coverage food: min=0.00 max=9.00
 [v0.9] coverage drink: min=0.00 max=9.00
 [v0.9] measured rho: daylight@40=0.672 food@20=0.969 -> taus=(5.0, 637.7, 100.6)
+[v0.9:pretrain] epoch 0 loss 25.2227 inv-acc 0.053 (chance 0.059)
+[v0.9:pretrain] epoch 100 loss 21.2146 inv-acc 0.059 (chance 0.059)
+[v0.9:pretrain] epoch 200 loss 18.2608 inv-acc 0.066 (chance 0.059)
+[v0.9:pretrain] epoch 300 loss 13.3526 inv-acc 0.084 (chance 0.059)
+[v0.9:pretrain] epoch 400 loss 10.8695 inv-acc 0.076 (chance 0.059)
+[v0.9:pretrain] epoch 500 loss 9.8363 inv-acc 0.070 (chance 0.059)
+[v0.9:pretrain] epoch 600 loss 9.3813 inv-acc 0.092 (chance 0.059)
+[v0.9:pretrain] epoch 700 loss 9.2474 inv-acc 0.100 (chance 0.059)
+[v0.9:pretrain] epoch 800 loss 9.2662 inv-acc 0.080 (chance 0.059)
+[v0.9:pretrain] epoch 900 loss 9.4594 inv-acc 0.080 (chance 0.059)
+[v0.9:pretrain] epoch 1000 loss 9.1141 inv-acc 0.084 (chance 0.059)
+[v0.9:pretrain] epoch 1100 loss 9.2901 inv-acc 0.088 (chance 0.059)
+[v0.9:pretrain] epoch 1200 loss 9.3243 inv-acc 0.088 (chance 0.059)
+[v0.9:pretrain] epoch 1300 loss 8.6876 inv-acc 0.080 (chance 0.059)
+[v0.9:pretrain] epoch 1400 loss 8.8570 inv-acc 0.096 (chance 0.059)
+[v0.9:pretrain] slow restart 0 loss 1.5122
+[v0.9:pretrain] slow restart 1 loss 1.5314
+[v0.9:pretrain] slow restart 2 loss 1.5140
+[v0.9:pretrain] slow restart 3 loss 1.5242
+[v0.9:pretrain] slow restart 4 loss 1.5316
+[v0.9:pretrain] slow restart 5 loss 1.5123
+[v0.9:pretrain] slow head <- argmin restart (loss 1.5122)
+[v0.9] pretraining done (968s)
+[v0.9] routing matrix (band x variable, max |corr|):
+[v0.9]   fast  {'daylight': 0.38, 'food': 0.38, 'drink': 0.36, 'energy': 0.24, 'health': 0.2}
+[v0.9]   mid   {'daylight': 0.3, 'food': 0.88, 'drink': 0.95, 'energy': 0.29, 'health': 0.18}
+[v0.9]   slow  {'daylight': 0.8, 'food': 0.51, 'drink': 0.45, 'energy': 0.17, 'health': 0.14}
+[v0.9] pca best daylight dim: 0.451
+[v0.9] partial: slow-daylight|meter 0.779  mid-meter|daylight 0.942
+[v0.9] mid health routing (reported, ungated): 0.18
+[v0.9] G-slow (daylight >=0.8, beats pca): FAIL
+[v0.9] G-mid  (food&drink&energy >=0.8):   FAIL
+[v0.9] G-part (partials >=0.5):            PASS
