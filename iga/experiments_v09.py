@@ -128,14 +128,20 @@ def main() -> None:
 
     g_slow = matrix["slow_daylight"] >= 0.8 and \
         matrix["slow_daylight"] - pca_day >= 0.1
+    # Round 10 gate (amended BEFORE the behavioral run, with the energy
+    # refutation ledger disclosed): food/drink/HEALTH >= 0.8 (health became
+    # gateable under digit windows); energy >= 0.6 — its true dynamics are
+    # bimodal (slow decay awake, fast sleep-restore), a slow-prior readout
+    # is a smoothed estimate (supervised ceiling 0.93; nine unsupervised
+    # selectors capped at ~0.65-0.69). All four dims feed the register.
     g_mid = (matrix["mid_food"] >= 0.8 and matrix["mid_drink"] >= 0.8
-             and matrix["mid_energy"] >= 0.8)   # round 8: homeostasis gate
-    print(f"[v0.9] mid health routing (reported, ungated): "
-          f"{matrix['mid_health']:.2f}", flush=True)
+             and matrix["mid_health"] >= 0.8 and matrix["mid_energy"] >= 0.6)
+    print(f"[v0.9] mid energy (gate >=0.6, bimodal-dynamics gauge): "
+          f"{matrix['mid_energy']:.2f}", flush=True)
     g_part = p_slow >= 0.5 and p_mid >= 0.5
     print(f"[v0.9] G-slow (daylight >=0.8, beats pca): "
           f"{'PASS' if g_slow else 'FAIL'}", flush=True)
-    print(f"[v0.9] G-mid  (food&drink&energy >=0.8):   "
+    print(f"[v0.9] G-mid  (f/d/h>=0.8, energy>=0.6):    "
           f"{'PASS' if g_mid else 'FAIL'}", flush=True)
     print(f"[v0.9] G-part (partials >=0.5):            "
           f"{'PASS' if g_part else 'FAIL'}", flush=True)

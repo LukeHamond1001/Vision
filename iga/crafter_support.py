@@ -77,7 +77,21 @@ def measure_rho(series: torch.Tensor, ep_ids: torch.Tensor, lag: int) -> float:
 
 
 HUD_ROWS = slice(47, 56)
-MID_SLOTS = ((0, 7), (7, 15), (15, 22), (22, 31))   # round 9: per-gauge
+MID_WINDOWS = (((2, 9), (1, 6)), ((2, 9), (8, 14)),
+               ((2, 9), (16, 21)), ((3, 9), (23, 29)))   # round 10:
+# per-gauge DIGIT windows (health, food, drink, energy), instrument-
+# located (exclusive-change differencing). Round-10 recipe: slot heads
+# are solved in CLOSED FORM — the 1-dim linear OU objective is a
+# generalized eigenproblem (innovation cov vs feature cov, rank-filtered
+# at 1e-3 relative variance); the head takes the smallest-innovation
+# eigenvector that is NON-REDUNDANT with the slow band (|corr| < 0.5 on
+# the walk) — cross-band deflation, the architecture's own anti-
+# duplication rule. Deterministic: no optimizer, no seeds, no basins.
+# Discovered en route: Adam never reached the objective's optima (the
+# "0.79 slow asymptote" was an OPTIMIZATION artifact — closed-form slow
+# reads daylight 0.945); and raw eigen-ORDER is unstable under near-ties
+# (darkness vs gauge), which deflation-by-content resolves.
+MID_SLOTS = ((0, 7), (7, 15), (15, 22), (22, 31))   # round 9 (superseded)
 # column slots (health, food, drink, energy), located by exclusive-change
 # pixel differencing (correlation cannot separate slots — vitals are too
 # inter-correlated; the pixels know). One gauge, one pathway: each
@@ -147,9 +161,10 @@ class EncoderCrafter(torch.nn.Module):
         # luminance; mid-band meter corr collapsed to 0.22). Incapacity that
         # matters = spatial confinement to the HUD; linear template matching
         # over the raw strip reads digits while still seeing no world.
-        assert band_dims[1] == len(MID_SLOTS), "mid band = one dim per gauge slot"
+        assert band_dims[1] == len(MID_WINDOWS), "mid band = one dim per gauge"
         self.mid_heads = torch.nn.ModuleList(
-            [torch.nn.Linear(9 * (b - a) * 3, 1) for a, b in MID_SLOTS])
+            [torch.nn.Linear(3 * (r1 - r0) * (c1 - c0), 1)
+             for (r0, r1), (c0, c1) in MID_WINDOWS])
         # slow (round 2): global photometric stats enriched with per-channel
         # luminance percentiles (p10/p50/p90). Crafter's viewport SCROLLS, so
         # mean/std alone is a terrain-composition signal (daylight corr stuck
@@ -179,9 +194,10 @@ class EncoderCrafter(torch.nn.Module):
                 slow_feats = slow_feats.unsqueeze(0)
         z_fast = self.fast_head(self.trunk(x))
         strip = x[:, :, HUD_ROWS, :]
-        z_mid = torch.cat([h(strip[:, :, :, a:b].flatten(1))
-                           for h, (a, b) in zip(self.mid_heads, MID_SLOTS)],
-                          dim=-1)
+        z_mid = torch.cat(
+            [h(strip[:, :, r0:r1, c0:c1].flatten(1))
+             for h, ((r0, r1), (c0, c1)) in zip(self.mid_heads, MID_WINDOWS)],
+            dim=-1)
         stats = slow_stats(x) if slow_feats is None else slow_feats.to(x.device)
         z_slow = self.slow_head(stats)
         z = torch.cat([z_fast, z_mid, z_slow], dim=-1) * self.out_scale
@@ -280,52 +296,75 @@ def pretrain_crafter_encoder(frames_u8: torch.Tensor, ep_ids: torch.Tensor,
                 sens = f" inv-acc {acc:.3f} (chance {1/n_actions:.3f})"
             print(f"[v0.9:pretrain] epoch {ep} loss {float(loss):.4f}{sens}",
                   flush=True)
-    # Round 5: slow-head restarts with unsupervised selection. The slow
-    # pathway (linear on precomputed EMA stats) is fully separable from the
-    # other bands, and its optimization is basin-sensitive (measured local
-    # replica: held-out daylight 0.72-0.84 across seeds at identical
-    # config; the pod's single seed landed 0.7962 vs the 0.8 gate). Train
-    # k fresh heads (seconds), keep the argmin of the FULL-DATA objective
-    # (innovation + whitening — no truth anywhere). Measured: argmin-loss
-    # picked the best-daylight basin (0.845) out of 6.
-    sl_slow, tau_sl, lag_sl = slices[-1], taus[-1], lags[-1]
-    bd = sl_slow.stop - sl_slow.start
-    rho_sl = float(torch.exp(torch.tensor(-lag_sl / tau_sl)))
-    vs = valid[lag_sl]
-    F = slow_feats.to(device)
-    best_head, best_L = None, float("inf")
-    for r in range(6):
-        torch.manual_seed(seed + 900 + r)
-        head = torch.nn.Linear(F.shape[1], bd).to(device)
-        hopt = torch.optim.Adam(head.parameters(), lr=lr)
-        hgen = torch.Generator().manual_seed(seed + 1000 + r)
-        for hep in range(epochs):
-            pick = vs[torch.randint(0, vs.shape[0], (batch,), generator=hgen)]
-            z0, z1 = head(F[pick]), head(F[pick + lag_sl])
-            hl = (((z1 - rho_sl * z0) ** 2).mean(0)
-                  / max(1 - rho_sl ** 2, 1e-3)).sum() / bd
-            st = torch.randint(0, T, (batch,), generator=hgen)
-            z = head(F[st]); zc = z - z.mean(0)
-            hl = hl + (((zc.T @ zc) / (batch - 1)
-                        - torch.eye(bd, device=device)) ** 2).sum()
-            hopt.zero_grad(); hl.backward(); hopt.step()
-        with torch.no_grad():
-            z0, z1 = head(F[vs]), head(F[vs + lag_sl])
-            innov = (((z1 - rho_sl * z0) ** 2).mean(0)
-                     / max(1 - rho_sl ** 2, 1e-3)).sum() / bd
-            z = head(F); zc = z - z.mean(0)
-            cov = (zc.T @ zc) / (F.shape[0] - 1)
-            L = float(innov + ((cov - torch.eye(bd, device=device)) ** 2).sum())
-        print(f"[v0.9:pretrain] slow restart {r} loss {L:.4f}", flush=True)
-        if L < best_L:
-            best_L, best_head = L, head
+    # Round 10: slow and mid heads are solved in CLOSED FORM (the 1-dim
+    # linear OU objective is a generalized eigenproblem; Adam provably
+    # never reached its optima — the 0.79 slow "asymptote" was an
+    # optimization artifact; closed form reads daylight 0.945 locally).
+    # Slow: first two eigvecs of the EMA-stat pathway. Mid: per-gauge
+    # digit windows, each deflated against the slow output (cross-band
+    # non-redundancy). Deterministic — no restarts, no seeds.
+    sl_lag, sl_tau = lags[-1], taus[-1]
+    F = slow_feats.cpu()
+    w0, b0 = closed_form_head(F, ep_ids, sl_lag, sl_tau)
+    F0 = F - F.mean(0)
+    z0 = (F0 @ w0).unsqueeze(1)
+    w1, b1 = closed_form_head(F, ep_ids, sl_lag, sl_tau, deflate=z0)
     with torch.no_grad():
-        enc.slow_head.weight.copy_(best_head.weight)
-        enc.slow_head.bias.copy_(best_head.bias)
-    print(f"[v0.9:pretrain] slow head <- argmin restart (loss {best_L:.4f})",
+        enc.slow_head.weight.copy_(torch.stack([w0, w1]).to(device))
+        enc.slow_head.bias.copy_(torch.tensor([b0, b1], device=device))
+    z_slow_walk = torch.stack([F0 @ w0, F0 @ w1], 1)
+    md_lag, md_tau = lags[1], taus[1]
+    strip_w = frames_u8[:, :, HUD_ROWS, :].float().div(255.0)
+    for h, ((r0, r1), (c0, c1)) in zip(enc.mid_heads, MID_WINDOWS):
+        Xw = strip_w[:, :, r0:r1, c0:c1].flatten(1)
+        wm, bm = closed_form_head(Xw, ep_ids, md_lag, md_tau,
+                                  deflate=z_slow_walk)
+        with torch.no_grad():
+            h.weight.copy_(wm.unsqueeze(0).to(device))
+            h.bias.copy_(torch.tensor([bm], device=device))
+    print("[v0.9:pretrain] slow+mid heads <- closed form (deterministic)",
           flush=True)
     enc.freeze()
     return enc
+
+
+def closed_form_head(X: torch.Tensor, ep_ids: torch.Tensor, lag: int,
+                     tau: float, deflate: torch.Tensor | None = None,
+                     var_floor: float = 1e-3):
+    """Exact optimum of the 1-dim linear OU head: generalized eigvecs of
+    (innovation cov, feature cov), rank-filtered; picks the smallest-
+    innovation direction with |corr| < 0.5 against every column of
+    `deflate` (cross-band non-redundancy). Returns (weight, bias) with
+    unit output variance on the walk."""
+    mu = X.mean(0)
+    Xc = X - mu
+    rho = float(torch.exp(torch.tensor(-lag / tau)))
+    idx = torch.arange(X.shape[0] - lag)
+    v = idx[ep_ids[idx] == ep_ids[idx + lag]]
+    d = Xc[v + lag] - rho * Xc[v]
+    A = (d.T @ d) / d.shape[0]
+    B = (Xc.T @ Xc) / Xc.shape[0]
+    eb, Vb = torch.linalg.eigh(B)
+    keep = eb > var_floor * eb.max()
+    P = Vb[:, keep]
+    Bih = torch.diag(eb[keep].rsqrt())
+    _, Va = torch.linalg.eigh(Bih @ (P.T @ A @ P) @ Bih)
+    for k in range(Va.shape[1]):
+        w = P @ (Bih @ Va[:, k])
+        z = Xc @ w
+        if deflate is not None and deflate.numel():
+            red = max(abs(float(torch.corrcoef(
+                torch.stack([z, deflate[:, j]]))[0, 1]))
+                for j in range(deflate.shape[1]))
+            if red >= 0.5:
+                continue
+        sd = z.std().clamp_min(1e-8)
+        w = w / sd
+        return w, float(-(mu @ w))
+    w = P @ (Bih @ Va[:, 0])
+    sd = (Xc @ w).std().clamp_min(1e-8)
+    w = w / sd
+    return w, float(-(mu @ w))
 
 
 def partial_corr(a: torch.Tensor, b: torch.Tensor, c: torch.Tensor) -> float:
