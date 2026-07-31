@@ -77,6 +77,14 @@ def measure_rho(series: torch.Tensor, ep_ids: torch.Tensor, lag: int) -> float:
 
 
 HUD_ROWS = slice(47, 56)
+MID_SLOTS = ((0, 7), (7, 15), (15, 22), (22, 31))   # round 9: per-gauge
+# column slots (health, food, drink, energy), located by exclusive-change
+# pixel differencing (correlation cannot separate slots — vitals are too
+# inter-correlated; the pixels know). One gauge, one pathway: each
+# sub-head CANNOT see the other meters, so routing holds by
+# construction instead of by objective preference. Round-8 lesson: a
+# single 4-dim head over the whole strip let food/drink capture the
+# capacity (energy 0.36).
 SLOW_EMA_TAU = 10.0   # round 4: frozen exponential smoother in the slow
 # pathway. Round-3 dissection: the trained slow band was the green-blue
 # composition axis (|corr| 0.94-0.99 with blueness, own rho@40 only
@@ -139,7 +147,9 @@ class EncoderCrafter(torch.nn.Module):
         # luminance; mid-band meter corr collapsed to 0.22). Incapacity that
         # matters = spatial confinement to the HUD; linear template matching
         # over the raw strip reads digits while still seeing no world.
-        self.mid_head = torch.nn.Linear(9 * 64 * 3, band_dims[1])
+        assert band_dims[1] == len(MID_SLOTS), "mid band = one dim per gauge slot"
+        self.mid_heads = torch.nn.ModuleList(
+            [torch.nn.Linear(9 * (b - a) * 3, 1) for a, b in MID_SLOTS])
         # slow (round 2): global photometric stats enriched with per-channel
         # luminance percentiles (p10/p50/p90). Crafter's viewport SCROLLS, so
         # mean/std alone is a terrain-composition signal (daylight corr stuck
@@ -169,7 +179,9 @@ class EncoderCrafter(torch.nn.Module):
                 slow_feats = slow_feats.unsqueeze(0)
         z_fast = self.fast_head(self.trunk(x))
         strip = x[:, :, HUD_ROWS, :]
-        z_mid = self.mid_head(strip.flatten(1))
+        z_mid = torch.cat([h(strip[:, :, :, a:b].flatten(1))
+                           for h, (a, b) in zip(self.mid_heads, MID_SLOTS)],
+                          dim=-1)
         stats = slow_stats(x) if slow_feats is None else slow_feats.to(x.device)
         z_slow = self.slow_head(stats)
         z = torch.cat([z_fast, z_mid, z_slow], dim=-1) * self.out_scale
