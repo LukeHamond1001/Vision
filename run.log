@@ -5,3 +5,33 @@
 [v0.9] coverage food: min=0.00 max=9.00
 [v0.9] coverage drink: min=0.00 max=9.00
 [v0.9] measured rho: daylight@40=0.666 food@20=0.972 -> taus=(5.0, 705.7, 98.4)
+[v0.9:pretrain] epoch 0 loss 25.5155 inv-acc 0.051 (chance 0.059)
+[v0.9:pretrain] epoch 100 loss 21.5918 inv-acc 0.084 (chance 0.059)
+[v0.9:pretrain] epoch 200 loss 17.6100 inv-acc 0.068 (chance 0.059)
+[v0.9:pretrain] epoch 300 loss 13.0260 inv-acc 0.104 (chance 0.059)
+[v0.9:pretrain] epoch 400 loss 11.2001 inv-acc 0.094 (chance 0.059)
+[v0.9:pretrain] epoch 500 loss 10.0325 inv-acc 0.107 (chance 0.059)
+[v0.9:pretrain] epoch 600 loss 9.6518 inv-acc 0.088 (chance 0.059)
+[v0.9:pretrain] epoch 700 loss 9.6201 inv-acc 0.104 (chance 0.059)
+[v0.9:pretrain] epoch 800 loss 9.3930 inv-acc 0.080 (chance 0.059)
+[v0.9:pretrain] epoch 900 loss 9.5576 inv-acc 0.072 (chance 0.059)
+[v0.9:pretrain] epoch 1000 loss 9.5492 inv-acc 0.080 (chance 0.059)
+[v0.9:pretrain] epoch 1100 loss 9.1301 inv-acc 0.086 (chance 0.059)
+[v0.9:pretrain] epoch 1200 loss 8.9538 inv-acc 0.117 (chance 0.059)
+[v0.9:pretrain] epoch 1300 loss 9.0987 inv-acc 0.104 (chance 0.059)
+[v0.9:pretrain] epoch 1400 loss 8.7825 inv-acc 0.068 (chance 0.059)
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/workspace/iga/iga/experiments_v09.py", line 161, in <module>
+    main()
+  File "/workspace/iga/iga/experiments_v09.py", line 87, in main
+    enc = pretrain_crafter_encoder(frames, ep_ids, band_dims=BANDS,
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/iga/iga/crafter_support.py", line 320, in pretrain_crafter_encoder
+    wm, bm = closed_form_head(Xw, ep_ids, md_lag, md_tau,
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/iga/iga/crafter_support.py", line 347, in closed_form_head
+    eb, Vb = torch.linalg.eigh(B)
+             ^^^^^^^^^^^^^^^^^^^^
+torch._C._LinAlgError: linalg.eigh: The algorithm failed to converge because the input matrix is ill-conditioned or has too many repeated eigenvalues (error code: 5873).
