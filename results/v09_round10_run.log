@@ -1,0 +1,35 @@
+[v0.9] device=cuda mode=full
+[v0.9] truth collinearity daylight-food (phase-randomized): +0.142
+[v0.9] walk torch.Size([40000, 3, 64, 64]) episodes=413 (491s)
+[v0.9] coverage daylight: min=0.00 max=1.00
+[v0.9] coverage food: min=0.00 max=9.00
+[v0.9] coverage drink: min=0.00 max=9.00
+[v0.9] measured rho: daylight@40=0.652 food@20=0.973 -> taus=(5.0, 743.5, 93.5)
+[v0.9:pretrain] epoch 0 loss 25.6387 inv-acc 0.051 (chance 0.059)
+[v0.9:pretrain] epoch 100 loss 21.9399 inv-acc 0.074 (chance 0.059)
+[v0.9:pretrain] epoch 200 loss 18.9331 inv-acc 0.084 (chance 0.059)
+[v0.9:pretrain] epoch 300 loss 13.2647 inv-acc 0.090 (chance 0.059)
+[v0.9:pretrain] epoch 400 loss 10.6576 inv-acc 0.076 (chance 0.059)
+[v0.9:pretrain] epoch 500 loss 10.2289 inv-acc 0.068 (chance 0.059)
+[v0.9:pretrain] epoch 600 loss 9.9546 inv-acc 0.100 (chance 0.059)
+[v0.9:pretrain] epoch 700 loss 9.4960 inv-acc 0.086 (chance 0.059)
+[v0.9:pretrain] epoch 800 loss 9.1041 inv-acc 0.059 (chance 0.059)
+[v0.9:pretrain] epoch 900 loss 9.1822 inv-acc 0.109 (chance 0.059)
+[v0.9:pretrain] epoch 1000 loss 9.2515 inv-acc 0.074 (chance 0.059)
+[v0.9:pretrain] epoch 1100 loss 9.0593 inv-acc 0.061 (chance 0.059)
+[v0.9:pretrain] epoch 1200 loss 9.0984 inv-acc 0.098 (chance 0.059)
+[v0.9:pretrain] epoch 1300 loss 9.0063 inv-acc 0.094 (chance 0.059)
+[v0.9:pretrain] epoch 1400 loss 9.3580 inv-acc 0.088 (chance 0.059)
+[v0.9:pretrain] slow+mid heads <- closed form (deterministic)
+[v0.9] pretraining done (958s)
+[v0.9] routing matrix (band x variable, max |corr|):
+[v0.9]   fast  {'daylight': 0.31, 'food': 0.3, 'drink': 0.28, 'energy': 0.25, 'health': 0.17}
+[v0.9]   mid   {'daylight': 0.3, 'food': 0.96, 'drink': 0.97, 'energy': 0.71, 'health': 0.94}
+[v0.9]   slow  {'daylight': 0.93, 'food': 0.38, 'drink': 0.41, 'energy': 0.09, 'health': 0.23}
+[v0.9] pca best daylight dim: 0.521
+[v0.9] partial: slow-daylight|meter 0.930  mid-meter|daylight 0.965
+[v0.9] mid energy (gate >=0.6, bimodal-dynamics gauge): 0.71
+[v0.9] G-slow (daylight >=0.8, beats pca): PASS
+[v0.9] G-mid  (f/d/h>=0.8, energy>=0.6):    PASS
+[v0.9] G-part (partials >=0.5):            PASS
+[v0.9] done 963s
