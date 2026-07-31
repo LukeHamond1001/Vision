@@ -1,0 +1,7 @@
+[v0.9] device=cuda mode=full
+[v0.9] truth collinearity daylight-food (phase-randomized): +0.255
+[v0.9] walk torch.Size([40000, 3, 64, 64]) episodes=392 (479s)
+[v0.9] coverage daylight: min=0.00 max=1.00
+[v0.9] coverage food: min=0.00 max=9.00
+[v0.9] coverage drink: min=0.00 max=9.00
+[v0.9] measured rho: daylight@40=0.666 food@20=0.972 -> taus=(5.0, 705.7, 98.4)
