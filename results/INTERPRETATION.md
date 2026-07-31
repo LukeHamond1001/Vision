@@ -5,6 +5,39 @@ stable commentary). Newest round first.
 
 ---
 
+## v1.1 FINAL — 2026-07-31: the three-arm verdict — nothing teaches at
+## this scale, and the zero control caught the near-miss misread
+
+Fleet of five pods (one seed each, pixel Q-net policy, arms wired /
+native / zero at 1M steps, ~13h each, ~$55): **both pre-registered
+gates FAIL, and the table is sharper than a null.**
+
+    IQM last-third survival: wired 168 · native 176 · zero 175
+    (wired n=5: 166-171; native n=5: 173-177; zero n=3: 173-176 —
+    seeds 2/4 zero arms killed on half-speed hosts after the verdict
+    was decided; their wired/native rows are in and consistent)
+
+1. **native = zero.** Crafter's own engineered reward taught nothing a
+   no-reward policy didn't have. The learner regime (single-env n-step
+   double-DQN, 1M steps) is below the teaching threshold for ANY
+   reward — measured internally, not assumed from literature. Mid-run
+   I briefly read "native teaching, wired losing" from the wired-native
+   gap; the zero arm landing ON native corrected it. The control did
+   its job against my own interpretation.
+2. **wired < zero, consistently** (paired diff CI [-9,-4]): in a
+   regime where nothing teaches, greedily optimizing the register
+   signal still produces behavior, and that behavior costs a few steps
+   of life (phi-chasing increases exposure while survival variance
+   lives in nights/zombies). A wired signal is not harmless when the
+   learner can't cash it — worth a paragraph in the paper.
+3. The signal itself remains verified sound (alignment -0.984); the
+   state was sufficient (pixels); the learner was the binding
+   constraint. Chain of custody for v1.2's design: parallel-env PPO
+   at published-regime scale, register upgraded to the full vital
+   state (homeostasis), sleeps-at-night as the mechanism fingerprint.
+
+---
+
 ## v0.9 round 7 — 2026-07-30: ALL THREE PHASE-1 GATES PASS; inverse
 ## dynamics wakes the trunk; water DIRECTION is readable; run 3 launched
 
