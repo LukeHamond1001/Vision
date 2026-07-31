@@ -32,3 +32,4 @@
 [v0.9] G-slow (daylight >=0.8, beats pca): PASS
 [v0.9] G-mid  (f/d/h>=0.8, energy>=0.6):    PASS
 [v0.9] G-part (partials >=0.5):            PASS
+[v0.9] done 963s
