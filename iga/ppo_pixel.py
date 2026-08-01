@@ -122,7 +122,8 @@ def run_ppo_arm(enc, g_mid, mid_slice, reward_mode: str, seed: int,
                 clip: float = 0.2, epochs: int = 4, minibatches: int = 4,
                 lr: float = 2.5e-4, ent_coef: float = 0.01,
                 vf_coef: float = 0.5, device: str = "cpu",
-                log_cb=None, init_state: dict | None = None) -> dict:
+                log_cb=None, init_state: dict | None = None,
+                dim_mask=None) -> dict:
     """One PPO arm. Returns per-episode stats streams + policy state.
     Wired reward: batched phi-progress in the frozen homeostasis register,
     with phi state kept per env and reset (to the fresh obs value) on
@@ -142,7 +143,10 @@ def run_ppo_arm(enc, g_mid, mid_slice, reward_mode: str, seed: int,
         es = s if es is None else (1 - alpha) * es + alpha * s
         with torch.no_grad():
             z = enc(x, slow_feats=es)
-        phi = torch.linalg.vector_norm(z[:, mid_slice] - g_mid.to(device), dim=1)
+        diff = z[:, mid_slice] - g_mid.to(device)
+        if dim_mask is not None:               # glass-box edit: DELETE a
+            diff = diff * dim_mask.to(device)  # dimension from the want
+        phi = torch.linalg.vector_norm(diff, dim=1)
         return phi.cpu().numpy(), es
 
     es = None

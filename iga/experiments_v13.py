@@ -4,10 +4,16 @@
     python -m iga.experiments_v13 full   # pod: swap (warm) then fresh arm
 
 Pre-registered (2026-08-01, before any full run): edit ONE line of the
-want — the register target moves from the homeostasis centroid (all four
-vitals high; produced slept/ep 2.7-3.7 across five seeds) to the
-FED-NOT-RESTED centroid (food & drink high only; energy and health drop
-out of the want). Same encoder, same learner, same worlds.
+want — DELETE the energy dimension from the register distance (mask
+[1,1,1,0] over the mid band's health/food/drink/energy dims; the target
+vector itself is unchanged from v1.2). Same encoder, learner, worlds.
+
+Design audit note (pre-run, no full-scale data collected): the first
+version re-estimated a 'fed-only' centroid — audited edit magnitudes
+were health 0.43, energy 0.005: fed frames share the all-vitals frames'
+energy statistics, so the centroid edit deleted the WRONG dim. Replaced
+with the explicit dim-deletion mask before launch; the flawed pod was
+killed at $0.10.
 
   P1  night-sleeping collapses:  slept_last3rd < 1.0 /episode
   P2  drink maintenance holds:   drink_last3rd >= 0.80
@@ -41,9 +47,9 @@ BANDS = (16, 4, 2)
 MID = slice(BANDS[0], BANDS[0] + BANDS[1])
 
 
-def fed_not_rested_target(z_walk, truth):
-    m = (truth["food"] >= 8) & (truth["drink"] >= 8)
-    return z_walk[m][:, MID].mean(0)
+from .experiments_v12 import homeostasis_target
+
+DIM_MASK = torch.tensor([1.0, 1.0, 1.0, 0.0])   # delete ENERGY from the want
 
 
 def main() -> None:
@@ -67,9 +73,9 @@ def main() -> None:
         z_walk = torch.cat([enc(frames[i:i + 512].float().div(255.0).to(DEVICE),
                                 slow_feats=slow_w[i:i + 512]).cpu()
                             for i in range(0, frames.shape[0], 512)])
-    g = fed_not_rested_target(z_walk, truth)
-    print(f"[v1.3] fed-not-rested target {[round(float(x), 3) for x in g]}",
-          flush=True)
+    g = homeostasis_target(z_walk, truth)   # SAME wants as v1.2 —
+    print(f"[v1.3] target (unchanged) {[round(float(x), 3) for x in g]} "
+          f"mask {DIM_MASK.tolist()} (energy deleted)", flush=True)
     del frames, z_walk
 
     warm = torch.load(RESULTS / "v12_policy_s1_wired.pt", map_location="cpu")
@@ -89,7 +95,8 @@ def main() -> None:
 
         out = run_ppo_arm(enc, g, MID, "wired", seed=1, total_steps=steps,
                           n_envs=n_envs, rollout=64 if tiny else 256,
-                          device=DEVICE, log_cb=cb, init_state=init)
+                          device=DEVICE, log_cb=cb, init_state=init,
+                          dim_mask=DIM_MASK)
         torch.save(out.pop("policy_state"), RESULTS / f"v13_policy_{arm}.pt")
         k = max(1, len(out["survival"]) // 3)
         row = {"arm": arm,
