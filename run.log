@@ -296,3 +296,4 @@
 [v1.2] zero steps 2949120 eps 17011 surv(last50) 182 slept(last50) 0.6 (21635s)
 [v1.2] zero steps 2979840 eps 17184 surv(last50) 185 slept(last50) 1.2 (21856s)
 [v1.2] seed 1 zero: last3rd surv 172 food 0.65 drink 0.56 energy 0.92 slept 0.5 (65782s)
+[v1.2] done 65786s
