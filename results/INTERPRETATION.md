@@ -5,6 +5,52 @@ stable commentary). Newest round first.
 
 ---
 
+## v1.2 VERDICT — 2026-08-01: the dissociation table. Reward chooses
+## the competence; the register builds a reproducible homeostat.
+
+Four complete seeds (seed 3's remaining arms trail on a slow host and
+join as the fifth row), 3M PPO steps per arm, arms paired on identical
+worlds:
+
+    IQM survival:  native 227  >>  wired 175  ~=  zero 171
+    G-wired-zero (>=1.25, CI>0): ratio 1.03, diff CI [-1, 9] -> FAIL
+    wired-vs-native: ratio 0.77, diff CI [-60, -28] (native better)
+
+    mechanism (wired vs zero): drink 0.89 vs 0.57 (+56%)
+                               slept/night 2.7 vs 0.6 (4.5x)
+                               energy 1.00 vs 0.92
+                               food 0.68 vs 0.66 (NO separation -
+                               predicted: cow-blind perception)
+
+Findings, in order of importance:
+
+1. **The register provably directs behavior.** Every variable it
+   pointed at separated hard, in every seed; the one vital it could
+   not reach (food = hunting = perception) did not move. The wiring
+   claim - point at discovered structure, get the behavior, write no
+   reward code - is demonstrated with the cleanest effect sizes of
+   the program.
+2. **Wired survival identity is near-deterministic across seeds:**
+   171-178 (7-point spread) with drink 0.87-0.91 five-for-five. Same
+   register, same homeostat, any seed - a reproducibility property to
+   pair with the closed-form encoder.
+3. **The pre-registered survival gate fails honestly:** homeostasis
+   does not extend Crafter survival at this horizon (wired ~= zero,
+   never harmful - the v1.1 harm inversion disappears once the
+   learner can cash the signal). Native's +52 shows where survival
+   actually lives: threat handling and hunting - competencies the
+   vitals register does not address by construction.
+4. **Reward determines WHAT is learned, cleanly dissociated:** three
+   reward streams, one learner, three agents - survivor (native),
+   homeostat (wired), drifter (zero). As a scientific figure this is
+   stronger than a marginal gate-pass would have been.
+
+Chapter closed. Next: act-4 render (split-screen homeostat vs
+survivor), the glass-box goal-swap addendum, then the battery-sim
+campaign (v2.0) where self-maintenance IS the task.
+
+---
+
 ## v0.9 rounds 8–10 — 2026-07-31: the homeostasis band, the energy
 ## saga, and the closed-form correction of our own asymptote
 
