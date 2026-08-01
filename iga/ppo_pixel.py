@@ -122,7 +122,7 @@ def run_ppo_arm(enc, g_mid, mid_slice, reward_mode: str, seed: int,
                 clip: float = 0.2, epochs: int = 4, minibatches: int = 4,
                 lr: float = 2.5e-4, ent_coef: float = 0.01,
                 vf_coef: float = 0.5, device: str = "cpu",
-                log_cb=None) -> dict:
+                log_cb=None, init_state: dict | None = None) -> dict:
     """One PPO arm. Returns per-episode stats streams + policy state.
     Wired reward: batched phi-progress in the frozen homeostasis register,
     with phi state kept per env and reset (to the fresh obs value) on
@@ -131,6 +131,8 @@ def run_ppo_arm(enc, g_mid, mid_slice, reward_mode: str, seed: int,
     alpha = 1.0 / SLOW_EMA_TAU
     vec = CrafterVec(n_envs, seed)
     net = PixelActorCritic(seed=seed).to(device)
+    if init_state is not None:                 # glass-box warm start: the
+        net.load_state_dict(init_state)        # same agent, new wants
     opt = torch.optim.Adam(net.parameters(), lr=lr, eps=1e-5)
     obs = vec.obs()
 
