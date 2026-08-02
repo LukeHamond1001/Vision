@@ -41,7 +41,7 @@ class BatteryAnt:
         self.k_b, self.k_c, self.k_t = k_b, k_c, k_t
         self.k_cool, self.k_w, self.spike_thr = k_cool, k_w, spike_thr
         self.max_steps = max_steps
-        self.obs_dim = self.env.observation_space.shape[0] + 4
+        self.obs_dim = self.env.observation_space.shape[0] + 6
         self.act_dim = self.env.action_space.shape[0]
         # WEAR PERSISTS ACROSS EPISODES (a robot lifetime): episodes are
         # tasks; wear is the chassis. It resets only when the robot
@@ -56,9 +56,18 @@ class BatteryAnt:
         return self.env.unwrapped.data.qpos[:2].copy()
 
     def _aug(self, obs: np.ndarray) -> np.ndarray:
-        dock_dist = float(np.linalg.norm(self._xy() - self.DOCK))
+        rel = self.DOCK - self._xy()
+        dock_dist = float(np.linalg.norm(rel))
+        bearing = rel / max(dock_dist, 1e-6)
+        # round 2: dock BEARING added. Round 1 measured the Crafter
+        # water-direction boundary in robot form — scalar distance with
+        # no direction teaches nobody to dock (all task arms ~30%
+        # brownout, docked ~1%, wired = penalty = baseline). A robot
+        # knows its dock's bearing (it is on the map); withholding it
+        # tested navigation-by-distance-gradient, not homeostasis.
         return np.concatenate([obs, [self.battery, self.temp, self.wear,
-                                     dock_dist]]).astype(np.float32)
+                                     dock_dist, bearing[0], bearing[1]]
+                               ]).astype(np.float32)
 
     def reset(self):
         obs, _ = self.env.reset(seed=self.seed + np.random.randint(10**6))
