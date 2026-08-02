@@ -180,9 +180,11 @@ def _machine_summary(machines) -> dict:
 
 
 def run_arm(arm: str, seed: int, steps: int, n_envs: int = 12,
-            log_every: int = 100_000, tag: str = "v40") -> dict:
+            log_every: int = 100_000, tag: str = "v40",
+            heartbeat: bool = False) -> dict:
     assert arm in ARMS, arm
     t0 = time.time()
+    pushed = [0]
     inst, spec, stds = load_instrument()
     reward_fn, machines, hook, mode = None, [], None, "custom"
     if arm == "native":
@@ -209,6 +211,16 @@ def run_arm(arm: str, seed: int, steps: int, n_envs: int = 12,
               f"arriv {ms.get('frontier_arrivals', '-')} "
               f"bonus {ms.get('bonus_total', '-')} "
               f"({time.time()-t0:.0f}s)", flush=True)
+        if heartbeat and step_total - pushed[0] >= 500_000:
+            pushed[0] = step_total       # v1.2 mid-arm tripwire pattern
+            import subprocess
+            subprocess.run(["git", "add", "-A", "run.log"],
+                           capture_output=True)
+            subprocess.run(["git", "commit", "-qm",
+                            f"hb-{arm}-s{seed}-{step_total}"],
+                           capture_output=True)
+            subprocess.run(["git", "push", "-qf", "origin", "HEAD"],
+                           capture_output=True)
 
     print(f"[{tag}] {arm} s{seed} device={DEVICE} steps={steps}", flush=True)
     out = run_ppo_arm(None, None, None, mode, seed, total_steps=steps,
@@ -266,7 +278,8 @@ def main() -> None:
         run_arm(arm, seed=1, steps=steps, n_envs=12, tag="v40r")
     elif mode == "full":
         arm, seed = sys.argv[2], int(sys.argv[3])
-        run_arm(arm, seed=seed, steps=3_000_000, n_envs=12, tag="v40")
+        run_arm(arm, seed=seed, steps=3_000_000, n_envs=12, tag="v40",
+                heartbeat=True)
     else:
         raise SystemExit(f"unknown mode: {mode}")
 
