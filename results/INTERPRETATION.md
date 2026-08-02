@@ -5,6 +5,49 @@ stable commentary). Newest round first.
 
 ---
 
+## v4.0 pre-flight D'/E — 2026-08-02: dress rehearsals. The complete
+## architecture runs for the first time — and the dissociation is
+## visible at 13% of training.
+
+400k-step rehearsals, seed 1, both arms; no-proposer run twice
+(local CPU + pod CUDA) as a platform-replication check, full arm on
+the fleet pod path (RTX 2000, BOOT -> tripwire -> per-arm push ->
+self-terminate: the entire delivery chain validated, ~$0.80).
+
+    no-proposer  surv 169/172 (pod/local)  achv-med 2.0 (both)
+                 signature: wake_up 701, collect_drink 401-463 — the
+                 v1.2 homeostat, replicated cross-platform
+    full         surv 170  achv-med 3.0  — PAIRED DIFF +1.0, exactly
+                 at the amended G-seq bar, at 400k of 3M
+                 signature: collect_sapling 740, collect_wood 699 (the
+                 PROPOSED goals are the top unlocks), eat_cow 154 vs 6
+                 (the serialized food register concentrates what
+                 v1.2's composite diluted — cow-hunting emerged),
+                 defeat_zombie 57 vs 1
+
+Machine, on-policy: 12,587 holds, 6,470 frontier arrivals climbing to
+wood>=5 / sapling>=8, one-shot bonus stream intact, rejects tiny
+(bar 38 — spent cells correctly blocked). Arrival rate ACCELERATES
+across training (677 -> 1,544 -> 1,899 -> 2,350 per 100k): the policy
+is learning to chase proposals. Survival parity held — frontier work
+cost no lives (drink 0.61 vs 0.79, slept 0.78 vs 3.3: it trades
+surplus homeostasis, not survival). Drive-layer runtime cost on the
+same host: 1.3%.
+
+Honest caveats, pre-registered posture unchanged: single seed;
+achv MEAN gap thinner (2.73 vs 2.50) than the median gap; the deep
+chain (pickaxe) remains entropy-only — the ladder expresses collection
+frontiers, as designed and disclosed. The gate lives at 3M x 5 seeds:
+paired diff >= +1.0 with CI > 0. Fleet throughput note: this host ran
+70 steps/s (half of v1.2's 129 on the same tier — host variance);
+protocol: cull-and-relaunch hosts under ~90 steps/s at first
+heartbeat.
+
+FLEET LAUNCHED on the back of this rehearsal: 5 pods (one per seed,
+paired worlds), full / no-proposer / native at 3M each.
+
+---
+
 ## v4.0 pre-flight B — 2026-08-02: the goal machine ports. The
 ## consume-trap dissolves by breadth; the ledger is exact in the field;
 ## the instrument pays for nothing that didn't happen.
