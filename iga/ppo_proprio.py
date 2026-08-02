@@ -54,6 +54,9 @@ def run_battery_arm(reward_fn, seed: int, total_steps: int = 2_000_000,
     prev_infos = [None] * n_envs
     ep_task = np.zeros(n_envs)
     ep_temp = np.zeros(n_envs)
+    ep_wear0 = np.array([e.wear for e in envs])   # wear persists across
+    # episodes (lifetime): rate must be the EPISODE DELTA, not the
+    # accumulated value (round-1 metric bug: short episodes inflated)
     stats = {"task": [], "brownout": [], "docked": [], "wear_rate": [],
              "temp_mean": [], "steps": []}
     step_total = 0
@@ -74,7 +77,6 @@ def run_battery_arm(reward_fn, seed: int, total_steps: int = 2_000_000,
             a_np = torch.tanh(a).numpy()
             nxt, rs, ds = [], [], []
             for k, e in enumerate(envs):
-                w0 = e.wear
                 o2, r_task, done, info = e.step(a_np[k])
                 r = reward_fn(r_task, info, prev_infos[k])
                 prev_infos[k] = info
@@ -85,13 +87,15 @@ def run_battery_arm(reward_fn, seed: int, total_steps: int = 2_000_000,
                     stats["task"].append(float(ep_task[k]))
                     stats["brownout"].append(info["brownout_steps"] / n)
                     stats["docked"].append(info["docked_steps"] / n)
-                    stats["wear_rate"].append((info["wear"] - 0.0) / n
-                                              if info["wear"] < 1.0 else 1.0)
+                    stats["wear_rate"].append(
+                        (info["wear"] - ep_wear0[k]) / n
+                        if info["wear"] < 1.0 else 1.0)
                     stats["temp_mean"].append(float(ep_temp[k] / n))
                     stats["steps"].append(n)
                     ep_task[k] = 0.0
                     ep_temp[k] = 0.0
                     o2 = e.reset()
+                    ep_wear0[k] = e.wear
                     prev_infos[k] = None
                 nxt.append(o2); rs.append(r); ds.append(done)
             obs = np.stack(nxt)
