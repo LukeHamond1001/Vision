@@ -5,6 +5,44 @@ stable commentary). Newest round first.
 
 ---
 
+## v2.1 VERDICT — 2026-08-02: the exploration valley. Conservation
+## replicates; docking emerges under NO reward composition; the
+## proposer inherits a measured job.
+
+Two rounds, 4 arms x 5 seeds each, 2M PPO steps/arm, all local ($0).
+Round 1 (no dock bearing) and round 2 (bearing in the sensor lines)
+agree on everything that matters:
+
+    task arms (task / task+wired / task+penalty): brownout ~0.26-0.38,
+        docked ~1%, statistically indistinguishable from each other
+    wired-only: brownout 0.02-0.07 — five-for-five, both rounds —
+        achieved by CONSERVATION (near-stillness), never by docking
+        (docked ~0.000); with bearing available it moves a little
+        more (task 204 vs 130) and still never navigates to charge
+
+Gates: G-task PASS; G-uptime FAIL; G-parity FAIL (vacuous — the
+incumbent hand-penalty is equally dock-blind).
+
+Findings:
+1. **The conservation dissociation** (new, replicated 10/10 across
+   rounds): pure drives satisfy homeostasis by the cheapest available
+   path — spend nothing, need nothing. Biology would approve. Task
+   pressure destroys this solution and no mixed arm finds the dock.
+2. **Docking is an exploration valley, not a reward-design problem:**
+   bearing visibility, potential-progress, brownout task-coupling, and
+   a hand-tuned penalty ALL fail identically. The detour behavior
+   (abandon the velocity gradient, walk to a corner, sit) is
+   unreachable by undirected exploration at 2M steps regardless of
+   what the reward says.
+3. **The proposer inherits a measured job** — the same pattern as
+   v1.2's night-deaths motivating the flinch: "propose a dock visit
+   when battery drifts" is exploration STRUCTURE, which is precisely
+   what the ladder generates and flat RL lacks. v2.2 (full
+   architecture on the battery world) now has its forcing failure,
+   documented before the ladder ever runs here.
+
+---
+
 ## v3.0 — 2026-08-02: the hacking-immunity table. The mis-specified
 ## reward gets maxed by cheating; the register cannot be paid to cheat.
 
