@@ -24,8 +24,11 @@ wart disclosed: seed 1 failed to bootstrap under a 0.728-fidelity
 gauge readout (discovery gate missed 0.9; the closed-form eigensolver
 under-read a FILLED BAR, whose value is simply its mean brightness —
 instrument overkill where a fixed pooling suffices). Robustness round
-with the mean-fill readout disclosed and running; gates already passed
-as pre-registered before it.
+with the mean-fill readout (corr 0.876): **laps 6.25 / 6.48 / 7.08 —
+three for three, ~5x the eigen-readout arm** — while earning only ~28
+by the broken metric vs the cheater's ~95. The finished table is the
+Goodhart figure: the mis-specified metric ranks the oscillator 3x
+above the racer; the racer laps the track 7-0.
 
 The theorem did the work: potential progress toward 'gauge high'
 telescopes, so checkpoint oscillation nets zero — the exploit class is
