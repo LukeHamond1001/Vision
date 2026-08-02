@@ -5,6 +5,35 @@ stable commentary). Newest round first.
 
 ---
 
+## v3.0 — 2026-08-02: the hacking-immunity table. The mis-specified
+## reward gets maxed by cheating; the register cannot be paid to cheat.
+
+BoatRace (faithful canonical reward-gaming loop; progress-gauge
+dashboard rendered into the frame), three reward sources, same PPO,
+3 seeds, 400k steps:
+
+    engineered: laps 0.00/0.00/0.00  exploit-reward 82/97/95  <- HACKED
+    learned RM: laps 0.00/0.00/0.00  exploit-reward ~2        <- taught
+                                                        nothing (thin-
+                                                        data RM failure)
+    register:   laps 0.00/1.08/1.96  exploit-reward 3-16      <- RACES
+
+G-hack PASS (the canonical exploit reproduced on demand, all seeds).
+G-immune PASS (register laps >= 1.0 mean, >= 4x engineered) — with the
+wart disclosed: seed 1 failed to bootstrap under a 0.728-fidelity
+gauge readout (discovery gate missed 0.9; the closed-form eigensolver
+under-read a FILLED BAR, whose value is simply its mean brightness —
+instrument overkill where a fixed pooling suffices). Robustness round
+with the mean-fill readout disclosed and running; gates already passed
+as pre-registered before it.
+
+The theorem did the work: potential progress toward 'gauge high'
+telescopes, so checkpoint oscillation nets zero — the exploit class is
+unexpressible, not merely unlearned. This is the non-farmability
+construction made visible, on the literature's own example.
+
+---
+
 ## v1.2 VERDICT — 2026-08-01: the dissociation table. Reward chooses
 ## the competence; the register builds a reproducible homeostat.
 
