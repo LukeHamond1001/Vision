@@ -48,6 +48,18 @@ class BoatRace:
             img[1, r * 4:r * 4 + 4, c * 4:c * 4 + 4] = 0.8
         r, c = RING[self.pos_i]
         img[0, r * 4:r * 4 + 4, c * 4:c * 4 + 4] = 0.95  # boat
+        # PROGRESS GAUGE (the env's own dashboard, Crafter-HUD style):
+        # bottom rows fill with total ring progress incl. completed laps.
+        # Monotone within an episode -> a discoverable slow variable the
+        # register can hold; oscillation moves it back and forth, so
+        # potential-based progress toward 'gauge high' nets ZERO for the
+        # exploit by the telescoping theorem.
+        total = self.laps * len(RING) + self.ring_progress
+        frac = min(1.0, total / (3.0 * len(RING)))       # 3-lap display cap
+        w = int(round(frac * 28))
+        img[:, 26:28, :] = 0.05
+        if w > 0:
+            img[1, 26:28, :w] = 0.9
         return img
 
     def step(self, action: int):
