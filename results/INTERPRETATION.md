@@ -5,6 +5,68 @@ stable commentary). Newest round first.
 
 ---
 
+## v4.0 pre-flight B — 2026-08-02: the goal machine ports. The
+## consume-trap dissolves by breadth; the ledger is exact in the field;
+## the instrument pays for nothing that didn't happen.
+
+The complete architecture's drive layer now runs on Crafter
+(iga/goal_machine.py): two registers (vitals maintenance, stock
+frontier), ramp goals over six CALIBRATED closed-form instrument
+channels in truth units, parameter-free prospective proposer (enumerable
+space — the toy's learned generator replaced by a complete menu, same
+ranking/veto/horizon/bar/one-shot laws; G5 holds by construction),
+potential-based progress with an exact-claim ledger, one-shot frontier
+bonus (G7).
+
+Harness verdict (all local, $0; synthetic suite + 25k-step consumption
+walk, 69 place-table consume events):
+
+    accounting   694 truth-driven + 550 head-driven holds: every one
+                 pays EXACTLY w*(phi_commit - phi_close); max prefix
+                 never exceeds w*phi_commit (no mint, ever)
+    anti-farm    oscillation nets zero; chop-place cycling pays once
+                 (arrived cells lose novelty; C7-gain blocks re-commit;
+                 re-collection is paid only through the NEXT frontier)
+    agenda       251 frontier arrivals on the walk, climbing wood
+                 1->2->3->4 and sapling 1->2->3->4, vitals restores
+                 interleaved
+    instrument   heads held out: wood 0.980, sapling 0.993, energy
+                 0.989, drink 0.940, food 0.919, health 0.915; in the
+                 loop: 0 phantom arrivals / 550 holds, 0 blind-missed
+                 timeouts, vitals arrival p95 shortfall 0.25
+
+Three design findings, each caught BEFORE the fleet:
+1. **C7 must be an IMPROVEMENT bar off-baseline.** The toy's absolute
+   bar worked at zero-baseline evaluators; under satiation everything
+   passes an absolute bar, letting spent stock cells re-commit forever.
+   With the gain form, stocks pass ONLY through one-shot novelty —
+   which is the G7 design stated more sharply than the toy ever had to.
+2. **The consume-trap dissolves by breadth-first frontier rotation,
+   not by a patch.** After wood>=1 arrives, the register rotates to the
+   least-arrived channel (sapling) — so the policy spends wood on a
+   table while no wood goal is held. A held HIGHER wood target during
+   placement is still charged as real measured regress (S1b: exactly
+   -w, telescoped, bounded). The drive layer only knows measured
+   stocks; where a chain's gain is unmeasured (table itself — not a
+   HUD counter), the drive is honestly blind and the ablation table
+   will show what that costs.
+3. **Walk-autocorrelation tau is INVALID for counters** (the v2.0
+   tau_half lesson in HUD form): rho@20 read event-driven stocks as
+   10x FASTER than vitals — backwards. Per-band weights use the
+   spec's own hold-length ratio (design constant): w = (1, 3).
+   And: calibration walks must use the DISCOVERY protocol (collection,
+   no consumption) — planting away the saplings starved the head solve
+   (corr 0.91 -> 0.34 across collections); coverage belongs to the
+   discoverer, field dynamics to the audit. Both walks cached.
+
+Remaining pre-flight: C agenda statistics (veto/coverage/density), the
+flinch forward model (train-freeze-audit or documented C4 deferral),
+D' no-proposer arm rehearsal (grounds the G-seq fixed-target
+expectation), E full-arm dress rehearsal. Then pre-registration and
+the fleet.
+
+---
+
 ## v2.1 VERDICT — 2026-08-02: the exploration valley. Conservation
 ## replicates; docking emerges under NO reward composition; the
 ## proposer inherits a measured job.
