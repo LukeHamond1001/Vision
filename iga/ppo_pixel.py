@@ -44,9 +44,12 @@ def _worker(remote, seed: int):
             if int(a) == 6 and day < 0.3: slept += 1
             ep_stat = None
             if done or ep_len >= 1000:
+                ach = {k: v for k, v in
+                       info.get("achievements", {}).items() if v > 0}
                 ep_stat = (ep_len, food_hi / max(ep_len, 1),
                            drink_hi / max(ep_len, 1),
-                           energy_hi / max(ep_len, 1), slept)
+                           energy_hi / max(ep_len, 1), slept,
+                           len(ach), ach)     # v4.0: distinct achievements
                 obs = env.reset()
                 ep_len = food_hi = drink_hi = energy_hi = slept = 0
                 done = True
@@ -123,11 +126,16 @@ def run_ppo_arm(enc, g_mid, mid_slice, reward_mode: str, seed: int,
                 lr: float = 2.5e-4, ent_coef: float = 0.01,
                 vf_coef: float = 0.5, device: str = "cpu",
                 log_cb=None, init_state: dict | None = None,
-                dim_mask=None) -> dict:
+                dim_mask=None, reward_fn=None, sample_hook=None) -> dict:
     """One PPO arm. Returns per-episode stats streams + policy state.
     Wired reward: batched phi-progress in the frozen homeostasis register,
     with phi state kept per env and reset (to the fresh obs value) on
-    episode boundaries so no cross-life reward leaks."""
+    episode boundaries so no cross-life reward leaks.
+    v4.0 hooks (PPO core untouched — learner-independence discipline):
+      reward_fn(obs2_u8_np, r_native, dones) -> np.float32[n_envs],
+        used when reward_mode == 'custom' (the goal-machine arms);
+      sample_hook(x_float, a, dist) -> a, applied between sampling and
+        log-prob (the C4 flinch veto — log-prob is of the FINAL action)."""
     from .crafter_support import SLOW_EMA_TAU, slow_stats
     alpha = 1.0 / SLOW_EMA_TAU
     vec = CrafterVec(n_envs, seed)
@@ -154,7 +162,7 @@ def run_ppo_arm(enc, g_mid, mid_slice, reward_mode: str, seed: int,
     if reward_mode == "wired":
         phi, es = encode_phi(obs, es)
     stats_all = {"survival": [], "food": [], "drink": [], "energy": [],
-                 "slept": []}
+                 "slept": [], "achv_n": [], "achv": []}
     step_total = 0
     while step_total < total_steps:
         O = torch.zeros(rollout, n_envs, 3, 64, 64, dtype=torch.uint8)
@@ -166,12 +174,17 @@ def run_ppo_arm(enc, g_mid, mid_slice, reward_mode: str, seed: int,
         for t in range(rollout):
             xt = torch.from_numpy(obs).permute(0, 3, 1, 2)
             with torch.no_grad():
-                logits, v = net(xt.float().div(255.0).to(device))
+                x_float = xt.float().div(255.0).to(device)
+                logits, v = net(x_float)
                 dist = torch.distributions.Categorical(logits=logits)
                 a = dist.sample()
+                if sample_hook is not None:
+                    a = sample_hook(x_float, a, dist)
                 lp = dist.log_prob(a)
             obs2, r_native, dones, ep_stats = vec.step(a.cpu().numpy())
-            if reward_mode == "wired":
+            if reward_mode == "custom":
+                r = reward_fn(obs2, r_native, dones)
+            elif reward_mode == "wired":
                 phi2, es = encode_phi(obs2, es)
                 r = phi - phi2
                 # reset phi baseline on episode boundary (fresh life)
@@ -194,6 +207,9 @@ def run_ppo_arm(enc, g_mid, mid_slice, reward_mode: str, seed: int,
                 stats_all["drink"].append(st[2])
                 stats_all["energy"].append(st[3])
                 stats_all["slept"].append(st[4])
+                if len(st) > 5:
+                    stats_all["achv_n"].append(st[5])
+                    stats_all["achv"].append(st[6])
         with torch.no_grad():
             _, v_last = net(torch.from_numpy(obs).permute(0, 3, 1, 2)
                             .float().div(255.0).to(device))

@@ -28,3 +28,36 @@ emitting register targets over discovered stock variables.
 pods. **Risk:** highest of the four — sequencing may need more
 machinery than the minimal port; failure modes are informative
 (which gate breaks names the missing component).
+
+---
+**Amendments (2026-08-02, all pre-run, pre-flight ladder A–F):**
+1. **Flinch DEFERRED per SPEC C4** (pre-flight F): the frozen-latent
+   forward model ranks *when* health drops (AUC 0.702, F1 PASS) but
+   has ZERO action discrimination on damage events (executed-action
+   margin frac 0.50 = chance; action sensitivity 0.137 vs drop
+   magnitude ~2; F2 FAIL). One-step melee damage is either
+   action-independent or requires the spatial object features the
+   encoder measurably lacks (zombie probe 0.55). An action-blind veto
+   is flinch theater; C4's precondition fails, so the fleet runs
+   **3 arms: full / no-proposer / native** (no-flinch ablation is
+   vacuous without a flinch). The socket stays open — an
+   action-conditioned video predictor (mimic-video track) is exactly
+   what would close it.
+2. **Proposer is parameter-free** (pre-flight B): stock/vital goal
+   spaces are enumerable, so the learned candidate generator is
+   replaced by a complete menu under the SAME prospective ranking,
+   veto, horizon, value-bar, and one-shot-curiosity laws. G5 holds by
+   construction. C7 runs in IMPROVEMENT form (gain over current f,
+   not absolute f) — stocks pass only through one-shot novelty.
+3. **No-proposer ablation = serialized fixed restore list**
+   (food/drink/energy >= 8), not v1.2's simultaneous composite —
+   same machinery as the full arm minus the proposer; the cleanest
+   ladder isolation. Disclosed here.
+4. **Goals are ramps** ("at least t"), registers per band (vitals,
+   stocks), w by hold-length ratio (1, 3); walk-rho tau measured
+   INVALID for counters (pre-flight B finding).
+5. **Instrument** = six calibrated closed-form heads in truth units
+   (results/v40_instrument.pt): held-out corr wood 0.980 / sapling
+   0.993 / energy 0.989 / drink 0.940 / food 0.919 / health 0.915;
+   in-the-loop: 0 phantom arrivals / 550 holds, blind-miss 1%.
+   Counters zero-anchored (empty state reads 0).

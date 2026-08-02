@@ -161,6 +161,31 @@ from .goal_machine import (CHANNELS, GMConfig, GoalMachine,
                            extract_window)
 
 
+def _walk_rule(rng, A, place_p: float, plant_p: float, sleep_p: float):
+    """The B/C/F walk protocol as a closure: persistent collection +
+    consumption/sleep overrides. One definition, every collector."""
+    state = {"a": 0}
+
+    def pick(t: int, wood: float, sapling: float, energy: float) -> int:
+        u = rng.random()
+        if u < 0.40:
+            state["a"] = A["do"]
+        elif u < 0.70 and t > 0:
+            pass                                    # repeat last action
+        else:
+            state["a"] = int(rng.integers(1, 5))
+        u2 = rng.random()
+        if wood >= 1 and u2 < place_p:
+            state["a"] = A["place_table"]
+        elif sapling >= 1 and u2 < place_p + plant_p:
+            state["a"] = A["place_plant"]
+        elif energy < 4 and rng.random() < sleep_p:
+            state["a"] = A["sleep"]
+        return state["a"]
+
+    return pick
+
+
 def collect_harness_walk(steps: int, seed: int, stock_windows: dict,
                          place_p: float = 0.20, plant_p: float = 0.15,
                          sleep_p: float = 0.30):
@@ -178,30 +203,17 @@ def collect_harness_walk(steps: int, seed: int, stock_windows: dict,
     A = {n: i for i, n in enumerate(names)}
     for n in ("do", "sleep", "place_table", "place_plant"):
         assert n in A, f"action '{n}' not in {names}"
+    pick = _walk_rule(rng, A, place_p, plant_p, sleep_p)
     spec = channel_windows(stock_windows)
     wins = {k: [] for k in CHANNELS}
     truth = {k: [] for k in CHANNELS}
     dones, consume_events = [], []
-    a = 0
     prev_wood = 0.0
     for t in range(steps):
-        u = rng.random()
         inv_wood = prev_wood
-        if u < 0.40:
-            a = A["do"]
-        elif u < 0.70 and t > 0:
-            pass                                    # repeat last action
-        else:
-            a = int(rng.integers(1, 5))
-        u2 = rng.random()
-        if inv_wood >= 1 and u2 < place_p:
-            a = A["place_table"]
-        elif len(truth["sapling"]) and truth["sapling"][-1] >= 1 \
-                and u2 < place_p + plant_p:
-            a = A["place_plant"]
-        elif len(truth["energy"]) and truth["energy"][-1] < 4 \
-                and rng.random() < sleep_p:
-            a = A["sleep"]
+        a = pick(t, inv_wood,
+                 truth["sapling"][-1] if truth["sapling"] else 0.0,
+                 truth["energy"][-1] if truth["energy"] else 9.0)
         obs, r, done, info = env.step(a)
         inv = info["inventory"]
         frame = torch.from_numpy(obs.copy()).permute(2, 0, 1)
@@ -576,6 +588,181 @@ def audit() -> None:
         + f"  ({time.time()-t0:.0f}s)", flush=True)
 
 
+# ====================================================================
+# Step F: the flinch forward model ('forward' mode). C4 needs a frozen
+# one-step predictor; this trains, freezes, and AUDITS it. Two gates:
+#   F1 drop-AUC       predicted next-step health delta must rank real
+#                     health drops (>= 0.70 holdout AUC)
+#   F2 discrimination flinch only matters if the prediction MOVES with
+#                     the action: starvation is action-blind, combat is
+#                     not. On holdout drop events, the executed action's
+#                     predicted drop must exceed the alternatives' mean
+#                     (fraction >= 0.55).
+# FAIL -> flinch deferred per SPEC C4 (documented), fleet runs 3 arms.
+# ====================================================================
+
+def collect_forward_walk(steps: int, seed: int, place_p: float = 0.20,
+                         plant_p: float = 0.15, sleep_p: float = 0.30):
+    """Frames + executed actions + vitals truth (same walk rule as B/C)."""
+    import crafter
+    rng = np.random.default_rng(seed)
+    env = crafter.Env(seed=seed)
+    obs = env.reset()
+    env._step = int(rng.integers(0, 300))
+    A = {n: i for i, n in enumerate(env.action_names)}
+    pick = _walk_rule(rng, A, place_p, plant_p, sleep_p)
+    frames, acts, dones = [], [], []
+    truth = {k: [] for k in ("health", "food", "drink", "energy")}
+    prev = {"wood": 0.0, "sapling": 0.0, "energy": 9.0}
+    for t in range(steps):
+        a = pick(t, prev["wood"], prev["sapling"], prev["energy"])
+        obs, r, done, info = env.step(a)
+        inv = info["inventory"]
+        frames.append(torch.from_numpy(obs.copy()).permute(2, 0, 1))
+        acts.append(a)
+        for k in truth:
+            truth[k].append(float(inv.get(k, 0)))
+        prev = {k: float(inv.get(k, 0)) for k in ("wood", "sapling", "energy")}
+        dones.append(bool(done))
+        if done:
+            obs = env.reset()
+            env._step = int(rng.integers(0, 300))
+            prev = {"wood": 0.0, "sapling": 0.0, "energy": 9.0}
+    return (torch.stack(frames), {k: torch.tensor(v) for k, v in truth.items()},
+            torch.tensor(acts), torch.tensor(dones))
+
+
+def _auc(scores: np.ndarray, labels: np.ndarray) -> float:
+    order = np.argsort(scores)
+    ranks = np.empty_like(order, dtype=float)
+    ranks[order] = np.arange(1, len(scores) + 1)
+    n_pos = int(labels.sum())
+    n_neg = len(labels) - n_pos
+    if n_pos == 0 or n_neg == 0:
+        return float("nan")
+    return float((ranks[labels > 0].sum() - n_pos * (n_pos + 1) / 2)
+                 / (n_pos * n_neg))
+
+
+def forward_model() -> None:
+    from .crafter_support import EncoderCrafter, ema_slow_stats
+    t0 = time.time()
+    pa = json.loads((RESULTS / "v40_preflight_A.json").read_text())
+    stock_windows = {k: tuple(map(tuple, v)) for k, v in pa["windows"].items()}
+    inst = torch.load(RESULTS / "v40_instrument.pt",
+                      weights_only=False)["inst"]
+    spec = channel_windows(stock_windows)
+
+    fr, tr, ac, dn = collect_forward_walk(40_000, seed=7)
+    fr_h, tr_h, ac_h, dn_h = collect_forward_walk(10_000, seed=207)
+    print(f"[pf-F] walks done ({time.time()-t0:.0f}s)", flush=True)
+    n_act = 17
+    assert int(ac.max()) < n_act and int(ac_h.max()) < n_act
+
+    enc = EncoderCrafter(band_dims=(16, 4, 2))
+    enc.load_state_dict(torch.load(RESULTS / "v09_encoder.pt",
+                                   map_location="cpu"))
+    enc.eval()
+
+    def feats(frames, dones):
+        ep = torch.cumsum(torch.cat([torch.tensor([0]),
+                                     dones[:-1].long()]), 0)
+        es = ema_slow_stats(frames, ep)
+        zs = []
+        with torch.no_grad():
+            for i in range(0, frames.shape[0], 512):
+                zs.append(enc(frames[i:i + 512].float().div(255.0),
+                              slow_feats=es[i:i + 512]))
+        z = torch.cat(zs)
+        m = torch.zeros(frames.shape[0], len(CHANNELS))
+        for i, k in enumerate(CHANNELS):
+            kind, (r0, r1), (c0, c1) = spec[k]
+            x = frames[:, :, HUD_ROWS, :] if kind == "hud" else frames
+            X = x[:, :, r0:r1, c0:c1].float().div(255.0).flatten(1)
+            ch = inst["channels"][k]
+            m[:, i] = ch["a"] * (X @ ch["w"] + ch["b"]) + ch["c"]
+        return torch.cat([z, m], dim=-1)
+
+    X, Xh = feats(fr, dn), feats(fr_h, dn_h)
+    print(f"[pf-F] features {X.shape} ({time.time()-t0:.0f}s)", flush=True)
+    vit = torch.stack([tr[k] for k in ("health", "food", "drink",
+                                       "energy")], 1)
+    vit_h = torch.stack([tr_h[k] for k in ("health", "food", "drink",
+                                           "energy")], 1)
+
+    def pairs(Xf, vitf, acf, dnf):
+        keep = (~dnf[:-1]).nonzero().squeeze(1)
+        oh = torch.nn.functional.one_hot(acf[keep + 1], n_act).float()
+        return (torch.cat([Xf[keep], oh], -1),
+                vitf[keep + 1] - vitf[keep], keep)
+
+    Xi, dy, _ = pairs(X, vit, ac, dn)
+    Xi_h, dy_h, keep_h = pairs(Xh, vit_h, ac_h, dn_h)
+
+    torch.manual_seed(4000)
+    model = torch.nn.Sequential(
+        torch.nn.Linear(Xi.shape[1], 64), torch.nn.ReLU(),
+        torch.nn.Linear(64, 64), torch.nn.ReLU(), torch.nn.Linear(64, 4))
+    opt = torch.optim.Adam(model.parameters(), lr=3e-3)
+    for ep in range(40):
+        perm = torch.randperm(Xi.shape[0])
+        for i in range(0, len(perm), 2048):
+            idx = perm[i:i + 2048]
+            loss = ((model(Xi[idx]) - dy[idx]) ** 2).mean()
+            opt.zero_grad()
+            loss.backward()
+            opt.step()
+    model.eval()
+    with torch.no_grad():
+        pred_h = model(Xi_h)
+    drops = (dy_h[:, 0] <= -0.9).numpy()
+    auc = _auc((-pred_h[:, 0]).numpy(), drops.astype(float))
+
+    # F2: action discrimination on drop events
+    margins = []
+    drop_idx = np.nonzero(drops)[0]
+    with torch.no_grad():
+        for j in drop_idx:
+            base = Xh[keep_h[j]]
+            allx = torch.cat([base.unsqueeze(0).expand(n_act, -1),
+                              torch.eye(n_act)], -1)
+            ph = model(allx)[:, 0]
+            a_exec = int(ac_h[keep_h[j] + 1])
+            others = torch.cat([ph[:a_exec], ph[a_exec + 1:]])
+            margins.append(float(others.mean() - ph[a_exec]))
+    margins = np.array(margins) if margins else np.array([0.0])
+    frac_pos = float((margins > 0).mean())
+    sens = []
+    with torch.no_grad():
+        for j in range(0, Xh.shape[0] - 1, 37):
+            allx = torch.cat([Xh[j].unsqueeze(0).expand(n_act, -1),
+                              torch.eye(n_act)], -1)
+            ph = model(allx)[:, 0]
+            sens.append(float(ph.max() - ph.min()))
+    metrics = {"drop_auc": auc, "n_drops": int(drops.sum()),
+               "margin_frac_pos": frac_pos,
+               "margin_mean": float(margins.mean()),
+               "action_sens_mean": float(np.mean(sens)),
+               "holdout_mse_health": float(((pred_h[:, 0] - dy_h[:, 0]) ** 2)
+                                           .mean())}
+    gates = {"F1_drop_auc": bool(auc >= 0.70),
+             "F2_discrimination": bool(frac_pos >= 0.55)}
+    torch.save({"state_dict": model.state_dict(), "in_dim": Xi.shape[1],
+                "n_act": n_act, "metrics": metrics, "gates": gates},
+               RESULTS / "v40_forward.pt")
+    print(f"[pf-F] drop AUC {auc:.3f} (n={int(drops.sum())}); "
+          f"exec-action margin frac {frac_pos:.2f} mean "
+          f"{float(margins.mean()):.3f}; action sensitivity "
+          f"{float(np.mean(sens)):.3f}", flush=True)
+    print(f"[pf-F] GATES: " + "  ".join(
+        f"{k} {'PASS' if v else 'FAIL'}" for k, v in gates.items())
+        + f"  ({time.time()-t0:.0f}s)", flush=True)
+    if not all(gates.values()):
+        print("[pf-F] -> flinch DEFERRED per SPEC C4 (no trustworthy "
+              "action-discriminating forward model); fleet runs 3 arms",
+              flush=True)
+
+
 def main() -> None:
     mode = sys.argv[1] if len(sys.argv) > 1 else "counters"
     if mode == "counters":
@@ -584,6 +771,8 @@ def main() -> None:
         harness()
     elif mode == "audit":
         audit()
+    elif mode == "forward":
+        forward_model()
     else:
         raise SystemExit(f"unknown pre-flight mode: {mode}")
 
