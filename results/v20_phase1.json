@@ -1,0 +1,17 @@
+{
+  "taus": {
+    "battery": 92.0,
+    "temp": 54.0,
+    "wear": 28856.0,
+    "gait": 4.0
+  },
+  "routes": {
+    "battery": 0.9999996423721313,
+    "temp": 1.0,
+    "wear": 1.0
+  },
+  "gates": {
+    "tau": true,
+    "route": true
+  }
+}

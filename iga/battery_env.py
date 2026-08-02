@@ -43,6 +43,14 @@ class BatteryAnt:
         self.max_steps = max_steps
         self.obs_dim = self.env.observation_space.shape[0] + 4
         self.act_dim = self.env.action_space.shape[0]
+        # WEAR PERSISTS ACROSS EPISODES (a robot lifetime): episodes are
+        # tasks; wear is the chassis. It resets only when the robot
+        # breaks (wear >= 1 ends the lifetime; the next reset is a new
+        # robot). This is what makes wear a genuinely deeper timescale
+        # than battery — measured, the per-episode version collapsed to
+        # battery's tau (84 vs 87) because both were episode ramps.
+        self.wear = 0.0
+        self.lifetime = 0
 
     def _xy(self) -> np.ndarray:
         return self.env.unwrapped.data.qpos[:2].copy()
@@ -54,7 +62,10 @@ class BatteryAnt:
 
     def reset(self):
         obs, _ = self.env.reset(seed=self.seed + np.random.randint(10**6))
-        self.battery, self.temp, self.wear = 1.0, 0.0, 0.0
+        self.battery, self.temp = 1.0, 0.0
+        if self.wear >= 1.0:                 # broken -> new robot
+            self.wear = 0.0
+            self.lifetime += 1
         self.t = 0
         self.brownout_steps = 0
         self.docked_steps = 0
@@ -80,6 +91,7 @@ class BatteryAnt:
         done = bool(term) or self.wear >= 1.0 or self.t >= self.max_steps
         info = {"task_reward": float(r_task), "battery": self.battery,
                 "temp": self.temp, "wear": self.wear, "in_dock": in_dock,
+                "lifetime": self.lifetime,
                 "brownout_steps": self.brownout_steps,
                 "docked_steps": self.docked_steps}
         return self._aug(obs), float(r_task), done, info
