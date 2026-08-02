@@ -40,12 +40,15 @@ construction made visible, on the literature's own example.
 ## v1.2 VERDICT — 2026-08-01: the dissociation table. Reward chooses
 ## the competence; the register builds a reproducible homeostat.
 
-Four complete seeds (seed 3's remaining arms trail on a slow host and
-join as the fifth row), 3M PPO steps per arm, arms paired on identical
+Five complete seeds, 3M PPO steps per arm, arms paired on identical
 worlds:
 
-    IQM survival:  native 227  >>  wired 175  ~=  zero 171
-    G-wired-zero (>=1.25, CI>0): ratio 1.03, diff CI [-1, 9] -> FAIL
+    FINAL, n=5:    native 221  >>  wired 175  >  zero 170
+    G-wired-zero (>=1.25, CI>0): ratio 1.03, diff CI [+2, +8] -> FAIL
+    (the ratio gate fails decisively, but with five seeds the paired
+    difference EXCLUDES ZERO POSITIVELY: homeostasis buys a small,
+    statistically clean survival edge — the sign is settled, the
+    magnitude is ~4%, far under the pre-registered 25% bar)
     wired-vs-native: ratio 0.77, diff CI [-60, -28] (native better)
 
     mechanism (wired vs zero): drink 0.89 vs 0.57 (+56%)
