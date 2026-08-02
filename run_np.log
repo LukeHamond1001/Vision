@@ -1,0 +1,5 @@
+[v40r] no-proposer s1 device=cuda steps=400000
+[v40r] no-proposer s1 0.10M: eps 601 surv 164 achv 3.0 arriv 0 bonus 0.0 (1443s)
+[v40r] no-proposer s1 0.20M: eps 1176 surv 169 achv 3.0 arriv 0 bonus 0.0 (2844s)
+[v40r] no-proposer s1 0.30M: eps 1768 surv 167 achv 3.0 arriv 0 bonus 0.0 (4272s)
+[v40r] no-proposer s1 DONE: surv 169 achv-med 2.0 table {'collect_drink': 401, 'collect_sapling': 319, 'wake_up': 701, 'place_plant': 144, 'collect_wood': 314, 'make_wood_sword': 8, 'place_table': 62, 'defeat_skeleton': 2, 'collect_stone': 3, 'make_wood_pickaxe': 6, 'place_furnace': 1, 'eat_cow': 6, 'defeat_zombie': 1, 'collect_coal': 1} (5676s)
