@@ -120,7 +120,14 @@ def calibrate_instrument(wins: dict, truth: dict, ep_ids: torch.Tensor,
         z = wins[k] @ w + b
         zv = float(z.var())
         a = float(((z - z.mean()) * (y - y.mean())).mean() / max(zv, 1e-8))
-        c = float(y.mean() - a * z.mean())
+        if k in ("wood", "sapling") and bool((y == 0).any()):
+            # Counters have a TRUE ZERO: anchor the intercept at the
+            # empty state (digit-glyph -> z is nonlinear at the low end;
+            # least-squares intercepts read ~1 at truth 0, shifting the
+            # whole frontier ladder's labels by one).
+            c = -a * float(z[y == 0].median())
+        else:
+            c = float(y.mean() - a * z.mean())
         zt = wins_t[k] @ w + b
         mt = a * zt + c
         yt = truth_t[k]
@@ -216,6 +223,9 @@ class GoalMachine:
         self.t = 0                        # GLOBAL step clock (not per-life):
         # ledger/trace times index the caller's stream, so audits can look
         # up ground truth at event times.
+        self.rejects = {"satisfied": 0, "veto": 0, "horizon": 0,
+                        "bar": 0, "cap": 0}   # proposer diagnostics (C)
+        self.total_bonus = 0.0
         self.reset(None)
 
     # -------------------------------------------------------------- life
@@ -258,9 +268,11 @@ class GoalMachine:
                 t = float(int(round(float(self.m[c]))) + 1)
                 cell = (c, int(t))
                 if self.arrive_count.get(cell, 0) >= self.cfg.cap_arrivals:
-                    continue                                   # C1
+                    self.rejects["cap"] += 1                   # C1
+                    continue
                 if t - float(self.m[c]) > self.cfg.horizon_stock:
-                    continue                                   # C5
+                    self.rejects["horizon"] += 1               # C5
+                    continue
                 out.append((c, t, True))
         return out
 
@@ -278,16 +290,19 @@ class GoalMachine:
         best, best_key, best_frontier = None, None, False
         for c, t, frontier in self._candidates(band):
             if self._satisfied(self.m, c, t):
+                self.rejects["satisfied"] += 1
                 continue                    # no instant-arrival commits
             g = self._imagine(c, t)
             if f_neg(g) > self.cfg.veto_threshold:
-                continue                                       # C4
+                self.rejects["veto"] += 1                      # C4
+                continue
             novelty = (self.cfg.frontier_bonus
                        if frontier and (c, int(t)) not in self.arrived_cells
                        else 0.0)
             gain = f_pos(g) - f_neg(g) - base
             if gain < self.cfg.value_bar and novelty <= 0:
-                continue                    # C7 improvement bar / G7 lane
+                self.rejects["bar"] += 1    # C7 improvement bar / G7 lane
+                continue
             key = (gain + novelty, -self.arrivals_by_channel.get(c, 0), -c)
             if best_key is None or key > best_key:
                 best, best_key, best_frontier = (c, t), key, frontier
@@ -343,6 +358,7 @@ class GoalMachine:
                             self.arrived_cells.add(cell)
                             r += self.cfg.frontier_bonus
                             ev["bonus"] += self.cfg.frontier_bonus
+                            self.total_bonus += self.cfg.frontier_bonus
                     ev["arrivals"].append((CHANNELS[h.channel], h.target))
                 else:
                     ev["timeouts"].append((CHANNELS[h.channel], h.target))

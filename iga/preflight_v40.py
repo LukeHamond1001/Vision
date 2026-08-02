@@ -484,12 +484,106 @@ def harness() -> None:
           f"({time.time()-t0:.0f}s)", flush=True)
 
 
+# ====================================================================
+# Step C: proposal-agenda statistics ('audit' mode). The machine is
+# correct (B); C asks whether its AGENDA has the shape a learner can
+# live inside: how often registers are held, how dense the reward
+# stream is, which goals commit/arrive/time out, what the proposer
+# rejects and why. Runs on the cached B walks; seconds, $0.
+# ====================================================================
+
+def audit() -> None:
+    import tempfile
+    from pathlib import Path
+    t0 = time.time()
+    blob = torch.load(RESULTS / "v40_instrument.pt", weights_only=False)
+    inst = blob["inst"]
+    cache = (Path(tempfile.gettempdir()) / "iga_v40_walks"
+             / "walk_25000_101_0.2_0.15.pt")
+    d = torch.load(cache, weights_only=False)
+    wins_a, truth_a, dones_a = d["wins"], d["truth"], d["dones"]
+    N = int(dones_a.shape[0])
+    M_hat = torch.zeros(N, len(CHANNELS))
+    for i, k in enumerate(CHANNELS):
+        ch = inst["channels"][k]
+        M_hat[:, i] = ch["a"] * (wins_a[k] @ ch["w"] + ch["b"]) + ch["c"]
+
+    stds = tuple(inst["channels"][k]["std"] for k in CHANNELS)
+    cfg = GMConfig(stds=stds)
+    cfg = GMConfig(stds=stds, w_bands=(1.0, cfg.holds[1] / cfg.holds[0]))
+    gm = GoalMachine(cfg)
+    rewards = _drive(gm, M_hat, dones_a)
+
+    # hold coverage per band (fraction of steps with an open hold)
+    cov = [0, 0]
+    for h in gm.ledger:
+        cov[h["band"]] += h["t_close"] - h["t_commit"]
+    cov = [c / N for c in cov]
+    nz = np.abs(rewards) > 1e-9
+    density = float(nz.mean())
+    pos = rewards[rewards > 1e-9]
+    neg = rewards[rewards < -1e-9]
+
+    table = {}
+    for h in gm.ledger:
+        key = f"{h['channel']}>={h['target']:.0f}"
+        row = table.setdefault(key, {"commits": 0, "arrive": 0,
+                                     "timeout": 0, "death": 0, "lens": []})
+        row["commits"] += 1
+        row[h["closed_by"]] += 1
+        row["lens"].append(h["t_close"] - h["t_commit"])
+    for row in table.values():
+        row["median_len"] = int(np.median(row.pop("lens")))
+
+    # richest life (most arrivals) — the trace preview
+    lives, start = [], 0
+    for t in range(N):
+        if bool(dones_a[t]):
+            lives.append((start, t))
+            start = t + 1
+    arr_times = [h["t_close"] for h in gm.ledger
+                 if h["closed_by"] == "arrive"]
+    best_life = max(lives, key=lambda ab: sum(1 for t in arr_times
+                                              if ab[0] <= t <= ab[1]))
+    print(f"[pf-C] lives {len(lives)}, stock-hold coverage {cov[1]:.2f}, "
+          f"vitals coverage {cov[0]:.2f}", flush=True)
+    print(f"[pf-C] reward stream: density {density:.3f}, +mean "
+          f"{pos.mean() if pos.size else 0:.3f} (n {pos.size}), -mean "
+          f"{neg.mean() if neg.size else 0:.3f} (n {neg.size}), bonus "
+          f"total {gm.total_bonus:.0f}", flush=True)
+    print(f"[pf-C] rejects: {gm.rejects}", flush=True)
+    for k, row in sorted(table.items()):
+        print(f"[pf-C]   {k:12s} {row}", flush=True)
+    print(f"[pf-C] --- richest life t=[{best_life[0]},{best_life[1]}] ---",
+          flush=True)
+    for (t, evn, band, chn, lvl) in gm.trace:
+        if best_life[0] <= t <= best_life[1]:
+            print(f"[pf-C]   t={t:5d} {'STOCK' if band else 'VITAL'} "
+                  f"{evn:7s} {chn}>={lvl:.0f}", flush=True)
+
+    frontier_lives = sum(1 for (a, b) in lives
+                         if any(a <= t <= b for t in arr_times))
+    gates = {"C1_coverage": bool(cov[1] >= 0.5),
+             "C2_density": bool(density >= 0.01)}
+    (RESULTS / "v40_preflight_C.json").write_text(json.dumps({
+        "lives": len(lives), "coverage": cov, "density": density,
+        "pos_n": int(pos.size), "neg_n": int(neg.size),
+        "bonus_total": gm.total_bonus, "rejects": gm.rejects,
+        "frontier_life_frac": frontier_lives / max(len(lives), 1),
+        "table": table, "gates": gates}, indent=2))
+    print(f"[pf-C] GATES: " + "  ".join(
+        f"{k} {'PASS' if v else 'FAIL'}" for k, v in gates.items())
+        + f"  ({time.time()-t0:.0f}s)", flush=True)
+
+
 def main() -> None:
     mode = sys.argv[1] if len(sys.argv) > 1 else "counters"
     if mode == "counters":
         step_a()
     elif mode == "harness":
         harness()
+    elif mode == "audit":
+        audit()
     else:
         raise SystemExit(f"unknown pre-flight mode: {mode}")
 

@@ -1,0 +1,81 @@
+{
+  "lives": 227,
+  "coverage": [
+    0.2528,
+    0.98844
+  ],
+  "density": 0.02648,
+  "pos_n": 349,
+  "neg_n": 313,
+  "bonus_total": 153.0,
+  "rejects": {
+    "satisfied": 0,
+    "veto": 0,
+    "horizon": 0,
+    "bar": 17,
+    "cap": 0
+  },
+  "frontier_life_frac": 0.5594713656387665,
+  "table": {
+    "wood>=1": {
+      "commits": 235,
+      "arrive": 127,
+      "timeout": 8,
+      "death": 100,
+      "median_len": 56
+    },
+    "sapling>=1": {
+      "commits": 130,
+      "arrive": 17,
+      "timeout": 6,
+      "death": 107,
+      "median_len": 45
+    },
+    "drink>=8": {
+      "commits": 109,
+      "arrive": 5,
+      "timeout": 33,
+      "death": 71,
+      "median_len": 44
+    },
+    "wood>=2": {
+      "commits": 17,
+      "arrive": 8,
+      "timeout": 1,
+      "death": 8,
+      "median_len": 44
+    },
+    "energy>=8": {
+      "commits": 27,
+      "arrive": 0,
+      "timeout": 14,
+      "death": 13,
+      "median_len": 60
+    },
+    "sapling>=2": {
+      "commits": 7,
+      "arrive": 1,
+      "timeout": 0,
+      "death": 6,
+      "median_len": 28
+    },
+    "food>=8": {
+      "commits": 21,
+      "arrive": 1,
+      "timeout": 9,
+      "death": 11,
+      "median_len": 56
+    },
+    "wood>=3": {
+      "commits": 4,
+      "arrive": 0,
+      "timeout": 1,
+      "death": 3,
+      "median_len": 49
+    }
+  },
+  "gates": {
+    "C1_coverage": true,
+    "C2_density": true
+  }
+}
