@@ -1,0 +1,7 @@
+[v40] flinch gates {'F1_drop_auc': True, 'F2_discrimination': False} -> DEFERRED (SPEC C4)
+[v40] full s3 device=cuda steps=3000000
+[v40] full s3 0.10M: eps 577 surv 174 achv 4.0 arriv 565 bonus 565.0 (1458s)
+[v40] full s3 0.20M: eps 1132 surv 174 achv 3.0 arriv 2235 bonus 2235.0 (2894s)
+[v40] full s3 0.30M: eps 1685 surv 180 achv 3.0 arriv 4306 bonus 4306.0 (4302s)
+[v40] full s3 0.41M: eps 2242 surv 178 achv 3.0 arriv 6547 bonus 6547.0 (5701s)
+[v40] full s3 0.51M: eps 2807 surv 176 achv 3.0 arriv 9067 bonus 9067.0 (7100s)
