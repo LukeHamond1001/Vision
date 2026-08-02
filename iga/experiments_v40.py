@@ -46,6 +46,7 @@ from .ppo_pixel import run_ppo_arm
 
 FIXED_TARGETS = ((1, 8.0), (2, 8.0), (3, 8.0))   # food, drink, energy
 ARMS = ("full", "no-flinch", "no-proposer", "native")
+DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
 
 def load_instrument():
@@ -209,9 +210,10 @@ def run_arm(arm: str, seed: int, steps: int, n_envs: int = 12,
               f"bonus {ms.get('bonus_total', '-')} "
               f"({time.time()-t0:.0f}s)", flush=True)
 
+    print(f"[{tag}] {arm} s{seed} device={DEVICE} steps={steps}", flush=True)
     out = run_ppo_arm(None, None, None, mode, seed, total_steps=steps,
                       n_envs=n_envs, reward_fn=reward_fn, sample_hook=hook,
-                      log_cb=log_cb)
+                      log_cb=log_cb, device=DEVICE)
     k = max(1, len(out["survival"]) // 3)
     ach_counts: dict = {}
     for d in out["achv"][-k:]:

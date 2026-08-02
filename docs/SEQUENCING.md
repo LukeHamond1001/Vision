@@ -61,3 +61,13 @@ machinery than the minimal port; failure modes are informative
    0.993 / energy 0.989 / drink 0.940 / food 0.919 / health 0.915;
    in-the-loop: 0 phantom arrivals / 550 holds, blind-miss 1%.
    Counters zero-anchored (empty state reads 0).
+6. **G-seq re-based to the PAIRED DIFFERENCE (tiny-smoke finding,
+   disclosed before any full run):** a 16k-step near-random policy
+   already medians 3.0 distinct achievements — incidental unlocks
+   (wake_up, place_plant) inflate ABSOLUTE counts for any policy with
+   entropy, so the registered absolute thresholds (full >= 3, fixed
+   < 1.5) cannot isolate the ladder. Amended gate: **G-seq = full
+   minus no-proposer distinct-achievement median (last third),
+   paired by seed, >= +1.0 with the across-seed CI excluding zero.**
+   Original absolute numbers and full achievement tables still
+   reported. Mechanism artifact unchanged (the proposal trace).
