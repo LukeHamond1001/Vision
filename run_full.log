@@ -1,0 +1,6 @@
+[v40r] flinch gates {'F1_drop_auc': True, 'F2_discrimination': False} -> DEFERRED (SPEC C4)
+[v40r] full s1 device=cuda steps=400000
+[v40r] full s1 0.10M: eps 576 surv 170 achv 3.0 arriv 677 bonus 677.0 (1451s)
+[v40r] full s1 0.20M: eps 1132 surv 174 achv 3.0 arriv 2221 bonus 2221.0 (2883s)
+[v40r] full s1 0.30M: eps 1694 surv 174 achv 3.0 arriv 4120 bonus 4120.0 (4330s)
+[v40r] full s1 DONE: surv 170 achv-med 3.0 table {'collect_sapling': 740, 'collect_wood': 699, 'eat_cow': 154, 'wake_up': 142, 'collect_drink': 236, 'place_table': 11, 'place_plant': 13, 'defeat_skeleton': 7, 'defeat_zombie': 57, 'make_wood_pickaxe': 1, 'make_wood_sword': 1} (5750s)
