@@ -151,3 +151,4 @@
 [v1.3] fresh steps 2949120 surv(last50) 168 slept(last50) 1.9 drink(last50) 0.96 (66469s)
 [v1.3] fresh steps 2979840 surv(last50) 167 slept(last50) 1.8 drink(last50) 0.89 (67128s)
 [v1.3] fresh: surv 169 drink 0.91 energy 0.98 slept 2.1 | P1 sleep-collapse FAIL P2 drink-holds PASS P3 energy-sags FAIL
+[v1.3] done 102881s
