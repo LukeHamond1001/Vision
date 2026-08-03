@@ -25,3 +25,8 @@
 [v40] full s4 2.33M: eps 13653 surv 166 achv 3.0 arriv 84324 bonus 84324.0 (32772s)
 [v40] full s4 2.43M: eps 14248 surv 167 achv 3.0 arriv 89421 bonus 89421.0 (34140s)
 [v40] full s4 2.53M: eps 14864 surv 166 achv 3.0 arriv 94733 bonus 94733.0 (36702s)
+[v40] full s4 2.64M: eps 15469 surv 166 achv 3.0 arriv 100024 bonus 100024.0 (38166s)
+[v40] full s4 2.74M: eps 16083 surv 165 achv 3.0 arriv 105462 bonus 105462.0 (39501s)
+[v40] full s4 2.84M: eps 16686 surv 166 achv 3.0 arriv 110740 bonus 110740.0 (41184s)
+[v40] full s4 2.94M: eps 17299 surv 166 achv 3.0 arriv 116248 bonus 116248.0 (43289s)
+[v40] full s4 DONE: surv 165 achv-med 3.0 table {'collect_sapling': 5870, 'collect_wood': 5861, 'collect_drink': 416, 'wake_up': 2008, 'place_plant': 3218, 'eat_cow': 670, 'defeat_zombie': 447, 'defeat_skeleton': 14, 'place_table': 2} (44288s)
