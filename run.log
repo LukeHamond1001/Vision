@@ -24,3 +24,8 @@
 [v40] no-proposer s3 2.33M: eps 13880 surv 164 achv 2.0 arriv 0 bonus 0.0 (33492s)
 [v40] no-proposer s3 2.43M: eps 14515 surv 164 achv 2.0 arriv 0 bonus 0.0 (34913s)
 [v40] no-proposer s3 2.53M: eps 15140 surv 164 achv 2.0 arriv 0 bonus 0.0 (36327s)
+[v40] no-proposer s3 2.64M: eps 15771 surv 164 achv 2.0 arriv 0 bonus 0.0 (37728s)
+[v40] no-proposer s3 2.74M: eps 16380 surv 164 achv 2.0 arriv 0 bonus 0.0 (39109s)
+[v40] no-proposer s3 2.84M: eps 16977 surv 165 achv 2.0 arriv 0 bonus 0.0 (40472s)
+[v40] no-proposer s3 2.94M: eps 17578 surv 166 achv 2.0 arriv 0 bonus 0.0 (41846s)
+[v40] no-proposer s3 DONE: surv 166 achv-med 2.0 table {'wake_up': 5371, 'collect_sapling': 2883, 'place_plant': 2104, 'collect_drink': 347, 'collect_wood': 1292, 'place_table': 64, 'eat_cow': 757, 'defeat_zombie': 121, 'defeat_skeleton': 13, 'make_wood_sword': 3, 'make_wood_pickaxe': 3} (42701s)

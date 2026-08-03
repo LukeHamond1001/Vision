@@ -52,5 +52,47 @@
       }
     },
     "elapsed_s": 45613.42436480522
+  },
+  {
+    "arm": "no-proposer",
+    "seed": 3,
+    "steps": 3000000,
+    "episodes": 17954,
+    "survival": 166.5,
+    "achv_median": 2.0,
+    "achv_mean": 2.1654411764705883,
+    "achv_table": {
+      "wake_up": 5371,
+      "collect_sapling": 2883,
+      "place_plant": 2104,
+      "collect_drink": 347,
+      "collect_wood": 1292,
+      "place_table": 64,
+      "eat_cow": 757,
+      "defeat_zombie": 121,
+      "defeat_skeleton": 13,
+      "make_wood_sword": 3,
+      "make_wood_pickaxe": 3
+    },
+    "drink": 0.56887423570272,
+    "food": 0.7431260324409484,
+    "energy": 0.9992897446941831,
+    "slept": 2.7540106951871657,
+    "machine": {
+      "holds": 47595,
+      "arrivals": 15386,
+      "frontier_arrivals": 0,
+      "timeouts": 14975,
+      "bonus_total": 0.0,
+      "cells": {},
+      "rejects": {
+        "satisfied": 0,
+        "veto": 0,
+        "horizon": 0,
+        "bar": 0,
+        "cap": 0
+      }
+    },
+    "elapsed_s": 42700.83958721161
   }
 ]
