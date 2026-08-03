@@ -1,0 +1,57 @@
+[
+  {
+    "arm": "full",
+    "seed": 2,
+    "steps": 3000000,
+    "episodes": 17649,
+    "survival": 166.0,
+    "achv_median": 3.0,
+    "achv_mean": 2.7353391126976034,
+    "achv_table": {
+      "collect_sapling": 5849,
+      "collect_wood": 5835,
+      "wake_up": 3067,
+      "eat_cow": 545,
+      "defeat_zombie": 281,
+      "collect_drink": 484,
+      "place_table": 7,
+      "defeat_skeleton": 5,
+      "place_plant": 16,
+      "make_wood_pickaxe": 2,
+      "make_wood_sword": 1
+    },
+    "drink": 0.5480571164388673,
+    "food": 0.6802652600514557,
+    "energy": 0.9265289205221503,
+    "slept": 1.499575046744858,
+    "machine": {
+      "holds": 163825,
+      "arrivals": 119309,
+      "frontier_arrivals": 118605,
+      "timeouts": 10604,
+      "bonus_total": 118605.0,
+      "cells": {
+        "wood>=1": 16926,
+        "sapling>=3": 9910,
+        "wood>=2": 12977,
+        "sapling>=1": 15339,
+        "sapling>=2": 12573,
+        "wood>=5": 9323,
+        "sapling>=4": 9115,
+        "sapling>=5": 7692,
+        "wood>=3": 11815,
+        "wood>=4": 10789,
+        "sapling>=8": 1036,
+        "sapling>=6": 1110
+      },
+      "rejects": {
+        "satisfied": 0,
+        "veto": 0,
+        "horizon": 0,
+        "bar": 107,
+        "cap": 0
+      }
+    },
+    "elapsed_s": 35214.88207745552
+  }
+]
