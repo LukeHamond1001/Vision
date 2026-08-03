@@ -1,0 +1,18 @@
+[
+  {
+    "arm": "swap",
+    "survival_last3rd": 169.093878954608,
+    "food_last3rd": 0.6909166742942429,
+    "drink_last3rd": 0.924278423046529,
+    "energy_last3rd": 0.9788687397044189,
+    "slept_last3rd": 1.3345942228335625
+  },
+  {
+    "arm": "fresh",
+    "survival_last3rd": 168.9131914893617,
+    "food_last3rd": 0.6885955461170538,
+    "drink_last3rd": 0.9111263691663108,
+    "energy_last3rd": 0.9826896416146246,
+    "slept_last3rd": 2.0577021276595744
+  }
+]

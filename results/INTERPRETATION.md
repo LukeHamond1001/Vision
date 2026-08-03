@@ -5,6 +5,46 @@ stable commentary). Newest round first.
 
 ---
 
+## v1.3 FINAL — 2026-08-03: the glass-box edit dissects a behavior
+## into its motives. Sleep turns out to be paid by TWO registers.
+
+Both arms in (pod x6rem69xbau9oh, self-terminated after push):
+
+    baseline   v1.2 wired (energy IN the want):   slept 4.3/ep, energy 0.98
+    swap       warm-start, energy DELETED, +1.5M: slept 1.34, drink 0.924,
+               energy 0.979, surv 169
+    fresh      from scratch, energy DELETED, 3M:  slept 2.06, drink 0.911,
+               energy 0.983, surv 169
+
+Pre-registered verdicts, strictly:
+    P2 drink holds (>= 0.80)   PASS both arms (0.92/0.91) — the edit was
+                               SURGICAL: untouched wants untouched
+    P1 sleep collapses (< 1.0) FAIL both (1.34 / 2.06) — but the
+                               DIRECTION is large and replicated:
+                               4.3 -> 1.3-2.1, a 52-69% reduction from
+                               deleting one dimension of the want
+    P3 energy sags (< 0.98)    SPLIT on the knife edge (0.979 / 0.983)
+                               — energy did not materially sag
+
+Why P1's residual is a FINDING, not just a miss: sleep was
+over-determined. The wired reward pays for health as well as energy,
+and sleeping through the night is Crafter's best zombie-avoidance —
+so even with the energy want deleted, the HEALTH register keeps paying
+for a share of sleep (the v1.2 night-death mechanism, now visible from
+the other side). The edit decomposed the behavior into its motives:
+roughly half-to-two-thirds of sleeping was energy-wanting; the rest is
+health-protective. Energy then stays pinned as a FREE RIDER on
+health-motivated sleep, which is why P3 sat on the knife edge. That
+a one-line ledger edit yields a motive decomposition — behavior
+shrinking by approximately the deleted motive's share, with unrelated
+lanes untouched — is the glass-box property demonstrated at level two,
+even though the strict collapse gate honestly FAILS.
+
+v1.3 CLOSED. All four launched experiments now have complete data;
+v4.0's fleet (the fourth) is mid-flight.
+
+---
+
 ## v4.0 pre-flight D'/E — 2026-08-02: dress rehearsals. The complete
 ## architecture runs for the first time — and the dissociation is
 ## visible at 13% of training.
