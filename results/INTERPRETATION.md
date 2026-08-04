@@ -5,6 +5,64 @@ stable commentary). Newest round first.
 
 ---
 
+## v4.0 VERDICT — 2026-08-04: the sequencing fleet. G-seq FAILS its
+## magnitude bar by one gardening homeostat; the causal effect is real
+## and CI-clean; the mechanism is unanimous; and the miss names gen-2's
+## component precisely.
+
+Fleet: 5 seeds x (full / no-proposer / native) x 3M steps, paired
+worlds, RTX 2000 pods, ~$30, ~40h wall-clock, 4 slow-host culls at
+~$2 total. All rows delivered by self-terminating pods.
+
+    full         achv-med 3.0 3.0 3.0 3.0 3.0   surv 165-167
+    no-proposer  achv-med 2.0 2.0 2.0 2.0 3.0   surv 157-166
+    native       achv-med 10.0 10.0 10.0        surv 199-212
+                 (3 seeds; slow-pod natives culled per plan)
+
+    G-seq paired diff: +1, +1, +1, +1, 0
+    mean +0.80, CI95 [+0.41, +1.19]
+    pre-registered gate (>= +1.0 AND CI > 0): **FAIL** (magnitude
+    clause; the CI clause passes decisively)
+
+What broke the bar: exactly the discrete-median fragility flagged when
+the gate was re-based (pre-run, disclosed) — medians are integers, and
+seed 5's homeostat became a gardener (place_plant 4,272/arm, third
+incidental unlock, median 3.0). The incidental-unlock ceiling is soft
+and seed-dependent; four of five seeds sat below it, one above.
+
+What stands regardless of the gate:
+1. **The causal effect is real**: CI excludes zero decisively. The
+   ladder adds distinct achievements; it added less than the
+   registered magnitude on one seed of five.
+2. **The mechanism is unanimous and enormous**: five full arms with
+   identical medians and frontier statistics within +-1.1% (117.0k to
+   119.6k arrivals). Behavior redirection dwarfs the coarse metric:
+   collection 29.1k vs 7.6k (wood), cow-hunting 2,879 vs 1,029,
+   zombie-fighting 1,651 vs 297 — at survival parity, with every goal
+   readable in the trace.
+3. **The native column reads as designed**: paid-per-achievement gets
+   10.0/episode and 199-212 survival — the answer-key row, reported
+   not gated.
+
+The single most valuable finding is a REVERSAL we could only see at
+scale: **no-proposer out-crafted full on the deep chain** — tables 772
+vs 20, pickaxes 45 vs 3. The homeostat's surplus wood wanders into
+placement; the frontier agent's residual consume-trap (spending stock
+under a held stock goal is charged as regress) actively TRAINED
+placement out. The drive's blindness to unmeasured intermediates has a
+measured behavioral COST, not just a coverage gap. This is the
+sharpest possible motivation for gen-2's senses: a measurable
+table/pickaxe makes the deep chain PAID instead of suppressed. The
+failure mode names the missing component, in numbers — the same
+pattern as v1.2 (night deaths -> flinch) and v2.1 (exploration valley
+-> proposer).
+
+House rules kept: the gate was registered, amended once pre-run with
+disclosure, and is reported FAILED. No post-hoc metric shopping; the
+richer statistics above are supplementary, labeled as such.
+
+---
+
 ## v1.3 FINAL — 2026-08-03: the glass-box edit dissects a behavior
 ## into its motives. Sleep turns out to be paid by TWO registers.
 
