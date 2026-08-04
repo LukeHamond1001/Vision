@@ -356,6 +356,169 @@ def three_worlds_card(out="results/video/act8_three_worlds.mp4",
     print(f"[act8] wrote {out} and {png}", flush=True)
 
 
+def replay_sleep(policy_name: str, steps: int, env_seed: int,
+                 sample_seed: int = 0):
+    """Replay tracking night-sleeps and daylight (goal-swap act)."""
+    import crafter
+    torch.manual_seed(sample_seed)
+    net = _load_policy(policy_name)
+    env = crafter.Env(seed=env_seed)
+    obs = env.reset()
+    rec = {"frames": [], "slept": [], "night": []}
+    slept = 0
+    for t in range(steps):
+        with torch.no_grad():
+            x = torch.from_numpy(obs[None]).permute(0, 3, 1, 2).float() / 255.0
+            logits, _ = net(x)
+            a = int(torch.distributions.Categorical(logits=logits).sample())
+        obs, r, done, info = env.step(a)
+        day = float(env._world.daylight)
+        if a == 6 and day < 0.3:
+            slept += 1
+        if done:
+            slept = 0
+            obs = env.reset()
+        rec["frames"].append(obs.copy())
+        rec["slept"].append(slept)
+        rec["night"].append(day < 0.3)
+    return rec
+
+
+def act_goalswap(env_seed=808, steps=900,
+                 out="results/video/act10_goal_swap.mp4"):
+    """Same drives, one desire deleted: v1.2 wired (energy IN the want)
+    vs v1.3 swap (energy DELETED by a one-line mask)."""
+    from PIL import Image, ImageDraw
+    recs = [("energy IN the want   (sleeps ~4.3x/night, fleet mean)",
+             replay_sleep("v12_policy_s1_wired.pt", steps, env_seed)),
+            ("energy DELETED from the want   (one-line edit; ~1.3x)",
+             replay_sleep("v13_policy_swap.pt", steps, env_seed))]
+    wr = FFmpegWriter(out, fps=FPS)
+    for t in range(steps):
+        cols = []
+        for label, rec in recs:
+            game = _upscale(rec["frames"][t], 300)
+            img = Image.new("RGB", (300, 300 + 44), COL_BG)
+            img.paste(Image.fromarray(game), (0, 44))
+            d = ImageDraw.Draw(img)
+            d.text((8, 5), label[:44], font=F_SMALL, fill=COL_TEXT)
+            night = "NIGHT" if rec["night"][t] else "day"
+            col = COL_STOCK if rec["night"][t] else COL_DIM
+            d.text((8, 24), f"{night}   sleeps this life: "
+                   f"{rec['slept'][t]}", font=F_SMALL, fill=col)
+            cols.append(np.asarray(img))
+        wr.append_data(np.concatenate(cols, axis=1))
+    wr.close()
+    print(f"[act10] wrote {out}", flush=True)
+
+
+def verdict_card(out="results/video/act11_verdict_card.mp4",
+                 png="results/video/act11_verdict_card.png",
+                 hold_s: float = 8.0):
+    from PIL import Image, ImageDraw
+    W, HH = 1000, 560
+    img = Image.new("RGB", (W, HH), COL_BG)
+    d = ImageDraw.Draw(img)
+    d.text((24, 18), "THE SEQUENCING FLEET — 5 seeds x 3 arms x 3M steps",
+           font=F_HEAD, fill=COL_TEXT)
+    rows = [
+        ("native", "told what to want (paid per achievement)", "10.0",
+         (215, 120, 110)),
+        ("full", "NEVER told — drives + goal ladder only", "3.0",
+         COL_ARRIVE),
+        ("no-proposer", "same drives, ladder removed", "2.0", COL_DIM),
+    ]
+    y = 80
+    for arm, desc, med, col in rows:
+        d.text((40, y), arm, font=F_MAIN, fill=col)
+        d.text((190, y), desc, font=F_MAIN, fill=COL_TEXT)
+        d.text((780, y - 6), med, font=F_HEAD, fill=col)
+        if arm == "native":
+            d.text((840, y + 2), "achv/episode", font=F_SMALL,
+                   fill=COL_DIM)
+        bw = int(560 * float(med) / 10.0)
+        d.rectangle([190, y + 22, 190 + 560, y + 34], fill=COL_BAR_BG)
+        d.rectangle([190, y + 22, 190 + bw, y + 34], fill=col)
+        y += 70
+    y += 10
+    d.line([(24, y), (W - 24, y)], fill=COL_BAR_BG, width=1)
+    y += 16
+    d.text((40, y), "pre-registered gate (ladder effect, paired vs "
+           "ablation):  >= +1.0", font=F_MAIN, fill=COL_TEXT)
+    y += 26
+    d.text((40, y), "measured:  +1, +1, +1, +1, 0  ->  mean +0.80,  "
+           "CI95 [+0.41, +1.19]", font=F_MAIN, fill=COL_TEXT)
+    y += 26
+    d.text((40, y), "verdict:  GATE FAILED (magnitude) — effect real "
+           "(CI excludes zero) — reported exactly as registered",
+           font=F_MAIN, fill=(235, 200, 120))
+    y += 40
+    d.text((40, y), "behavior redirection, full vs ablation: collection "
+           "x3.9 · cow-hunting x2.8 · zombie-fighting x5.6 — at survival "
+           "parity", font=F_SMALL, fill=COL_DIM)
+    y += 22
+    d.text((40, y), "we report the miss because the numbers are the "
+           "point. gates are gates.", font=F_SMALL, fill=COL_DIM)
+    arr = np.asarray(img)
+    Image.fromarray(arr).save(png)
+    wr = FFmpegWriter(out, fps=FPS)
+    for _ in range(int(hold_s * FPS)):
+        wr.append_data(arr)
+    wr.close()
+    print(f"[act11] wrote {out}", flush=True)
+
+
+def reversal_card(out="results/video/act12_reversal_card.mp4",
+                  png="results/video/act12_reversal_card.png",
+                  hold_s: float = 8.0):
+    from PIL import Image, ImageDraw
+    W, HH = 1000, 480
+    img = Image.new("RGB", (W, HH), COL_BG)
+    d = ImageDraw.Draw(img)
+    d.text((24, 18), "THE REVERSAL — what the drive cannot measure, "
+           "it learns to avoid", font=F_HEAD, fill=COL_TEXT)
+    d.text((24, 46), "tables and pickaxes are NOT measured channels in "
+           "generation 1. watch what that does:", font=F_SMALL,
+           fill=COL_DIM)
+    pairs = [("tables placed  (3M steps, 5 seeds)", 772, 20),
+             ("wood pickaxes crafted", 45, 3)]
+    y = 100
+    for label, np_v, full_v in pairs:
+        d.text((40, y), label, font=F_MAIN, fill=COL_TEXT)
+        y += 26
+        for name, v, col, vmax in [("drives w/o ladder", np_v,
+                                    COL_DIM, 800),
+                                   ("drives + ladder", full_v,
+                                    COL_STOCK, 800)]:
+            d.text((60, y), f"{name:18s}", font=F_SMALL, fill=col)
+            d.rectangle([240, y + 2, 240 + 620, y + 14], fill=COL_BAR_BG)
+            d.rectangle([240, y + 2, 240 + max(4, int(620 * v / vmax)),
+                         y + 14], fill=col)
+            d.text((870, y), str(v), font=F_MAIN, fill=col)
+            y += 24
+        y += 18
+    y += 4
+    d.line([(24, y), (W - 24, y)], fill=COL_BAR_BG, width=1)
+    y += 14
+    for ln, col in [
+        ("spending stock under a held stock-goal reads as REGRESS -> the "
+         "ladder agent TRAINED PLACEMENT OUT.", COL_TEXT),
+        ("the blindness has a measured cost, not just a coverage gap.",
+         COL_TEXT),
+        ("generation 2's senses (table, pickaxe) turn the suppressed "
+         "chain into a PAID chain — the fix is named in numbers.",
+         COL_ARRIVE)]:
+        d.text((40, y), ln, font=F_SMALL, fill=col)
+        y += 22
+    arr = np.asarray(img)
+    Image.fromarray(arr).save(png)
+    wr = FFmpegWriter(out, fps=FPS)
+    for _ in range(int(hold_s * FPS)):
+        wr.append_data(arr)
+    wr.close()
+    print(f"[act12] wrote {out}", flush=True)
+
+
 def main():
     mode = sys.argv[1] if len(sys.argv) > 1 else "frames"
     (RESULTS / "video").mkdir(exist_ok=True)
@@ -365,6 +528,11 @@ def main():
         act_creatures()
     elif mode == "card":
         three_worlds_card()
+    elif mode == "goalswap":
+        act_goalswap()
+    elif mode == "cards2":
+        verdict_card()
+        reversal_card()
     elif mode == "frames":
         rec = replay_with_machine("v40_policy_full_s4.pt", 400, 411)
         from PIL import Image

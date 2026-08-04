@@ -186,6 +186,9 @@ def run_arm(mode, seed, total_steps, reg=None, rm=None, n_envs=8, rollout=128):
                 opt.zero_grad(); loss.backward()
                 torch.nn.utils.clip_grad_norm_(net.parameters(), 0.5)
                 opt.step()
+    from .experiments import RESULTS
+    torch.save(net.state_dict(),
+               RESULTS / f"v30_policy_{mode}_s{seed}.pt")   # demo replays
     return ep_laps, ep_eng
 
 
