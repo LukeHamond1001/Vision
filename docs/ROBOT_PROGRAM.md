@@ -89,6 +89,31 @@ discipline; pre-flight F audit)*
 
 ---
 
+## Corpus labels — the "good clips" mechanism (fits between R0 and R1)
+The teleop corpus can be preference-labeled (good / bad clips), and the
+labels enter the architecture in exactly one way: **labels define what
+pays; they never pay.**
+- GOOD clip -> mints a goal template (its measured endpoint deltas =
+  an arrival state) + BC-init data for the skill. Post-training, the
+  FROZEN ledger pays measured progress toward those clip-defined
+  goals. The robot is rewarded for doing what good clips showed —
+  but the currency is minted by unfarmable machinery, never by a
+  model imitating the labels (no learned reward channel; the v3.0
+  lesson is load-bearing here).
+- BAD clip -> excluded arrival template (never counts as done) +
+  calibration data for the fixed danger evaluator f- (fitted on
+  labeled-bad states, then frozen — learned-then-frozen contract) +
+  flinch training pairs (predict entry into bad states -> veto),
+  all audited before authority.
+- Human visual cues: DELIBERATE gestures (thumbs-up, pointing) are
+  visual buttons — voluntary channel, admissible as goal
+  selection/ratification. INFERRED cues (faces, mood, posture) are
+  the involuntary channel — never admissible; no ground truth to
+  audit, and involuntary signals are what a manipulator farms.
+- New foundational rewards between phases, layers preserved: the
+  generational re-freeze with warm-start (v1.3-demonstrated). Frozen
+  within each phase, edited only at the gate between them.
+
 ## Safety spine (constants, all phases)
 - Success grounded in WORLD-STATE, never human reaction: no facial /
   physiognomic channels — no ground truth exists to audit them, and
