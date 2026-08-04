@@ -1,7 +1,10 @@
-# Battery interpretation
+# The honest log — every campaign, newest first
 
-Companion to `battery.md`/`battery.json` (regenerated each run; this file is
-stable commentary). Newest round first.
+The round-by-round record of the whole program: what was claimed, what
+was measured, what failed, and what each failure taught. Gates are
+pre-registered; misses are reported as misses. (Older entries carry an
+earlier per-file framing; the log has been continuous since the toy
+worlds.)
 
 ---
 

@@ -1,9 +1,14 @@
 [project]
 name = "iga"
-version = "0.1.0"
-description = "Imagination-Gated Agent — reference scaffold for SPEC.md"
+version = "1.0.0"
+description = "Imagination-Gated Agent — a drive layer for agents: unfarmable rewards, readable goals, editable wants. Wrap any env with DriveWrapper."
 requires-python = ">=3.11"
+license = {file = "LICENSE"}
 dependencies = ["torch>=2.0", "numpy>=1.24"]
+
+[project.optional-dependencies]
+crafter = ["crafter"]
+render = ["pillow", "matplotlib"]
 
 [tool.setuptools]
 packages = ["iga", "iga.envs"]
