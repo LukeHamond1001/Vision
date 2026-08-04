@@ -42,6 +42,9 @@ def _font(size: int):
 F_HEAD = _font(15)
 F_MAIN = _font(13)
 F_SMALL = _font(11)
+F_HEAD2 = _font(30)
+F_MAIN2 = _font(26)
+F_SMALL2 = _font(22)
 
 COL_BG = (14, 16, 22)
 COL_TEXT = (225, 228, 235)
@@ -54,38 +57,43 @@ COL_BAR_BG = (45, 50, 62)
 
 
 def agenda_panel(t: int, holds: list, events: list, arrivals: int,
-                 bonus: float, achv: int) -> np.ndarray:
+                 bonus: float, achv: int, s: int = 1) -> np.ndarray:
     """The live goal-agenda panel: current wants with progress bars +
     scrolling event feed. holds: (band, label, frac_done). events:
-    (kind, band, label) newest last."""
+    (kind, band, label) newest last. s: integer UI scale (2 = crisp HD)."""
     from PIL import Image, ImageDraw
-    img = Image.new("RGB", (PANEL_W, H), COL_BG)
+    fh = F_HEAD2 if s == 2 else F_HEAD
+    fm = F_MAIN2 if s == 2 else F_MAIN
+    fs = F_SMALL2 if s == 2 else F_SMALL
+    W, HH = PANEL_W * s, H * s
+    img = Image.new("RGB", (W, HH), COL_BG)
     d = ImageDraw.Draw(img)
-    y = 10
-    d.text((12, y), "GOAL AGENDA  (live, machine-written)", font=F_HEAD,
+    y = 10 * s
+    d.text((12 * s, y), "GOAL AGENDA  (live, machine-written)", font=fh,
            fill=COL_TEXT)
-    d.text((PANEL_W - 78, y + 1), f"t={t:4d}", font=F_MAIN, fill=COL_DIM)
-    y += 30
-    d.text((12, y), "wants held now", font=F_SMALL, fill=COL_DIM)
-    y += 16
+    d.text((W - 78 * s, y + s), f"t={t:4d}", font=fm, fill=COL_DIM)
+    y += 30 * s
+    d.text((12 * s, y), "wants held now", font=fs, fill=COL_DIM)
+    y += 16 * s
     if not holds:
-        d.text((24, y), "(none — proposing)", font=F_MAIN, fill=COL_DIM)
-        y += 22
+        d.text((24 * s, y), "(none — proposing)", font=fm, fill=COL_DIM)
+        y += 22 * s
     for band, label, frac in holds:
         col = COL_STOCK if band == 1 else COL_VITAL
         tag = "STOCK" if band == 1 else "VITAL"
-        d.text((16, y), f"{tag}", font=F_SMALL, fill=col)
-        d.text((66, y - 1), label, font=F_MAIN, fill=COL_TEXT)
-        bx, bw = 250, 190
-        d.rectangle([bx, y + 3, bx + bw, y + 11], fill=COL_BAR_BG)
-        d.rectangle([bx, y + 3, bx + int(bw * min(max(frac, 0), 1)), y + 11],
+        d.text((16 * s, y), f"{tag}", font=fs, fill=col)
+        d.text((66 * s, y - s), label, font=fm, fill=COL_TEXT)
+        bx, bw = 250 * s, 190 * s
+        d.rectangle([bx, y + 3 * s, bx + bw, y + 11 * s], fill=COL_BAR_BG)
+        d.rectangle([bx, y + 3 * s,
+                     bx + int(bw * min(max(frac, 0), 1)), y + 11 * s],
                     fill=col)
-        y += 22
-    y += 8
-    d.line([(12, y), (PANEL_W - 12, y)], fill=COL_BAR_BG, width=1)
-    y += 8
-    d.text((12, y), "recent events", font=F_SMALL, fill=COL_DIM)
-    y += 16
+        y += 22 * s
+    y += 8 * s
+    d.line([(12 * s, y), (W - 12 * s, y)], fill=COL_BAR_BG, width=s)
+    y += 8 * s
+    d.text((12 * s, y), "recent events", font=fs, fill=COL_DIM)
+    y += 16 * s
     for kind, band, label in events[-8:]:
         col = {"arrive": COL_ARRIVE, "timeout": COL_TIMEOUT,
                "death": COL_TIMEOUT}.get(
@@ -93,13 +101,14 @@ def agenda_panel(t: int, holds: list, events: list, arrivals: int,
         sym = {"commit": "→", "arrive": "✓",
                "timeout": "·", "death": "†"}.get(kind, "?")
         extra = "   +bonus" if kind == "arrive" and band == 1 else ""
-        d.text((16, y), f"{sym} {kind:7s} {label}{extra}", font=F_MAIN,
+        d.text((16 * s, y), f"{sym} {kind:7s} {label}{extra}", font=fm,
                fill=col)
-        y += 19
-    d.line([(12, H - 30), (PANEL_W - 12, H - 30)], fill=COL_BAR_BG, width=1)
-    d.text((12, H - 24),
+        y += 19 * s
+    d.line([(12 * s, HH - 30 * s), (W - 12 * s, HH - 30 * s)],
+           fill=COL_BAR_BG, width=s)
+    d.text((12 * s, HH - 24 * s),
            f"arrivals {arrivals}   one-shot bonuses {bonus:.0f}   "
-           f"achievements {achv}", font=F_SMALL, fill=COL_DIM)
+           f"achievements {achv}", font=fs, fill=COL_DIM)
     return np.asarray(img)
 
 
@@ -196,13 +205,29 @@ def act_trace(policy="v40_policy_full_s4.pt", env_seed=411, steps=4000,
     print(f"[act6] richest life t=[{lo},{hi}] ({best[0]} arrivals, "
           f"{best[1]} steps) of {len(rec['lives'])} lives", flush=True)
     wr = FFmpegWriter(out, fps=FPS)
+    S = 2                                        # HD scale
+    prev_ev = rec["ev_len"][lo] if lo > 0 else 0
     for t in range(lo, hi + 1):
-        game = _upscale(rec["frames"][t], GAME)
+        game = _upscale(rec["frames"][t], GAME * S)
         arrivals, bonus, achv = rec["counts"][t]
+        new_events = rec["event_stream"][prev_ev:rec["ev_len"][t]]
+        arrived_now = any(e[0] == "arrive" for e in new_events)
+        prev_ev = rec["ev_len"][t]
         panel = agenda_panel(t - lo, rec["holds"][t],
                              rec["event_stream"][:rec["ev_len"][t]],
-                             arrivals, bonus, achv)
-        wr.append_data(np.concatenate([game, panel], axis=1))
+                             arrivals, bonus, achv, s=S)
+        row = np.concatenate([game, panel], axis=1)
+        if arrived_now:
+            # freeze ~0.7s with a green flash border: the eye is TOLD
+            flash = row.copy()
+            b = 6 * S
+            flash[:b, :] = COL_ARRIVE
+            flash[-b:, :] = COL_ARRIVE
+            flash[:, :b] = COL_ARRIVE
+            flash[:, GAME * S - b:GAME * S] = COL_ARRIVE
+            for k in range(int(0.7 * FPS)):
+                wr.append_data(flash if k < FPS // 3 else row)
+        wr.append_data(row)
     wr.close()
     print(f"[act6] wrote {out}", flush=True)
 
@@ -393,8 +418,16 @@ def act_goalswap(env_seed=808, steps=900,
              replay_sleep("v12_policy_s1_wired.pt", steps, env_seed)),
             ("energy DELETED from the want   (one-line edit; ~1.3x)",
              replay_sleep("v13_policy_swap.pt", steps, env_seed))]
+    # center the clip on the first substantial night (the effect is a
+    # NIGHT behavior; daytime footage shows nothing)
+    night = recs[0][1]["night"]
+    first_night = next((i for i in range(len(night))
+                        if all(night[i:i + 20])), 0)
+    lo = max(0, first_night - 60)
+    hi = min(steps, lo + 420)
+    print(f"[act10] night window t=[{lo},{hi}]", flush=True)
     wr = FFmpegWriter(out, fps=FPS)
-    for t in range(steps):
+    for t in range(lo, hi):
         cols = []
         for label, rec in recs:
             game = _upscale(rec["frames"][t], 300)
@@ -578,9 +611,63 @@ def act_hack(steps=600, out="results/video/act9_hack_clip.mp4"):
                    f"mis-specified score {rec['eng'][t]:.0f}",
                    font=F_SMALL, fill=lap_col)
             cols.append(np.asarray(img))
-        wr.append_data(np.concatenate(cols, axis=1))
+        row = np.concatenate(cols, axis=1)
+        strip = Image.new("RGB", (row.shape[1], 22), COL_BG)
+        ds = ImageDraw.Draw(strip)
+        ds.text((8, 4), "red = boat · green = checkpoints · bottom bar "
+                "= the progress gauge both rewards read", font=F_SMALL,
+                fill=COL_DIM)
+        wr.append_data(np.concatenate([row, np.asarray(strip)], axis=0))
     wr.close()
     print(f"[act9] wrote {out}", flush=True)
+
+
+def goalswap_card(out="results/video/act10b_goalswap_card.mp4",
+                  png="results/video/act10b_goalswap_card.png",
+                  hold_s: float = 8.0):
+    from PIL import Image, ImageDraw
+    W, HH = 1000, 520
+    img = Image.new("RGB", (W, HH), COL_BG)
+    d = ImageDraw.Draw(img)
+    d.text((24, 18), "EDIT A DESIRE — one line, measured consequences",
+           font=F_HEAD, fill=COL_TEXT)
+    d.text((24, 52), "the want is a vector. delete energy from it:",
+           font=F_SMALL, fill=COL_DIM)
+    d.rectangle([24, 76, W - 24, 112], fill=(24, 27, 36))
+    d.text((40, 84), "mask = [health: 1, food: 1, drink: 1, "
+           "energy: 0]   # the whole edit", font=F_MAIN, fill=COL_STOCK)
+    rows = [
+        ("sleeping per night-cycle", "4.3", "1.3 – 2.1",
+         "the deleted desire's share collapses"),
+        ("drink uptime", "0.88", "0.91 – 0.92",
+         "untouched wants: untouched (the edit is surgical)"),
+        ("residual sleep", "—", "health-motivated",
+         "sleep was paid by TWO registers; the edit dissected it"),
+    ]
+    y = 140
+    d.text((320, y), "energy wanted", font=F_SMALL, fill=COL_DIM)
+    d.text((520, y), "energy deleted", font=F_SMALL, fill=COL_DIM)
+    y += 24
+    for label, a, b, note in rows:
+        d.text((40, y), label, font=F_MAIN, fill=COL_TEXT)
+        d.text((320, y), a, font=F_MAIN, fill=COL_VITAL)
+        d.text((520, y), b, font=F_MAIN, fill=COL_ARRIVE)
+        d.text((40, y + 22), note, font=F_SMALL, fill=COL_DIM)
+        y += 58
+    y += 6
+    d.line([(24, y), (W - 24, y)], fill=COL_BAR_BG, width=1)
+    y += 14
+    for ln in ("wants you can read are wants you can EDIT —",
+               "and edits land where they aim, with receipts."):
+        d.text((40, y), ln, font=F_MAIN, fill=COL_TEXT)
+        y += 26
+    arr = np.asarray(img)
+    Image.fromarray(arr).save(png)
+    wr = FFmpegWriter(out, fps=FPS)
+    for _ in range(int(hold_s * FPS)):
+        wr.append_data(arr)
+    wr.close()
+    print(f"[act10b] wrote {out}", flush=True)
 
 
 def main():

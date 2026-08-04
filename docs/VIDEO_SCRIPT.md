@@ -47,7 +47,7 @@ are the point. Everything here is pre-registered, committed before the
 runs, reproducible for about five dollars."
 
 ## 3:40–4:25 — The glass box
-**Footage:** Act 10 goal-swap side-by-side, then Act 12 reversal card.
+**Footage:** Act 10b goal-swap card (the one-line edit + numbers), then Act 12 reversal card. (Act 10 side-by-side kept in repo as supplementary.)
 **Say:** "Wants you can read are wants you can edit. We deleted ONE
 desire — energy — one line. The same agent's sleeping fell by that
 desire's share and nothing else moved. And the fleet showed us the
@@ -94,10 +94,11 @@ you can read, audit, and edit — that's what this is. Links below."
 | Act | File | Status |
 |---|---|---|
 | 1–5 | results/video/act1..5*.mp4 | rendered (phase-1 + v1.2) |
-| 6 trace overlay | act6_trace_overlay.mp4 | rendered |
+| 6 trace overlay | act6_trace_overlay.mp4 | rendered (HD, arrival freeze-flash) |
 | 7 three creatures | act7_three_creatures.mp4 | rendered |
 | 8 three worlds | act8_three_worlds.{mp4,png} | rendered |
-| 9 hack clip | act9_hack_clip.mp4 | retrain running |
-| 10 goal swap | act10_goal_swap.mp4 | rendering |
-| 11 verdict card | act11_verdict_card.{mp4,png} | rendering |
-| 12 reversal card | act12_reversal_card.{mp4,png} | rendering |
+| 9 hack clip | act9_hack_clip.mp4 | rendered (legend strip; cumulative counters) |
+| 10 goal swap (side-by-side) | act10_goal_swap.mp4 | rendered — supplementary |
+| 10b goal-swap card | act10b_goalswap_card.{mp4,png} | rendered — primary beat |
+| 11 verdict card | act11_verdict_card.{mp4,png} | rendered |
+| 12 reversal card | act12_reversal_card.{mp4,png} | rendered |
