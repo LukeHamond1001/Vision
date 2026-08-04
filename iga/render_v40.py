@@ -787,6 +787,59 @@ def arch_card(out="results/video/act14_arch_card.mp4",
     print(f"[act14] wrote {out}", flush=True)
 
 
+def vla_bridge_card(out="results/video/act15_vla_bridge.mp4",
+                    png="results/video/act15_vla_bridge.png",
+                    hold_s: float = 10.0):
+    """Two columns: the VLA/world-model stack | this layer on top."""
+    from PIL import Image, ImageDraw
+    W, HH = 1160, 470
+    img = Image.new("RGB", (W, HH), COL_BG)
+    d = ImageDraw.Draw(img)
+    d.text((24, 18), "WORLD MODELS SOLVE PERCEPTION AND SKILL. "
+           "THIS LAYER IS THE OBJECTIVE THAT SITS ON TOP.",
+           font=F_HEAD, fill=COL_TEXT)
+    colw = (W - 72) // 2
+    for i, (title, col, lines) in enumerate([
+        ("YOUR STACK  (video world model / VLA)", COL_STOCK, [
+            "video-pretrained latents carry objects,",
+            "contact, consequence — that is why they",
+            "generalize: less robot data, transfer",
+            "across tasks (mimic: frozen video backbone",
+            "+ small action decoders, competitive",
+            "manipulation on standard benchmarks)",
+            "",
+            "objective still comes from demos, task",
+            "specs, or hand rewards"]),
+        ("THIS LAYER  (drops on your latents)", COL_ARRIVE, [
+            "instrument audit: which quantities are",
+            "honestly readable from YOUR latent —",
+            "one notebook, any checkpoint",
+            "",
+            "wants · unfarmable ledger · proposer run",
+            "over whatever passes — unchanged code",
+            "",
+            "flinch: benched on my substrate (forward",
+            "model failed its action audit) — an",
+            "action-conditioned video predictor is",
+            "exactly what that audit wants"])]):
+        x = 24 + i * (colw + 24)
+        d.rounded_rectangle([x, 66, x + colw, HH - 24], radius=10,
+                            outline=col, width=3, fill=(22, 25, 33))
+        d.text((x + 18, 80), title, font=F_MAIN, fill=col)
+        y = 116
+        for ln in lines:
+            d.text((x + 18, y), ln, font=F_SMALL, fill=COL_TEXT
+                   if ln else COL_DIM)
+            y += 24
+    arr = np.asarray(img)
+    Image.fromarray(arr).save(png)
+    wr = FFmpegWriter(out, fps=FPS)
+    for _ in range(int(hold_s * FPS)):
+        wr.append_data(arr)
+    wr.close()
+    print(f"[act15] wrote {out}", flush=True)
+
+
 def main():
     mode = sys.argv[1] if len(sys.argv) > 1 else "frames"
     (RESULTS / "video").mkdir(exist_ok=True)
