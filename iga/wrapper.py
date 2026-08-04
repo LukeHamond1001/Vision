@@ -114,16 +114,20 @@ class DriveWrapper:
         """Random rollout to freeze per-channel stds. Consumes the env
         pre-training (standard); prints what it froze."""
         sample = sample_action or (lambda: self.env.action_space.sample())
-        obs = self.env.reset()
+        self.env.reset()
         vals = [[] for _ in self.names]
         for _ in range(steps):
             out = self.env.step(sample())
-            obs, _, done, info = out
+            if len(out) == 5:                             # gymnasium compat
+                obs, _, term, trunc, info = out
+                done = bool(term or trunc)
+            else:
+                obs, _, done, info = out
             m = self._measure(obs, info)
             for i in range(len(self.names)):
                 vals[i].append(float(m[i]))
             if done:
-                obs = self.env.reset()
+                self.env.reset()
         stds = {k: (torch.tensor(v).std().item() or 1.0)
                 for k, v in zip(self.names, vals)}
         print(f"[DriveWrapper] calibrated+frozen stds over {steps} random "

@@ -183,7 +183,7 @@ the §6.4 treadmill; it is never a deployed configuration.
 
 Toy-world program complete (E1–E4, ladder, representation recipe — see
 `results/INTERPRETATION.md` rounds). Crafter/robot campaign complete:
-four experiments, verdicts above. Open frontiers: generation-2 senses on
+six cards, verdicts above. Open frontiers: generation-2 senses on
 Crafter (instruments calibrated from generation-1's own behavior — the
 table/pickaxe rungs the fleet showed are suppressed while unmeasured),
 and the robot-substrate program in `docs/ROBOT_PROGRAM.md`.

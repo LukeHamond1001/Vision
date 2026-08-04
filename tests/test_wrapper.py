@@ -41,6 +41,18 @@ def wrap(levels, **kw):
         holds=(6, 50), frontier_bonus=1.0, **kw)
 
 
+class Gym5TupleEnv(ScriptedEnv):
+    """Gymnasium API: reset -> (obs, info); step -> 5-tuple."""
+
+    def reset(self):
+        super().reset()
+        return 0, {}
+
+    def step(self, a):
+        obs, r, done, info = super().step(a)
+        return obs, r, done, False, info
+
+
 class TestDriveWrapper(unittest.TestCase):
     def test_reset_defers_seeding_to_first_step(self):
         # extractors read info[...] with no default: if reset() measured,
@@ -101,6 +113,21 @@ class TestDriveWrapper(unittest.TestCase):
             if done:
                 break
         self.assertAlmostEqual(total, 0.0, places=6)
+
+    def test_calibrate_handles_gymnasium_5tuple(self):
+        # stds=None forces the calibration rollout; a gymnasium env
+        # (5-tuple step) must not crash it (the 4-tuple-unpack bug
+        # this pins — step() handled both APIs, _calibrate didn't)
+        env = DriveWrapper(
+            Gym5TupleEnv([5, 6, 7, 8]),
+            channels={"level": lambda o, i: i["level"],
+                      "count": lambda o, i: i["count"]},
+            maintain={"level": (5.5, 8.0)}, frontier=["count"],
+            holds=(6, 50), sample_action=lambda: 0, calibrate_steps=12)
+        env.reset()
+        _, r0, _, info = env.step(0)
+        self.assertEqual(r0, 0.0)
+        self.assertIn("drive_events", info)
 
     def test_unit_free_eps_small_scale_channel(self):
         # a [0,1]-scale channel must still commit restores (the
