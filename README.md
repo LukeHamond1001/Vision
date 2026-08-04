@@ -39,6 +39,36 @@ the failures.
 Renders: `python -m iga.render_v40 trace|creatures|card|cards2` ($0,
 replays the committed policies).
 
+## Try it on YOUR environment (this afternoon)
+
+The drive layer wraps any env with a `reset()/step()` loop — no
+training, no GPU, no tuning beyond naming your channels:
+
+```python
+from iga.wrapper import DriveWrapper
+
+env = DriveWrapper(
+    my_env,
+    channels={"battery": lambda o, i: i["battery"],
+              "boxes":   lambda o, i: i["boxes_sorted"]},
+    maintain={"battery": (0.3, 0.8)},   # restore when < 0.3, target 0.8
+    frontier=["boxes"],                 # one-shot "more than before"
+)
+obs = env.reset()
+obs, drive_reward, done, info = env.step(action)
+print(env.trace[-5:])   # the live goal agenda, as text
+env.audit()             # telescoping-exactness check on YOUR rollouts
+```
+
+Demo on a simulated robot (calibrates, runs, audits — ~30s, $0):
+
+```bash
+python -m iga.wrapper
+```
+
+Structural tests for the wrapper's laws (telescoping exact, no pay
+across reset, oscillation nets zero): `tests/test_wrapper.py`.
+
 Full narrative, reversals included:
 [results/INTERPRETATION.md](results/INTERPRETATION.md). Design cards
 committed before runs: [docs/SEQUENCING.md](docs/SEQUENCING.md).

@@ -179,6 +179,16 @@ def f_neg(m: torch.Tensor) -> float:
 # ---------------------------------------------------------------- machine
 @dataclass
 class GMConfig:
+    # -------- channel spec (defaults = the Crafter instrument; the
+    # DriveWrapper passes its own — same audited machine, any world)
+    channels: tuple = CHANNELS
+    vitals: tuple = VITALS           # band-0 channel indices
+    stocks: tuple = STOCKS           # band-1 channel indices
+    goal_vitals: tuple = GOAL_VITALS # maintain-lane menu (subset of vitals)
+    restore: dict | None = None      # per-channel {idx: (lo, hi)};
+    #   None -> the scalar restore_lo/restore_hi below for every vital
+    f_pos_fn: object = None          # callable(m)->float; None -> Crafter f+
+    f_neg_fn: object = None          # callable(m)->float; None -> Crafter f-
     holds: tuple = (60, 180)         # vitals, stocks (steps; ~episode-scale)
     arrive_eps: tuple = (0.75, 0.4)  # per band, truth units. Vitals are
     #   release-TOLERANT (no bonus at stake on a vitals arrival; an early
@@ -218,6 +228,8 @@ class GoalMachine:
 
     def __init__(self, cfg: GMConfig):
         self.cfg = cfg
+        self._fp = cfg.f_pos_fn or f_pos
+        self._fn = cfg.f_neg_fn or f_neg
         self.ledger: list[dict] = []      # closed holds (audit surface)
         self.trace: list[tuple] = []      # (t, event, band, channel, level)
         self.t = 0                        # GLOBAL step clock (not per-life):
@@ -240,9 +252,8 @@ class GoalMachine:
             self._propose_all()
 
     # -------------------------------------------------------------- goals
-    @staticmethod
-    def _band_of(c: int) -> int:
-        return 0 if c in VITALS else 1
+    def _band_of(self, c: int) -> int:
+        return 0 if c in self.cfg.vitals else 1
 
     def _phi(self, m: torch.Tensor, c: int, t: float) -> float:
         return max(0.0, t - float(m[c])) / self.cfg.stds[c]
@@ -260,11 +271,13 @@ class GoalMachine:
         the proposer's whole search space, visible in one screen."""
         out = []
         if band == 0:
-            for c in GOAL_VITALS:
-                if float(self.m[c]) < self.cfg.restore_lo:
-                    out.append((c, self.cfg.restore_hi, False))
+            for c in self.cfg.goal_vitals:
+                lo, hi = (self.cfg.restore or {}).get(
+                    c, (self.cfg.restore_lo, self.cfg.restore_hi))
+                if float(self.m[c]) < lo:
+                    out.append((c, hi, False))
         else:
-            for c in STOCKS:
+            for c in self.cfg.stocks:
                 t = float(int(round(float(self.m[c]))) + 1)
                 cell = (c, int(t))
                 if self.arrive_count.get(cell, 0) >= self.cfg.cap_arrivals:
@@ -286,20 +299,20 @@ class GoalMachine:
                     self._commit(band, c, float(t), frontier=False)
                     return
             return
-        base = f_pos(self.m) - f_neg(self.m)
+        base = self._fp(self.m) - self._fn(self.m)
         best, best_key, best_frontier = None, None, False
         for c, t, frontier in self._candidates(band):
             if self._satisfied(self.m, c, t):
                 self.rejects["satisfied"] += 1
                 continue                    # no instant-arrival commits
             g = self._imagine(c, t)
-            if f_neg(g) > self.cfg.veto_threshold:
+            if self._fn(g) > self.cfg.veto_threshold:
                 self.rejects["veto"] += 1                      # C4
                 continue
             novelty = (self.cfg.frontier_bonus
                        if frontier and (c, int(t)) not in self.arrived_cells
                        else 0.0)
-            gain = f_pos(g) - f_neg(g) - base
+            gain = self._fp(g) - self._fn(g) - base
             if gain < self.cfg.value_bar and novelty <= 0:
                 self.rejects["bar"] += 1    # C7 improvement bar / G7 lane
                 continue
@@ -318,7 +331,7 @@ class GoalMachine:
             band=band, channel=c, target=t,
             phi_commit=self._phi(self.m, c, t), t_commit=self.t,
             remaining=self.cfg.holds[band], frontier=frontier)
-        self.trace.append((self.t, "commit", band, CHANNELS[c], t))
+        self.trace.append((self.t, "commit", band, self.cfg.channels[c], t))
 
     # -------------------------------------------------------------- step
     def step(self, m_now: torch.Tensor, done: bool = False) -> tuple[float, dict]:
@@ -359,11 +372,11 @@ class GoalMachine:
                             r += self.cfg.frontier_bonus
                             ev["bonus"] += self.cfg.frontier_bonus
                             self.total_bonus += self.cfg.frontier_bonus
-                    ev["arrivals"].append((CHANNELS[h.channel], h.target))
+                    ev["arrivals"].append((self.cfg.channels[h.channel], h.target))
                 else:
-                    ev["timeouts"].append((CHANNELS[h.channel], h.target))
+                    ev["timeouts"].append((self.cfg.channels[h.channel], h.target))
                 self.ledger.append({
-                    "band": band, "channel": CHANNELS[h.channel],
+                    "band": band, "channel": self.cfg.channels[h.channel],
                     "target": h.target, "t_commit": h.t_commit,
                     "t_close": self.t, "closed_by": how,
                     "phi_commit": h.phi_commit,
@@ -372,7 +385,7 @@ class GoalMachine:
                     "paid": h.paid, "max_prefix": h.max_prefix,
                     "frontier": h.frontier})
                 self.trace.append((self.t, how, band,
-                                   CHANNELS[h.channel], h.target))
+                                   self.cfg.channels[h.channel], h.target))
                 self.holds[band] = None
         if not done:
             self._propose_all()
