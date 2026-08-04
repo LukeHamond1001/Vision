@@ -24,3 +24,8 @@
 [v40] native s4 2.33M: eps 11856 surv 199 achv 10.0 arriv - bonus - (25634s)
 [v40] native s4 2.43M: eps 12324 surv 202 achv 10.0 arriv - bonus - (26666s)
 [v40] native s4 2.53M: eps 12772 surv 204 achv 10.0 arriv - bonus - (27703s)
+[v40] native s4 2.64M: eps 13208 surv 206 achv 10.0 arriv - bonus - (28823s)
+[v40] native s4 2.74M: eps 13638 surv 208 achv 10.0 arriv - bonus - (29872s)
+[v40] native s4 2.84M: eps 14069 surv 210 achv 10.0 arriv - bonus - (30857s)
+[v40] native s4 2.94M: eps 14498 surv 211 achv 10.0 arriv - bonus - (31850s)
+[v40] native s4 DONE: surv 212 achv-med 10.0 table {'collect_coal': 654, 'collect_drink': 2987, 'collect_sapling': 4429, 'collect_stone': 3212, 'collect_wood': 4852, 'defeat_zombie': 3374, 'eat_cow': 3462, 'make_wood_pickaxe': 4364, 'make_wood_sword': 3919, 'place_plant': 4388, 'place_stone': 3023, 'place_table': 4737, 'wake_up': 4465, 'defeat_skeleton': 239, 'make_stone_pickaxe': 1331, 'place_furnace': 63, 'collect_iron': 71, 'make_stone_sword': 173} (32586s)
