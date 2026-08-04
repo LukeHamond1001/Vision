@@ -742,7 +742,7 @@ def arch_card(out="results/video/act14_arch_card.mp4",
               hold_s: float = 10.0):
     """The four-box architecture card."""
     from PIL import Image, ImageDraw
-    W, HH = 1100, 400
+    W, HH = 1100, 434
     img = Image.new("RGB", (W, HH), COL_BG)
     d = ImageDraw.Draw(img)
     d.text((24, 18), "THE DRIVE LAYER — frozen before training; the "
@@ -772,7 +772,11 @@ def arch_card(out="results/video/act14_arch_card.mp4",
             d.text((ax, y0 + bh // 2 - 10), "→", font=F_HEAD,
                    fill=COL_DIM)
         x += bw + gap
-    y = y0 + bh + 46
+    y = y0 + bh + 40
+    d.text((40, y), "registers repeat per timescale band; hold length "
+           "is FREE in the theorem — a month pays as exactly as a "
+           "minute", font=F_MAIN, fill=COL_TEXT)
+    y += 30
     for ln in ("nothing in this layer is trained · nothing changes "
                "while the agent learns",
                "the policy underneath is ordinary RL — the only thing "

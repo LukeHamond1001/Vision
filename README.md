@@ -8,11 +8,14 @@ goals held as readable text, wants you can edit with one line. Specified in
 with every gate pre-registered and every miss reported.
 
 The drive layer is **parameter-free and frozen before training**: senses
-(closed-form instrument heads), registers (wants as measurable targets),
-a potential-based ledger (telescoping ⇒ non-farmable, audited to
-exactness over 1,200+ holds), and a prospective proposer (maintain what
-has a healthy range; seek the frontier of anything measurable, once
-each). The policy is ordinary RL; only what it *wants* is architecture.
+(closed-form instrument heads), registers **per timescale band** (wants as
+measurable targets, held minute-fast to month-slow — hold length is free
+in the telescoping theorem, so a month-long want pays as exactly as a
+minute-long one), a potential-based ledger (telescoping ⇒ non-farmable,
+audited to exactness over 1,200+ holds on both bands), and a prospective
+proposer (maintain what has a healthy range; seek the frontier of
+anything measurable, once each — run per band, slow register first). The
+policy is ordinary RL; only what it *wants* is architecture.
 
 **Demo reel:** `results/video/` — start with `act6_trace_overlay.mp4`
 (an agent playing beside its live goal agenda), `act9_hack_clip.mp4`
