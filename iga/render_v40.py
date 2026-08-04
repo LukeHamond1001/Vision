@@ -840,6 +840,68 @@ def vla_bridge_card(out="results/video/act15_vla_bridge.mp4",
     print(f"[act15] wrote {out}", flush=True)
 
 
+def requirements_card(out="results/video/act17_requirements.mp4",
+                      png="results/video/act17_requirements.png",
+                      hold_s: float = 12.0):
+    """Part 3: what a system needs for this layer to fit."""
+    from PIL import Image, ImageDraw
+    W, HH = 1100, 560
+    img = Image.new("RGB", (W, HH), COL_BG)
+    d = ImageDraw.Draw(img)
+    d.text((24, 18), "WHAT A SYSTEM NEEDS FOR THIS LAYER TO FIT",
+           font=F_HEAD, fill=COL_TEXT)
+    d.text((24, 46), "judge your own stack against the list",
+           font=F_SMALL, fill=COL_DIM)
+    reqs = [
+        ("1  measurable channels", COL_STOCK,
+         "quantities readable as numbers — telemetry, counters, "
+         "meters, levels. if it has a gauge, it can be a channel."),
+        ("2  direction that means something", COL_STOCK,
+         "per channel: more is better, or a range is healthy — that "
+         "is what makes a want expressible as a held target."),
+        ("3  any learner underneath", COL_STOCK,
+         "the layer only supplies reward; it ran unchanged over "
+         "different learners across these experiments."),
+        ("4  the ability to freeze", COL_VITAL,
+         "sensors calibrated from logs or a calibration run BEFORE "
+         "training, untouched after. labeled history (good/bad "
+         "episodes) can mint the goal roster: labels define what "
+         "pays; only measured reality pays."),
+        ("5  optional: an action-conditioned predictor", COL_ARRIVE,
+         "unlocks the flinch (veto actions with dangerous predicted "
+         "outcomes). the audit that decides whether a predictor "
+         "earns the veto ships in the repo."),
+    ]
+    y = 86
+    for title, col, body in reqs:
+        d.text((40, y), title, font=F_MAIN, fill=col)
+        y += 24
+        # naive wrap at ~92 chars
+        line = ""
+        for word in body.split():
+            if len(line) + len(word) + 1 > 92:
+                d.text((64, y), line, font=F_SMALL, fill=COL_TEXT)
+                y += 20
+                line = word
+            else:
+                line = (line + " " + word).strip()
+        if line:
+            d.text((64, y), line, font=F_SMALL, fill=COL_TEXT)
+            y += 20
+        y += 14
+    d.line([(24, HH - 44), (W - 24, HH - 44)], fill=COL_BAR_BG, width=1)
+    d.text((40, HH - 34), "whether it delivers value on any particular "
+           "system is the untested part — the experiments are the "
+           "evidence that exists", font=F_SMALL, fill=COL_DIM)
+    arr = np.asarray(img)
+    Image.fromarray(arr).save(png)
+    wr = FFmpegWriter(out, fps=FPS)
+    for _ in range(int(hold_s * FPS)):
+        wr.append_data(arr)
+    wr.close()
+    print(f"[act17] wrote {out}", flush=True)
+
+
 def main():
     mode = sys.argv[1] if len(sys.argv) > 1 else "frames"
     (RESULTS / "video").mkdir(exist_ok=True)
