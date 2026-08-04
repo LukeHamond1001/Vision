@@ -671,6 +671,122 @@ def goalswap_card(out="results/video/act10b_goalswap_card.mp4",
     print(f"[act10b] wrote {out}", flush=True)
 
 
+def math_card(out="results/video/act13_math_card.mp4",
+              png="results/video/act13_math_card.png",
+              hold_s: float = 10.0):
+    """The telescoping theorem, on one card, with scope and audit."""
+    from PIL import Image, ImageDraw
+    W, HH = 1100, 460
+    img = Image.new("RGB", (W, HH), COL_BG)
+    d = ImageDraw.Draw(img)
+    d.text((24, 18), "THE REWARD, IN THREE LINES", font=F_HEAD,
+           fill=COL_TEXT)
+    d.text((24, 46), "potential-based shaping identity (Ng, Harada, "
+           "Russell 1999) — used as the ENTIRE reward, anchored to a "
+           "held goal", font=F_SMALL, fill=COL_DIM)
+    y = 92
+    d.rectangle([24, y - 8, W - 24, y + 118], fill=(24, 27, 36))
+    d.text((48, y), "potential   φ(t) = max(0,  g − m(t)) / s",
+           font=F_MAIN, fill=COL_STOCK)
+    d.text((48, y + 14), "            distance below the held target g,"
+           " in calibrated units", font=F_SMALL, fill=COL_DIM)
+    y += 44
+    d.text((48, y), "reward      r(t) = φ(t−1) − φ(t)",
+           font=F_MAIN, fill=COL_STOCK)
+    d.text((48, y + 14), "            pay approach, charge retreat — "
+           "every step, while the goal is held", font=F_SMALL,
+           fill=COL_DIM)
+    y += 44
+    d.text((48, y), "held sum    r(1) + r(2) + … + r(T)  =  "
+           "φ(commit) − φ(close)", font=F_MAIN, fill=COL_ARRIVE)
+    d.text((48, y + 14), "            everything between cancels — the "
+           "sum TELESCOPES", font=F_SMALL, fill=COL_DIM)
+    y += 66
+    for ln, col in [
+        ("⇒ any loop, oscillation, or cycle sums to exactly ZERO — no "
+         "sequence of movements mints reward", COL_TEXT),
+        ("⇒ goals are held until arrival and settled exactly at close "
+         "— switching goals mints nothing either", COL_TEXT)]:
+        d.text((40, y), ln, font=F_MAIN, fill=col)
+        y += 30
+    y += 8
+    d.line([(24, y), (W - 24, y)], fill=COL_BAR_BG, width=1)
+    y += 14
+    d.text((40, y), "verified against the implementation: 1,244 "
+           "goal-holds across the experiments, every closed hold paid "
+           "exactly", font=F_SMALL, fill=COL_ARRIVE)
+    y += 20
+    d.text((40, y), "φ(commit) − φ(close) to float precision; zero "
+           "phantom payments. audit() ships in the repo — run it on "
+           "any rollout.", font=F_SMALL, fill=COL_ARRIVE)
+    y += 32
+    d.text((40, y), "scope: the theorem covers the progress stream; "
+           "one-shot frontier bonuses are bounded per life; sensors "
+           "are a", font=F_SMALL, fill=COL_DIM)
+    y += 20
+    d.text((40, y), "separate trust problem — every instrument passes "
+           "a held-out audit before the drive layer may read it.",
+           font=F_SMALL, fill=COL_DIM)
+    arr = np.asarray(img)
+    Image.fromarray(arr).save(png)
+    wr = FFmpegWriter(out, fps=FPS)
+    for _ in range(int(hold_s * FPS)):
+        wr.append_data(arr)
+    wr.close()
+    print(f"[act13] wrote {out}", flush=True)
+
+
+def arch_card(out="results/video/act14_arch_card.mp4",
+              png="results/video/act14_arch_card.png",
+              hold_s: float = 10.0):
+    """The four-box architecture card."""
+    from PIL import Image, ImageDraw
+    W, HH = 1100, 400
+    img = Image.new("RGB", (W, HH), COL_BG)
+    d = ImageDraw.Draw(img)
+    d.text((24, 18), "THE DRIVE LAYER — frozen before training; the "
+           "agent reads it, and cannot touch it", font=F_HEAD,
+           fill=COL_TEXT)
+    boxes = [
+        ("SENSES", ["instruments calibrated", "once, then frozen;",
+                    "audited before trusted"], COL_STOCK),
+        ("WANTS", ["measurable targets,", "held: drink ≥ 8, wood ≥ 2.",
+                   "readable · editable"], COL_VITAL),
+        ("LEDGER", ["pays only measured", "progress; telescoping ⇒",
+                    "exploits net zero"], COL_ARRIVE),
+        ("PROPOSER", ["two fixed rules:", "maintain healthy ranges;",
+                      "frontier once each"], (200, 160, 255)),
+    ]
+    bw, bh, gap, y0 = 236, 150, 34, 110
+    x = 24
+    for i, (name, lines, col) in enumerate(boxes):
+        d.rounded_rectangle([x, y0, x + bw, y0 + bh], radius=10,
+                            outline=col, width=3, fill=(22, 25, 33))
+        d.text((x + 16, y0 + 14), name, font=F_MAIN, fill=col)
+        for j, ln in enumerate(lines):
+            d.text((x + 16, y0 + 48 + j * 24), ln, font=F_SMALL,
+                   fill=COL_TEXT)
+        if i < 3:
+            ax = x + bw + 4
+            d.text((ax, y0 + bh // 2 - 10), "→", font=F_HEAD,
+                   fill=COL_DIM)
+        x += bw + gap
+    y = y0 + bh + 46
+    for ln in ("nothing in this layer is trained · nothing changes "
+               "while the agent learns",
+               "the policy underneath is ordinary RL — the only thing "
+               "that is architecture is what the agent WANTS"):
+        d.text((40, y), ln, font=F_MAIN, fill=COL_DIM)
+        y += 30
+    arr = np.asarray(img)
+    Image.fromarray(arr).save(png)
+    wr = FFmpegWriter(out, fps=FPS)
+    for _ in range(int(hold_s * FPS)):
+        wr.append_data(arr)
+    wr.close()
+    print(f"[act14] wrote {out}", flush=True)
+
+
 def main():
     mode = sys.argv[1] if len(sys.argv) > 1 else "frames"
     (RESULTS / "video").mkdir(exist_ok=True)
