@@ -183,7 +183,10 @@ the §6.4 treadmill; it is never a deployed configuration.
 
 Toy-world program complete (E1–E4, ladder, representation recipe — see
 `results/INTERPRETATION.md` rounds). Crafter/robot campaign complete:
-six cards, verdicts above. Open frontiers: generation-2 senses on
-Crafter (instruments calibrated from generation-1's own behavior — the
-table/pickaxe rungs the fleet showed are suppressed while unmeasured),
-and the robot-substrate program in `docs/ROBOT_PROGRAM.md`.
+six cards, verdicts above. Open frontiers: derived slow-band channels
+(the consume-trap fix — levels dip when invested, so slow bands should
+hold monotone totals derived from the same frozen senses, ever-collected
+and ever-spent; placement then pays instead of charging, with no new
+perception), generation-2 senses for events that leave no trace on any
+existing channel (instruments calibrated from generation-1's own
+behavior), and the robot-substrate program in `docs/ROBOT_PROGRAM.md`.

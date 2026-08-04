@@ -71,6 +71,22 @@ House rules kept: the gate was registered, amended once pre-run with
 disclosure, and is reported FAILED. No post-hoc metric shopping; the
 richer statistics above are supplementary, labeled as such.
 
+ADDENDUM — 2026-08-04 (design review): the reversal's fix, sharpened.
+The conclusion above reached for gen-2 senses too fast. Table
+suppression doesn't need new perception: wood-in-hand is a LEVEL,
+and levels dip when invested, so any layer holding the level charges
+the investment. The same frozen sense derives two monotone counters
+— total-ever-collected (sum of ups) and total-ever-spent (sum of
+downs; Crafter stock leaves hand only through crafting, so the spent
+counter counts conversions). Held on slow bands under the unchanged
+frontier rule, placement PAYS on the investment layer while the
+level dips on the fast one, and hold-ratio weighting makes the slow
+layer the bigger payer. Nothing re-added by hand: slow bands want
+integrals of what the small senses already measure — the robot
+program's wear-over-months was always this object. Gen-2 senses
+remain the answer only for events with zero trace on any channel.
+Untested; logged as the next design card, not a result.
+
 ---
 
 ## v1.3 FINAL — 2026-08-03: the glass-box edit dissects a behavior

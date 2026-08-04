@@ -539,9 +539,10 @@ def reversal_card(out="results/video/act12_reversal_card.mp4",
          "ladder agent TRAINED PLACEMENT OUT.", COL_TEXT),
         ("the blindness has a measured cost, not just a coverage gap.",
          COL_TEXT),
-        ("generation 2's senses (table, pickaxe) turn the suppressed "
-         "chain into a PAID chain — the fix is named in numbers.",
-         COL_ARRIVE)]:
+        ("the fix derives from the SAME sense: slow bands want TOTALS — "
+         "ever-collected, ever-SPENT (= crafting here).", COL_ARRIVE),
+        ("placement pays on the investment layer, nothing re-added by "
+         "hand; only zero-trace events need new senses.", COL_ARRIVE)]:
         d.text((40, y), ln, font=F_SMALL, fill=col)
         y += 22
     arr = np.asarray(img)
