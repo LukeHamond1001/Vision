@@ -42,17 +42,19 @@ from .goal_machine import GMConfig, GoalMachine
 
 class DriveWrapper:
     def __init__(self, env, channels, maintain=None, frontier=None,
-                 stds=None, holds=(60, 180), arrive_eps=(0.75, 0.4),
+                 stds=None, holds=(60, 180), arrive_eps_frac=(0.35, 0.25),
                  frontier_bonus=1.0, horizon_stock=2.0,
                  calibrate_steps=2000, sample_action=None, danger=None):
         """channels: {name: extractor(obs, info) -> float} (ordered).
         maintain: {name: (restore_lo, target_hi)} — the vitals band.
         frontier: [names] — the stock band (one-shot 'more than before').
         stds: {name: float} to skip calibration (freeze-before-use is
-        YOUR responsibility then). danger: {name: floor} — channels the
-        prospective veto watches (imagined states below floor are never
-        committed to).
-        """
+        YOUR responsibility then). arrive_eps_frac: per-band arrival
+        tolerance as a FRACTION of each channel's calibrated std —
+        unit-free, so [0,1] batteries and 0-9 gauges both work
+        untouched. danger: {name: floor} — channels the prospective
+        veto watches (imagined states below floor are never committed
+        to)."""
         maintain = maintain or {}
         frontier = list(frontier or [])
         assert channels, "at least one channel"
@@ -89,15 +91,20 @@ class DriveWrapper:
                 bad += max(0.0, floor - float(m[i]))
             return bad
 
+        band_of = lambda i: 0 if i in vit_idx else 1
+        eps_pc = tuple(arrive_eps_frac[band_of(i)] * self._stds[i]
+                       for i in range(len(self.names)))
         self.cfg = GMConfig(
             channels=self.names, vitals=vit_idx, stocks=stk_idx,
             goal_vitals=vit_idx, restore=restore,
             f_pos_fn=fp, f_neg_fn=fn,
-            stds=self._stds, holds=holds, arrive_eps=arrive_eps,
+            stds=self._stds, holds=holds,
+            arrive_eps_per_channel=eps_pc,
             frontier_bonus=frontier_bonus, horizon_stock=horizon_stock,
             w_bands=(1.0, holds[1] / holds[0]))
         self.machine = GoalMachine(self.cfg)
         self._last_obs = None
+        self._pending_seed = True
 
     # ------------------------------------------------------------ internals
     def _measure(self, obs, info) -> torch.Tensor:
@@ -126,16 +133,29 @@ class DriveWrapper:
 
     # ------------------------------------------------------------ env API
     def reset(self):
-        obs = self.env.reset()
+        out = self.env.reset()
+        obs = out[0] if isinstance(out, tuple) else out   # gymnasium compat
         self._last_obs = obs
-        m0 = self._measure(obs, {})
-        self.machine.reset(m0)
+        # No measurement here: extractors typically read `info`, which
+        # does not exist at reset. The machine seeds from the FIRST
+        # step's measurement (which pays nothing) — the same boundary
+        # rule the campaign harnesses use.
+        self._pending_seed = True
         return obs
 
     def step(self, action):
-        obs, native_r, done, info = self.env.step(action)
+        out = self.env.step(action)
+        if len(out) == 5:                                 # gymnasium compat
+            obs, native_r, term, trunc, info = out
+            done = bool(term or trunc)
+        else:
+            obs, native_r, done, info = out
         m = self._measure(obs, info)
-        if done:
+        if self._pending_seed:
+            self.machine.reset(m)
+            self._pending_seed = False
+            r, ev = 0.0, {"arrivals": [], "timeouts": [], "bonus": 0.0}
+        elif done:
             # v1.2 boundary rule: the dying transition pays nothing;
             # claims settle at the last-seen state. Call reset() next.
             r, ev = self.machine.step(self.machine.m.clone(), done=True)

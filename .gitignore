@@ -5,3 +5,6 @@ __pycache__/
 # secrets — never commit
 API Key.md
 *.key
+
+# launch-private (playbooks stay local)
+docs-private/

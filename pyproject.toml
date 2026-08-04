@@ -1,9 +1,14 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
 [project]
 name = "iga"
 version = "1.0.0"
 description = "Imagination-Gated Agent — a drive layer for agents: unfarmable rewards, readable goals, editable wants. Wrap any env with DriveWrapper."
 requires-python = ">=3.11"
-license = {file = "LICENSE"}
+license = "Apache-2.0"
+license-files = ["LICENSE", "NOTICE"]
 dependencies = ["torch>=2.0", "numpy>=1.24"]
 
 [project.optional-dependencies]

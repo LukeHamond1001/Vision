@@ -1,9 +1,13 @@
 # Wire It, Don't Train It: Safety and Identifiability by Construction in an Imagination-Gated Agent
 
-**Draft preprint v0.1 — 2026-07-29**
-*(Working draft for author review. All numbers trace to `results/` and
-`results/INTERPRETATION.md` in this repository; every headline claim was
-pre-registered before its measurement.)*
+**Draft preprint v0.1 — 2026-07-29 — PRE-CAMPAIGN DRAFT**
+*(Written before the four-experiment campaign (v1.2 dissociation, v3.0
+hacking immunity, v2.x battery, v1.3 glass-box, v4.0 sequencing fleet);
+none of those results appear here. For current results see the README
+reproduce matrix and results/INTERPRETATION.md — including the failed
+gates. Statistics in this draft predate the exact-methods pass
+(`python -m iga.verdicts`). Kept as a snapshot of the toy-world-era
+thesis; a campaign-era write-up supersedes it when written.)*
 
 ---
 

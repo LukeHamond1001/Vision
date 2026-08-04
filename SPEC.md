@@ -1,6 +1,6 @@
 # Imagination-Gated Agent — Design Specification
 
-**Version 0.6-draft** · Status: v0.1–v0.6 implemented & battery-tested; ChargeWorld end-to-end on hand latents (round 10) AND on a fully learned representation (v0.6 behavioral gate) · Codename: `iga` (placeholder)
+**Version 1.0** · Status: toy-world program complete (v0.1–v0.6, battery-tested); campaign-validated across three worlds (BoatRace, BatteryAnt, Crafter — see README reproduce matrix; verdicts incl. failures in results/INTERPRETATION.md) · Codename: `iga`
 
 This document is the normative specification of the architecture. It exists because
 review showed the informal description admits multiple readings, only one of which

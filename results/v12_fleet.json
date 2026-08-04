@@ -1,0 +1,81 @@
+{
+ "note": "v1.2 fleet rows recovered from per-arm commits on the pod results branches (branch HEADs carried stale smoke files; the seed field inside pod jsonls was hardcoded to 1). Pairing is BY POD \u2014 each pod ran its three arms on its own worlds; seed_label is a bookkeeping index. Full per-episode streams remain on the branches.",
+ "rows": [
+  {
+   "pod": "gt8j1b32933807",
+   "seed_label": 1,
+   "role": "pilot",
+   "wired": {
+    "survival": 178.009,
+    "drink": 0.887,
+    "slept": 3.733
+   },
+   "native": {
+    "survival": 227.962,
+    "drink": 0.616,
+    "slept": 0.019
+   },
+   "zero": {
+    "survival": 172.111,
+    "drink": 0.561,
+    "slept": 0.513
+   }
+  },
+  {
+   "pod": "63uio8kmty399j",
+   "seed_label": 2,
+   "role": "fleet-relaunch",
+   "wired": {
+    "survival": 170.871
+   },
+   "native": {
+    "survival": 230.484
+   },
+   "zero": {
+    "survival": 171.379
+   }
+  },
+  {
+   "pod": "9nlguhogicwdmj",
+   "seed_label": 3,
+   "role": "fleet-relaunch",
+   "wired": {
+    "survival": 176.021
+   },
+   "native": {
+    "survival": 226.24
+   },
+   "zero": {
+    "survival": 167.31
+   }
+  },
+  {
+   "pod": "k8bl9vrdp4t2bj",
+   "seed_label": 4,
+   "role": "fleet-relaunch",
+   "wired": {
+    "survival": 175.348
+   },
+   "native": {
+    "survival": 208.876
+   },
+   "zero": {
+    "survival": 169.805
+   }
+  },
+  {
+   "pod": "ui9hq4cfex3mqf",
+   "seed_label": 5,
+   "role": "fleet-relaunch",
+   "wired": {
+    "survival": 174.432
+   },
+   "native": {
+    "survival": 202.043
+   },
+   "zero": {
+    "survival": 170.149
+   }
+  }
+ ]
+}

@@ -26,13 +26,21 @@ Port decisions (each disclosed, none silent):
              permanently veto the frontier via C5. Native Crafter
              reward re-pays achievements per episode — parity kept.
              Within a life no cell's bonus pays twice.
-  C1 cap     arrive-count cap per stock cell per life (2): a consumed
-             stock may be legitimately re-collected ONCE (the
-             table-chain needs re-collection), but chop-place-chop
-             farming is bounded. Vitals are uncapped: sag is
-             env-clocked (decay timers), so restore pay is rate-bounded
-             by physiology and cannot be accelerated by the policy —
-             the v1.2-established maintenance lane.
+  C1 cap     arrive-count cap per stock cell per life (2) — defense in
+             depth behind the C7 gain bar. NOTE (measured, v4.0 fleet):
+             with C7 in improvement form the bar alone blocks
+             re-commits of arrived cells, so the cap never fired in
+             any fleet seed (cap rejects = 0). It stays wired as the
+             backstop C1 specifies, not as a load-bearing constraint.
+             Vitals are uncapped: sag is env-clocked (decay timers), so
+             restore pay is rate-bounded by physiology and cannot be
+             accelerated by the policy — the v1.2 maintenance lane.
+             Bonus scope, stated plainly: the one-shot frontier bonus
+             resets per LIFE (like native Crafter's per-episode
+             achievements); the telescoping theorem covers the
+             PROGRESS stream, and per-life bonus totals are bounded by
+             the cell count — across lives the bonus re-pays at
+             episode-turnover rate, by design and disclosed.
   vitals     food/drink/energy restore-ramps, proposed only when the
              vital sags below restore_lo. No instant-arrival commits
              (the toy's round-10 arrive-eps lesson, made explicit:
@@ -190,6 +198,10 @@ class GMConfig:
     f_pos_fn: object = None          # callable(m)->float; None -> Crafter f+
     f_neg_fn: object = None          # callable(m)->float; None -> Crafter f-
     holds: tuple = (60, 180)         # vitals, stocks (steps; ~episode-scale)
+    arrive_eps_per_channel: tuple | None = None   # per-CHANNEL tolerances
+    #   in the channel's own units (the DriveWrapper derives these from
+    #   calibrated stds, making arrivals unit-free); None -> the
+    #   per-band truth-unit constants below (the Crafter instrument).
     arrive_eps: tuple = (0.75, 0.4)  # per band, truth units. Vitals are
     #   release-TOLERANT (no bonus at stake on a vitals arrival; an early
     #   release just re-proposes if the vital is still low) so eps absorbs
@@ -203,8 +215,8 @@ class GMConfig:
     frontier_bonus: float = 1.0      # G7 one-shot arrival bonus
     value_bar: float = 0.02          # C7 (f units)
     veto_threshold: float = 0.5      # C4 prospective (f- units)
-    w_bands: tuple = (1.0, 3.0)      # overwritten from instrument (w ∝ τ)
-    stds: tuple = (1.0,) * 6         # overwritten from instrument
+    w_bands: tuple = (1.0, 3.0)      # hold-length ratio (spec law)
+    stds: tuple = (1.0,) * 6         # per-channel walk stds (frozen)
     use_proposer: bool = True        # False = fixed-target ablation arm
     fixed_targets: tuple = ()        # ((channel, level), ...) when ablated
 
@@ -258,8 +270,13 @@ class GoalMachine:
     def _phi(self, m: torch.Tensor, c: int, t: float) -> float:
         return max(0.0, t - float(m[c])) / self.cfg.stds[c]
 
+    def _eps(self, c: int) -> float:
+        if self.cfg.arrive_eps_per_channel is not None:
+            return self.cfg.arrive_eps_per_channel[c]
+        return self.cfg.arrive_eps[self._band_of(c)]
+
     def _satisfied(self, m: torch.Tensor, c: int, t: float) -> bool:
-        return float(m[c]) >= t - self.cfg.arrive_eps[self._band_of(c)]
+        return float(m[c]) >= t - self._eps(c)
 
     def _imagine(self, c: int, t: float) -> torch.Tensor:
         g = self.m.clone()
@@ -336,9 +353,13 @@ class GoalMachine:
     # -------------------------------------------------------------- step
     def step(self, m_now: torch.Tensor, done: bool = False) -> tuple[float, dict]:
         """Advance one env transition (self.m -> m_now). Returns the
-        drive reward for this transition and an event dict. On done, the
-        caller passes the TERMINAL measurement; claims settle there and
-        the caller must then reset(m0_of_next_life)."""
+        drive reward for this transition and an event dict. On done,
+        pass the LAST-SEEN measurement (self.m.clone()) so the dying
+        transition pays nothing and claims settle at the last-seen
+        state — the v1.2 boundary rule; DriveWrapper does exactly this.
+        (Passing the true terminal measurement instead charges the
+        death transition — a design choice, but not the audited one.)
+        Then reset(m0_of_next_life)."""
         assert self.m is not None, "reset(m0) before stepping"
         self.t += 1
         r = 0.0

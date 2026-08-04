@@ -1,7 +1,8 @@
 # iga — Imagination-Gated Agent
 
-A **drive layer** for agents: rewards that provably cannot be farmed, goals
-held as readable text, wants you can edit with one line. Specified in
+A **drive layer** for agents: a progress reward that provably telescopes
+(exploits of the accounting net exactly zero — proven, then audited),
+goals held as readable text, wants you can edit with one line. Specified in
 [SPEC.md](SPEC.md), enforced by structural tests, and measured across
 **three worlds** — a reward-gaming track, a simulated robot, and Crafter —
 with every gate pre-registered and every miss reported.
@@ -17,8 +18,7 @@ each). The policy is ordinary RL; only what it *wants* is architecture.
 (an agent playing beside its live goal agenda), `act9_hack_clip.mp4`
 (the hand-written reward maxed by a cheater at zero laps, beside the
 register racing on the same gauge), and `act8_three_worlds.png`
-(one drive layer, three worlds, zero law changes). Presentation beat
-sheet: [docs/VIDEO_SCRIPT.md](docs/VIDEO_SCRIPT.md).
+(one drive layer, three worlds, zero law changes).
 
 ## The experiments (reproduce matrix)
 
@@ -30,14 +30,19 @@ the failures.
 | # | Claim under test | World | Result (honest) | Reproduce | Cost |
 |---|---|---|---|---|---|
 | v0.9 | temporal routing from pixels, closed-form | Crafter | all gates: slow 0.93, vitals 0.94–0.97, energy 0.71 (amended pre-run, ledgered) | `python -m iga.experiments_v09 full` | ~$0.25 |
-| v1.2 | wired drives steer behavior (no task reward) | Crafter | native 221 ≫ wired 175 > zero 170; wired−zero CI [+2,+8]; mechanism fingerprint clean (drink 0.88 vs 0.56, sleep 4.3×) | `python -m iga.experiments_v12 full <seed>` | ~$23 (5 seeds) |
-| v3.0 | the register cannot be paid to cheat | BoatRace | engineered reward HACKED (score 82–97, **0.00 laps**, 3/3); register on the same gauge races 6.2–7.1 laps/ep | `python -m iga.experiments_v30 full` | $0 (local) |
+| v1.2 | wired drives steer behavior (no task reward) | Crafter | native ≫ wired > zero (means 219/175/170); **registered ratio gate (≥1.25) FAIL at 1.03**; paired wired−zero +4.8, t-CI95 [+0.6, +9.0], 4 of 5 pods positive (sign p=0.375); mechanism fingerprint clean (drink 0.89 vs 0.56, sleep 4.3×) | `python -m iga.experiments_v12 full <seed>` | ~$23 (5 seeds) |
+| v3.0 | the register cannot be paid to cheat | BoatRace | engineered reward HACKED (score 82–97, **0.00 laps**, 3/3). Pre-registered register arm: 0.00/1.08/1.96 laps (G-immune passed at 1.01 vs a 1.0 bar — thin, one seed's readout failed and is disclosed); post-hoc mean-fill robustness round, labeled as such: 6.2–7.1 laps 3/3 | `python -m iga.experiments_v30 full` | $0 (local) |
 | v2.0/2.1 | drives transfer to a robot's telemetry | BatteryAnt | τ-ladder 4/54/92/28,856; conservation dissociation 10/10 (brownout 0.05 vs 0.31); **uptime/parity gates FAIL** — docking is an exploration valley under every reward tried | `python -m iga.experiments_v20` + `_v21 full` | $0 (local) |
 | v1.3 | wants are editable (delete one desire) | Crafter | drink held 0.92 (surgical); sleep 4.3→1.3–2.1 (**strict <1.0 gate FAIL**); the edit *decomposed* sleep into energy-share + health-share | `python -m iga.experiments_v13 full` | ~$7 |
-| v4.0 | sequencing emerges from the goal ladder | Crafter | full 3.0 vs ablation 2.0 achv-median, 5 seeds; paired diff +1,+1,+1,+1,0 → **+0.80 CI95 [+0.41,+1.19] vs registered ≥+1.0: gate FAIL**, effect CI-clean; mechanism unanimous (118k arrivals ±1.1%); native (told the goals) 10.0 | pre-flights: `python -m iga.preflight_v40 harness\|audit\|forward`; arms: `python -m iga.experiments_v40 full <arm> <seed>` | ~$30 (fleet) |
+| v4.0 | sequencing emerges from the goal ladder | Crafter | full 3.0 vs ablation 2.0 achv-median, 5 seeds; paired diff +1,+1,+1,+1,0 → **mean +0.80, t-CI95 [+0.24,+1.36] vs registered ≥+1.0: gate FAIL** (sign test p=0.125; n=5 cannot reach exact significance — CIs are effect-size intervals); mechanism unanimous (118k arrivals ±1.1%); native (told the goals; 3 of 5 seeds, 2 culled per plan) 10.0 | pre-flights: `python -m iga.preflight_v40 harness\|audit\|forward`; arms: `python -m iga.experiments_v40 full <arm> <seed>` | ~$30 (fleet) |
 
 Renders: `python -m iga.render_v40 trace|creatures|card|cards2` ($0,
 replays the committed policies).
+
+Every headline statistic recomputes from committed artifacts with
+exact small-n methods (paired t-CI df=4 + exact sign test):
+`python -m iga.verdicts`. Fast clone (the `results-*` branches are the
+raw pod ledger): `git clone --depth 1 --single-branch <url>`.
 
 ## Try it on YOUR environment (this afternoon)
 

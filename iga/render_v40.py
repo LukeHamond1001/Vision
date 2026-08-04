@@ -455,7 +455,7 @@ def verdict_card(out="results/video/act11_verdict_card.mp4",
     d.text((24, 18), "THE SEQUENCING FLEET — 5 seeds x 3 arms x 3M steps",
            font=F_HEAD, fill=COL_TEXT)
     rows = [
-        ("native", "told what to want (paid per achievement)", "10.0",
+        ("native", "told what to want (paid per achievement; 3 seeds)", "10.0",
          (215, 120, 110)),
         ("full", "NEVER told — drives + goal ladder only", "3.0",
          COL_ARRIVE),
@@ -480,10 +480,11 @@ def verdict_card(out="results/video/act11_verdict_card.mp4",
            "ablation):  >= +1.0", font=F_MAIN, fill=COL_TEXT)
     y += 26
     d.text((40, y), "measured:  +1, +1, +1, +1, 0  ->  mean +0.80,  "
-           "CI95 [+0.41, +1.19]", font=F_MAIN, fill=COL_TEXT)
+           "t-CI95 [+0.24, +1.36]  (n=5; sign test p=0.125)",
+           font=F_MAIN, fill=COL_TEXT)
     y += 26
-    d.text((40, y), "verdict:  GATE FAILED (magnitude) — effect real "
-           "(CI excludes zero) — reported exactly as registered",
+    d.text((40, y), "verdict:  GATE FAILED — direction consistent (4/5), "
+           "magnitude under the bar; n=5 — reported as registered",
            font=F_MAIN, fill=(235, 200, 120))
     y += 40
     d.text((40, y), "behavior redirection, full vs ablation: collection "

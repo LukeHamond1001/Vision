@@ -23,9 +23,12 @@ worlds, RTX 2000 pods, ~$30, ~40h wall-clock, 4 slow-host culls at
                  (3 seeds; slow-pod natives culled per plan)
 
     G-seq paired diff: +1, +1, +1, +1, 0
-    mean +0.80, CI95 [+0.41, +1.19]
+    mean +0.80, t-CI95 [+0.24, +1.36] (df=4); exact sign test 4+/0-
+    p=0.125. Recompute: python -m iga.verdicts
     pre-registered gate (>= +1.0 AND CI > 0): **FAIL** (magnitude
-    clause; the CI clause passes decisively)
+    clause; the t-CI excludes zero — but read all CIs here as
+    EFFECT-SIZE intervals: at n=5 no exact test can reach p<0.05,
+    and the CI includes the registered bar itself)
 
 What broke the bar: exactly the discrete-median fragility flagged when
 the gate was re-based (pre-run, disclosed) — medians are integers, and
@@ -34,9 +37,13 @@ incidental unlock, median 3.0). The incidental-unlock ceiling is soft
 and seed-dependent; four of five seeds sat below it, one above.
 
 What stands regardless of the gate:
-1. **The causal effect is real**: CI excludes zero decisively. The
-   ladder adds distinct achievements; it added less than the
-   registered magnitude on one seed of five.
+1. **The effect is directionally consistent** (4 of 5 seeds positive,
+   1 tie; supplementary achv-MEAN diff +0.59 [+0.13, +1.06], 5/5
+   positive, sign p=0.062). The t-CI excludes zero, but n=5 cannot
+   deliver exact-test significance and the interval includes the
+   registered bar — so the honest one-line summary is: consistent
+   direction, magnitude under the bar, sample too small to settle it.
+   The mechanism statistics below are where the certainty lives.
 2. **The mechanism is unanimous and enormous**: five full arms with
    identical medians and frontier statistics within +-1.1% (117.0k to
    119.6k arrivals). Behavior redirection dwarfs the coarse metric:
@@ -221,7 +228,7 @@ agree on everything that matters:
 
     task arms (task / task+wired / task+penalty): brownout ~0.26-0.38,
         docked ~1%, statistically indistinguishable from each other
-    wired-only: brownout 0.02-0.07 — five-for-five, both rounds —
+    wired-only: brownout 0.01-0.11 — five-for-five, both rounds —
         achieved by CONSERVATION (near-stillness), never by docking
         (docked ~0.000); with bearing available it moves a little
         more (task 204 vs 130) and still never navigates to charge
