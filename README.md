@@ -1,10 +1,63 @@
 # iga — Imagination-Gated Agent
 
-Reference scaffold for the architecture specified in [SPEC.md](SPEC.md). The
-spec is the deliverable; this package makes its commitments **executable and
-testable**. It is deliberately *not* a performing agent — the RL is a minimal
-REINFORCE loop on a toy gridworld, there to prove the wiring, not to post
-numbers.
+A **drive layer** for agents: rewards that provably cannot be farmed, goals
+held as readable text, wants you can edit with one line. Specified in
+[SPEC.md](SPEC.md), enforced by structural tests, and measured across
+**three worlds** — a reward-gaming track, a simulated robot, and Crafter —
+with every gate pre-registered and every miss reported.
+
+The drive layer is **parameter-free and frozen before training**: senses
+(closed-form instrument heads), registers (wants as measurable targets),
+a potential-based ledger (telescoping ⇒ non-farmable, audited to
+exactness over 1,200+ holds), and a prospective proposer (maintain what
+has a healthy range; seek the frontier of anything measurable, once
+each). The policy is ordinary RL; only what it *wants* is architecture.
+
+**Demo reel:** `results/video/` — start with `act6_trace_overlay.mp4`
+(an agent playing beside its live goal agenda), `act9_hack_clip.mp4`
+(the hand-written reward maxed by a cheater at zero laps, beside the
+register racing on the same gauge), and `act8_three_worlds.png`
+(one drive layer, three worlds, zero law changes). Presentation beat
+sheet: [docs/VIDEO_SCRIPT.md](docs/VIDEO_SCRIPT.md).
+
+## The experiments (reproduce matrix)
+
+Every row has a `tiny` smoke mode that runs locally in minutes for $0.
+Full-run costs are what we actually paid (RTX 2000 pods at $0.24/hr or
+a laptop). Verdicts are reported exactly as pre-registered — including
+the failures.
+
+| # | Claim under test | World | Result (honest) | Reproduce | Cost |
+|---|---|---|---|---|---|
+| v0.9 | temporal routing from pixels, closed-form | Crafter | all gates: slow 0.93, vitals 0.94–0.97, energy 0.71 (amended pre-run, ledgered) | `python -m iga.experiments_v09 full` | ~$0.25 |
+| v1.2 | wired drives steer behavior (no task reward) | Crafter | native 221 ≫ wired 175 > zero 170; wired−zero CI [+2,+8]; mechanism fingerprint clean (drink 0.88 vs 0.56, sleep 4.3×) | `python -m iga.experiments_v12 full <seed>` | ~$23 (5 seeds) |
+| v3.0 | the register cannot be paid to cheat | BoatRace | engineered reward HACKED (score 82–97, **0.00 laps**, 3/3); register on the same gauge races 6.2–7.1 laps/ep | `python -m iga.experiments_v30 full` | $0 (local) |
+| v2.0/2.1 | drives transfer to a robot's telemetry | BatteryAnt | τ-ladder 4/54/92/28,856; conservation dissociation 10/10 (brownout 0.05 vs 0.31); **uptime/parity gates FAIL** — docking is an exploration valley under every reward tried | `python -m iga.experiments_v20` + `_v21 full` | $0 (local) |
+| v1.3 | wants are editable (delete one desire) | Crafter | drink held 0.92 (surgical); sleep 4.3→1.3–2.1 (**strict <1.0 gate FAIL**); the edit *decomposed* sleep into energy-share + health-share | `python -m iga.experiments_v13 full` | ~$7 |
+| v4.0 | sequencing emerges from the goal ladder | Crafter | full 3.0 vs ablation 2.0 achv-median, 5 seeds; paired diff +1,+1,+1,+1,0 → **+0.80 CI95 [+0.41,+1.19] vs registered ≥+1.0: gate FAIL**, effect CI-clean; mechanism unanimous (118k arrivals ±1.1%); native (told the goals) 10.0 | pre-flights: `python -m iga.preflight_v40 harness\|audit\|forward`; arms: `python -m iga.experiments_v40 full <arm> <seed>` | ~$30 (fleet) |
+
+Renders: `python -m iga.render_v40 trace|creatures|card|cards2` ($0,
+replays the committed policies).
+
+Full narrative, reversals included:
+[results/INTERPRETATION.md](results/INTERPRETATION.md). Design cards
+committed before runs: [docs/SEQUENCING.md](docs/SEQUENCING.md).
+Roadmap to robots (teleop-corpus pretraining, the teaching loop,
+generational senses): [docs/ROBOT_PROGRAM.md](docs/ROBOT_PROGRAM.md).
+
+**House rules:** gates are registered before runs and amended only
+pre-run with disclosure; failed gates are reported as failed; walks
+that calibrate instruments never see task labels; nothing in the
+reward path is trained, and nothing trained is trusted before audit.
+
+---
+
+# The reference scaffold
+
+The spec is the deliverable; this package makes its commitments
+**executable and testable**. The scaffold RL is a minimal loop on toy
+worlds, there to prove the wiring, not to post numbers — the campaign
+experiments above are where numbers live.
 
 ## What is enforced where
 
@@ -63,12 +116,19 @@ the §6.4 treadmill; it is never a deployed configuration.
 - `iga/pretrain.py` — OU-ladder latent pretraining (v0.3/v0.4 recipe:
   innovations + coverage resets + boundary masking + within-band whitening +
   context coupling)
-- `iga/envs/` — gridworld, trap corridor (E2a), reachability probe (E3b),
-  two/three-zone worlds (E5), charge world (E5c — end-to-end as of round 10)
-- `iga/audits.py` — A1 trigger set, A2 proxy gap, A3 Lipschitz (claims-channel
-  audits; selection-side uses read f± directly since round 9)
-- `iga/experiments*.py` — the SPEC §9/§10 batteries and probes
-- `results/` — outputs + `INTERPRETATION.md` (the honest round-by-round log)
+- `iga/crafter_support.py` — Crafter instruments: banded encoder,
+  closed-form heads (the round-10 eigen recipe), digit windows
+- `iga/goal_machine.py` — the v4.0 drive layer: ramp goals, parameter-free
+  proposer, one-shot frontier curiosity, exact-claim ledger
+- `iga/ppo_pixel.py` / `iga/ppo_proprio.py` — vectorized PPO harnesses
+  (pixels / proprioception)
+- `iga/boatrace_env.py` / `iga/battery_env.py` — the other two worlds
+- `iga/preflight_v40.py` — the pre-flight ladder (harness, agenda audit,
+  forward-model audit) that bought v4.0 its first-run odds
+- `iga/experiments_v*.py` — the campaign runners (each file = one card)
+- `iga/render_demo.py` / `iga/render_v40.py` — the demo reel
+- `iga/envs/` — toy worlds (gridworld, trap corridor, charge world, …)
+- `results/` — outputs, artifacts, `INTERPRETATION.md`, `video/`
 - `tests/` — structural tests keyed to spec clauses
 
 ## Deliberate scaffold simplifications
@@ -78,20 +138,17 @@ the §6.4 treadmill; it is never a deployed configuration.
 - `f±` are designed radial evaluators around known sites; any frozen evaluator
   over pre-mapped channels satisfies W1.
 - The negative veto is prospective only (candidate filtering); an acting-time
-  veto belongs in the evaluation battery.
+  veto belongs in the evaluation battery. (On Crafter, the acting-time flinch
+  was built, audited, and **benched by its own audit** — action-blind forward
+  models don't get veto authority. See pre-flight F.)
 - E3b (reachability bias) ships as env + drift metric; the multi-seed
   experiment is evaluation work (SPEC §9), not scaffold work.
 
-## Status (v0.5-draft)
+## Status
 
-E1–E4 complete (E2a with disjoint CIs via the C4 flinch; E3b confirmed under
-two learners). Ladder built and battle-tested; ChargeWorld end-to-end as of
-round 10 (first completions, +0.031 [0.016, 0.042] vs control 0.000, clean
-attribution to G6 gradient proposals + composite neutrality). Representation
-recipe validated (band discovery; leak mechanism identified both directions;
-learned coupling recovers the win, hand-design still edges it at toy scale).
-
-Open frontiers: representation scale-up (high-dim observations, unknown slow
-variables — where the learned pretraining recipe's value claim lives), and
-completion-rate engineering. See `results/INTERPRETATION.md` for the full
-round-by-round record, reversals included.
+Toy-world program complete (E1–E4, ladder, representation recipe — see
+`results/INTERPRETATION.md` rounds). Crafter/robot campaign complete:
+four experiments, verdicts above. Open frontiers: generation-2 senses on
+Crafter (instruments calibrated from generation-1's own behavior — the
+table/pickaxe rungs the fleet showed are suppressed while unmeasured),
+and the robot-substrate program in `docs/ROBOT_PROGRAM.md`.
