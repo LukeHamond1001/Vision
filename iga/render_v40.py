@@ -260,6 +260,102 @@ def replay_plain(policy_name: str, steps: int, env_seed: int,
     return rec
 
 
+def three_worlds_card(out="results/video/act8_three_worlds.mp4",
+                      png="results/video/act8_three_worlds.png",
+                      hold_s: float = 8.0):
+    """The anti-'custom-harness' card: one drive layer, three worlds,
+    zero law changes. Thumbnails are real env frames; results are the
+    banked numbers."""
+    from PIL import Image, ImageDraw
+    W, COLW, HH = 1200, 400, 560
+    img = Image.new("RGB", (W, HH), COL_BG)
+    d = ImageDraw.Draw(img)
+    d.text((24, 18), "ONE DRIVE LAYER.  THREE WORLDS.  ZERO LAW CHANGES.",
+           font=F_HEAD, fill=COL_TEXT)
+    d.text((24, 44), "registers · prospective proposer · one-shot curiosity"
+           " · non-farmable ledger — identical code; only the channel"
+           " manifest changed", font=F_SMALL, fill=COL_DIM)
+
+    # thumbnails
+    import crafter
+    cf = crafter.Env(seed=7).reset()
+    from .boatrace_env import BoatRace
+    bf = BoatRace().reset()
+    if isinstance(bf, tuple):
+        bf = bf[0]
+    bf = np.asarray(bf)
+    if bf.dtype != np.uint8:
+        bf = (np.clip(bf, 0, 1) * 255).astype(np.uint8)
+    if bf.ndim == 3 and bf.shape[0] in (1, 3):        # CHW -> HWC
+        bf = np.transpose(bf, (1, 2, 0))
+    if bf.shape[-1] == 1:
+        bf = np.repeat(bf, 3, -1)
+
+    def put_thumb(arr, cx, size=230):
+        im = Image.fromarray(arr).resize((size, size), Image.NEAREST)
+        img.paste(im, (cx + (COLW - size) // 2, 84))
+
+    cols = [
+        ("BOAT RACE  (reward-hacking world)",
+         "channel: race-progress gauge — an EXTERNAL task variable",
+         ["engineered reward: HACKED (0.00 laps, 3/3 seeds)",
+          "register on the same gauge: RACES 6.3-7.1 laps/ep",
+          "the reward that cannot be paid to cheat"]),
+        ("BATTERY ROBOT  (proprioceptive world)",
+         "channels: battery, temperature, wear — somatic telemetry",
+         ["drives alone: brownout 0.05 vs task arms 0.31 (10/10)",
+          "homeostasis by learned frugality, never harmful",
+          "the tau ladder: 4 / 54 / 92 / 28,856 steps"]),
+        ("CRAFTER  (pixel survival world)",
+         "channels: vitals + stocks — read from raw pixels",
+         ["collection ladder climbed in 96% of lives (5 seeds)",
+          "+0.8 achievements vs ablation, CI95 [+0.4, +1.2]",
+          "every want readable in the live trace"]),
+    ]
+    for i, (title, chan, lines) in enumerate(cols):
+        cx = i * COLW
+        if i:
+            d.line([(cx, 78), (cx, HH - 46)], fill=COL_BAR_BG, width=1)
+        thumb = [bf, None, cf][i]
+        if thumb is None:
+            # battery world: draw the brownout bars (no mujoco renderer)
+            bx, by = cx + 95, 130
+            d.text((bx, by - 24), "brownout fraction", font=F_SMALL,
+                   fill=COL_DIM)
+            for j, (lbl, v, col) in enumerate([
+                    ("task-reward arms", 0.31, (215, 120, 110)),
+                    ("drives only", 0.048, COL_ARRIVE)]):
+                y0 = by + j * 64
+                d.text((bx, y0), lbl, font=F_SMALL, fill=COL_TEXT)
+                d.rectangle([bx, y0 + 18, bx + 210, y0 + 34],
+                            fill=COL_BAR_BG)
+                d.rectangle([bx, y0 + 18, bx + int(210 * v / 0.35),
+                             y0 + 34], fill=col)
+                d.text((bx + 216, y0 + 18), f"{v:.2f}", font=F_SMALL,
+                       fill=COL_DIM)
+        else:
+            put_thumb(thumb, cx)
+        y = 330
+        d.text((cx + 24, y), title, font=F_MAIN, fill=COL_TEXT)
+        y += 24
+        d.text((cx + 24, y), chan, font=F_SMALL, fill=COL_STOCK)
+        y += 26
+        for ln in lines:
+            d.text((cx + 24, y), "· " + ln, font=F_SMALL, fill=COL_DIM)
+            y += 20
+    d.line([(24, HH - 40), (W - 24, HH - 40)], fill=COL_BAR_BG, width=1)
+    d.text((24, HH - 32), "the sensor manifest is per-world plumbing "
+           "(6 lines each); the laws never changed — that is the claim",
+           font=F_SMALL, fill=COL_TEXT)
+    arr = np.asarray(img)
+    Image.fromarray(arr).save(png)
+    wr = FFmpegWriter(out, fps=FPS)
+    for _ in range(int(hold_s * FPS)):
+        wr.append_data(arr)
+    wr.close()
+    print(f"[act8] wrote {out} and {png}", flush=True)
+
+
 def main():
     mode = sys.argv[1] if len(sys.argv) > 1 else "frames"
     (RESULTS / "video").mkdir(exist_ok=True)
@@ -267,6 +363,8 @@ def main():
         act_trace()
     elif mode == "creatures":
         act_creatures()
+    elif mode == "card":
+        three_worlds_card()
     elif mode == "frames":
         rec = replay_with_machine("v40_policy_full_s4.pt", 400, 411)
         from PIL import Image
