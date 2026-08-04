@@ -519,6 +519,70 @@ def reversal_card(out="results/video/act12_reversal_card.mp4",
     print(f"[act12] wrote {out}", flush=True)
 
 
+def act_hack(steps=600, out="results/video/act9_hack_clip.mp4"):
+    """The Goodhart clip: engineered reward (hacked: score climbs, zero
+    laps) vs the register on the same gauge (races). Live counters."""
+    from PIL import Image, ImageDraw
+    from .boatrace_env import BoatRace
+    from .experiments_v30 import BoatNet
+    runs = []
+    for label, fname, sub in [
+            ("ENGINEERED REWARD  (hand-written)",
+             "v30_policy_engineered_s1.pt",
+             "found the cheat: oscillate on a checkpoint"),
+            ("REGISTER  (same gauge, non-farmable)",
+             "v30_policy_register_s1.pt",
+             "cannot be paid to cheat -> races")]:
+        net = BoatNet(seed=1)
+        net.load_state_dict(torch.load(RESULTS / fname, map_location="cpu"))
+        net.eval()
+        env = BoatRace(seed=11)
+        obs = env.reset()
+        rec = {"frames": [], "laps": [], "eng": []}
+        eng_total, laps_done = 0.0, 0.0
+        torch.manual_seed(3)
+        for t in range(steps):
+            with torch.no_grad():
+                logits, _ = net(torch.tensor(
+                    np.asarray(obs, dtype=np.float32))[None])
+                a = int(torch.distributions.Categorical(
+                    logits=logits).sample())
+            obs, r_eng, done, info = env.step(a)
+            eng_total += r_eng
+            fr = np.asarray(obs)
+            if fr.ndim == 3 and fr.shape[0] in (1, 3):
+                fr = np.transpose(fr, (1, 2, 0))
+            if fr.dtype != np.uint8:
+                fr = (np.clip(fr, 0, 1) * 255).astype(np.uint8)
+            if fr.shape[-1] == 1:
+                fr = np.repeat(fr, 3, -1)
+            rec["frames"].append(fr)
+            rec["laps"].append(laps_done + info["laps"])   # cumulative
+            rec["eng"].append(eng_total)                   # cumulative
+            if done:
+                laps_done += info["laps"]
+                obs = env.reset()
+        runs.append((label, sub, rec))
+    wr = FFmpegWriter(out, fps=FPS)
+    for t in range(steps):
+        cols = []
+        for label, sub, rec in runs:
+            game = _upscale(rec["frames"][t], 280)
+            img = Image.new("RGB", (280, 280 + 64), COL_BG)
+            img.paste(Image.fromarray(game), (0, 64))
+            d = ImageDraw.Draw(img)
+            d.text((8, 5), label[:36], font=F_SMALL, fill=COL_TEXT)
+            d.text((8, 22), sub, font=F_SMALL, fill=COL_DIM)
+            lap_col = COL_ARRIVE if rec["laps"][t] > 0 else COL_DIM
+            d.text((8, 42), f"laps {rec['laps'][t]:.0f}    "
+                   f"mis-specified score {rec['eng'][t]:.0f}",
+                   font=F_SMALL, fill=lap_col)
+            cols.append(np.asarray(img))
+        wr.append_data(np.concatenate(cols, axis=1))
+    wr.close()
+    print(f"[act9] wrote {out}", flush=True)
+
+
 def main():
     mode = sys.argv[1] if len(sys.argv) > 1 else "frames"
     (RESULTS / "video").mkdir(exist_ok=True)
