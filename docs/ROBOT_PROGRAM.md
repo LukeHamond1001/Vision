@@ -114,6 +114,51 @@ pays; they never pay.**
   generational re-freeze with warm-start (v1.3-demonstrated). Frozen
   within each phase, edited only at the gate between them.
 
+## Pretraining the ladder itself — "data for anything" (fits R0→R2)
+*(receipts: v0.5–v0.9 banded latent pretraining — per-band whitening,
+context coupling — and the replay-through-the-machine harness that
+built the act-6 trace)*
+
+The corpus doesn't just pretrain perception and skills — it can
+pretrain the **band ladder itself**, because nothing about a band
+needs interaction. A band is bookkeeping over time, and the corpus
+HAS time: every quantity any band would ever hold — integrals
+(ever-collected / ever-spent / wear), window deltas, arrival
+statistics — is a fixed function of logged streams.
+
+- **Retro-agenda**: replay the frozen goal machine over every logged
+  episode. Yields, offline and before any RL: band constants
+  calibrated from measured arrival-time distributions (hold lengths,
+  arrive-eps — data-set, not hand-set), the derived-channel roster
+  (which integrals actually move in this world), and an audit table
+  per band. The instrument discipline, applied to time itself.
+- **Per-band latents — deeper meaning per band**: the world-model
+  trick, recursively. The sequence of fast latents across one
+  slow-band window is itself a sentence: embed the window, predict
+  the NEXT window's embedding, per band. Frame-scale prediction
+  forces physics into the weights; window-scale forces event
+  structure (what actions accomplish); episode-scale forces task
+  structure; generation-scale forces learning-progress structure.
+  Each band's latent keeps only what is stable at its horizon —
+  noise averages out, meaning concentrates.
+- **Senses stay senses**: a band-k channel is a linear probe on the
+  band-k latent, calibrated once, held-out audited AT THAT
+  TIMESCALE, then frozen. Deeper meaning never means vaguer
+  instruments; a slow quantity that cannot pass its audit does not
+  become a want.
+- **Goal-tracking layers all the way up**: every layer is the same
+  object — a register holding a target over an audited channel, paid
+  by the same telescoping ledger. The program's own north star
+  already is one: demos-needed-per-new-task falling (R4) is a
+  register on the GENERATIONAL band. The program itself is the
+  slowest layer.
+- **Status**: design. The banded-latent recursion is untested beyond
+  the toy receipts; the retro-agenda is engineering on the existing
+  replay harness. No new laws — the existing contract
+  (learned-then-frozen, audited before authority) applied at more
+  timescales. What data cannot buy remains the interventional loop:
+  the ladder pretrains, the policy still has to live.
+
 ## Safety spine (constants, all phases)
 - Success grounded in WORLD-STATE, never human reaction: no facial /
   physiognomic channels — no ground truth exists to audit them, and
