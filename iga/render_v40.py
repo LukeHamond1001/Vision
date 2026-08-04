@@ -854,11 +854,13 @@ def requirements_card(out="results/video/act17_requirements.mp4",
            font=F_SMALL, fill=COL_DIM)
     reqs = [
         ("1  measurable channels", COL_STOCK,
-         "quantities readable as numbers — telemetry, counters, "
-         "meters, levels. if it has a gauge, it can be a channel."),
-        ("2  direction that means something", COL_STOCK,
-         "per channel: more is better, or a range is healthy — that "
-         "is what makes a want expressible as a held target."),
+         "quantities readable as numbers — direct from telemetry, or "
+         "extracted through a latent when buried in pixels (compress "
+         "what's noisy). if it has a gauge, it can be a channel."),
+        ("2  direction that means something — on ANY timescale", COL_STOCK,
+         "more is better, or a range is healthy. battery by the hour, "
+         "actuator wear by the month: the ledger pays a month-long "
+         "want as exactly as a minute-long one."),
         ("3  any learner underneath", COL_STOCK,
          "the layer only supplies reward; it ran unchanged over "
          "different learners across these experiments."),
