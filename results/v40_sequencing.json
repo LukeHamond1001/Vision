@@ -94,5 +94,40 @@
       }
     },
     "elapsed_s": 35657.90495657921
+  },
+  {
+    "arm": "native",
+    "seed": 1,
+    "steps": 3000000,
+    "episodes": 15094,
+    "survival": 199.0,
+    "achv_median": 10.0,
+    "achv_mean": 10.043927648578812,
+    "achv_table": {
+      "collect_sapling": 4489,
+      "collect_wood": 4942,
+      "make_wood_pickaxe": 4434,
+      "place_plant": 4468,
+      "place_table": 4795,
+      "collect_drink": 2877,
+      "defeat_zombie": 2093,
+      "eat_cow": 3096,
+      "make_wood_sword": 3929,
+      "wake_up": 4646,
+      "collect_coal": 1118,
+      "collect_stone": 3268,
+      "place_furnace": 1441,
+      "place_stone": 2988,
+      "make_stone_sword": 1100,
+      "defeat_skeleton": 233,
+      "make_stone_pickaxe": 575,
+      "collect_iron": 39
+    },
+    "drink": 0.6680005156406258,
+    "food": 0.7261135164868453,
+    "energy": 0.828857665780588,
+    "slept": 0.016696481812760882,
+    "machine": {},
+    "elapsed_s": 30749.90074276924
   }
 ]
