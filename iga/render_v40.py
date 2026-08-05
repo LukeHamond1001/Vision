@@ -793,6 +793,149 @@ def arch_card(out="results/video/act14_arch_card.mp4",
     print(f"[act14] wrote {out}", flush=True)
 
 
+def latent_card(out="results/video/act16_latent_card.mp4",
+                png="results/video/act16_latent_card.png",
+                hold_s: float = 8.0):
+    """Rendered fallback for the hand-drawn act16: pixels -> encoder ->
+    embedding space (points spread) -> readers. Hand-drawn stays the
+    preferred version; this exists so the edit never blocks."""
+    from PIL import Image, ImageDraw
+    W, HH = 1100, 480
+    img = Image.new("RGB", (W, HH), COL_BG)
+    d = ImageDraw.Draw(img)
+    d.text((24, 18), "LATENT SPACE — embed what's noisy, read what's "
+           "dense", font=F_HEAD, fill=COL_TEXT)
+    # pixel block: deterministic noisy grid
+    px, py, cell = 40, 120, 12
+    for i in range(10):
+        for j in range(10):
+            v = (i * 7 + j * 13 + (i * j) % 5) % 9
+            g = 40 + v * 18
+            col = (g, min(255, g + 25), g) if (i + j) % 3 else (g, g, g)
+            d.rectangle([px + j * cell, py + i * cell,
+                         px + j * cell + cell - 2,
+                         py + i * cell + cell - 2], fill=col)
+    d.text((px - 4, py + 128), "pixels — millions,", font=F_SMALL,
+           fill=COL_DIM)
+    d.text((px - 4, py + 146), "noisy", font=F_SMALL, fill=COL_DIM)
+    d.text((px + 128, py + 52), "→", font=F_HEAD, fill=COL_DIM)
+    # encoder box
+    d.rounded_rectangle([210, py + 30, 330, py + 90], radius=8,
+                        outline=COL_STOCK, width=2, fill=(22, 25, 33))
+    d.text((234, py + 50), "encoder", font=F_MAIN, fill=COL_STOCK)
+    d.text((340, py + 52), "→", font=F_HEAD, fill=COL_DIM)
+    # embedding field with evenly-spread points
+    d.rounded_rectangle([410, 70, 810, 350], radius=10,
+                        outline=COL_BAR_BG, width=2)
+    pts = [(0.10, 0.18), (0.34, 0.10), (0.62, 0.14), (0.88, 0.22),
+           (0.16, 0.44), (0.42, 0.36), (0.70, 0.40), (0.92, 0.52),
+           (0.08, 0.70), (0.30, 0.62), (0.56, 0.66), (0.80, 0.72),
+           (0.20, 0.90), (0.48, 0.84), (0.72, 0.92), (0.94, 0.86),
+           (0.52, 0.52), (0.26, 0.26), (0.66, 0.24), (0.38, 0.76)]
+    for k, (fx, fy) in enumerate(pts):
+        x = 410 + 14 + fx * (400 - 28)
+        y = 70 + 14 + fy * (280 - 28)
+        col = COL_ARRIVE if k == 16 else COL_STOCK
+        r = 5 if k == 16 else 3
+        d.ellipse([x - r, y - r, x + r, y + r], fill=col)
+    d.text((410, 356), "embedding space — points spread evenly "
+           "(SIGReg-style)", font=F_SMALL, fill=COL_DIM)
+    d.text((410, 374), "the frame is WHERE it lands", font=F_SMALL,
+           fill=COL_DIM)
+    d.text((820, 190), "→", font=F_HEAD, fill=COL_DIM)
+    # readers
+    for k, name in enumerate(("senses (drives)", "policy",
+                              "world model")):
+        yy = 110 + k * 70
+        d.rounded_rectangle([870, yy, 1070, yy + 48], radius=8,
+                            outline=COL_VITAL, width=2, fill=(22, 25, 33))
+        d.text((884, yy + 15), name, font=F_SMALL, fill=COL_VITAL)
+    d.text((870, 330), "read coordinates,", font=F_SMALL, fill=COL_DIM)
+    d.text((870, 348), "never raw pixels", font=F_SMALL, fill=COL_DIM)
+    d.line([(24, 408), (W - 24, 408)], fill=COL_BAR_BG, width=1)
+    d.text((40, 422), "information is carried by differences between "
+           "frames, not by the pixels · telemetry is already numbers — "
+           "read it directly", font=F_SMALL, fill=COL_TEXT)
+    arr = np.asarray(img)
+    Image.fromarray(arr).save(png)
+    wr = FFmpegWriter(out, fps=FPS)
+    for _ in range(int(hold_s * FPS)):
+        wr.append_data(arr)
+    wr.close()
+    print(f"[act16] wrote {out}", flush=True)
+
+
+def end_card(out="results/video/act20_end_card.mp4",
+             png="results/video/act20_end_card.png",
+             hold_s: float = 8.0):
+    """Close: project name + repo URL."""
+    from PIL import Image, ImageDraw
+    W, HH = 1100, 480
+    img = Image.new("RGB", (W, HH), COL_BG)
+    d = ImageDraw.Draw(img)
+
+    def center(y, text, font, fill):
+        w = d.textlength(text, font=font)
+        d.text(((W - w) / 2, y), text, font=font, fill=fill)
+
+    center(150, "iga — imagination-gated agent", F_HEAD, COL_TEXT)
+    center(210, "github.com/LukeHamond1001/iga-scale", F_MAIN, COL_STOCK)
+    center(268, "spec · proofs · six experiment cards · the wrapper",
+           F_SMALL, COL_DIM)
+    center(296, "smoke tests run free · the whole study ~$60", F_SMALL,
+           COL_DIM)
+    center(348, "imagine before wanting; measure before paying",
+           F_MAIN, COL_ARRIVE)
+    arr = np.asarray(img)
+    Image.fromarray(arr).save(png)
+    wr = FFmpegWriter(out, fps=FPS)
+    for _ in range(int(hold_s * FPS)):
+        wr.append_data(arr)
+    wr.close()
+    print(f"[act20] wrote {out}", flush=True)
+
+
+def thumb_bg(png="results/video/thumb_bg.png"):
+    """Thumbnail background 1920x1080: staircase polyline + orange
+    interrupt, right side clear for the title text (added in the
+    editor)."""
+    from PIL import Image, ImageDraw
+    W, HH = 1920, 1080
+    img = Image.new("RGB", (W, HH), (10, 12, 18))
+    d = ImageDraw.Draw(img)
+    for gx in range(0, W, 64):
+        for gy in range(0, HH, 64):
+            d.ellipse([gx - 1, gy - 1, gx + 1, gy + 1],
+                      fill=(26, 30, 40))
+    steps = [(100, 900), (280, 900), (280, 780), (470, 780),
+             (470, 650), (670, 650), (670, 520), (880, 520),
+             (880, 390), (1080, 390), (1080, 260), (1220, 260)]
+    d.line(steps, fill=(24, 70, 90), width=13)
+    d.line(steps, fill=COL_STOCK, width=5)
+    ox, oy = 670, 585
+    d.ellipse([ox - 22, oy - 22, ox + 22, oy + 22], fill=(90, 60, 30))
+    d.ellipse([ox - 13, oy - 13, ox + 13, oy + 13], fill=COL_VITAL)
+    img.save(png)
+    print(f"[thumb] wrote {png}", flush=True)
+
+
+def title_bg(png="results/video/title_bg.png"):
+    """Title-card background 1920x1080: unevenly nested timing rings,
+    one faint cyan arc. Very quiet — the opening line sits on top."""
+    from PIL import Image, ImageDraw
+    W, HH = 1920, 1080
+    img = Image.new("RGB", (W, HH), (10, 12, 18))
+    d = ImageDraw.Draw(img)
+    cx, cy = 960, 540
+    for r in (90, 150, 260, 430, 700, 1050):
+        d.ellipse([cx - r, cy - r, cx + r, cy + r],
+                  outline=(24, 28, 38), width=2)
+    d.arc([cx - 430, cy - 430, cx + 430, cy + 430], start=300, end=345,
+          fill=(60, 140, 170), width=4)
+    img.save(png)
+    print(f"[title] wrote {png}", flush=True)
+
+
 def clocks_card(out="results/video/act18_clocks_card.mp4",
                 png="results/video/act18_clocks_card.png",
                 hold_s: float = 8.0):
