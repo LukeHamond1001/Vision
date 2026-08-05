@@ -936,6 +936,112 @@ def title_bg(png="results/video/title_bg.png"):
     print(f"[title] wrote {png}", flush=True)
 
 
+BOARDS = {
+    "b1_title": [
+        ("iga — a drive layer for RL agents", F_HEAD, COL_TEXT),
+        ("", None, None),
+        ("fixed before training · readable · untouchable", F_MAIN,
+         COL_STOCK),
+        ("goals on nested timescales, one exact accounting", F_MAIN,
+         COL_DIM)],
+    "b2_world_models": [
+        ("WORLD MODELS", F_HEAD, COL_TEXT),
+        ("", None, None),
+        ("next-token prediction — on experience instead of text",
+         F_MAIN, COL_TEXT),
+        ("text pretraining: observational — learns ABOUT causes",
+         F_MAIN, COL_DIM),
+        ("world-model data: interventional — state, action, outcome",
+         F_MAIN, COL_STOCK)],
+    "b3_dynamics": [
+        ("WHAT GETS FORCED INTO THE WEIGHTS", F_HEAD, COL_TEXT),
+        ("", None, None),
+        ("objects · contact · consequence — dynamics", F_MAIN,
+         COL_TEXT),
+        ("rollouts: step the model forward, preview outcomes", F_MAIN,
+         COL_DIM),
+        ("— which is imagination, mechanically", F_MAIN, COL_ARRIVE)],
+    "b4_proposer": [
+        ("THE PROPOSER — two fixed rules", F_HEAD, COL_TEXT),
+        ("", None, None),
+        ("restore what's below its healthy range", F_MAIN, COL_VITAL),
+        ("extend any counter one step — once per level per life",
+         F_MAIN, COL_STOCK),
+        ("", None, None),
+        ("imagination-gated: nothing is wanted until its imagined",
+         F_MAIN, COL_TEXT),
+        ("arrival is scored and cleared — it ranks and vetoes,",
+         F_MAIN, COL_TEXT),
+        ("never pays", F_MAIN, COL_ARRIVE)],
+    "b5_audit": [
+        ("THE AUDIT", F_HEAD, COL_TEXT),
+        ("", None, None),
+        ("gates registered before runs · amended only pre-run,",
+         F_MAIN, COL_TEXT),
+        ("with disclosure", F_MAIN, COL_TEXT),
+        ("four of six cards missed — printed as failed", F_MAIN,
+         COL_VITAL),
+        ("every statistic recomputes:  python -m iga.verdicts",
+         F_MAIN, COL_ARRIVE)],
+    "b6_llm_bet": [
+        ("BET ONE — THE STANDARD LLM", F_HEAD, COL_TEXT),
+        ("", None, None),
+        ("senses = frozen linear probes on the residual stream",
+         F_MAIN, COL_STOCK),
+        ("drive on the agentic phase · turn / task / session bands",
+         F_MAIN, COL_TEXT),
+        ("a judge that cannot be trained", F_MAIN, COL_ARRIVE),
+        ("cannot be gamed by training", F_MAIN, COL_ARRIVE)],
+    "b7_three_channels": [
+        ("PREMAP EXACTLY THREE", F_HEAD, COL_TEXT),
+        ("", None, None),
+        ("charge · damage · clicker", F_MAIN, COL_VITAL),
+        ("already a number · direction certain forever ·", F_MAIN,
+         COL_TEXT),
+        ("out of the policy's reach", F_MAIN, COL_TEXT),
+        ("everything else: derived, minted, or frontier", F_MAIN,
+         COL_DIM)],
+    "b8_flinch": [
+        ("THE FLINCH — benched by its own audit", F_HEAD, COL_TEXT),
+        ("", None, None),
+        ("the same imagination gate, dropped from goals to actions",
+         F_MAIN, COL_TEXT),
+        ("F1 danger ranking 0.702 — PASS", F_MAIN, COL_ARRIVE),
+        ("F2 action discrimination at chance — FAIL, no veto",
+         F_MAIN, COL_VITAL),
+        ("the authority audit ships in the repo", F_MAIN, COL_DIM)],
+    "b9_two_bets": [
+        ("TWO BETS", F_HEAD, COL_TEXT),
+        ("", None, None),
+        ("the experiments you just saw are the evidence that exists",
+         F_MAIN, COL_TEXT),
+        ("mechanism and hope, kept separate", F_MAIN, COL_DIM)],
+}
+
+
+def board_cards(hold_s: float = 8.0):
+    """Canvas boards for the former face-only cuts — one fixed layout,
+    the screen is never just the speaker at a different size."""
+    from PIL import Image, ImageDraw
+    for name, lines in BOARDS.items():
+        W, HH = 1100, 480
+        img = Image.new("RGB", (W, HH), COL_BG)
+        d = ImageDraw.Draw(img)
+        n_lines = sum(1 for _ in lines)
+        y = max(60, (HH - n_lines * 34) // 2 - 20)
+        for text, font, col in lines:
+            if font is not None:
+                d.text((60, y), text, font=font, fill=col)
+            y += 40 if font is F_HEAD else 34
+        arr = np.asarray(img)
+        Image.fromarray(arr).save(f"results/video/{name}.png")
+        wr = FFmpegWriter(f"results/video/{name}.mp4", fps=FPS)
+        for _ in range(int(hold_s * FPS)):
+            wr.append_data(arr)
+        wr.close()
+        print(f"[boards] wrote {name}", flush=True)
+
+
 def clocks_card(out="results/video/act18_clocks_card.mp4",
                 png="results/video/act18_clocks_card.png",
                 hold_s: float = 8.0):
