@@ -981,6 +981,9 @@ BOARDS = {
         ("with disclosure", F_MAIN, COL_TEXT),
         ("four of six cards missed — printed as failed", F_MAIN,
          COL_VITAL),
+        ("passed: v0.9 routing · v3.0 hack", F_SMALL, COL_ARRIVE),
+        ("missed: v1.2 steering · v2.1 robot · v1.3 edit · v4.0 ladder",
+         F_SMALL, COL_VITAL),
         ("every statistic recomputes:  python -m iga.verdicts",
          F_MAIN, COL_ARRIVE)],
     "b6_llm_bet": [
