@@ -10,6 +10,7 @@ Everything replays LOCALLY from results/ artifacts; no pods.
 
 from __future__ import annotations
 
+import math
 import sys
 
 import numpy as np
@@ -790,6 +791,102 @@ def arch_card(out="results/video/act14_arch_card.mp4",
         wr.append_data(arr)
     wr.close()
     print(f"[act14] wrote {out}", flush=True)
+
+
+def clocks_card(out="results/video/act18_clocks_card.mp4",
+                png="results/video/act18_clocks_card.png",
+                hold_s: float = 8.0):
+    """Receipts under the hierarchy: v0.9 routing gates + v2.0 tau-ladder."""
+    from PIL import Image, ImageDraw
+    W, HH = 1100, 480
+    img = Image.new("RGB", (W, HH), COL_BG)
+    d = ImageDraw.Draw(img)
+    d.text((24, 18), "THE CLOCKS ARE MEASURED — bands aren't a metaphor",
+           font=F_HEAD, fill=COL_TEXT)
+    d.text((24, 52), "v0.9 — temporal routing from pixels (held-out corr; "
+           "gates passed, one amended pre-run, disclosed)", font=F_SMALL,
+           fill=COL_DIM)
+    y = 92
+    for name, v, col in [("slow band", 0.93, COL_STOCK),
+                         ("vitals", 0.955, COL_VITAL),
+                         ("energy", 0.71, COL_VITAL)]:
+        d.text((40, y), f"{name:10s}", font=F_MAIN, fill=col)
+        d.rectangle([200, y + 3, 200 + 700, y + 15], fill=COL_BAR_BG)
+        d.rectangle([200, y + 3, 200 + int(700 * v), y + 15], fill=col)
+        lab = "0.94–0.97" if name == "vitals" else f"{v:.2f}"
+        d.text((920, y), lab, font=F_MAIN, fill=col)
+        y += 30
+    y += 16
+    d.text((24, y), "v2.0 — measured clocks on robot telemetry "
+           "(τ, steps; log scale)", font=F_SMALL, fill=COL_DIM)
+    y += 36
+    taus = [("gait", 4), ("battery", 54), ("temp", 92),
+            ("wear", 28856)]
+    lmax = math.log10(30000)
+    for name, tau in taus:
+        d.text((40, y), f"{name:12s}", font=F_MAIN, fill=COL_TEXT)
+        d.rectangle([200, y + 3, 200 + 700, y + 15], fill=COL_BAR_BG)
+        frac = math.log10(max(tau, 1)) / lmax
+        d.rectangle([200, y + 3, 200 + max(6, int(700 * frac)), y + 15],
+                    fill=COL_ARRIVE)
+        d.text((920, y), f"{tau:,}", font=F_MAIN, fill=COL_ARRIVE)
+        y += 30
+    y += 18
+    d.line([(24, y), (W - 24, y)], fill=COL_BAR_BG, width=1)
+    d.text((40, y + 12), "four orders of magnitude in one machine — "
+           "measured, then assigned: one band per distinct clock",
+           font=F_MAIN, fill=COL_TEXT)
+    arr = np.asarray(img)
+    Image.fromarray(arr).save(png)
+    wr = FFmpegWriter(out, fps=FPS)
+    for _ in range(int(hold_s * FPS)):
+        wr.append_data(arr)
+    wr.close()
+    print(f"[act18] wrote {out}", flush=True)
+
+
+def band_ladder_card(out="results/video/act19_band_ladder.mp4",
+                     png="results/video/act19_band_ladder.png",
+                     hold_s: float = 8.0):
+    """The band ladder: one theorem at every length (design card)."""
+    from PIL import Image, ImageDraw
+    W, HH = 1100, 480
+    img = Image.new("RGB", (W, HH), COL_BG)
+    d = ImageDraw.Draw(img)
+    d.text((24, 18), "THE BAND LADDER — one theorem at every length",
+           font=F_HEAD, fill=COL_TEXT)
+    rows = [("reflex", "milliseconds", 0.16),
+            ("action", "seconds", 0.32),
+            ("task", "minutes", 0.50),
+            ("battery / thermal", "hours", 0.70),
+            ("wear", "months", 0.94)]
+    y = 70
+    for name, clock, frac in rows:
+        d.text((40, y), f"{name:18s}", font=F_MAIN, fill=COL_TEXT)
+        d.rectangle([260, y + 3, 260 + 640, y + 15], fill=COL_BAR_BG)
+        d.rectangle([260, y + 3, 260 + int(640 * frac), y + 15],
+                    fill=COL_STOCK)
+        d.text((920, y), clock, font=F_SMALL, fill=COL_DIM)
+        y += 34
+    y += 10
+    d.line([(24, y), (W - 24, y)], fill=COL_BAR_BG, width=1)
+    y += 14
+    for ln, col in [
+        ("band count is read off the world, not tuned: one band per "
+         "distinct clock", COL_TEXT),
+        ("derived totals — collected, spent, worn — live one band above "
+         "the flow they integrate", COL_TEXT),
+        ("in the fleet: two bands live, settled exactly; any length by "
+         "the algebra — hold length is free", COL_ARRIVE)]:
+        d.text((40, y), ln, font=F_SMALL, fill=col)
+        y += 24
+    arr = np.asarray(img)
+    Image.fromarray(arr).save(png)
+    wr = FFmpegWriter(out, fps=FPS)
+    for _ in range(int(hold_s * FPS)):
+        wr.append_data(arr)
+    wr.close()
+    print(f"[act19] wrote {out}", flush=True)
 
 
 def vla_bridge_card(out="results/video/act15_vla_bridge.mp4",
