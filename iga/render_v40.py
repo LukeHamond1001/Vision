@@ -989,9 +989,11 @@ BOARDS = {
     "b6_llm_bet": [
         ("BET ONE — THE STANDARD LLM", F_HEAD, COL_TEXT),
         ("", None, None),
-        ("senses = frozen linear probes on the residual stream",
+        ("senses = frozen probes on the model's activations",
          F_MAIN, COL_STOCK),
-        ("drive on the agentic phase · turn / task / session bands",
+        ("goals held as registers, outside the context window",
+         F_MAIN, COL_TEXT),
+        ("turn / task / session bands · paid by measured progress",
          F_MAIN, COL_TEXT),
         ("a judge that cannot be trained", F_MAIN, COL_ARRIVE),
         ("cannot be gamed by training", F_MAIN, COL_ARRIVE)],
