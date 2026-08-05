@@ -15,6 +15,9 @@ minute-long one), a potential-based ledger (telescoping ⇒ non-farmable,
 audited to exactness over 1,200+ holds on both bands), and a prospective
 proposer (maintain what has a healthy range; seek the frontier of
 anything measurable, once each — run per band, slow register first). The
+name is the mechanism: **imagination-gated** — nothing becomes a want
+until its imagined arrival state is scored and cleared, and imagination
+ranks and vetoes but never pays; only measured arrival does. The
 policy is ordinary RL; only what it *wants* is architecture.
 
 **Demo reel:** `results/video/` — start with `act6_trace_overlay.mp4`
