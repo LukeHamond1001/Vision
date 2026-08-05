@@ -11,9 +11,11 @@ Methods (stated so nobody has to guess):
     wherever the CI is stated. The CIs are effect-size intervals, not
     significance claims.
 
-Sources: results/v40_sequencing.json (the v4.0 fleet, 13 rows) and
+Sources: results/v40_sequencing.json (the v4.0 fleet, 13 rows),
 results/v12_fleet.json (the v1.2 pod triples, recovered to main from
-the pod branches)."""
+the pod branches), and the per-card artifact JSONs (v30_hacking,
+v09_routing, v20_phase1, v21_battery, v13_goalswap) whose headline
+numbers are reprinted verbatim at the end."""
 
 from __future__ import annotations
 
@@ -86,6 +88,62 @@ def main():
     print(f"registered v1.2 gate (wired/zero IQM ratio >= 1.25): mean "
           f"ratio {mean_ratio:.3f} -> "
           f"{'PASS' if mean_ratio >= 1.25 else 'FAIL'}", flush=True)
+
+    fp = [r for r in fleet if "drink" in r.get("wired", {})]
+    if fp:
+        w, z = fp[0]["wired"], fp[0]["zero"]
+        print(f"mechanism fingerprint (pod '{fp[0]['pod']}' per-channel "
+              f"logs): drink {w['drink']:.2f} vs {z['drink']:.2f}; "
+              f"slept/life {w['slept']:.2f} vs {z['slept']:.2f}")
+
+    print("\n== committed-artifact headlines (the other cards) ==")
+
+    def j(name):
+        f = RESULTS / name
+        return json.load(open(f)) if f.exists() else None
+
+    v30 = j("v30_hacking.json")
+    if v30:
+        eng = v30["engineered"]
+        print(f"v3.0 engineered reward: score "
+              f"{min(eng['eng_last3rd']):.0f}-{max(eng['eng_last3rd']):.0f}"
+              f", laps {sorted(eng['laps_last3rd'])} -> HACKED, 3/3 at "
+              f"zero laps")
+        reg = sorted(v30["register"]["laps_last3rd"])
+        mf = sorted(v30["register_meanfill"]["laps_last3rd"])
+        print(f"v3.0 register arm laps {['%.2f' % x for x in reg]} "
+              f"(pre-registered); mean-fill readout "
+              f"{['%.2f' % x for x in mf]} (robustness round, labeled "
+              f"post-hoc)")
+    v09 = j("v09_routing.json")
+    if v09:
+        vit = [v09[k] for k in ("mid_food", "mid_drink", "mid_health")]
+        print(f"v0.9 routing (held-out corr): slow "
+              f"{v09['slow_daylight']:.2f}, vitals {min(vit):.2f}-"
+              f"{max(vit):.2f}, energy {v09['mid_energy']:.2f} (energy "
+              f"gate amended pre-run, ledgered)")
+    v20 = j("v20_phase1.json")
+    if v20:
+        t = v20["taus"]
+        print(f"v2.0 tau-ladder (steps): gait {t['gait']:.0f} | temp "
+              f"{t['temp']:.0f} | battery {t['battery']:.0f} | wear "
+              f"{t['wear']:,.0f} | gates {v20['gates']}")
+    v21 = j("v21_battery.json")
+    if v21:
+        arms = {}
+        for r in v21:
+            arms.setdefault(r["arm"], []).append(r["brownout"])
+        line = " vs ".join(f"{a} {sum(v) / len(v):.2f}"
+                           for a, v in sorted(arms.items()))
+        print(f"v2.1 brownout dissociation (mean by arm): {line}")
+    v13 = j("v13_goalswap.json")
+    if v13:
+        parts = ", ".join(f"{r['arm']}: slept/life "
+                          f"{r['slept_last3rd']:.2f}, drink "
+                          f"{r['drink_last3rd']:.2f}" for r in v13)
+        print(f"v1.3 edited arms ({parts}); baseline 4.3 slept/life is "
+              f"the v1.2-lineage policy, logged in "
+              f"results/INTERPRETATION.md")
 
     print("\n(read the CIs as effect-size intervals: at n=5 the exact "
           "sign test cannot reach p<0.05 even at 5/5)")

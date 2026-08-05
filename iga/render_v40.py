@@ -640,9 +640,9 @@ def goalswap_card(out="results/video/act10b_goalswap_card.mp4",
     d.text((40, 84), "mask = [health: 1, food: 1, drink: 1, "
            "energy: 0]   # the whole edit", font=F_MAIN, fill=COL_STOCK)
     rows = [
-        ("sleeping per night-cycle", "4.3", "1.3 – 2.1",
+        ("sleeping per life", "4.3", "1.3 – 2.1",
          "the deleted desire's share collapses"),
-        ("drink uptime", "0.88", "0.91 – 0.92",
+        ("drink uptime", "0.89", "0.91 – 0.92",
          "untouched wants: untouched (the edit is surgical)"),
         ("residual sleep", "—", "health-motivated",
          "sleep was paid by TWO registers; the edit dissected it"),
@@ -715,8 +715,8 @@ def math_card(out="results/video/act13_math_card.mp4",
     d.line([(24, y), (W - 24, y)], fill=COL_BAR_BG, width=1)
     y += 14
     d.text((40, y), "verified against the implementation: 1,244 "
-           "goal-holds across the experiments, every closed hold paid "
-           "exactly", font=F_SMALL, fill=COL_ARRIVE)
+           "goal-holds on the pre-flight audit harness, every closed "
+           "hold paid exactly", font=F_SMALL, fill=COL_ARRIVE)
     y += 20
     d.text((40, y), "φ(commit) − φ(close) to float precision; zero "
            "phantom payments. audit() ships in the repo — run it on "
@@ -1069,7 +1069,7 @@ def clocks_card(out="results/video/act18_clocks_card.mp4",
     d.text((24, y), "v2.0 — measured clocks on robot telemetry "
            "(τ, steps; log scale)", font=F_SMALL, fill=COL_DIM)
     y += 36
-    taus = [("gait", 4), ("battery", 54), ("temp", 92),
+    taus = [("gait", 4), ("temp", 54), ("battery", 92),
             ("wear", 28856)]
     lmax = math.log10(30000)
     for name, tau in taus:

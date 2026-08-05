@@ -36,7 +36,7 @@ the failures.
 | # | Claim under test | World | Result (honest) | Reproduce | Cost |
 |---|---|---|---|---|---|
 | v0.9 | temporal routing from pixels, closed-form | Crafter | all gates: slow 0.93, vitals 0.94–0.97, energy 0.71 (amended pre-run, ledgered) | `python -m iga.experiments_v09 full` | ~$0.25 |
-| v1.2 | wired drives steer behavior (no task reward) | Crafter | native ≫ wired > zero (means 219/175/170); **registered ratio gate (≥1.25) FAIL at 1.03**; paired wired−zero +4.8, t-CI95 [+0.6, +9.0], 4 of 5 pods positive (sign p=0.375); mechanism fingerprint clean (drink 0.89 vs 0.56, sleep 4.3×) | `python -m iga.experiments_v12 full <seed>` | ~$23 (5 seeds) |
+| v1.2 | wired drives steer behavior (no task reward) | Crafter | native ≫ wired > zero (means 219/175/170); **registered ratio gate (≥1.25) FAIL at 1.03**; paired wired−zero +4.8, t-CI95 [+0.6, +9.0], 4 of 5 pods positive (sign p=0.375); mechanism fingerprint clean (pilot logs: drink 0.89 vs 0.56, sleep 3.7 vs 0.5 per life) | `python -m iga.experiments_v12 full <seed>` | ~$23 (5 seeds) |
 | v3.0 | the register cannot be paid to cheat | BoatRace | engineered reward HACKED (score 82–97, **0.00 laps**, 3/3). Pre-registered register arm: 0.00/1.08/1.96 laps (G-immune passed at 1.01 vs a 1.0 bar — thin, one seed's readout failed and is disclosed); post-hoc mean-fill robustness round, labeled as such: 6.2–7.1 laps 3/3 | `python -m iga.experiments_v30 full` | $0 (local) |
 | v2.0/2.1 | drives transfer to a robot's telemetry | BatteryAnt | τ-ladder 4/54/92/28,856; conservation dissociation 10/10 (brownout 0.05 vs 0.31); **uptime/parity gates FAIL** — docking is an exploration valley under every reward tried | `python -m iga.experiments_v20` + `_v21 full` | $0 (local) |
 | v1.3 | wants are editable (delete one desire) | Crafter | drink held 0.92 (surgical); sleep 4.3→1.3–2.1 (**strict <1.0 gate FAIL**); the edit *decomposed* sleep into energy-share + health-share | `python -m iga.experiments_v13 full` | ~$7 |
@@ -45,9 +45,10 @@ the failures.
 Renders: `python -m iga.render_v40 trace|creatures|card|cards2` ($0,
 replays the committed policies).
 
-Every headline statistic recomputes from committed artifacts with
-exact small-n methods (paired t-CI df=4 + exact sign test):
-`python -m iga.verdicts`. Fast clone (the `results-*` branches are the
+Every card's headline statistics reprint from committed artifacts —
+`python -m iga.verdicts` (paired rows recomputed with exact small-n
+methods: t-CI df=4 + exact sign test; the other cards' numbers are
+read back verbatim from their result JSONs). Fast clone (the `results-*` branches are the
 raw pod ledger): `git clone --depth 1 --single-branch <url>`.
 
 ## Try it on YOUR environment (this afternoon)
@@ -71,7 +72,11 @@ print(env.trace[-5:])   # the live goal agenda, as text
 env.audit()             # telescoping-exactness check on YOUR rollouts
 ```
 
-Demo on a simulated robot (calibrates, runs, audits — ~30s, $0):
+(Auto-calibration samples random actions via `env.action_space.sample()`;
+pass `sample_action=` if your env has no action space, or `stds=` to
+skip calibration entirely.)
+
+Demo on a simulated robot (calibrates, runs, audits — seconds, $0):
 
 ```bash
 python -m iga.wrapper

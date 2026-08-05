@@ -20,6 +20,10 @@ Arms (same PPO core, same worlds — ppo_pixel with v4.0 hooks):
 G-seq (pre-registered): full-arm distinct achievements per episode
 (median of the last third) >= 3; no-proposer < 1.5; native reported,
 not gated. The proposal trace is the paper figure.
+(PRE-RUN amendment 6 — docs/SEQUENCING.md, ledgered: the registered
+gate was re-based to the PAIRED form, full − no-proposer achv-median
+>= +1.0. This docstring keeps the original wording for history; the
+verdict is computed against the amended form: python -m iga.verdicts.)
 
 All drive-layer components are FROZEN before RL: instrument heads
 (results/v40_instrument.pt, pre-flight B), forward model

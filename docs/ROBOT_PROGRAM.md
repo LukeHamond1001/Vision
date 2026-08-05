@@ -37,7 +37,11 @@ discipline; pre-flight F audit)*
 *(receipts: v2.1 conservation; v4.0 fleet; B-harness zero-phantom)*
 
 - Maintain lane live (battery, thermal, contact force) with leashes
-  and caps from day one; flinch armed iff F2 passed.
+  and caps from day one; flinch armed iff F2 passed. (Stated as the
+  premapped VALUE roster: three directions — charge, damage, clicker.
+  Thermal and contact force are damage's instruments; the clicker is
+  the voluntary human channel, ratifying goals between lives, never
+  paying in-stream. Everything else is derived, minted, or frontier.)
 - **Teaching loop v1 — the core product mechanic:**
   1. human demonstrates (1–2 teleop episodes) → BC-initializes the
      skill AND mints a register target from the demo's measured

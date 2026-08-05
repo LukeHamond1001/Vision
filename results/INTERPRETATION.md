@@ -307,6 +307,10 @@ construction made visible, on the literature's own example.
 ## v1.2 VERDICT — 2026-08-01: the dissociation table. Reward chooses
 ## the competence; the register builds a reproducible homeostat.
 
+(Exact recompute of the paired statistics: python -m iga.verdicts —
+diff CI [+0.60, +8.97], native mean 219. The prose below keeps this
+entry's original roundings from the day it was written.)
+
 Five complete seeds, 3M PPO steps per arm, arms paired on identical
 worlds:
 
