@@ -64,7 +64,8 @@ def process_chunk(model, drive, conveyor, T, device, opt=None):
 
 
 def train(d=64, lanes=4, T=256, steps=40, seed=0, device="cpu",
-          ckpt=None, log_every=10, data=None, talk="dense", widths=None):
+          ckpt=None, log_every=10, data=None, talk="dense", widths=None,
+          compile_model=False):
     drive = Drive(n_lanes=lanes, seed=seed)
     if data:  # prepared real-data shard (A8): UltraChat conveyor
         from .lm_data_ultrachat import UltraConveyor, load_tokenizer
@@ -78,6 +79,11 @@ def train(d=64, lanes=4, T=256, steps=40, seed=0, device="cpu",
         conveyor = Conveyor(vocab, n_lanes=lanes, seed=splits(seed)["train"],
                             bias_fn=drive.bin_weights)
     model = BandLM(vocab_size, d=d, talk=talk, widths=widths).to(device)
+    if compile_model:
+        try:
+            model = torch.compile(model)
+        except Exception as e:
+            print(f"torch.compile unavailable ({e}); running eager")
     model._st = model.init_state(lanes, device)
     opt = torch.optim.AdamW(model.parameters(), lr=3e-4)
     t0 = time.time()

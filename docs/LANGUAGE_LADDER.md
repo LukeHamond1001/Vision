@@ -326,6 +326,23 @@ scale, not blocking this one. Target cost: $15–40 total.
   runs. Pod bootstrap committed (`scripts/pod_debug.sh`): shard prep
   (train + disjoint calibration shard), the A/B, real-data
   calibration — one paste on the RTX 2000. Suite 49/49.
+- **A11** (2026-08-06, pre-run): the three-size ladder collapses to
+  ONE registered run. One pod session decides everything — the
+  talk x shape A/B, a lanes/compile throughput sweep on the winner,
+  and real-data calibration — then every choice (talk, shape, lanes,
+  compile, model size, constants) is frozen here, and a single
+  registered run executes at the largest size that fits ~12 hours at
+  the MEASURED throughput. Cost, printed: with one size and one seed
+  there is no replication axis at all — G-trend is dropped, and this
+  round is a pure n=1 existence demonstration (G-context, G-flat,
+  G-lesion at the single size), with the lesion as the only control.
+  Incident ledger from the first pod attempt, also on the record:
+  a roster-exhaustion infinite loop in the instrument generator
+  (64 name-object combos, never freed; froze the pod and the local
+  build at ~1,000 conversations — fixed: pairs free on ask, deep-run
+  regression test added) and HF unauthenticated streaming throttle
+  (fixed: bulk-download the raw file; iter_convos prefers local).
+  ~$0.80 spent on the lessons.
 
 ## Status
 

@@ -72,6 +72,26 @@ def main():
     print(f"\nsuggested winner (ce - 10*b0 recall): "
           f"talk={best[0]} shape={best[1]}")
 
+    # throughput dialing on the winner: lanes sweep + compile probe.
+    # tok/s here sizes the ONE registered run (A11).
+    import time as _t
+    from .lm_train import process_chunk
+    print("\n== throughput sweep (winner cell) ==")
+    for lanes, comp in ((8, False), (32, False), (128, False), (128, True)):
+        try:
+            t0 = _t.time()
+            train(d=best[2], lanes=lanes, T=a.chunk, steps=12, seed=1,
+                  device=a.device, log_every=999, data=a.data,
+                  talk=best[0],
+                  widths=shape_widths(best[2], best[1]),
+                  compile_model=comp)
+            dt = _t.time() - t0
+            toks = lanes * a.chunk * 12
+            print(f"  lanes={lanes:4d} compile={comp}  "
+                  f"{toks/dt:,.0f} tok/s (incl. warmup)")
+        except Exception as e:
+            print(f"  lanes={lanes:4d} compile={comp}  FAILED: {e}")
+
 
 if __name__ == "__main__":
     main()
