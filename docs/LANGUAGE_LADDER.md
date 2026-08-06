@@ -317,6 +317,15 @@ scale, not blocking this one. Target cost: $15–40 total.
   hand-set imagination veto would have trusted an ignorant band.
   Registered-run precondition: re-run calibration on the real-data
   calibration shard and freeze. Suite 48/48.
+- **A10** (2026-08-05, assembled pre-run): width shaping — per-band
+  state widths (`shape_widths`: uniform | slowheavy, where slow bands
+  get 1.5-2x room; they carry the most compressed meaning). The debug
+  A/B (`iga/lm_ab.py`) covers talk x shape at matched params (base
+  width searched per cell, ~3% tolerance) and reports CE + short-gap
+  recall + throughput; winners frozen in this card before registered
+  runs. Pod bootstrap committed (`scripts/pod_debug.sh`): shard prep
+  (train + disjoint calibration shard), the A/B, real-data
+  calibration — one paste on the RTX 2000. Suite 49/49.
 
 ## Status
 

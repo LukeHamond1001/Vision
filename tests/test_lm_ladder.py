@@ -115,6 +115,27 @@ class TestBandLaws(unittest.TestCase):
         m.lesioned = set()
 
 
+class TestWidthShaping(unittest.TestCase):
+    def test_slowheavy_forward_backward_and_shapes(self):
+        from iga.lm_bands import shape_widths
+        v = Vocab()
+        widths = shape_widths(32, "slowheavy")
+        m = BandLM(len(v), d=32, widths=widths)
+        self.assertEqual([h.shape[1] for h in
+                          m.init_state(2, "cpu")["h"]], widths)
+        lane = Lane(v, random.Random(1))
+        toks, tgts, _ = lane.take(600)
+        x = torch.tensor([toks[:300], toks[300:600]])
+        st = m.init_state(2, "cpu")
+        logits, st, _ = m(x, st, None)
+        loss = torch.nn.functional.cross_entropy(
+            logits.reshape(-1, len(v)),
+            torch.tensor([tgts[:300], tgts[300:600]]).reshape(-1))
+        loss.backward()
+        self.assertGreater(m.n_params(),
+                           BandLM(len(v), d=32).n_params())
+
+
 class TestCalibration(unittest.TestCase):
     def test_calibrate_produces_dataset_constants(self):
         from iga.lm_calibrate import run

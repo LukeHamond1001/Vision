@@ -2,17 +2,23 @@
 
 Band k ticks every CLOCKS[k] tokens (~8x ladder). Band 1 ticks per
 token over the embedding; band k>=2 consumes the mean of band k-1's
-states over its window, conditioned top-down by band k+1's current
-state. The LM head reads the concatenation of all band states — the
-only route to the long range is band state, which is the point.
+states over its window (projected to its own width), conditioned
+top-down by band k+1's current state. The LM head reads the
+concatenation of all band states — the only route to the long range
+is band state, which is the point.
 
 Per-band predictors P_k (k>=2) predict the NEXT window-mean of band
-k-1 at each tick: the v0.5-v0.9 recipe transposed. They are trained
-(fidelity loss), serve as the drive layer's fidelity channels, and are
-the forward model the imagination gate scores with.
+k-1 at each tick: trained (fidelity loss), the drive layer's fidelity
+channels, and the forward model the imagination gate scores with.
 
-Scene masking (conveyor law A1): at a scene start, fast bands 1-4 are
-zeroed for that lane; bands 5-6 persist. Lesion: zeroed bands at eval.
+Talk modes (A9): "dense" projects every band's held state into band
+1's input at EVERY token — reads only; write clocks untouched.
+"tick" is the original chain (band 1 hears band 2 only).
+
+Width shaping (A10): widths may differ per band. "slowheavy" gives
+the slow bands more room — they carry the most compressed meaning.
+The debug tier A/Bs talk x widths at matched params; winners are
+frozen before registered runs.
 """
 
 import torch
@@ -20,37 +26,50 @@ import torch.nn as nn
 
 CLOCKS = [1, 8, 64, 512, 4096, 32768]
 N_BANDS = len(CLOCKS)
-FAST_BANDS = (0, 1, 2, 3)  # masked at scene starts; 5th/6th persist
+FAST_BANDS = (0, 1, 2, 3)
+
+
+def shape_widths(d, shape="uniform"):
+    if shape == "uniform":
+        return [d] * N_BANDS
+    if shape == "slowheavy":
+        return [d, d, d, int(1.5 * d), 2 * d, 2 * d]
+    raise ValueError(shape)
 
 
 class BandLM(nn.Module):
-    def __init__(self, vocab_size, d=128, talk="dense"):
-        """talk='dense': every band's held state is projected into band
-        1's input at EVERY token — the full council speaks into each
-        word. Write clocks are untouched (reads don't overwrite; the
-        rare write remains the memory mechanism). talk='tick': the
-        original chain — band 1 hears band 2 only. The debug tier A/Bs
-        the two; the winner is frozen before registered runs (A9)."""
+    def __init__(self, vocab_size, d=128, talk="dense", widths=None):
         super().__init__()
-        self.d = d
+        widths = widths or shape_widths(d)
+        self.widths = widths
+        self.d = widths[0]
         self.vocab_size = vocab_size
         self.talk_mode = talk
-        self.embed = nn.Embedding(vocab_size, d)
-        self.cells = nn.ModuleList([nn.GRUCell(d, d) for _ in range(N_BANDS)])
+        self.embed = nn.Embedding(vocab_size, widths[0])
+        self.cells = nn.ModuleList(
+            [nn.GRUCell(widths[k], widths[k]) for k in range(N_BANDS)])
+        # in_proj[k]: band k-1's window mean -> band k's input space
+        self.in_proj = nn.ModuleList(
+            [nn.Identity()] + [nn.Linear(widths[k - 1], widths[k])
+                               for k in range(1, N_BANDS)])
         self.topdown = nn.ModuleList(
-            [nn.Linear(d, d, bias=False) for _ in range(N_BANDS - 1)])
-        if talk == "dense":
-            self.talk = nn.Linear(N_BANDS * d, d, bias=False)
+            [nn.Linear(widths[k + 1], widths[k], bias=False)
+             for k in range(N_BANDS - 1)])
+        # pred[k] (k>=1): band k's state -> next window mean of band k-1
         self.pred = nn.ModuleList(
-            [nn.Linear(d, d) for _ in range(N_BANDS)])  # pred[k] used for k>=1
+            [nn.Identity()] + [nn.Linear(widths[k], widths[k - 1])
+                               for k in range(1, N_BANDS)])
+        if talk == "dense":
+            self.talk = nn.Linear(sum(widths), widths[0], bias=False)
         self.head = nn.Sequential(
-            nn.Linear(N_BANDS * d, 2 * d), nn.GELU(), nn.Linear(2 * d, vocab_size))
+            nn.Linear(sum(widths), 2 * widths[0]), nn.GELU(),
+            nn.Linear(2 * widths[0], vocab_size))
         self.lesioned = set()
 
     def init_state(self, B, device):
         return {
-            "h": [torch.zeros(B, self.d, device=device) for _ in range(N_BANDS)],
-            "acc": [torch.zeros(B, self.d, device=device) for _ in range(N_BANDS)],
+            "h": [torch.zeros(B, w, device=device) for w in self.widths],
+            "acc": [torch.zeros(B, w, device=device) for w in self.widths],
             "cnt": [0 for _ in range(N_BANDS)],
             "pend": [None for _ in range(N_BANDS)],
             "step": 0,
@@ -74,25 +93,12 @@ class BandLM(nn.Module):
         return hs
 
     def forward(self, tokens, st, scene_starts=None):
-        """tokens [B,T]; scene_starts: {local_pos: [lane indices]}.
-        Returns logits [B,T,V], st, ticks: per-band list of
-        (local_pos, fidelity[B]) fidelity entries (differentiable)."""
         B, T = tokens.shape
         logits = []
         ticks = [[] for _ in range(N_BANDS)]
         for t in range(T):
-            if scene_starts and t in scene_starts:
-                lanes = scene_starts[t]
-                for k in FAST_BANDS:
-                    st["h"][k] = st["h"][k].clone()
-                    st["h"][k][lanes] = 0.0
-                    st["acc"][k] = st["acc"][k].clone()
-                    st["acc"][k][lanes] = 0.0
-                    st["pend"][k] = None
             x = self.embed(tokens[:, t])
             hs = self._read(st)
-            # band 1 every token — dense talk: the whole ladder speaks
-            # into every word; tick mode: band 2 only
             if self.talk_mode == "dense":
                 inp0 = x + self.talk(torch.cat(hs, dim=-1))
             else:
@@ -108,14 +114,15 @@ class BandLM(nn.Module):
                             st["pend"][k], window, dim=-1)
                         ticks[k].append((t, fid))
                     hs_k = self._read(st)
-                    td = self.topdown[k](hs_k[k + 1]) if k + 1 < N_BANDS else 0.0
-                    st["h"][k] = self.cells[k](window + td, st["h"][k])
+                    inp = self.in_proj[k](window)
+                    if k + 1 < N_BANDS:
+                        inp = inp + self.topdown[k](hs_k[k + 1])
+                    st["h"][k] = self.cells[k](inp, st["h"][k])
                     st["pend"][k] = self.pred[k](st["h"][k])
                     st["acc"][k - 1] = torch.zeros_like(st["acc"][k - 1])
                     st["cnt"][k - 1] = 0
-                    if k < N_BANDS:
-                        st["acc"][k] = st["acc"][k] + st["h"][k]
-                        st["cnt"][k] += 1
+                    st["acc"][k] = st["acc"][k] + st["h"][k]
+                    st["cnt"][k] += 1
             st["step"] += 1
             logits.append(self.head(torch.cat(self._read(st), dim=-1)))
         return torch.stack(logits, dim=1), st, ticks
