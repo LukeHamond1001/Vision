@@ -45,6 +45,29 @@ THANKS = "thanks . good job ."
 
 
 def iter_convos(limit, skip=0):
+    """Prefers a local bulk-downloaded jsonl (ULTRACHAT_JSONL env or
+    data/ultrachat_raw.jsonl) — HF's unauthenticated streaming API is
+    per-record throttled and starved both the pod and the local build;
+    one ranged bulk GET of the raw file is not. Falls back to
+    streaming if no local file exists."""
+    local = os.environ.get("ULTRACHAT_JSONL", "data/ultrachat_raw.jsonl")
+    if os.path.exists(local):
+        n = 0
+        with open(local) as f:
+            for i, line in enumerate(f):
+                if i < skip:
+                    continue
+                try:
+                    turns = [t.strip() for t in json.loads(line)["data"]
+                             if t and t.strip()]
+                except (json.JSONDecodeError, KeyError):
+                    continue
+                if len(turns) >= 2:
+                    yield turns
+                    n += 1
+                if n >= limit:
+                    return
+        return
     from datasets import load_dataset
     ds = load_dataset("stingning/ultrachat", split="train", streaming=True)
     n = 0
