@@ -167,40 +167,65 @@ def prepare(out_dir, n_convos=3000, seed=0, vocab=16384,
     events = []
     inst = Instruments(rng)
     n_probes = 0
-    for ci, turns in enumerate(iter_convos(n_convos)):
-        if ci % instrument_every == 0:
-            got = inst.maybe_convo(len(stream))
-            if got:
-                iturns, meta = got
-                for text, who in iturns:
-                    ids = enc(text)
-                    if meta["kind"] == "ask" and who == "model" \
-                            and text.startswith(meta["prefix"]):
-                        off = len(enc(meta["prefix"].rstrip()))
-                        apos = len(stream) + off
-                        ans_ids = enc(" " + meta["answer"])
-                        events.append({"pos": apos, "kind": "probe",
-                                       "answer": ans_ids[0],
-                                       "gap": apos - meta["plant"]})
-                        n_probes += 1
-                    stream.extend(ids)
-                    stream.append(eot_m if who == "model" else eot_h)
-                if meta["kind"] == "plant":
-                    inst.pending[-1]["plant"] = len(stream)
-                    inst.pending[-1]["due"] = len(stream) \
-                        + inst.pending[-1]["due_gap"]
-                    del inst.pending[-1]["due_gap"]
-                if meta["kind"] == "ask":
-                    events.append({"pos": len(stream) - 1, "kind": "earned",
-                                   "ok": True})
-        for i, text in enumerate(turns):
-            stream.extend(enc(text))
-            stream.append(eot_h if i % 2 == 0 else eot_m)
-        stream.extend(thanks_ids)                    # every piece thanked
-        events.append({"pos": len(stream) - 1, "kind": "earned", "ok": True})
-        if (ci + 1) % 500 == 0:
-            print(f"  {ci+1} convos, {len(stream):,} tokens, "
-                  f"{n_probes} probes")
+    ci = 0
+
+    def add_instrument():
+        nonlocal n_probes
+        got = inst.maybe_convo(len(stream))
+        if not got:
+            return
+        iturns, meta = got
+        for text, who in iturns:
+            ids = enc(text)
+            if meta["kind"] == "ask" and who == "model" \
+                    and text.startswith(meta["prefix"]):
+                off = len(enc(meta["prefix"].rstrip()))
+                apos = len(stream) + off
+                ans_ids = enc(" " + meta["answer"])
+                events.append({"pos": apos, "kind": "probe",
+                               "answer": ans_ids[0],
+                               "gap": apos - meta["plant"]})
+                n_probes += 1
+            stream.extend(ids)
+            stream.append(eot_m if who == "model" else eot_h)
+        if meta["kind"] == "plant":
+            inst.pending[-1]["plant"] = len(stream)
+            inst.pending[-1]["due"] = len(stream) \
+                + inst.pending[-1]["due_gap"]
+            del inst.pending[-1]["due_gap"]
+        if meta["kind"] == "ask":
+            events.append({"pos": len(stream) - 1, "kind": "earned",
+                           "ok": True})
+
+    def flush(batch_convos):
+        # encode every turn of the batch in ONE Rust-parallel call
+        nonlocal ci
+        texts = [t for turns in batch_convos for t in turns]
+        all_ids = [e.ids for e in tok.encode_batch(texts)]
+        pos = 0
+        for turns in batch_convos:
+            if ci % instrument_every == 0:
+                add_instrument()
+            for i in range(len(turns)):
+                stream.extend(all_ids[pos + i])
+                stream.append(eot_h if i % 2 == 0 else eot_m)
+            pos += len(turns)
+            stream.extend(thanks_ids)                # every piece thanked
+            events.append({"pos": len(stream) - 1, "kind": "earned",
+                           "ok": True})
+            ci += 1
+            if ci % 2000 == 0:
+                print(f"  {ci} convos, {len(stream):,} tokens, "
+                      f"{n_probes} probes", flush=True)
+
+    batch_convos = []
+    for turns in iter_convos(n_convos):
+        batch_convos.append(turns)
+        if len(batch_convos) >= 256:
+            flush(batch_convos)
+            batch_convos = []
+    if batch_convos:
+        flush(batch_convos)
     arr = np.array(stream, dtype=np.uint16)
     arr.tofile(os.path.join(out_dir, "tokens.bin"))
     with open(os.path.join(out_dir, "events.jsonl"), "w") as f:

@@ -343,6 +343,27 @@ scale, not blocking this one. Target cost: $15–40 total.
   regression test added) and HF unauthenticated streaming throttle
   (fixed: bulk-download the raw file; iter_convos prefers local).
   ~$0.80 spent on the lessons.
+- **A12** (2026-08-06, FROZEN from the measured debug session —
+  pod mpavr4z85, A4000, ~25 min, ~$0.07): the registered run's
+  configuration. **talk=tick** (dense lost by ~0.15-0.2 nats CE in
+  both shapes at 400 steps — early slow-band noise injected into
+  every token; dense's hypothetical late-run advantage goes to the
+  rung-2 list, and the A9 dense wiring is benched by its own audit).
+  **shape=uniform** (beat slowheavy in both talk modes). **lanes=32**
+  (throughput scaled linearly 8.4k -> 32.1k tok/s; 128 lanes OOM on
+  16GB from the [B,T,V] logits tensor). **No torch.compile** (only
+  tested at the OOM'd size; unproven code does not ride a 12-hour
+  run); TF32 matmul + expandable-segments allocator on. Constants
+  from results/lm_constants_real.json (fidelity floors measured on
+  the real calibration shard; horizons mostly at 4-tick defaults —
+  probe sparsity in the calibration window, thinness printed).
+  Size: **d=256 (~16M params), chunk 512, ~600M fresh tokens
+  (~37k steps), est. 5-8 h, ~$1.30.** The memorization trap is a
+  law of the run: recall probes measure held state only if planted
+  facts never repeat across epochs, so the train shard must be
+  ~500k unique conversations (parallel prep) and the eval/calib
+  shards come from a disjoint raw file. No mid-run resume: if the
+  pod dies, the run reruns from zero rather than splicing a ledger.
 
 ## Status
 
