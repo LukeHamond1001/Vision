@@ -24,14 +24,23 @@ FAST_BANDS = (0, 1, 2, 3)  # masked at scene starts; 5th/6th persist
 
 
 class BandLM(nn.Module):
-    def __init__(self, vocab_size, d=128):
+    def __init__(self, vocab_size, d=128, talk="dense"):
+        """talk='dense': every band's held state is projected into band
+        1's input at EVERY token — the full council speaks into each
+        word. Write clocks are untouched (reads don't overwrite; the
+        rare write remains the memory mechanism). talk='tick': the
+        original chain — band 1 hears band 2 only. The debug tier A/Bs
+        the two; the winner is frozen before registered runs (A9)."""
         super().__init__()
         self.d = d
         self.vocab_size = vocab_size
+        self.talk_mode = talk
         self.embed = nn.Embedding(vocab_size, d)
         self.cells = nn.ModuleList([nn.GRUCell(d, d) for _ in range(N_BANDS)])
         self.topdown = nn.ModuleList(
             [nn.Linear(d, d, bias=False) for _ in range(N_BANDS - 1)])
+        if talk == "dense":
+            self.talk = nn.Linear(N_BANDS * d, d, bias=False)
         self.pred = nn.ModuleList(
             [nn.Linear(d, d) for _ in range(N_BANDS)])  # pred[k] used for k>=1
         self.head = nn.Sequential(
@@ -82,8 +91,12 @@ class BandLM(nn.Module):
                     st["pend"][k] = None
             x = self.embed(tokens[:, t])
             hs = self._read(st)
-            # band 1 every token, conditioned by band 2
-            inp0 = x + self.topdown[0](hs[1])
+            # band 1 every token — dense talk: the whole ladder speaks
+            # into every word; tick mode: band 2 only
+            if self.talk_mode == "dense":
+                inp0 = x + self.talk(torch.cat(hs, dim=-1))
+            else:
+                inp0 = x + self.topdown[0](hs[1])
             st["h"][0] = self.cells[0](inp0, st["h"][0])
             st["acc"][0] = st["acc"][0] + st["h"][0]
             st["cnt"][0] += 1

@@ -301,19 +301,39 @@ scale, not blocking this one. Target cost: $15–40 total.
   channel per lane. Suite 46/46; real-data smoke passing (CE falls,
   ledger exact, probes aligned, gaps measured to 7k+ on a
   400-conversation shard).
+- **A9** (2026-08-05, assembled pre-run): dense talk + calibration.
+  (1) Talk mode: `BandLM(talk="dense")` projects every band's held
+  state into band 1's input at every token — reads only; write
+  clocks untouched, so holding is unaffected by construction. The
+  debug tier A/Bs dense vs tick; the winner is frozen before
+  registered runs. (2) `iga/lm_calibrate.py`: horizons = 2 x p90 of
+  measured ask-back gaps per bin (floor 4 ticks); chance floors per
+  bin from a random-init model on the calibration split (the
+  G-context gate's empirical floor); fidelity floors = random-init
+  mean + 2 sigma. Drive consumes the constants file. First artifact
+  (weaver calib split) committed at results/lm_constants.json — and
+  it already corrected the scaffold: random-init band-1 fidelity
+  floors at 0.25 where hand-set floors sat at 0.05-0.15, so the
+  hand-set imagination veto would have trusted an ignorant band.
+  Registered-run precondition: re-run calibration on the real-data
+  calibration shard and freeze. Suite 48/48.
 
 ## Status
 
 Assembled scene-free (A6), no registered runs. Weaver (`iga/lm_gen.py`),
 conveyor (`iga/lm_conveyor.py`), six-band model (`iga/lm_bands.py`),
 drive layer (`iga/lm_drive.py`), trainer (`iga/lm_train.py`), eval
-harness (`iga/lm_eval.py`); law tests in `tests/test_lm_ladder.py`
-(suite: 45/45). Local end-to-end smoke passes on the endless-dialogue
-stream: CE falls, ledger audits exact, thanks-mints/expiry-zero/
-closed-loop-zero pinned by tests, panel readable, lesion + talk
-harness run. v0 engineering notes (honest) in module docstrings:
-slow-band predictor gradients flow only within a chunk; competence
-band = records + scheduler bin-weights. Remaining before any
-registered run: the channel admission audit on the calibration split,
-then constants frozen. Debug next on RTX 2000; registered runs on a
-4090.
+harness (`iga/lm_eval.py`); UltraChat prep + conveyor
+(`iga/lm_data_ultrachat.py`); calibration harness
+(`iga/lm_calibrate.py`); law tests in `tests/test_lm_ladder.py`
+(suite: 48/48). End-to-end smokes pass on both conveyors (weaver and
+a real UltraChat shard): CE falls, ledger audits exact,
+thanks-mints/expiry-zero/closed-loop-zero pinned by tests, panel
+readable, lesion + talk harness run, probe positions token-verified.
+First calibration artifact committed (weaver split). v0 engineering
+notes (honest) in module docstrings: slow-band predictor gradients
+flow only within a chunk; competence band = records + scheduler
+bin-weights. Remaining before any registered run: (1) debug-tier A/B
+of talk=dense vs tick, winner frozen; (2) calibration re-run on the
+real-data calibration shard, constants frozen. Debug next on RTX
+2000; registered runs on a 4090.

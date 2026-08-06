@@ -47,7 +47,19 @@ def horizon(band):
 
 
 class Drive:
-    def __init__(self, n_lanes, lam=0.1, seed=0):
+    def __init__(self, n_lanes, lam=0.1, seed=0, constants=None):
+        """constants: dict (or path to results/lm_constants.json) from
+        iga.lm_calibrate — horizons and fid floors become data-set;
+        absent, the scaffold defaults apply (debug only)."""
+        if isinstance(constants, str):
+            import json as _json
+            with open(constants) as f:
+                constants = _json.load(f)
+        c = constants or {}
+        self._horizons = {int(k): int(v)
+                          for k, v in c.get("horizons", {}).items()}
+        self._fid_floors = {int(k): float(v)
+                            for k, v in c.get("fid_floor", {}).items()}
         self.n_lanes = n_lanes
         self.lam = lam
         self.rng = random.Random(seed)
@@ -112,7 +124,10 @@ class Drive:
             self.proposed += 1
             carry = self.ema.get(f"fid:{band}", 0.0)
             fast = min(self.ema.get(f"fid:{k}", 1.0) for k in (1, 2))
-            if kind == "frontier" and (carry < FID_FLOOR or fast < FID_FLOOR):
+            floor = self._fid_floors.get(band, FID_FLOOR)
+            fast_floor = max(self._fid_floors.get(k, FID_FLOOR)
+                             for k in (1, 2))
+            if kind == "frontier" and (carry < floor or fast < fast_floor):
                 self.vetoes += 1
                 continue
             scored.append((carry, kind, key, band, target))
@@ -123,9 +138,13 @@ class Drive:
             phi0 = max(0.0, target - self.ema.get(key, 0.0)) / max(target, 1e-6)
             out.append({"lane": lane, "band": band, "key": key,
                         "target": target, "phi0": phi0, "w": 1.0,
-                        "t0": self.step_t, "due": self.step_t + horizon(band),
+                        "t0": self.step_t,
+                        "due": self.step_t + self.horizon_for(band),
                         "kind": kind})
         return out
+
+    def horizon_for(self, band):
+        return self._horizons.get(band, horizon(band))
 
     # ---------- the sweep: settle due holds, then propose ----------
     def sweep(self, losses):

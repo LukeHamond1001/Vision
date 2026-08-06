@@ -115,6 +115,24 @@ class TestBandLaws(unittest.TestCase):
         m.lesioned = set()
 
 
+class TestCalibration(unittest.TestCase):
+    def test_calibrate_produces_dataset_constants(self):
+        from iga.lm_calibrate import run
+        import os
+        out = "results/lm_constants_test.json"
+        c = run(chunks=4, T=256, lanes=2, out=out)
+        self.assertEqual(set(int(k) for k in c["horizons"]),
+                         set(range(N_BANDS)))
+        self.assertTrue(c["chance_floors"])   # at least one bin measured
+        os.remove(out)
+
+    def test_drive_consumes_constants(self):
+        d = Drive(n_lanes=1, constants={"horizons": {"2": 99999},
+                                        "fid_floor": {"2": 0.9}})
+        self.assertEqual(d.horizon_for(2), 99999)
+        self.assertEqual(d.horizon_for(1), horizon(1))  # default fallback
+
+
 class TestEndToEnd(unittest.TestCase):
     def test_smoke_train_audit(self):
         model, drive, vocab, ce0, ce1 = train(d=48, lanes=2, T=192, steps=12,
