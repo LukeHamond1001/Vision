@@ -56,7 +56,10 @@ competence band.**
 run, and the stream is one unbroken dialogue.** No scene brackets, no
 masking, nothing ever reset — the model lives once and reads on. The
 referent law survives without brackets as a **horizon**: every hold
-carries a time budget set by its band's clock (~4 ticks); at the
+carries a time budget set by its band's clock (scaffold default 4
+ticks — a placeholder; before registered runs, horizons are frozen
+from measured ask-back statistics on the calibration split, per the
+data-set-not-hand-set discipline in docs/ROBOT_PROGRAM.md); at the
 horizon it settles on the readings that arrived during the hold, or
 expires at exactly zero. No hold outlives its horizon; the telescoping
 audit applies per hold; closed loops still net zero.
@@ -89,8 +92,9 @@ parsing:
   source)** — one endless person↔agent conversation per lane: facts
   planted in human turns and asked back at controlled gaps (up to
   24k tokens — band 6's food), find-the-object tasks verified by a
-  world sim, the depicted agent right ~3/4 of the time so
-  thanks/not-right varies truthfully by construction.
+  world sim; under A7 the depicted agent is always right and every
+  exchange is thanked (failure rates parameterized for real-data
+  rounds).
 
 **Scope (A5):** training and headline evaluation are synthetic
 held-out (generator-verified ground truth). Real-data headlines are
@@ -102,12 +106,15 @@ data" wherever they are quoted.
 - `<eot_human>` / `<eot_model>` — the only special tokens in the
   stream. The page shows pure conversation, like regular LLM data.
 - The earned mark is natural human speech — "thanks . good job ." —
-  spoken iff the depicted agent earned it ("that is not right ."
-  otherwise). The pipeline records it as an invisible `earned` event;
-  a thanks MINTS the channel it followed and never pays.
-- Probes (planted-fact ask-backs) are invisible events too, annotated
-  only where the depicted answer is the true one — the model is never
-  trained toward a token that is then graded as truth when it wasn't.
+  and under A7 every exchange earns it: v0 data depicts only correct
+  answers and successful tasks, so uniform thanks is truthful. The
+  pipeline records it as an invisible `earned` event; a thanks MINTS
+  the channel it followed and never pays. (With a uniform label the
+  minting gate fires trivially — its selective function is dormant by
+  construction in v0 and reactivates on real data, where the failure
+  branches, kept in code behind rate parameters, return.)
+- Probes (planted-fact ask-backs) are invisible events; under A7
+  every depicted answer is true, so every ask-back is annotated.
 - The model never earns by emitting anything: reward exists only at
   training time, computed by the frozen ledger from pipeline events.
 
@@ -269,6 +276,15 @@ scale, not blocking this one. Target cost: $15–40 total.
   zero, readings count only if strictly inside the hold). Scheduler
   wired as bin-weights biasing the weaver's plant gaps. Code and law
   tests updated; suite 45/45.
+- **A7** (2026-08-05, assembled pre-run): all-good data — every
+  depicted answer correct, every task successful, every exchange
+  thanked. Truthful because nothing failing is depicted; the earned
+  label therefore carries no selection information in v0 (printed),
+  minting fires trivially, and what varies and pays remains the
+  model's measured readings. Failure branches kept in code behind
+  rate parameters for real-data rounds. Horizon constants flagged as
+  scaffold defaults to be frozen from calibration-split ask-back
+  statistics before registered runs. Suite 46/46.
 
 ## Status
 

@@ -13,13 +13,10 @@ from iga.lm_train import train
 
 
 class TestWeaverLaws(unittest.TestCase):
-    def test_probe_positions_exact_and_earned_varies(self):
+    def test_probe_positions_exact_and_all_thanked(self):
         v = Vocab()
         lane = Lane(v, random.Random(3))
-        toks, _, _ = lane.take(6000)
-        evs = []  # re-take with events captured
-        lane2 = Lane(v, random.Random(3))
-        toks, _, evs = lane2.take(6000)
+        toks, _, evs = lane.take(6000)
         probes = [(p, d) for p, k, d in evs if k == "probe"]
         earned = [d["ok"] for p, k, d in evs if k == "earned"]
         self.assertGreater(len(probes), 0)
@@ -27,9 +24,18 @@ class TestWeaverLaws(unittest.TestCase):
             self.assertEqual(toks[p], d["answer"],
                              "probe position must be the answer token id")
             self.assertGreater(d["gap"], 0)
-        self.assertEqual(set(earned) | {True, False}, {True, False})
-        self.assertIn(True, earned)   # the label varies
-        self.assertIn(False, earned)
+        self.assertGreater(len(earned), 0)
+        self.assertTrue(all(earned),
+                        "A7: all-good data — every exchange is thanked")
+
+    def test_failure_branches_survive_for_real_data_rounds(self):
+        v = Vocab()
+        lane = Lane(v, random.Random(5))
+        lane.weaver.correct_rate = 0.5
+        lane.weaver.success_rate = 0.5
+        _, _, evs = lane.take(8000)
+        earned = [d["ok"] for p, k, d in evs if k == "earned"]
+        self.assertIn(False, earned)  # the machinery still selects
 
     def test_only_two_special_tokens_no_scene(self):
         self.assertNotIn("<scene>", lm_gen.LEXICON)

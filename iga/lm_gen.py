@@ -65,9 +65,14 @@ def _fill(rng, n):
 class Weaver:
     """Stateful endless-dialogue generator for one lane."""
 
-    def __init__(self, rng, correct_rate=0.75):
+    def __init__(self, rng, correct_rate=1.0, success_rate=1.0):
+        # A7: v0 data is all-good — every depicted answer correct, every
+        # task succeeds, every exchange thanked. The failure branches
+        # below stay in code (rates < 1.0) for real-data rounds, where
+        # the earned label's selective function reactivates.
         self.rng = rng
         self.correct_rate = correct_rate
+        self.success_rate = success_rate
         self.n = 0                    # tokens emitted so far (lane-local)
         self.pending = []             # facts planted, not yet asked
         self.used = set()
@@ -133,7 +138,7 @@ class Weaver:
         col = self.rng.choice(COLORS)
         h = self._human(["please", "find", "the", col, goal, "and",
                          "bring", "it", "to", "the", "hall", "."])
-        succeed = self.rng.random() > 0.33
+        succeed = self.rng.random() < self.success_rate
         fetched = goal if succeed else self.rng.choice(
             [o for o in world if o != goal])
         a = self._agent(["i", "looked", "in", "the", world[fetched], "and",
