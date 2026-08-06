@@ -48,7 +48,9 @@ LM pretraining is low-variance relative to RL.
 Clock ratio ~8× per band. Band 1 ticks per token (state spans words);
 band 2 ~8 tokens (phrase); band 3 ~64 (paragraph/topic); band 4 ~512
 (section); band 5 ~4k (document intent); band 6 ~32k (book scale,
-active only on long documents). Bands at 10M: 4; 30M: 5; 90M: 6.
+active only on long documents). **All sizes carry all six content
+bands (A3) — state widths scale with model size — plus the continuous
+competence band.**
 
 **The conveyor law (A1): the life is the training run; a document is
 a scene.** All data rides one continuous stream, in the order the
@@ -69,12 +71,35 @@ growing up.
 
 ## Data (public, free, mixed; ratios frozen before runs)
 
-- **FineWeb-Edu** (sampled) — general text; ships a per-document
-  quality score used as a selection label.
-- **PG-19** — full public-domain books; the long-document anchor that
-  gives slow bands real work.
-- **StackExchange dumps** — threads as episodes; the accepted-answer
-  bit and in-the-wild "thanks" are natural human ratification labels.
+Dialogue-primary (A3) — the model should learn turn-taking so the
+talking eval is native to it:
+
+- **WildChat-1M** — real human↔assistant conversations, open license;
+  the primary conversational substrate.
+- **OpenAssistant OASST1/2** — human-written dialogue trees with
+  per-message quality ratings (a natural, varying ratification label).
+- **Anthropic HH-RLHF** — dialogue pairs with chosen/rejected labels
+  (earned / not-earned, built in).
+- **PG-19** — full public-domain books; the long-scene anchor that
+  gives bands 5–6 real work and the ≥4k-gap gate its material.
+- **FineWeb-Edu** (sampled) — general-text backbone; ships a
+  per-document quality score used as a selection label.
+- **StackExchange dumps** — threads as scenes; the accepted-answer
+  bit and in-the-wild "thanks" are natural ratification labels.
+
+### Stream markers (pipeline-written; the model never earns by
+emitting them — reward exists only at training time, computed by the
+frozen ledger from data-side labels)
+
+- `<scene>` / `</scene>` — scene start/end. Start masks fast-band
+  state; end settles every scene-scoped hold (arrival paid, unmet
+  expired at zero). Every piece of data gets these.
+- `<eot_human>` / `<eot_model>` — turn ends inside dialogue scenes.
+  No state masking (one conversation is one scene); turn-scoped holds
+  settle at `<eot_model>`.
+- `<ok>` — the earned mark, appended at scene end only where the
+  data's label says earned (accepted answer, quality rating, chosen
+  side, thanked reply). Gates template minting; never pays.
 
 Token budgets ~chinchilla: 10M→~200M tok, 30M→~600M, 90M→~2B.
 Three splits under the instrument discipline: train / calibration
@@ -166,11 +191,13 @@ with the amendment ledgered here)
   decisions are logged this round and reported descriptively.
 - Misses are printed beside passes, as always.
 
-## Compute and cost
+## Compute and cost (A3)
 
-Kaggle free tier (30 GPU-h + 20 TPU-h/week) covers 10M and 30M.
-90M on TPU Research Cloud (application submitted) or ~$50–100 rented
-GPU fallback. Target cost: $0–100.
+Debug on RunPod RTX 2000 at $0.24/hr (the campaign's workhorse);
+registered runs on a rented RTX 4090 (~$0.35–0.70/hr): 10M in under
+an hour, 30M in ~2–4 h, 90M in ~20–40 h. Kaggle free tier for
+spillover debugging. TRC application submitted for the next card's
+scale, not blocking this one. Target cost: $15–40 total.
 
 ## Amendment ledger
 
@@ -191,6 +218,12 @@ GPU fallback. Target cost: $0–100.
   deferred; this round registers existence (L1) only. Gates
   re-registered accordingly above; no runs existed under the old
   gates.
+- **A3** (2026-08-05, pre-run, pre-code): six content bands at every
+  size (widths scale, clocks fixed); data goes dialogue-primary
+  (WildChat, OASST, HH-RLHF added; books and web retained for long
+  scenes) with turn-end markers `<eot_human>`/`<eot_model>` and
+  turn-scoped holds; compute plan set to RTX 2000 debug → RTX 4090
+  registered runs.
 
 ## Status
 
