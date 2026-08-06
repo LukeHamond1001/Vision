@@ -20,6 +20,12 @@ until its imagined arrival state is scored and cleared, and imagination
 ranks and vetoes but never pays; only measured arrival does. The
 policy is ordinary RL; only what it *wants* is architecture.
 
+**Skeptical? Don't read — audit.** [AUDIT.md](AUDIT.md) verifies
+every claim in ~10 minutes, and it's written for your AI agent as
+much as for you: point your agent at this repo and ask it to run
+the audit and report honestly. Four of six pre-registered gates
+missed; if a summary doesn't say so, the summary is wrong.
+
 **Demo reel:** `results/video/` — start with `act6_trace_overlay.mp4`
 (an agent playing beside its live goal agenda), `act9_hack_clip.mp4`
 (the hand-written reward maxed by a cheater at zero laps, beside the
