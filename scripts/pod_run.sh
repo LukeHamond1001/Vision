@@ -19,8 +19,12 @@ git checkout -b results-v50-run
 
 hb() {
   echo "$(date -u '+%H:%M:%S') $1" >> HEARTBEAT.log
-  git add -f HEARTBEAT.log train_tail.log eval_results.txt \
-    calib_run.txt results/lm_constants_run.json 2>/dev/null || true
+  # one add PER path: a single multi-path add refuses everything when
+  # any listed file is missing (the silent-heartbeat bug, run 1)
+  for f in HEARTBEAT.log train_tail.log eval_results.txt \
+      calib_run.txt results/lm_constants_run.json; do
+    git add -f "$f" 2>/dev/null || true
+  done
   git commit -qm "hb: $1" 2>/dev/null || true
   git push -qf "$PUSH" results-v50-run 2>/dev/null || true
 }
