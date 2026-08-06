@@ -1,0 +1,5 @@
+calibration source: shard:data/uc_calib
+horizons (tokens/band): {0: 4, 1: 32, 2: 256, 3: 2048, 4: 16384, 5: 131072}
+  bin 2 (gap 2048-16384): chance p=0.0001 top1=0.000 n=4
+fid floors: {1: 0.055, 2: 0.093, 3: -0.139, 4: 0.023}
+-> results/lm_constants_real.json

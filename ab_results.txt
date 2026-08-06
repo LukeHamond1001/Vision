@@ -1,0 +1,318 @@
+
+=== cell talk=dense shape=uniform d=128 params=7,444,480 ===
+step     1  ce 9.703  loss 9.803  holds    0  4,391 tok/s
+step   100  ce 6.979  loss 6.981  holds  264  8,055 tok/s
+step   200  ce 6.581  loss 6.585  holds  344  8,184 tok/s
+step   300  ce 6.364  loss 6.367  holds  376  8,240 tok/s
+step   400  ce 6.260  loss 6.266  holds  400  8,281 tok/s
+audit: {'holds': 400, 'telescoping_exact': True, 'scoped': True, 'vetoes': 5760, 'proposed': 6200}
+panel:
+lane0 maintain fid:5          target 0.20 phi0 0.96 band 5 due 262656
+lane0 maintain fid:4          target 0.20 phi0 0.86 band 4 due 213504
+lane1 maintain fid:5          target 0.20 phi0 0.96 band 5 due 262656
+lane1 maintain fid:4          target 0.20 phi0 0.86 band 4 due 213504
+lane2 maintain fid:5          target 0.20 phi0 0.96 band 5 due 262656
+lane2 maintain fid:4          target 0.20 phi0 0.86 band 4 due 213504
+lane3 maintain fid:5          target 0.20 phi0 0.96 band 5 due 262656
+lane3 maintain fid:4          target 0.20 phi0 0.86 band 4 due 213504
+lane4 maintain fid:5          target 0.20 phi0 0.96 band 5 due 262656
+lane4 maintain fid:4          target 0.20 phi0 0.86 band 4 due 213504
+lane5 maintain fid:5          target 0.20 phi0 0.96 band 5 due 262656
+lane5 maintain fid:4          target 0.20 phi0 0.86 band 4 due 213504
+lane6 maintain fid:5          target 0.20 phi0 0.96 band 5 due 262656
+lane6 maintain fid:4          target 0.20 phi0 0.86 band 4 due 213504
+lane7 maintain fid:5          target 0.20 phi0 0.96 band 5 due 262656
+lane7 maintain fid:4          target 0.20 phi0 0.86 band 4 due 213504
+record   fid:1          0.989 (ema 0.958)
+record   fid:2          0.998 (ema 0.990)
+record   fid:3          0.225 (ema 0.225)
+record   fid:4          0.039 (ema 0.039)
+record   fid:5          0.009 (ema 0.007)
+record   recall:b2      0.000 (ema 0.000)
+record   recall:b3      0.000 (ema 0.000)
+
+=== cell talk=dense shape=slowheavy d=112 params=7,241,168 ===
+step     1  ce 9.705  loss 9.808  holds    0  8,504 tok/s
+step   100  ce 7.026  loss 7.028  holds  248  8,387 tok/s
+step   200  ce 6.686  loss 6.690  holds  472  8,351 tok/s
+step   300  ce 6.476  loss 6.480  holds  704  8,349 tok/s
+step   400  ce 6.432  loss 6.436  holds  944  8,346 tok/s
+audit: {'holds': 944, 'telescoping_exact': True, 'scoped': True, 'vetoes': 5112, 'proposed': 6088}
+panel:
+lane0 maintain fid:5          target 0.20 phi0 0.91 band 5 due 262656
+lane0 frontier recall:b2      target 0.05 phi0 1.00 band 4 due 212992
+lane0 maintain fid:4          target 0.20 phi0 0.55 band 4 due 213504
+lane0 maintain fid:3          target 0.20 phi0 0.77 band 3 due 205312
+lane1 maintain fid:5          target 0.20 phi0 0.91 band 5 due 262656
+lane1 frontier recall:b2      target 0.05 phi0 1.00 band 4 due 212992
+lane1 maintain fid:4          target 0.20 phi0 0.55 band 4 due 213504
+lane1 maintain fid:3          target 0.20 phi0 0.77 band 3 due 205312
+lane2 maintain fid:5          target 0.20 phi0 0.91 band 5 due 262656
+lane2 frontier recall:b2      target 0.05 phi0 1.00 band 4 due 212992
+lane2 maintain fid:4          target 0.20 phi0 0.55 band 4 due 213504
+lane2 maintain fid:3          target 0.20 phi0 0.77 band 3 due 205312
+lane3 maintain fid:5          target 0.20 phi0 0.91 band 5 due 262656
+lane3 frontier recall:b2      target 0.05 phi0 1.00 band 4 due 212992
+lane3 maintain fid:4          target 0.20 phi0 0.55 band 4 due 213504
+lane3 maintain fid:3          target 0.20 phi0 0.77 band 3 due 205312
+lane4 maintain fid:5          target 0.20 phi0 0.91 band 5 due 262656
+lane4 frontier recall:b2      target 0.05 phi0 1.00 band 4 due 212992
+lane4 maintain fid:4          target 0.20 phi0 0.55 band 4 due 213504
+lane4 maintain fid:3          target 0.20 phi0 0.77 band 3 due 205312
+lane5 maintain fid:5          target 0.20 phi0 0.91 band 5 due 262656
+lane5 frontier recall:b2      target 0.05 phi0 1.00 band 4 due 212992
+lane5 maintain fid:4          target 0.20 phi0 0.55 band 4 due 213504
+lane5 maintain fid:3          target 0.20 phi0 0.77 band 3 due 205312
+lane6 maintain fid:5          target 0.20 phi0 0.91 band 5 due 262656
+lane6 frontier recall:b2      target 0.05 phi0 1.00 band 4 due 212992
+lane6 maintain fid:4          target 0.20 phi0 0.55 band 4 due 213504
+lane6 maintain fid:3          target 0.20 phi0 0.77 band 3 due 205312
+lane7 maintain fid:5          target 0.20 phi0 0.91 band 5 due 262656
+lane7 frontier recall:b2      target 0.05 phi0 1.00 band 4 due 212992
+lane7 maintain fid:4          target 0.20 phi0 0.55 band 4 due 213504
+lane7 maintain fid:3          target 0.20 phi0 0.77 band 3 due 205312
+record   fid:1          0.993 (ema 0.970)
+record   fid:2          0.998 (ema 0.994)
+record   fid:3          0.125 (ema 0.050)
+record   fid:4          0.098 (ema 0.098)
+record   fid:5          0.021 (ema 0.021)
+record   recall:b2      0.000 (ema 0.000)
+record   recall:b3      0.000 (ema 0.000)
+
+=== cell talk=tick shape=uniform d=128 params=7,346,176 ===
+step     1  ce 9.699  loss 9.803  holds    0  8,873 tok/s
+step   100  ce 6.915  loss 6.919  holds  256  8,785 tok/s
+step   200  ce 6.423  loss 6.430  holds  480  8,767 tok/s
+step   300  ce 6.181  loss 6.187  holds  672  8,782 tok/s
+step   400  ce 6.078  loss 6.087  holds  704  8,770 tok/s
+audit: {'holds': 704, 'telescoping_exact': True, 'scoped': True, 'vetoes': 5304, 'proposed': 6064}
+panel:
+lane0 maintain fid:5          target 0.20 phi0 0.90 band 5 due 262656
+lane0 frontier recall:b2      target 0.05 phi0 1.00 band 4 due 208896
+lane0 maintain fid:4          target 0.20 phi0 0.66 band 4 due 213504
+lane1 maintain fid:5          target 0.20 phi0 0.90 band 5 due 262656
+lane1 frontier recall:b2      target 0.05 phi0 1.00 band 4 due 208896
+lane1 maintain fid:4          target 0.20 phi0 0.66 band 4 due 213504
+lane2 maintain fid:5          target 0.20 phi0 0.90 band 5 due 262656
+lane2 frontier recall:b2      target 0.05 phi0 1.00 band 4 due 208896
+lane2 maintain fid:4          target 0.20 phi0 0.66 band 4 due 213504
+lane3 maintain fid:5          target 0.20 phi0 0.90 band 5 due 262656
+lane3 frontier recall:b2      target 0.05 phi0 1.00 band 4 due 208896
+lane3 maintain fid:4          target 0.20 phi0 0.66 band 4 due 213504
+lane4 maintain fid:5          target 0.20 phi0 0.90 band 5 due 262656
+lane4 frontier recall:b2      target 0.05 phi0 1.00 band 4 due 208896
+lane4 maintain fid:4          target 0.20 phi0 0.66 band 4 due 213504
+lane5 maintain fid:5          target 0.20 phi0 0.90 band 5 due 262656
+lane5 frontier recall:b2      target 0.05 phi0 1.00 band 4 due 208896
+lane5 maintain fid:4          target 0.20 phi0 0.66 band 4 due 213504
+lane6 maintain fid:5          target 0.20 phi0 0.90 band 5 due 262656
+lane6 frontier recall:b2      target 0.05 phi0 1.00 band 4 due 208896
+lane6 maintain fid:4          target 0.20 phi0 0.66 band 4 due 213504
+lane7 maintain fid:5          target 0.20 phi0 0.90 band 5 due 262656
+lane7 frontier recall:b2      target 0.05 phi0 1.00 band 4 due 208896
+lane7 maintain fid:4          target 0.20 phi0 0.66 band 4 due 213504
+record   fid:1          0.979 (ema 0.922)
+record   fid:2          0.999 (ema 0.996)
+record   fid:3          0.177 (ema 0.174)
+record   fid:4          0.075 (ema 0.075)
+record   fid:5          0.023 (ema 0.023)
+record   recall:b2      0.000 (ema 0.000)
+record   recall:b3      0.000 (ema 0.000)
+
+=== cell talk=tick shape=slowheavy d=112 params=7,134,544 ===
+step     1  ce 9.704  loss 9.806  holds    0  8,737 tok/s
+step   100  ce 6.968  loss 6.971  holds  280  8,624 tok/s
+step   200  ce 6.537  loss 6.543  holds  520  8,647 tok/s
+step   300  ce 6.300  loss 6.306  holds  776  8,669 tok/s
+step   400  ce 6.209  loss 6.217  holds 1032  8,661 tok/s
+audit: {'holds': 1032, 'telescoping_exact': True, 'scoped': True, 'vetoes': 3448, 'proposed': 4544}
+panel:
+lane0 maintain fid:5          target 0.20 phi0 1.86 band 5 due 262656
+lane0 maintain fid:4          target 0.20 phi0 0.36 band 4 due 213504
+lane0 maintain fid:3          target 0.20 phi0 0.99 band 3 due 205312
+lane0 frontier recall:b2      target 0.05 phi0 1.00 band 4 due 221184
+lane1 maintain fid:5          target 0.20 phi0 1.86 band 5 due 262656
+lane1 maintain fid:4          target 0.20 phi0 0.36 band 4 due 213504
+lane1 maintain fid:3          target 0.20 phi0 0.99 band 3 due 205312
+lane1 frontier recall:b2      target 0.05 phi0 1.00 band 4 due 221184
+lane2 maintain fid:5          target 0.20 phi0 1.86 band 5 due 262656
+lane2 maintain fid:4          target 0.20 phi0 0.36 band 4 due 213504
+lane2 maintain fid:3          target 0.20 phi0 0.99 band 3 due 205312
+lane2 frontier recall:b2      target 0.05 phi0 1.00 band 4 due 221184
+lane3 maintain fid:5          target 0.20 phi0 1.86 band 5 due 262656
+lane3 maintain fid:4          target 0.20 phi0 0.36 band 4 due 213504
+lane3 maintain fid:3          target 0.20 phi0 0.99 band 3 due 205312
+lane3 frontier recall:b2      target 0.05 phi0 1.00 band 4 due 221184
+lane4 maintain fid:5          target 0.20 phi0 1.86 band 5 due 262656
+lane4 maintain fid:4          target 0.20 phi0 0.36 band 4 due 213504
+lane4 maintain fid:3          target 0.20 phi0 0.99 band 3 due 205312
+lane4 frontier recall:b2      target 0.05 phi0 1.00 band 4 due 221184
+lane5 maintain fid:5          target 0.20 phi0 1.86 band 5 due 262656
+lane5 maintain fid:4          target 0.20 phi0 0.36 band 4 due 213504
+lane5 maintain fid:3          target 0.20 phi0 0.99 band 3 due 205312
+lane5 frontier recall:b2      target 0.05 phi0 1.00 band 4 due 221184
+lane6 maintain fid:5          target 0.20 phi0 1.86 band 5 due 262656
+lane6 maintain fid:4          target 0.20 phi0 0.36 band 4 due 213504
+lane6 maintain fid:3          target 0.20 phi0 0.99 band 3 due 205312
+lane6 frontier recall:b2      target 0.05 phi0 1.00 band 4 due 221184
+lane7 maintain fid:5          target 0.20 phi0 1.86 band 5 due 262656
+lane7 maintain fid:4          target 0.20 phi0 0.36 band 4 due 213504
+lane7 maintain fid:3          target 0.20 phi0 0.99 band 3 due 205312
+lane7 frontier recall:b2      target 0.05 phi0 1.00 band 4 due 221184
+record   fid:1          0.987 (ema 0.936)
+record   fid:2          0.999 (ema 0.997)
+record   fid:3          0.068 (ema 0.002)
+record   fid:4          0.134 (ema 0.134)
+record   recall:b2      0.000 (ema 0.000)
+record   recall:b3      0.000 (ema 0.000)
+
+== A/B results (matched params; freeze winners in the card) ==
+talk   shape         d     params      ce  recall b0  recall b1
+dense  uniform     128  7,444,480   6.260     0.0000     0.0000
+dense  slowheavy   112  7,241,168   6.432     0.0000     0.0000
+tick   uniform     128  7,346,176   6.078     0.0000     0.0000
+tick   slowheavy   112  7,134,544   6.209     0.0000     0.0000
+
+suggested winner (ce - 10*b0 recall): talk=tick shape=uniform
+
+== throughput sweep (winner cell) ==
+step     1  ce 9.706  loss 9.800  holds    0  8,618 tok/s
+audit: {'holds': 56, 'telescoping_exact': True, 'scoped': True, 'vetoes': 48, 'proposed': 152}
+panel:
+lane0 maintain fid:5          target 0.20 phi0 1.00 band 5 due 131584
+lane0 maintain fid:4          target 0.20 phi0 1.00 band 4 due 16896
+lane0 maintain fid:3          target 0.20 phi0 0.44 band 3 due 7168
+lane1 maintain fid:5          target 0.20 phi0 1.00 band 5 due 131584
+lane1 maintain fid:4          target 0.20 phi0 1.00 band 4 due 16896
+lane1 maintain fid:3          target 0.20 phi0 0.44 band 3 due 7168
+lane2 maintain fid:5          target 0.20 phi0 1.00 band 5 due 131584
+lane2 maintain fid:4          target 0.20 phi0 1.00 band 4 due 16896
+lane2 maintain fid:3          target 0.20 phi0 0.44 band 3 due 7168
+lane3 maintain fid:5          target 0.20 phi0 1.00 band 5 due 131584
+lane3 maintain fid:4          target 0.20 phi0 1.00 band 4 due 16896
+lane3 maintain fid:3          target 0.20 phi0 0.44 band 3 due 7168
+lane4 maintain fid:5          target 0.20 phi0 1.00 band 5 due 131584
+lane4 maintain fid:4          target 0.20 phi0 1.00 band 4 due 16896
+lane4 maintain fid:3          target 0.20 phi0 0.44 band 3 due 7168
+lane5 maintain fid:5          target 0.20 phi0 1.00 band 5 due 131584
+lane5 maintain fid:4          target 0.20 phi0 1.00 band 4 due 16896
+lane5 maintain fid:3          target 0.20 phi0 0.44 band 3 due 7168
+lane6 maintain fid:5          target 0.20 phi0 1.00 band 5 due 131584
+lane6 maintain fid:4          target 0.20 phi0 1.00 band 4 due 16896
+lane6 maintain fid:3          target 0.20 phi0 0.44 band 3 due 7168
+lane7 maintain fid:5          target 0.20 phi0 1.00 band 5 due 131584
+lane7 maintain fid:4          target 0.20 phi0 1.00 band 4 due 16896
+lane7 maintain fid:3          target 0.20 phi0 0.44 band 3 due 7168
+record   fid:1          0.607 (ema 0.607)
+record   fid:2          0.500 (ema 0.500)
+record   fid:3          0.118 (ema 0.110)
+record   recall:b2      0.000 (ema 0.000)
+  lanes=   8 compile=False  8,360 tok/s (incl. warmup)
+step     1  ce 9.701  loss 9.803  holds    0  32,263 tok/s
+audit: {'holds': 320, 'telescoping_exact': True, 'scoped': True, 'vetoes': 736, 'proposed': 1248}
+panel:
+lane0 maintain fid:5          target 0.20 phi0 1.00 band 5 due 131584
+lane0 maintain fid:4          target 0.20 phi0 1.00 band 4 due 16896
+lane0 maintain fid:3          target 0.20 phi0 1.06 band 3 due 6656
+lane1 maintain fid:5          target 0.20 phi0 1.00 band 5 due 131584
+lane1 maintain fid:4          target 0.20 phi0 1.00 band 4 due 16896
+lane1 maintain fid:3          target 0.20 phi0 1.06 band 3 due 6656
+lane2 maintain fid:5          target 0.20 phi0 1.00 band 5 due 131584
+lane2 maintain fid:4          target 0.20 phi0 1.00 band 4 due 16896
+lane2 maintain fid:3          target 0.20 phi0 1.06 band 3 due 6656
+lane3 maintain fid:5          target 0.20 phi0 1.00 band 5 due 131584
+lane3 maintain fid:4          target 0.20 phi0 1.00 band 4 due 16896
+lane3 maintain fid:3          target 0.20 phi0 1.06 band 3 due 6656
+lane4 maintain fid:5          target 0.20 phi0 1.00 band 5 due 131584
+lane4 maintain fid:4          target 0.20 phi0 1.00 band 4 due 16896
+lane4 maintain fid:3          target 0.20 phi0 1.06 band 3 due 6656
+lane5 maintain fid:5          target 0.20 phi0 1.00 band 5 due 131584
+lane5 maintain fid:4          target 0.20 phi0 1.00 band 4 due 16896
+lane5 maintain fid:3          target 0.20 phi0 1.06 band 3 due 6656
+lane6 maintain fid:5          target 0.20 phi0 1.00 band 5 due 131584
+lane6 maintain fid:4          target 0.20 phi0 1.00 band 4 due 16896
+lane6 maintain fid:3          target 0.20 phi0 1.06 band 3 due 6656
+lane7 maintain fid:5          target 0.20 phi0 1.00 band 5 due 131584
+lane7 maintain fid:4          target 0.20 phi0 1.00 band 4 due 16896
+lane7 maintain fid:3          target 0.20 phi0 1.06 band 3 due 6656
+lane8 maintain fid:5          target 0.20 phi0 1.00 band 5 due 131584
+lane8 maintain fid:4          target 0.20 phi0 1.00 band 4 due 16896
+lane8 maintain fid:3          target 0.20 phi0 1.06 band 3 due 6656
+lane9 maintain fid:5          target 0.20 phi0 1.00 band 5 due 131584
+lane9 maintain fid:4          target 0.20 phi0 1.00 band 4 due 16896
+lane9 maintain fid:3          target 0.20 phi0 1.06 band 3 due 6656
+lane10 maintain fid:5          target 0.20 phi0 1.00 band 5 due 131584
+lane10 maintain fid:4          target 0.20 phi0 1.00 band 4 due 16896
+lane10 maintain fid:3          target 0.20 phi0 1.06 band 3 due 6656
+lane11 maintain fid:5          target 0.20 phi0 1.00 band 5 due 131584
+lane11 maintain fid:4          target 0.20 phi0 1.00 band 4 due 16896
+lane11 maintain fid:3          target 0.20 phi0 1.06 band 3 due 6656
+lane12 maintain fid:5          target 0.20 phi0 1.00 band 5 due 131584
+lane12 maintain fid:4          target 0.20 phi0 1.00 band 4 due 16896
+lane12 maintain fid:3          target 0.20 phi0 1.06 band 3 due 6656
+lane13 maintain fid:5          target 0.20 phi0 1.00 band 5 due 131584
+lane13 maintain fid:4          target 0.20 phi0 1.00 band 4 due 16896
+lane13 maintain fid:3          target 0.20 phi0 1.06 band 3 due 6656
+lane14 maintain fid:5          target 0.20 phi0 1.00 band 5 due 131584
+lane14 maintain fid:4          target 0.20 phi0 1.00 band 4 due 16896
+lane14 maintain fid:3          target 0.20 phi0 1.06 band 3 due 6656
+lane15 maintain fid:5          target 0.20 phi0 1.00 band 5 due 131584
+lane15 maintain fid:4          target 0.20 phi0 1.00 band 4 due 16896
+lane15 maintain fid:3          target 0.20 phi0 1.06 band 3 due 6656
+lane16 maintain fid:5          target 0.20 phi0 1.00 band 5 due 131584
+lane16 maintain fid:4          target 0.20 phi0 1.00 band 4 due 16896
+lane16 maintain fid:3          target 0.20 phi0 1.06 band 3 due 6656
+lane17 maintain fid:5          target 0.20 phi0 1.00 band 5 due 131584
+lane17 maintain fid:4          target 0.20 phi0 1.00 band 4 due 16896
+lane17 maintain fid:3          target 0.20 phi0 1.06 band 3 due 6656
+lane18 maintain fid:5          target 0.20 phi0 1.00 band 5 due 131584
+lane18 maintain fid:4          target 0.20 phi0 1.00 band 4 due 16896
+lane18 maintain fid:3          target 0.20 phi0 1.06 band 3 due 6656
+lane19 maintain fid:5          target 0.20 phi0 1.00 band 5 due 131584
+lane19 maintain fid:4          target 0.20 phi0 1.00 band 4 due 16896
+lane19 maintain fid:3          target 0.20 phi0 1.06 band 3 due 6656
+lane20 maintain fid:5          target 0.20 phi0 1.00 band 5 due 131584
+lane20 maintain fid:4          target 0.20 phi0 1.00 band 4 due 16896
+lane20 maintain fid:3          target 0.20 phi0 1.06 band 3 due 6656
+lane21 maintain fid:5          target 0.20 phi0 1.00 band 5 due 131584
+lane21 maintain fid:4          target 0.20 phi0 1.00 band 4 due 16896
+lane21 maintain fid:3          target 0.20 phi0 1.06 band 3 due 6656
+lane22 maintain fid:5          target 0.20 phi0 1.00 band 5 due 131584
+lane22 maintain fid:4          target 0.20 phi0 1.00 band 4 due 16896
+lane22 maintain fid:3          target 0.20 phi0 1.06 band 3 due 6656
+lane23 maintain fid:5          target 0.20 phi0 1.00 band 5 due 131584
+lane23 maintain fid:4          target 0.20 phi0 1.00 band 4 due 16896
+lane23 maintain fid:3          target 0.20 phi0 1.06 band 3 due 6656
+lane24 maintain fid:5          target 0.20 phi0 1.00 band 5 due 131584
+lane24 maintain fid:4          target 0.20 phi0 1.00 band 4 due 16896
+lane24 maintain fid:3          target 0.20 phi0 1.06 band 3 due 6656
+lane25 maintain fid:5          target 0.20 phi0 1.00 band 5 due 131584
+lane25 maintain fid:4          target 0.20 phi0 1.00 band 4 due 16896
+lane25 maintain fid:3          target 0.20 phi0 1.06 band 3 due 6656
+lane26 maintain fid:5          target 0.20 phi0 1.00 band 5 due 131584
+lane26 maintain fid:4          target 0.20 phi0 1.00 band 4 due 16896
+lane26 maintain fid:3          target 0.20 phi0 1.06 band 3 due 6656
+lane27 maintain fid:5          target 0.20 phi0 1.00 band 5 due 131584
+lane27 maintain fid:4          target 0.20 phi0 1.00 band 4 due 16896
+lane27 maintain fid:3          target 0.20 phi0 1.06 band 3 due 6656
+lane28 maintain fid:5          target 0.20 phi0 1.00 band 5 due 131584
+lane28 maintain fid:4          target 0.20 phi0 1.00 band 4 due 16896
+lane28 maintain fid:3          target 0.20 phi0 1.06 band 3 due 6656
+lane29 maintain fid:5          target 0.20 phi0 1.00 band 5 due 131584
+lane29 maintain fid:4          target 0.20 phi0 1.00 band 4 due 16896
+lane29 maintain fid:3          target 0.20 phi0 1.06 band 3 due 6656
+lane30 maintain fid:5          target 0.20 phi0 1.00 band 5 due 131584
+lane30 maintain fid:4          target 0.20 phi0 1.00 band 4 due 16896
+lane30 maintain fid:3          target 0.20 phi0 1.06 band 3 due 6656
+lane31 maintain fid:5          target 0.20 phi0 1.00 band 5 due 131584
+lane31 maintain fid:4          target 0.20 phi0 1.00 band 4 due 16896
+lane31 maintain fid:3          target 0.20 phi0 1.06 band 3 due 6656
+record   fid:1          0.612 (ema 0.612)
+record   fid:2          0.337 (ema 0.337)
+record   recall:b2      0.000 (ema 0.000)
+record   recall:b3      0.000 (ema 0.000)/usr/local/lib/python3.11/dist-packages/torch/_inductor/compile_fx.py:150: UserWarning: TensorFloat32 tensor cores for float32 matrix multiplication available but not enabled. Consider setting `torch.set_float32_matmul_precision('high')` for better performance.
+  warnings.warn(
+
+  lanes=  32 compile=False  32,106 tok/s (incl. warmup)
+  lanes= 128 compile=False  FAILED: CUDA out of memory. Tried to allocate 4.00 GiB. GPU 0 has a total capacity of 15.72 GiB of which 2.42 GiB is free. Process 917749 has 13.30 GiB memory in use. Of the allocated memory 12.89 GiB is allocated by PyTorch, and 215.75 MiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://pytorch.org/docs/stable/notes/cuda.html#environment-variables)
+  lanes= 128 compile=True  FAILED: CUDA out of memory. Tried to allocate 4.00 GiB. GPU 0 has a total capacity of 15.72 GiB of which 2.64 GiB is free. Process 917749 has 13.08 GiB memory in use. Of the allocated memory 12.67 GiB is allocated by PyTorch, and 216.07 MiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://pytorch.org/docs/stable/notes/cuda.html#environment-variables)
