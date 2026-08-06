@@ -14,7 +14,9 @@ transformer structurally cannot hold past its context window, and the
 drive layer's self-scheduled curriculum beats uniform training at
 matched compute.
 
-Two sub-claims, separable by the arms below:
+Two sub-claims (A2: L1 is this round's registered claim; L2 runs but
+is observational this round — its causal gate is deferred to the next
+card, since no bands-without-drive arm is trained):
 - **L1 (holding):** the ladder carries long-range structure with no
   attention anywhere; long-range performance does not cliff at any
   window boundary, because there is no window.
@@ -22,24 +24,24 @@ Two sub-claims, separable by the arms below:
   model's own measured competences and scheduling data by learning
   progress, improves on uniform training at matched compute.
 
-## Arms (all matched parameter count and matched training compute)
+## The model (one arm — A2)
 
-1. **baseline** — standard decoder-only transformer (the reference the
-   field trusts).
-2. **bands** — the clock ladder alone: per-band recurrent state, each
-   band ~8× slower than the one below; each band embeds the window of
-   the band below and predicts the next window (the v0.5–v0.9 recipe:
-   context coupling, within-band whitening, boundary masking). No
-   registers, no reward. Isolates the backbone.
-3. **full** — bands + the drive layer: probes, registers, proposer,
-   ledger, and the learning-progress data scheduler. The complete
-   architecture. Arm 3 vs arm 2 isolates the drive layer; arm 3 vs
-   arm 1 is the headline.
+One trained model per size: the **full architecture** — the band
+ladder (each band ~8× slower than the one below, each embedding the
+window of the band below and predicting the next window; the
+v0.5–v0.9 recipe: context coupling, within-band whitening, boundary
+masking) plus the drive layer. No trained baseline, no bands-only
+arm. The control is structural: with attention absent, any long-range
+behavior can only flow through band state, and the **lesion test**
+exercises that control at evaluation time. Reference points: public
+checkpoints of similar size (e.g. Pythia-70M/160M), downloaded not
+trained, labeled non-matched (different data and compute) — landmarks,
+not baselines.
 
-Sizes: ~10M, ~30M, ~90M params. **One seed per (size, arm) cell** —
-replication is carried by the size axis: no claim counts unless its
-direction holds at all three sizes. This is standard scaling-study
-methodology; LM pretraining is low-variance relative to RL.
+Sizes: ~10M, ~30M, ~90M params. **One seed per size** — replication
+is carried by the size axis: no claim counts unless its direction
+holds at all three sizes. This is standard scaling-study methodology;
+LM pretraining is low-variance relative to RL.
 
 ## Band geometry (content bands)
 
@@ -103,7 +105,7 @@ its own latent.
 Admission: closed-form probes calibrated on the calibration split,
 held-out audited; the audit table is committed with the runs.
 
-## Drive layer (arm 3 only)
+## Drive layer
 
 - Registers per content band hold targets over admitted channels
   (maintain: keep each band's competence in its healthy range;
@@ -124,32 +126,44 @@ held-out audited; the audit table is committed with the runs.
 ## Evaluation
 
 - **Recall-at-distance curves** on held-out books: performance vs gap
-  length, overlaid with the baseline's context-window boundary. The
-  registered picture: baseline cliffs at its window; ladder does not.
-- **Window dial:** baseline re-evaluated at shrinking windows
-  (2048/512/128) vs the ladder arm (which has none).
-- **Lesion:** slow bands knocked out at eval; long-range recall must
-  collapse (mechanism check) while local perplexity survives.
-- **Short-range cost:** within-window perplexity, ladder vs baseline.
-- **Live register panel:** the act6 demo transposed — mid-book state
-  of every band, printed as text from audited probes.
+  length, overlaid with the reference checkpoints' context-window
+  boundaries. The registered picture: references cliff at their
+  windows; the ladder's curve does not cliff, because it has none.
+- **Window dial (references only, eval-time, $0):** public
+  checkpoints re-evaluated at shrinking windows (2048/512/128) to
+  render the cliff the ladder is claimed not to have.
+- **Lesion (the control):** slow bands knocked out at eval — live,
+  repeatable; beyond-scale recall must collapse while local
+  perplexity survives. With no attention present, whatever the lesion
+  kills was band-carried.
+- **The talking eval (demo protocol):** plant a name or fact early in
+  a held-out document or dialogue; continue thousands of tokens of
+  unrelated stream; probe whether it returns. Run with the register
+  panel open — every band's held state printed live from audited
+  probes — and repeat with band 5 lesioned on camera. Persistence,
+  not eloquence, is what is being read.
+- **Short-range perplexity** vs reference checkpoints (descriptive,
+  non-matched; reported, not gated).
 - Ledger audit: telescoping exactness recomputed from committed logs.
 
 ## Gates (pre-registered; exact constants may be amended only pre-run,
 with the amendment ledgered here)
 
-- **G-hold:** at every size, ladder recall-at-distance beyond the
-  baseline's window exceeds the baseline's, and the ladder's curve
-  from near to far degrades by less than half the baseline's
-  within-to-edge degradation. Direction must hold at all 3 sizes.
-- **G-trend:** the ladder-vs-baseline long-range advantage is
-  monotone non-decreasing across 10M→30M→90M.
-- **G-drive:** arm 3 beats arm 2 on the pre-registered eval suite at
-  matched compute at ≥2 of 3 sizes.
-- **G-cost:** arm 3 within-window perplexity within 15% of baseline
-  at 90M.
-- **G-lesion:** slow-band lesion reduces beyond-window recall by
-  ≥50% while within-window perplexity moves <10%.
+- **G-context (existence):** at every size, entity recall at gaps
+  ≥4k tokens beats the distractor-chance floor by a margin fixed
+  pre-run (after the probe admission audit, before any training).
+  With no attention in the model, passing this gate is attributable
+  to band state.
+- **G-flat:** the ladder's recall-at-distance curve from 512-token
+  gaps to 8k-token gaps degrades by less than half the drop the
+  reference checkpoints show crossing their own window edge.
+- **G-trend:** the ladder's beyond-4k recall is monotone
+  non-decreasing across 10M→30M→90M.
+- **G-lesion:** slow-band lesion reduces beyond-4k recall by ≥50%
+  while local perplexity moves <10%.
+- **(Deferred, A2):** the L2/drive-layer causal gate — requires a
+  bands-without-drive arm; registered for the next card. Scheduler
+  decisions are logged this round and reported descriptively.
 - Misses are printed beside passes, as always.
 
 ## Compute and cost
@@ -167,6 +181,16 @@ GPU fallback. Target cost: $0–100.
   scoped to their referents. The accounting is unchanged — every hold
   still settles within one scene and the audit is identical — but the
   model lives once, for the whole run.
+- **A2** (2026-08-05, pre-run, pre-code): the three trained arms
+  (baseline / bands / full) are reduced to one — the full
+  architecture only. Rationale: with attention absent, any long-range
+  capability is attributable to band state, so the lesion test is the
+  control and trained baselines are replaced by downloaded reference
+  checkpoints (labeled non-matched). Cost, priced openly: the
+  drive-layer causal claim (L2) loses its gate this round and is
+  deferred; this round registers existence (L1) only. Gates
+  re-registered accordingly above; no runs existed under the old
+  gates.
 
 ## Status
 
