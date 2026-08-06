@@ -110,6 +110,9 @@ class Instruments:
         if due:
             f = due[0]
             self.pending.remove(f)
+            # the pair frees when its fact is asked — the roster can
+            # never exhaust (the 64-combo spin that froze the first pod)
+            self.used.discard((f["name"], f["obj"]))
             ask = f"what color of {f['obj']} was {f['name']} kept ?"
             ans_prefix = f"the {f['obj']} was "
             answer = f["col"]
@@ -119,10 +122,12 @@ class Instruments:
                     {"kind": "ask", "prefix": ans_prefix, "answer": answer,
                      "plant": f["plant"]})
         if len(self.pending) < 8 and self.rng.random() < 0.5:
-            while True:
+            for _ in range(200):  # bounded; roster self-frees on ask
                 name, obj = self.rng.choice(NAMES), self.rng.choice(OBJECTS)
                 if (name, obj) not in self.used:
                     break
+            else:
+                return None
             self.used.add((name, obj))
             col = self.rng.choice(COLORS)
             b = self.rng.choices(range(4), weights=self.bias)[0]

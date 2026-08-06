@@ -90,10 +90,12 @@ class Weaver:
         return toks, evs
 
     def _plant(self):
-        while True:
+        for _ in range(200):  # bounded; roster self-frees on ask
             name, obj = self.rng.choice(NAMES), self.rng.choice(OBJECTS)
             if (name, obj) not in self.used:
                 break
+        else:
+            return self._chatter()
         self.used.add((name, obj))
         col = self.rng.choice(COLORS)
         words = ["by", "the", "way", name, "kept", "a", col, obj, "in",
@@ -167,6 +169,8 @@ class Weaver:
         if due:
             fact = due[0]
             self.pending.remove(fact)
+            # pair frees on ask — the roster can never exhaust
+            self.used.discard((fact["name"], fact["obj"]))
             batch = self._ask(fact)
         else:
             r = self.rng.random()

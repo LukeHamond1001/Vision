@@ -37,6 +37,27 @@ class TestWeaverLaws(unittest.TestCase):
         earned = [d["ok"] for p, k, d in evs if k == "earned"]
         self.assertIn(False, earned)  # the machinery still selects
 
+    def test_roster_never_exhausts_on_long_runs(self):
+        # regression: the 64-combo retry spin that froze the first pod
+        from iga.lm_data_ultrachat import Instruments
+        import random as _r
+        inst = Instruments(_r.Random(0))
+        pos, convos = 0, 0
+        for i in range(3000):
+            got = inst.maybe_convo(pos)
+            pos += 1500  # ~one conversation of stream per slot
+            if got:
+                convos += 1
+                if got[1]["kind"] == "plant":
+                    inst.pending[-1]["plant"] = pos
+                    inst.pending[-1]["due"] = pos \
+                        + inst.pending[-1].pop("due_gap")
+        self.assertGreater(convos, 400)  # kept producing to the end
+        w_lane = Lane(Vocab(), random.Random(9))
+        toks, _, evs = w_lane.take(120_000)  # weaver deep run
+        late_probes = [p for p, k, d in evs if k == "probe" and p > 60_000]
+        self.assertGreater(len(late_probes), 0)
+
     def test_only_two_special_tokens_no_scene(self):
         self.assertNotIn("<scene>", lm_gen.LEXICON)
         self.assertNotIn("</scene>", lm_gen.LEXICON)
