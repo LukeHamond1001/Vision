@@ -87,6 +87,23 @@ talking eval is native to it:
 - **StackExchange dumps** — threads as scenes; the accepted-answer
   bit and in-the-wild "thanks" are natural ratification labels.
 
+Synthetic tier (A4) — free, pre-generated, used to separate the
+fluency layer from the holding layer at small scale:
+
+- **TinyStories** — clean simple English that even 10M models speak
+  fluently; derisks the go/no-go read.
+- **Cosmopedia** (sampled) — synthetic long-form textbook prose.
+- **UltraChat** — synthetic dialogue, turn-marked like the rest.
+- **Planted-dependency generator (ours)** — synthetic scenes where a
+  fact stated early is required late at controlled gap lengths;
+  ground truth known by construction, so recall channels audit
+  airtight.
+
+**Mix policy (A4):** synthetic-heavy at 10M (clean go/no-go),
+annealing toward real-heavy at 90M. All headline numbers are quoted
+on real held-out data (PG-19); synthetic is for training food and
+precision measurement, never for claims.
+
 ### Stream markers (pipeline-written; the model never earns by
 emitting them — reward exists only at training time, computed by the
 frozen ledger from data-side labels)
@@ -166,7 +183,12 @@ held-out audited; the audit table is committed with the runs.
   unrelated stream; probe whether it returns. Run with the register
   panel open — every band's held state printed live from audited
   probes — and repeat with band 5 lesioned on camera. Persistence,
-  not eloquence, is what is being read.
+  not eloquence, is what is being read. The go/no-go read at 10M
+  distinguishes three outcomes: gibberish (engineering failure —
+  fix and retry, no verdict on the claim), fluent-but-memoryless
+  (the bet failing — the honest negative), fluent-and-holding (L1
+  existence — with no attention present, what is held is
+  band-held).
 - **Short-range perplexity** vs reference checkpoints (descriptive,
   non-matched; reported, not gated).
 - Ledger audit: telescoping exactness recomputed from committed logs.
@@ -224,6 +246,15 @@ scale, not blocking this one. Target cost: $15–40 total.
   scenes) with turn-end markers `<eot_human>`/`<eot_model>` and
   turn-scoped holds; compute plan set to RTX 2000 debug → RTX 4090
   registered runs.
+- **A4** (2026-08-05, pre-run, pre-code): synthetic tier added
+  (TinyStories, Cosmopedia, UltraChat, and a planted-dependency
+  generator) with the mix policy: synthetic-heavy at 10M annealing to
+  real-heavy at 90M; headline numbers quoted only on real held-out
+  data. The talking eval's three-outcome read (gibberish /
+  fluent-but-memoryless / fluent-and-holding) registered as the
+  go/no-go interpretation. Success bar restated: L1 is existence —
+  some form of the attention function held in band state — not
+  superiority over any baseline.
 
 ## Status
 
