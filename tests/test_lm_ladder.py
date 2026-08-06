@@ -1,4 +1,4 @@
-"""v5.0 law tests — the language ladder keeps the campaign's laws."""
+"""v5.0 law tests — the endless-dialogue ladder keeps the campaign's laws."""
 
 import random
 import unittest
@@ -6,94 +6,107 @@ import unittest
 import torch
 
 from iga import lm_gen
-from iga.lm_bands import BandLM, FAST_BANDS, N_BANDS
-from iga.lm_conveyor import Vocab, Conveyor
-from iga.lm_drive import Drive
+from iga.lm_bands import BandLM, N_BANDS
+from iga.lm_conveyor import Vocab, Lane
+from iga.lm_drive import Drive, horizon
 from iga.lm_train import train
 
 
-class TestGeneratorLaws(unittest.TestCase):
-    def test_probe_positions_exact(self):
-        rng = random.Random(3)
-        for _ in range(5):
-            toks, meta = lm_gen.saga(rng)
-            for p in meta["probes"]:
-                self.assertEqual(toks[p["pos"]], p["answer"])
-            toks, meta = lm_gen.episode(rng)
-            for p in meta["probes"]:
-                self.assertEqual(toks[p["pos"]], p["answer"])
+class TestWeaverLaws(unittest.TestCase):
+    def test_probe_positions_exact_and_earned_varies(self):
+        v = Vocab()
+        lane = Lane(v, random.Random(3))
+        toks, _, _ = lane.take(6000)
+        evs = []  # re-take with events captured
+        lane2 = Lane(v, random.Random(3))
+        toks, _, evs = lane2.take(6000)
+        probes = [(p, d) for p, k, d in evs if k == "probe"]
+        earned = [d["ok"] for p, k, d in evs if k == "earned"]
+        self.assertGreater(len(probes), 0)
+        for p, d in probes:
+            self.assertEqual(toks[p], d["answer"],
+                             "probe position must be the answer token id")
+            self.assertGreater(d["gap"], 0)
+        self.assertEqual(set(earned) | {True, False}, {True, False})
+        self.assertIn(True, earned)   # the label varies
+        self.assertIn(False, earned)
 
-    def test_ok_iff_verified_success(self):
-        rng = random.Random(4)
-        seen = set()
-        for _ in range(50):
-            toks, meta = lm_gen.episode(rng)
-            self.assertEqual("<ok>" in toks, meta["ok"])
-            seen.add(meta["ok"])
-        self.assertEqual(seen, {True, False})  # the label varies
+    def test_only_two_special_tokens_no_scene(self):
+        self.assertNotIn("<scene>", lm_gen.LEXICON)
+        self.assertNotIn("</scene>", lm_gen.LEXICON)
+        self.assertNotIn("<ok>", lm_gen.LEXICON)
+        self.assertIn("<eot_human>", lm_gen.LEXICON)
+        self.assertIn("<eot_model>", lm_gen.LEXICON)
 
 
 class TestDriveLaws(unittest.TestCase):
     def test_closed_loop_pays_zero(self):
         d = Drive(n_lanes=1)
         d.ema["fid:1"] = 0.10  # below healthy -> maintain proposed
-        d.scene_start(0, "saga")
+        d.sweep(losses=[])
         self.assertTrue(any(h["key"] == "fid:1" for h in d.holds[0]))
-        d.scene_end(0, ok=False, scene_type="saga", losses=[])
-        for e in d.ledger:
-            if e["key"] == "fid:1":
-                self.assertEqual(e["pay"], 0.0)  # ended where it opened
+        d.step_t += horizon(1) + 1
+        d.sweep(losses=[])     # ema unchanged: ends where it opened
+        settled = [e for e in d.ledger if e["key"] == "fid:1"]
+        self.assertTrue(settled)
+        self.assertEqual(settled[0]["pay"], 0.0)
 
     def test_telescoping_reconstructs(self):
         d = Drive(n_lanes=1)
         d.ema["fid:1"] = 0.10
-        d.scene_start(0, "saga")
-        d.ema["fid:1"] = 0.30  # progress happened during the scene
-        d.scene_end(0, ok=False, scene_type="saga", losses=[])
+        d.sweep(losses=[])
+        d.ema["fid:1"] = 0.19  # progress during the hold
+        d.step_t += horizon(1) + 1
+        d.sweep(losses=[])
         for e in d.ledger:
             self.assertAlmostEqual(e["pay"], e["w"] * (e["phi0"] - e["phi1"]),
                                    places=12)
 
-    def test_unminted_never_proposed_and_ok_mints(self):
+    def test_thanks_mints_and_unminted_never_proposed(self):
         d = Drive(n_lanes=1)
         for k in range(1, N_BANDS):
             d.ema[f"fid:{k}"] = 0.5  # healthy: no maintains, no vetoes
-        d.scene_start(0, "saga")
+        d.sweep(losses=[])
         self.assertFalse(any(h["kind"] == "frontier" for h in d.holds[0]))
-        d.probe(0, torch.tensor(0.4), gap=100, scene_type="saga")
-        d.scene_end(0, ok=True, scene_type="saga", losses=[])
-        self.assertIn(("saga", "recall:saga:b0"), d.minted)
-        d.scene_start(0, "saga")
+        d.probe(0, torch.tensor(0.4), gap=100)
+        d.earned(0, ok=False)     # "not right" mints nothing
+        d.sweep(losses=[])
+        self.assertFalse(any(h["kind"] == "frontier" for h in d.holds[0]))
+        d.earned(0, ok=True)      # "thanks" mints the channel it followed
+        d.sweep(losses=[])
         self.assertTrue(any(h["kind"] == "frontier" for h in d.holds[0]))
 
-    def test_no_hold_outlives_scene(self):
+    def test_expiry_pays_exactly_zero_and_hold_dies(self):
         d = Drive(n_lanes=1)
-        d.ema["fid:1"] = 0.10
-        d.scene_start(0, "saga")
-        self.assertTrue(d.holds[0])
-        d.scene_end(0, ok=False, scene_type="saga", losses=[])
-        self.assertFalse([h for h in d.holds[0] if h["scope"] == "scene"])
+        for k in range(1, N_BANDS):
+            d.ema[f"fid:{k}"] = 0.5
+        d.probe(0, torch.tensor(0.4), gap=100)
+        d.earned(0, ok=True)
+        d.sweep(losses=[])
+        h = [h for h in d.holds[0] if h["kind"] == "frontier"][0]
+        d.step_t = h["due"] + 1   # horizon passes, no readings in-window
+        d.sweep(losses=[])
+        exp = [e for e in d.ledger if e["key"] == h["key"]]
+        self.assertTrue(exp)
+        self.assertEqual(exp[0]["pay"], 0.0)
+        self.assertNotIn(h, d.holds[0])
 
 
 class TestBandLaws(unittest.TestCase):
-    def test_scene_mask_resets_fast_persists_slow(self):
+    def test_state_persists_and_lesion_zeroes(self):
         v = Vocab()
         m = BandLM(len(v), d=32)
-        torch.manual_seed(0)
         st = m.init_state(1, "cpu")
-        toks = torch.tensor([v.encode("mira kept a silver key .".split())])
+        toks = torch.tensor([v.encode("by the way mira kept a red key .".split())])
         _, st, _ = m(toks, st, None)
-        st["h"][5] = torch.ones_like(st["h"][5])  # slow band carries something
-        fast_before = [st["h"][k].clone() for k in FAST_BANDS]
-        tok = torch.tensor([[v.idx["<scene>"]]])
-        _, st, _ = m(tok, st, {0: [0]})
-        fresh = m.init_state(1, "cpu")
-        _, fresh, _ = m(tok, fresh, None)
-        for k in FAST_BANDS:
-            self.assertTrue(torch.allclose(st["h"][k], fresh["h"][k]),
-                            f"band {k} not reset to fresh at scene start")
-        self.assertTrue(bool((st["h"][5] == 1.0).all()),
-                        "slow band must persist across scene starts")
+        self.assertGreater(float(st["h"][0].abs().sum()), 0.0)
+        st = m.detach_state(st)
+        _, st2, _ = m(toks, st, None)   # continuity: nothing resets, ever
+        self.assertGreater(float(st2["h"][0].abs().sum()), 0.0)
+        m.lesioned = {5}
+        reads = m._read(st2)
+        self.assertEqual(float(reads[5].abs().sum()), 0.0)
+        m.lesioned = set()
 
 
 class TestEndToEnd(unittest.TestCase):

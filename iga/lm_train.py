@@ -28,12 +28,7 @@ FID_W = 0.1
 def process_chunk(model, drive, conveyor, T, device, opt=None):
     x, y, events = conveyor.chunk(T)
     x, y = x.to(device), y.to(device)
-    scene_starts = {}
-    for lane, evs in enumerate(events):
-        for p, k, d in evs:
-            if k == "scene_start":
-                scene_starts.setdefault(p, []).append(lane)
-    logits, model._st, ticks = model(x, model._st, scene_starts)
+    logits, model._st, ticks = model(x, model._st, None)
     ce = torch.nn.functional.cross_entropy(
         logits.reshape(-1, model.vocab_size), y.reshape(-1))
     losses = [ce]
@@ -47,14 +42,14 @@ def process_chunk(model, drive, conveyor, T, device, opt=None):
         losses.append(FID_W * torch.stack(fid_terms).mean())
     logp = torch.log_softmax(logits, dim=-1)
     for lane, evs in enumerate(events):
-        for p, kind, d in sorted(evs):
-            if kind == "scene_start":
-                drive.scene_start(lane, d["type"])
-            elif kind == "probe" and p > 0:
+        for p, kind, d in sorted(evs, key=lambda e: e[0]):
+            if kind == "probe" and p > 0:
                 prob = logp[lane, p - 1, d["answer"]].exp()
-                drive.probe(lane, prob, d["gap"], d["type"])
-            elif kind == "scene_end":
-                drive.scene_end(lane, d["ok"], d["type"], losses)
+                drive.probe(lane, prob, d["gap"])
+            elif kind == "earned":
+                drive.earned(lane, d["ok"])
+    drive.step_t += T
+    drive.sweep(losses)
     loss = torch.stack([l if l.dim() == 0 else l.mean() for l in losses]).sum()
     if opt is not None:
         opt.zero_grad()
@@ -62,13 +57,9 @@ def process_chunk(model, drive, conveyor, T, device, opt=None):
         torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
         opt.step()
     model._st = model.detach_state(model._st)
-    # probe readings retained by scenes that span chunks leave the graph
-    # here: pay gradients flow through settlement-chunk readings only
-    for lane in range(len(drive.scene_probes)):
-        drive.scene_probes[lane] = {
-            k: [t.detach() for t in v]
-            for k, v in drive.scene_probes[lane].items()}
-    drive.step_t += T
+    # reading tensors retained across the boundary leave the graph here:
+    # pay gradients flow through settlement-chunk readings only
+    drive.detach_readings()
     return float(ce.detach()), float(loss.detach())
 
 
@@ -77,7 +68,7 @@ def train(d=64, lanes=4, T=256, steps=40, seed=0, device="cpu",
     vocab = Vocab()
     drive = Drive(n_lanes=lanes, seed=seed)
     conveyor = Conveyor(vocab, n_lanes=lanes, seed=splits(seed)["train"],
-                        next_kind=drive.next_kind)
+                        bias_fn=drive.bin_weights)
     model = BandLM(len(vocab), d=d).to(device)
     model._st = model.init_state(lanes, device)
     opt = torch.optim.AdamW(model.parameters(), lr=3e-4)

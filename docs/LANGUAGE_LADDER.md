@@ -52,15 +52,14 @@ active only on long documents). **All sizes carry all six content
 bands (A3) — state widths scale with model size — plus the continuous
 competence band.**
 
-**The conveyor law (A1): the life is the training run; a document is
-a scene.** All data rides one continuous stream, in the order the
-scheduler chooses; the model is never reset. Fast-band hidden state is
-boundary-masked between scenes (carrying one scene's state into an
-unrelated one is noise, not memory), slow bands persist, and the
-ledger's law is scoped rather than episodic: **no hold outlives its
-referent.** A hold opened on a scene's entities settles by that
-scene's end — arrival or expiry, paid or zero, never across it. The
-telescoping audit applies per hold; closed loops still net zero.
+**The conveyor law (A1, completed by A6): the life is the training
+run, and the stream is one unbroken dialogue.** No scene brackets, no
+masking, nothing ever reset — the model lives once and reads on. The
+referent law survives without brackets as a **horizon**: every hold
+carries a time budget set by its band's clock (~4 ticks); at the
+horizon it settles on the readings that arrived during the hold, or
+expires at exactly zero. No hold outlives its horizon; the telescoping
+audit applies per hold; closed loops still net zero.
 
 **The competence band is continuous.** One slowest register bank runs
 on the training-run clock, holding targets over the model's measured
@@ -86,31 +85,31 @@ parsing:
 - **Public synthetic agent trajectories** (AgentInstruct,
   ToolBench-class tool-use episodes) — goal → actions → outcome
   scenes.
-- **Procedural generator (ours; the precision core)** — TextWorld-
-  style agent episodes and multi-chapter planted-dependency sagas at
-  any length (band 6's 32k scenes come from here), goals and
-  outcomes verified by the generator's own world state: `<ok>`
-  appears iff the goal was actually achieved, so earned/not-earned
-  varies truthfully by construction.
+- **Procedural weaver (ours; the precision core, and A6's sole v0
+  source)** — one endless person↔agent conversation per lane: facts
+  planted in human turns and asked back at controlled gaps (up to
+  24k tokens — band 6's food), find-the-object tasks verified by a
+  world sim, the depicted agent right ~3/4 of the time so
+  thanks/not-right varies truthfully by construction.
 
 **Scope (A5):** training and headline evaluation are synthetic
 held-out (generator-verified ground truth). Real-data headlines are
 deferred to the next card; this round's claims say "on synthetic
 data" wherever they are quoted.
 
-### Stream markers (pipeline-written; the model never earns by
-emitting them — reward exists only at training time, computed by the
-frozen ledger from data-side labels)
+### Stream markers (A6 — two special tokens, nothing else)
 
-- `<scene>` / `</scene>` — scene start/end. Start masks fast-band
-  state; end settles every scene-scoped hold (arrival paid, unmet
-  expired at zero). Every piece of data gets these.
-- `<eot_human>` / `<eot_model>` — turn ends inside dialogue scenes.
-  No state masking (one conversation is one scene); turn-scoped holds
-  settle at `<eot_model>`.
-- `<ok>` — the earned mark, appended at scene end only where the
-  data's label says earned (accepted answer, quality rating, chosen
-  side, thanked reply). Gates template minting; never pays.
+- `<eot_human>` / `<eot_model>` — the only special tokens in the
+  stream. The page shows pure conversation, like regular LLM data.
+- The earned mark is natural human speech — "thanks . good job ." —
+  spoken iff the depicted agent earned it ("that is not right ."
+  otherwise). The pipeline records it as an invisible `earned` event;
+  a thanks MINTS the channel it followed and never pays.
+- Probes (planted-fact ask-backs) are invisible events too, annotated
+  only where the depicted answer is the true one — the model is never
+  trained toward a token that is then graded as truth when it wasn't.
+- The model never earns by emitting anything: reward exists only at
+  training time, computed by the frozen ledger from pipeline events.
 
 Token budgets ~chinchilla: 10M→~200M tok, 30M→~600M, 90M→~2B.
 Three splits under the instrument discipline: train / calibration
@@ -260,18 +259,29 @@ scale, not blocking this one. Target cost: $15–40 total.
   real-data headlines are the next card's work. Real corpora
   (WildChat, OASST, HH-RLHF, PG-19, FineWeb-Edu, StackExchange)
   remain listed in A3/A4 as the rung-2 roster.
+- **A6** (2026-08-05, assembled pre-run): no scene tokens. The stream
+  is one endless person↔agent dialogue; the only special tokens are
+  `<eot_human>`/`<eot_model>`; earned marks are natural speech plus
+  invisible pipeline events ("thanks" mints the channel it followed);
+  scene masking is removed (nothing unrelated exists to firewall —
+  the conversation is genuinely continuous), and hold settlement is
+  horizon-scoped (~4 ticks of the hold's band; expiry pays exactly
+  zero, readings count only if strictly inside the hold). Scheduler
+  wired as bin-weights biasing the weaver's plant gaps. Code and law
+  tests updated; suite 45/45.
 
 ## Status
 
-Assembled, no registered runs. Generator (`iga/lm_gen.py`), conveyor
-(`iga/lm_conveyor.py`), six-band model (`iga/lm_bands.py`), drive
-layer (`iga/lm_drive.py`), trainer (`iga/lm_train.py`), eval harness
-(`iga/lm_eval.py`); 8 law tests in `tests/test_lm_ladder.py` (suite:
-45/45). Local end-to-end smoke passes: CE falls, ledger audits exact,
-proposals/vetoes/minting live, panel readable, lesion + talk harness
-run. v0 engineering notes (honest) live in module docstrings:
-slow-band predictor gradients flow only within a chunk; turn-scoped
-settlement wired as scene-scoped for now; competence band = records +
-scheduler. Remaining before any registered run: the channel admission
-audit on the calibration split, then constants frozen. Debug next on
-RTX 2000; registered runs on a 4090.
+Assembled scene-free (A6), no registered runs. Weaver (`iga/lm_gen.py`),
+conveyor (`iga/lm_conveyor.py`), six-band model (`iga/lm_bands.py`),
+drive layer (`iga/lm_drive.py`), trainer (`iga/lm_train.py`), eval
+harness (`iga/lm_eval.py`); law tests in `tests/test_lm_ladder.py`
+(suite: 45/45). Local end-to-end smoke passes on the endless-dialogue
+stream: CE falls, ledger audits exact, thanks-mints/expiry-zero/
+closed-loop-zero pinned by tests, panel readable, lesion + talk
+harness run. v0 engineering notes (honest) in module docstrings:
+slow-band predictor gradients flow only within a chunk; competence
+band = records + scheduler bin-weights. Remaining before any
+registered run: the channel admission audit on the calibration split,
+then constants frozen. Debug next on RTX 2000; registered runs on a
+4090.
