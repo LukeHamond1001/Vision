@@ -71,38 +71,32 @@ growing up.
 
 ## Data (public, free, mixed; ratios frozen before runs)
 
-Dialogue-primary (A3) — the model should learn turn-taking so the
-talking eval is native to it:
+All-synthetic (A5) — every cue, boundary, and label known by
+construction; the reward word is placed by verified outcome, never by
+parsing:
 
-- **WildChat-1M** — real human↔assistant conversations, open license;
-  the primary conversational substrate.
-- **OpenAssistant OASST1/2** — human-written dialogue trees with
-  per-message quality ratings (a natural, varying ratification label).
-- **Anthropic HH-RLHF** — dialogue pairs with chosen/rejected labels
-  (earned / not-earned, built in).
-- **PG-19** — full public-domain books; the long-scene anchor that
-  gives bands 5–6 real work and the ≥4k-gap gate its material.
-- **FineWeb-Edu** (sampled) — general-text backbone; ships a
-  per-document quality score used as a selection label.
-- **StackExchange dumps** — threads as scenes; the accepted-answer
-  bit and in-the-wild "thanks" are natural ratification labels.
+- **UltraChat** — synthetic human↔assistant dialogue; the turn-taking
+  substrate.
+- **OpenHermes / Magpie-class** — synthetic instruction-chat
+  episodes.
+- **Cosmopedia** (sampled) — synthetic long-form prose; mid-band
+  food.
+- **TinyStories** — clean simple English; the fluency floor that
+  makes the 10M go/no-go readable.
+- **Public synthetic agent trajectories** (AgentInstruct,
+  ToolBench-class tool-use episodes) — goal → actions → outcome
+  scenes.
+- **Procedural generator (ours; the precision core)** — TextWorld-
+  style agent episodes and multi-chapter planted-dependency sagas at
+  any length (band 6's 32k scenes come from here), goals and
+  outcomes verified by the generator's own world state: `<ok>`
+  appears iff the goal was actually achieved, so earned/not-earned
+  varies truthfully by construction.
 
-Synthetic tier (A4) — free, pre-generated, used to separate the
-fluency layer from the holding layer at small scale:
-
-- **TinyStories** — clean simple English that even 10M models speak
-  fluently; derisks the go/no-go read.
-- **Cosmopedia** (sampled) — synthetic long-form textbook prose.
-- **UltraChat** — synthetic dialogue, turn-marked like the rest.
-- **Planted-dependency generator (ours)** — synthetic scenes where a
-  fact stated early is required late at controlled gap lengths;
-  ground truth known by construction, so recall channels audit
-  airtight.
-
-**Mix policy (A4):** synthetic-heavy at 10M (clean go/no-go),
-annealing toward real-heavy at 90M. All headline numbers are quoted
-on real held-out data (PG-19); synthetic is for training food and
-precision measurement, never for claims.
+**Scope (A5):** training and headline evaluation are synthetic
+held-out (generator-verified ground truth). Real-data headlines are
+deferred to the next card; this round's claims say "on synthetic
+data" wherever they are quoted.
 
 ### Stream markers (pipeline-written; the model never earns by
 emitting them — reward exists only at training time, computed by the
@@ -167,10 +161,12 @@ held-out audited; the audit table is committed with the runs.
 
 ## Evaluation
 
-- **Recall-at-distance curves** on held-out books: performance vs gap
-  length, overlaid with the reference checkpoints' context-window
-  boundaries. The registered picture: references cliff at their
-  windows; the ladder's curve does not cliff, because it has none.
+- **Recall-at-distance curves** on held-out synthetic scenes
+  (planted-dependency; generator-verified ground truth): performance
+  vs gap length, overlaid with the reference checkpoints'
+  context-window boundaries. The registered picture: references
+  cliff at their windows; the ladder's curve does not cliff, because
+  it has none.
 - **Window dial (references only, eval-time, $0):** public
   checkpoints re-evaluated at shrinking windows (2048/512/128) to
   render the cliff the ladder is claimed not to have.
@@ -255,6 +251,15 @@ scale, not blocking this one. Target cost: $15–40 total.
   go/no-go interpretation. Success bar restated: L1 is existence —
   some form of the attention function held in band state — not
   superiority over any baseline.
+- **A5** (2026-08-05, pre-run, pre-code): all-synthetic supersedes
+  the A3/A4 mix. Rationale: every boundary cue and earned-mark is
+  known by construction, `<ok>` is placed by generator-verified
+  outcome (so the label varies truthfully), fluency at tiny scale is
+  derisked, and the pipeline sheds all real-data parsing. Cost,
+  printed: this round's claims are scoped "on synthetic data";
+  real-data headlines are the next card's work. Real corpora
+  (WildChat, OASST, HH-RLHF, PG-19, FineWeb-Edu, StackExchange)
+  remain listed in A3/A4 as the rung-2 roster.
 
 ## Status
 
