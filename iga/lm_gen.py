@@ -99,7 +99,7 @@ def saga(rng, target_len=2048, n_facts=6):
             break
         if len(toks) > target_len * 3:  # safety
             break
-    toks += ["</scene>"]
+    toks += ["<ok>", "</scene>"]  # sagas are wholly good by construction
     return toks, {"type": "saga", "probes": probes, "ok": True,
                   "turn_ends": [], "goal": None}
 
