@@ -48,15 +48,22 @@ band 2 ~8 tokens (phrase); band 3 ~64 (paragraph/topic); band 4 ~512
 (section); band 5 ~4k (document intent); band 6 ~32k (book scale,
 active only on long documents). Bands at 10M: 4; 30M: 5; 90M: 6.
 
-**The episode law carries over: a document is a life.** Content bands
-and registers reset at document boundaries; no pay across a reset;
-documents are never concatenated into one stream. (Same law as the
-agent campaign; the telescoping audit applies per document.)
+**The conveyor law (A1): the life is the training run; a document is
+a scene.** All data rides one continuous stream, in the order the
+scheduler chooses; the model is never reset. Fast-band hidden state is
+boundary-masked between scenes (carrying one scene's state into an
+unrelated one is noise, not memory), slow bands persist, and the
+ledger's law is scoped rather than episodic: **no hold outlives its
+referent.** A hold opened on a scene's entities settles by that
+scene's end — arrival or expiry, paid or zero, never across it. The
+telescoping audit applies per hold; closed loops still net zero.
 
 **The competence band is continuous.** One slowest register bank runs
 on the training-run clock, holding targets over the model's measured
-competences (below), paid at hold ends on measured improvement. This
-band never resets: it is the run growing up.
+competences (below), paid at hold ends on measured improvement. Its
+referents — the model's own competences — genuinely persist, so its
+holds may span the whole run. This band never resets: it is the run
+growing up.
 
 ## Data (public, free, mixed; ratios frozen before runs)
 
@@ -150,6 +157,16 @@ with the amendment ledgered here)
 Kaggle free tier (30 GPU-h + 20 TPU-h/week) covers 10M and 30M.
 90M on TPU Research Cloud (application submitted) or ~$50–100 rented
 GPU fallback. Target cost: $0–100.
+
+## Amendment ledger
+
+- **A1** (2026-08-05, pre-run, pre-code): the original episode framing
+  ("a document is a life; bands and registers reset at boundaries;
+  documents are never concatenated") is superseded by the conveyor law
+  above: one continuous stream, boundary-masked fast state, holds
+  scoped to their referents. The accounting is unchanged — every hold
+  still settles within one scene and the audit is identical — but the
+  model lives once, for the whole run.
 
 ## Status
 
