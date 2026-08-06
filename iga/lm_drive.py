@@ -90,6 +90,7 @@ class Drive:
 
     # ---------- proposer + imagination ----------
     def _propose(self, lane):
+        open_keys = {h["key"] for h in self.holds[lane]}
         cands = []
         for k in range(1, N_BANDS):
             key = f"fid:{k}"
@@ -106,6 +107,8 @@ class Drive:
             cands.append(("frontier", key, BIN_BAND[b], rec + FRONTIER_DELTA))
         scored = []
         for kind, key, band, target in cands:
+            if key in open_keys:      # one register per channel per lane
+                continue
             self.proposed += 1
             carry = self.ema.get(f"fid:{band}", 0.0)
             fast = min(self.ema.get(f"fid:{k}", 1.0) for k in (1, 2))

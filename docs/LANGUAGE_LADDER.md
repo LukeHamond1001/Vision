@@ -285,6 +285,22 @@ scale, not blocking this one. Target cost: $15–40 total.
   rate parameters for real-data rounds. Horizon constants flagged as
   scaffold defaults to be frozen from calibration-split ask-back
   statistics before registered runs. Suite 46/46.
+- **A8** (2026-08-05, assembled pre-run): the training corpus is
+  UltraChat — real synthetic long back-and-forth — prepared onto the
+  conveyor by `iga/lm_data_ultrachat.py`: every human turn ends
+  `<eot_human>`, every agent turn `<eot_model>`, every conversation
+  closes with the human's "thanks . good job ." turn, all
+  concatenated into one unbroken stream; sparse instrument convos
+  (planted facts, ask-backs at gap targets to 24k) threaded between
+  conversations as the measuring layer, probe positions
+  token-verified at build time. Tokenizer: ByteLevelBPE (16k
+  registered; 8k on the smoke shard). The closed-vocab weaver
+  remains as the debug conveyor. Long conversations carry natural
+  cross-turn dependencies (1–3k tokens), so mid bands get real work
+  beyond the instruments. Proposer dedup added: one register per
+  channel per lane. Suite 46/46; real-data smoke passing (CE falls,
+  ledger exact, probes aligned, gaps measured to 7k+ on a
+  400-conversation shard).
 
 ## Status
 

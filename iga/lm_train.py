@@ -64,12 +64,20 @@ def process_chunk(model, drive, conveyor, T, device, opt=None):
 
 
 def train(d=64, lanes=4, T=256, steps=40, seed=0, device="cpu",
-          ckpt=None, log_every=10):
-    vocab = Vocab()
+          ckpt=None, log_every=10, data=None):
     drive = Drive(n_lanes=lanes, seed=seed)
-    conveyor = Conveyor(vocab, n_lanes=lanes, seed=splits(seed)["train"],
-                        bias_fn=drive.bin_weights)
-    model = BandLM(len(vocab), d=d).to(device)
+    if data:  # prepared real-data shard (A8): UltraChat conveyor
+        from .lm_data_ultrachat import UltraConveyor, load_tokenizer
+        import os
+        conveyor = UltraConveyor(data, n_lanes=lanes)
+        tok = load_tokenizer(os.path.join(data, "tokenizer.json"))
+        vocab, vocab_size = tok, tok.get_vocab_size()
+    else:
+        vocab = Vocab()
+        vocab_size = len(vocab)
+        conveyor = Conveyor(vocab, n_lanes=lanes, seed=splits(seed)["train"],
+                            bias_fn=drive.bin_weights)
+    model = BandLM(vocab_size, d=d).to(device)
     model._st = model.init_state(lanes, device)
     opt = torch.optim.AdamW(model.parameters(), lr=3e-4)
     t0 = time.time()
@@ -101,16 +109,18 @@ def main():
     ap.add_argument("--device", default="cuda" if torch.cuda.is_available()
                     else "cpu")
     ap.add_argument("--ckpt", default="lm_ladder.pt")
+    ap.add_argument("--data", default=None,
+                    help="prepared shard dir (lm_data_ultrachat prepare)")
     a = ap.parse_args()
     if a.mode == "smoke":
         model, drive, vocab, ce0, ce1 = train(d=64, lanes=4, T=256, steps=40,
-                                              device="cpu")
+                                              device="cpu", data=a.data)
         assert ce1 < ce0, "smoke: CE did not fall"
         assert drive.audit()["telescoping_exact"], "smoke: ledger not exact"
         print(f"SMOKE PASS  ce {ce0:.3f} -> {ce1:.3f}")
     else:
         train(d=a.d, lanes=a.lanes, T=a.chunk, steps=a.steps, seed=a.seed,
-              device=a.device, ckpt=a.ckpt, log_every=50)
+              device=a.device, ckpt=a.ckpt, log_every=50, data=a.data)
 
 
 if __name__ == "__main__":
