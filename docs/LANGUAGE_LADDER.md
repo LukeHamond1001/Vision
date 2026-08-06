@@ -263,5 +263,15 @@ scale, not blocking this one. Target cost: $15–40 total.
 
 ## Status
 
-Design. No code, no runs. Pipeline and scaffold next; first 10M
-curves targeted ~10 days from card commit; full package 4–6 weeks.
+Assembled, no registered runs. Generator (`iga/lm_gen.py`), conveyor
+(`iga/lm_conveyor.py`), six-band model (`iga/lm_bands.py`), drive
+layer (`iga/lm_drive.py`), trainer (`iga/lm_train.py`), eval harness
+(`iga/lm_eval.py`); 8 law tests in `tests/test_lm_ladder.py` (suite:
+45/45). Local end-to-end smoke passes: CE falls, ledger audits exact,
+proposals/vetoes/minting live, panel readable, lesion + talk harness
+run. v0 engineering notes (honest) live in module docstrings:
+slow-band predictor gradients flow only within a chunk; turn-scoped
+settlement wired as scene-scoped for now; competence band = records +
+scheduler. Remaining before any registered run: the channel admission
+audit on the calibration split, then constants frozen. Debug next on
+RTX 2000; registered runs on a 4090.
