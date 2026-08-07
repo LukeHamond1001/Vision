@@ -82,25 +82,42 @@ kill $HBPID 2>/dev/null
 tail -60 train.log > train_tail.log
 hb "training complete"
 
-# --- the checkpoint goes home FIRST, verified, before anything else.
-#     Run 1 lost run.pt: its push failed silently and, once the big
-#     blob sat in local history, every later push failed with it.
-git add -f run.pt train.log prep.log
-git commit -qm "v5.0 registered run: checkpoint + logs"
-CKPT_OK=0
-for i in 1 2 3 4 5; do
-  if git push -f "$PUSH" results-v50-run; then
-    REMOTE=$(git ls-remote "$PUSH" results-v50-run | cut -f1)
-    if [ "$REMOTE" = "$(git rev-parse HEAD)" ]; then CKPT_OK=1; break; fi
-  fi
-  sleep 30
+# --- the checkpoint goes home FIRST. Runs 1-2 both lost run.pt to
+#     the same systematic failure: a single ~67MB push never lands
+#     from these pods. v3: small pieces, separate commits, each push
+#     verified; plus an fp16 sidecar and an external mirror.
+python - <<'EOF'
+import torch
+s = torch.load("run.pt", map_location="cpu", weights_only=False)
+torch.save({"model": {k: v.half() for k, v in s["model"].items()},
+            "step": s["step"], "fp16": True}, "run_fp16.pt")
+EOF
+split -b 25m run.pt run_part_
+BASE=$(git rev-parse HEAD)
+CKPT_OK=1
+for f in run_fp16.pt $(ls run_part_*); do
+  git add -f "$f" && git commit -qm "ckpt piece: $f"
+  PUSHED=0
+  for i in 1 2 3 4; do
+    if git push -f "$PUSH" results-v50-run && \
+       [ "$(git ls-remote "$PUSH" results-v50-run | cut -f1)" = "$(git rev-parse HEAD)" ]; then
+      PUSHED=1; break
+    fi
+    sleep 20
+  done
+  if [ "$PUSHED" != "1" ]; then CKPT_OK=0; break; fi
+  hb "ckpt piece landed: $f"
 done
+git add -f train.log prep.log 2>/dev/null || true
+git commit -qm "run logs" 2>/dev/null || true
+git push -qf "$PUSH" results-v50-run 2>/dev/null || true
 if [ "$CKPT_OK" = "1" ]; then
-  hb "checkpoint pushed and VERIFIED on remote"
+  hb "checkpoint FULLY VERIFIED on remote (fp16 + fp32 parts)"
 else
-  git reset --hard HEAD~1   # unblock small pushes
-  hb "CKPT PUSH FAILED after 5 tries - pod held 6h for manual rescue"
-  sleep 21600               # rescue window, then fall through to remove
+  MIRROR=$(curl -s -F "file=@run_fp16.pt" https://0x0.st 2>/dev/null || echo none)
+  git reset --hard "$BASE"  # unblock small pushes
+  hb "CKPT GIT PUSH INCOMPLETE - fp16 mirror: $MIRROR - holding 2h"
+  sleep 7200
 fi
 
 # --- evaluation on the held-out shard: tables, lesion, talk ---
