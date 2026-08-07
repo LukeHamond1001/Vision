@@ -53,3 +53,4 @@
 13:19:18 training heartbeat: step 34400  ce 3.062  loss 3.074  holds 33376  15,443 tok/s
 13:21:34 training complete
 13:25:41 CKPT PUSH FAILED after 5 tries - pod held 6h for manual rescue
+19:25:45 evaluation complete
