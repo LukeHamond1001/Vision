@@ -1,0 +1,60 @@
+13:21:37 boot NVIDIA RTX A4000
+13:21:42 deps installed
+13:22:21 download: part 0 (150000 lines)
+13:22:39 download: part 1 (300000 lines)
+13:23:31 download: part 2 (450000 lines)
+13:24:23 download: part 3 (600000 lines)
+13:24:29 download: heldout file (6000 lines)
+13:33:37 prep: train shard built
+13:33:46 prep: eval + calib shards built
+13:49:38 calibration frozen
+14:04:39 training heartbeat: 
+14:19:41 training heartbeat: 
+14:34:42 training heartbeat: 
+14:49:43 training heartbeat: 
+15:04:44 training heartbeat: 
+15:19:45 training heartbeat: 
+15:34:47 training heartbeat: 
+15:49:48 training heartbeat: 
+16:04:49 training heartbeat: 
+16:19:50 training heartbeat: step  6900  ce 3.487  loss 3.499  holds 5728  13,831 tok/s
+16:34:51 training heartbeat: step  6900  ce 3.487  loss 3.499  holds 5728  13,831 tok/s
+16:49:52 training heartbeat: step  6900  ce 3.487  loss 3.499  holds 5728  13,831 tok/s
+17:04:54 training heartbeat: step  6900  ce 3.487  loss 3.499  holds 5728  13,831 tok/s
+17:19:55 training heartbeat: step  6900  ce 3.487  loss 3.499  holds 5728  13,831 tok/s
+17:34:56 training heartbeat: step  6900  ce 3.487  loss 3.499  holds 5728  13,831 tok/s
+17:49:57 training heartbeat: step  6900  ce 3.487  loss 3.499  holds 5728  13,831 tok/s
+18:04:58 training heartbeat: step  6900  ce 3.487  loss 3.499  holds 5728  13,831 tok/s
+18:19:59 training heartbeat: step  6900  ce 3.487  loss 3.499  holds 5728  13,831 tok/s
+18:35:01 training heartbeat: step 13750  ce 3.210  loss 3.222  holds 14304  13,765 tok/s
+18:50:02 training heartbeat: step 13750  ce 3.210  loss 3.222  holds 14304  13,765 tok/s
+19:05:03 training heartbeat: step 13750  ce 3.210  loss 3.222  holds 14304  13,765 tok/s
+19:20:04 training heartbeat: step 13750  ce 3.210  loss 3.222  holds 14304  13,765 tok/s
+19:35:05 training heartbeat: step 13750  ce 3.210  loss 3.222  holds 14304  13,765 tok/s
+19:50:07 training heartbeat: step 13750  ce 3.210  loss 3.222  holds 14304  13,765 tok/s
+20:05:08 training heartbeat: step 13750  ce 3.210  loss 3.222  holds 14304  13,765 tok/s
+20:20:09 training heartbeat: step 13750  ce 3.210  loss 3.222  holds 14304  13,765 tok/s
+20:35:10 training heartbeat: step 13750  ce 3.210  loss 3.222  holds 14304  13,765 tok/s
+20:50:11 training heartbeat: step 20600  ce 3.032  loss 3.044  holds 15392  13,694 tok/s
+21:05:13 training heartbeat: step 20600  ce 3.032  loss 3.044  holds 15392  13,694 tok/s
+21:20:14 training heartbeat: step 20600  ce 3.032  loss 3.044  holds 15392  13,694 tok/s
+21:35:15 training heartbeat: step 20600  ce 3.032  loss 3.044  holds 15392  13,694 tok/s
+21:50:16 training heartbeat: step 20600  ce 3.032  loss 3.044  holds 15392  13,694 tok/s
+22:05:17 training heartbeat: step 20600  ce 3.032  loss 3.044  holds 15392  13,694 tok/s
+22:20:19 training heartbeat: step 20600  ce 3.032  loss 3.044  holds 15392  13,694 tok/s
+22:35:20 training heartbeat: step 20600  ce 3.032  loss 3.044  holds 15392  13,694 tok/s
+22:50:21 training heartbeat: step 20600  ce 3.032  loss 3.044  holds 15392  13,694 tok/s
+23:05:22 training heartbeat: step 27450  ce 2.972  loss 2.984  holds 18240  13,764 tok/s
+23:20:23 training heartbeat: step 27450  ce 2.972  loss 2.984  holds 18240  13,764 tok/s
+23:35:24 training heartbeat: step 27450  ce 2.972  loss 2.984  holds 18240  13,764 tok/s
+23:50:25 training heartbeat: step 27450  ce 2.972  loss 2.984  holds 18240  13,764 tok/s
+00:05:26 training heartbeat: step 27450  ce 2.972  loss 2.984  holds 18240  13,764 tok/s
+00:20:27 training heartbeat: step 27450  ce 2.972  loss 2.984  holds 18240  13,764 tok/s
+00:35:29 training heartbeat: step 27450  ce 2.972  loss 2.984  holds 18240  13,764 tok/s
+00:50:30 training heartbeat: step 27450  ce 2.972  loss 2.984  holds 18240  13,764 tok/s
+01:05:31 training heartbeat: step 27450  ce 2.972  loss 2.984  holds 18240  13,764 tok/s
+01:20:32 training heartbeat: step 34300  ce 2.952  loss 2.964  holds 20896  13,795 tok/s
+01:35:33 training heartbeat: step 34300  ce 2.952  loss 2.964  holds 20896  13,795 tok/s
+01:50:34 training heartbeat: step 34300  ce 2.952  loss 2.964  holds 20896  13,795 tok/s
+01:53:23 training complete
+01:54:22 evaluation complete

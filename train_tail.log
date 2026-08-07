@@ -1,0 +1,60 @@
+lane14 frontier recall:b3      target 0.16 phi0 0.54 band 5 due 18854912
+lane14 maintain fid:4          target 0.20 phi0 0.28 band 4 due 18747392
+lane15 maintain fid:5          target 0.20 phi0 0.43 band 5 due 18841600
+lane15 frontier recall:b3      target 0.16 phi0 0.54 band 5 due 18854912
+lane15 maintain fid:4          target 0.20 phi0 0.28 band 4 due 18747392
+lane16 maintain fid:5          target 0.20 phi0 0.43 band 5 due 18841600
+lane16 frontier recall:b3      target 0.16 phi0 0.54 band 5 due 18854912
+lane16 maintain fid:4          target 0.20 phi0 0.28 band 4 due 18747392
+lane17 maintain fid:5          target 0.20 phi0 0.43 band 5 due 18841600
+lane17 frontier recall:b3      target 0.16 phi0 0.54 band 5 due 18854912
+lane17 maintain fid:4          target 0.20 phi0 0.28 band 4 due 18747392
+lane18 maintain fid:5          target 0.20 phi0 0.43 band 5 due 18841600
+lane18 frontier recall:b3      target 0.16 phi0 0.54 band 5 due 18854912
+lane18 maintain fid:4          target 0.20 phi0 0.28 band 4 due 18747392
+lane19 maintain fid:5          target 0.20 phi0 0.43 band 5 due 18841600
+lane19 frontier recall:b3      target 0.16 phi0 0.54 band 5 due 18854912
+lane19 maintain fid:4          target 0.20 phi0 0.28 band 4 due 18747392
+lane20 maintain fid:5          target 0.20 phi0 0.43 band 5 due 18841600
+lane20 frontier recall:b3      target 0.16 phi0 0.54 band 5 due 18854912
+lane20 maintain fid:4          target 0.20 phi0 0.28 band 4 due 18747392
+lane21 maintain fid:5          target 0.20 phi0 0.43 band 5 due 18841600
+lane21 frontier recall:b3      target 0.16 phi0 0.54 band 5 due 18854912
+lane21 maintain fid:4          target 0.20 phi0 0.28 band 4 due 18747392
+lane22 maintain fid:5          target 0.20 phi0 0.43 band 5 due 18841600
+lane22 frontier recall:b3      target 0.16 phi0 0.54 band 5 due 18854912
+lane22 maintain fid:4          target 0.20 phi0 0.28 band 4 due 18747392
+lane23 maintain fid:5          target 0.20 phi0 0.43 band 5 due 18841600
+lane23 frontier recall:b3      target 0.16 phi0 0.54 band 5 due 18854912
+lane23 maintain fid:4          target 0.20 phi0 0.28 band 4 due 18747392
+lane24 maintain fid:5          target 0.20 phi0 0.43 band 5 due 18841600
+lane24 frontier recall:b3      target 0.16 phi0 0.54 band 5 due 18854912
+lane24 maintain fid:4          target 0.20 phi0 0.28 band 4 due 18747392
+lane25 maintain fid:5          target 0.20 phi0 0.43 band 5 due 18841600
+lane25 frontier recall:b3      target 0.16 phi0 0.54 band 5 due 18854912
+lane25 maintain fid:4          target 0.20 phi0 0.28 band 4 due 18747392
+lane26 maintain fid:5          target 0.20 phi0 0.43 band 5 due 18841600
+lane26 frontier recall:b3      target 0.16 phi0 0.54 band 5 due 18854912
+lane26 maintain fid:4          target 0.20 phi0 0.28 band 4 due 18747392
+lane27 maintain fid:5          target 0.20 phi0 0.43 band 5 due 18841600
+lane27 frontier recall:b3      target 0.16 phi0 0.54 band 5 due 18854912
+lane27 maintain fid:4          target 0.20 phi0 0.28 band 4 due 18747392
+lane28 maintain fid:5          target 0.20 phi0 0.43 band 5 due 18841600
+lane28 frontier recall:b3      target 0.16 phi0 0.54 band 5 due 18854912
+lane28 maintain fid:4          target 0.20 phi0 0.28 band 4 due 18747392
+lane29 maintain fid:5          target 0.20 phi0 0.43 band 5 due 18841600
+lane29 frontier recall:b3      target 0.16 phi0 0.54 band 5 due 18854912
+lane29 maintain fid:4          target 0.20 phi0 0.28 band 4 due 18747392
+lane30 maintain fid:5          target 0.20 phi0 0.43 band 5 due 18841600
+lane30 frontier recall:b3      target 0.16 phi0 0.54 band 5 due 18854912
+lane30 maintain fid:4          target 0.20 phi0 0.28 band 4 due 18747392
+lane31 maintain fid:5          target 0.20 phi0 0.43 band 5 due 18841600
+lane31 frontier recall:b3      target 0.16 phi0 0.54 band 5 due 18854912
+lane31 maintain fid:4          target 0.20 phi0 0.28 band 4 due 18747392
+record   fid:1          0.977 (ema 0.896)
+record   fid:2          0.998 (ema 0.873)
+record   fid:3          0.406 (ema 0.277)
+record   fid:4          0.401 (ema 0.145)
+record   fid:5          0.258 (ema 0.114)
+record   recall:b2      0.151 (ema 0.077)
+record   recall:b3      0.106 (ema 0.069)
