@@ -7,3 +7,4 @@
 02:19:28 download: heldout file (6000 lines)
 02:30:16 prep: train shard built
 02:30:23 prep: eval + calib shards built (train tokenizer reused)
+02:33:30 calibration frozen
