@@ -386,6 +386,30 @@ scale, not blocking this one. Target cost: $15–40 total.
   and a 6-hour pod-hold rescue window on failure. The rerun repeats
   the identical frozen A12 configuration.
 
+- **A14** (2026-08-07, post-run-2): run 2 trained clean and REPLICATED
+  run 1's telemetry (records recall:b2 0.135 / recall:b3 0.122, EMA
+  ~0.076/0.062; fidelity on all six bands, fid:5 to 0.357; 33,376
+  holds; 15.4k tok/s) — and is also VOID for claiming: the ~67MB
+  single checkpoint push failed again (now established as systematic),
+  and the failure branch's `git reset --hard` restored the working
+  tree, DELETING run.pt from the pod's disk six hours before the eval
+  needed it; the eval crashed on the missing file and the wrapper
+  reported success anyway. Honesty notes printed here rather than
+  discovered later: (1) the registered chance floor (0.0001,
+  random-init) is weak — a format-only model that learned "a color
+  goes here" scores ~0.08 with zero memory, and the training EMAs sit
+  near that value while only the records clear it; the run-3 verdict
+  will be read against BOTH floors, and the lesion delta (format
+  survives, memory dies) is the load-bearing discriminator. (2) Model
+  init was unseeded in runs 1-2; A14 pins torch.manual_seed. Wrapper
+  v4 for run 3: eval runs FIRST after training; checkpoint travels as
+  25MB pieces with per-piece verified pushes; failure path uses
+  reset --mixed (keeps files) + external fp16 mirror; rolling ckpt
+  snapshots push to a side branch every 2h DURING training from an
+  isolated repo dir (mid-run death can no longer lose the artifact);
+  hb reports eval/train exit codes truthfully; eval widened to 160
+  chunks for larger n (pre-run, ledgered).
+
 ## Status
 
 Assembled scene-free (A6), no registered runs. Weaver (`iga/lm_gen.py`),

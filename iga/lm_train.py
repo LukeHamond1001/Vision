@@ -68,6 +68,7 @@ def train(d=64, lanes=4, T=256, steps=40, seed=0, device="cpu",
           compile_model=False, constants=None):
     if "cuda" in str(device):
         torch.set_float32_matmul_precision("high")  # TF32 (A12)
+    torch.manual_seed(seed)  # reproducible init (A14)
     drive = Drive(n_lanes=lanes, seed=seed, constants=constants)
     if data:  # prepared real-data shard (A8): UltraChat conveyor
         from .lm_data_ultrachat import UltraConveyor, load_tokenizer
