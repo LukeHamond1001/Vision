@@ -6,3 +6,4 @@
 19:31:50 download: part 3 (600000 lines)
 19:31:54 download: heldout file
 19:37:46 prep: train shard built
+19:37:51 prep: eval + calib shards built (train tokenizer reused)
