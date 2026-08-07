@@ -32,3 +32,4 @@
 08:03:51 training heartbeat: step 13850  ce 3.364  loss 3.376  holds 9024  15,299 tok/s
 08:18:52 training heartbeat: step 13850  ce 3.364  loss 3.376  holds 9024  15,299 tok/s
 08:33:53 training heartbeat: step 13850  ce 3.364  loss 3.376  holds 9024  15,299 tok/s
+08:48:54 training heartbeat: step 20700  ce 3.107  loss 3.119  holds 16736  15,374 tok/s
