@@ -8,3 +8,4 @@
 19:37:46 prep: train shard built
 19:37:51 prep: eval + calib shards built (train tokenizer reused)
 19:39:14 calibration frozen
+19:54:15 training heartbeat: 
