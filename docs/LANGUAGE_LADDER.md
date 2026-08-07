@@ -365,6 +365,27 @@ scale, not blocking this one. Target cost: $15–40 total.
   shards come from a disjoint raw file. No mid-run resume: if the
   pod dies, the run reruns from zero rather than splicing a ledger.
 
+- **A13** (2026-08-06, post-run-1): run 1 executed the full frozen
+  config (36,500 steps, 12.5 h, CE 3.49→2.95, 20,896 holds settled,
+  fidelity records on all six bands, measured 13.8k tok/s) and is
+  **VOID for claiming**: (1) the eval shard was prepared with a
+  freshly trained tokenizer, so the held-out tables and talk sample
+  were computed in a vocabulary that is not the model's — the 0.000
+  readings are mistranslation, not measurement; (2) the checkpoint
+  push failed silently and blocked all later pushes, and the pod
+  removed itself with run.pt aboard — the artifact is lost. What
+  survives, printed as telemetry only (not a registered verdict):
+  training-stream recall on never-repeated facts reached records
+  0.151 (2k-16k gaps) and 0.106 (16k+), EMA ~0.07-0.08 against the
+  measured 0.0001 chance floor — held-state signal ~700x above
+  chance in an attention-free model. Fixes for the rerun, all
+  committed: prepare() reuses the train tokenizer for eval/calib
+  shards; probes whose plant falls outside a lane's eval segment are
+  marked unanswerable and skipped; the checkpoint is pushed FIRST
+  after training, with verification against the remote SHA, retries,
+  and a 6-hour pod-hold rescue window on failure. The rerun repeats
+  the identical frozen A12 configuration.
+
 ## Status
 
 Assembled scene-free (A6), no registered runs. Weaver (`iga/lm_gen.py`),

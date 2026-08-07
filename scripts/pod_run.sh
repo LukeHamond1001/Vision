@@ -58,12 +58,14 @@ import os
 os.environ["ULTRACHAT_JSONL"] = "data/ultrachat_heldout.jsonl"
 import iga.lm_data_ultrachat as U
 from iga.lm_data_ultrachat import prepare
-prepare("data/uc_eval", n_convos=2500, seed=2, vocab=16384)
+# REUSE the train tokenizer — a fresh BPE voids every measurement
+TOK = "data/uc_train/tokenizer.json"
+prepare("data/uc_eval", n_convos=2500, seed=2, tokenizer_path=TOK)
 orig = U.iter_convos
 U.iter_convos = lambda limit, skip=0: orig(limit, skip=2500)
-prepare("data/uc_calib_run", n_convos=1500, seed=3, vocab=16384)
+prepare("data/uc_calib_run", n_convos=1500, seed=3, tokenizer_path=TOK)
 EOF
-hb "prep: eval + calib shards built"
+hb "prep: eval + calib shards built (train tokenizer reused)"
 
 python -m iga.lm_calibrate --data data/uc_calib_run --chunks 60 \
   --out results/lm_constants_run.json > calib_run.txt 2>&1
@@ -80,14 +82,31 @@ kill $HBPID 2>/dev/null
 tail -60 train.log > train_tail.log
 hb "training complete"
 
+# --- the checkpoint goes home FIRST, verified, before anything else.
+#     Run 1 lost run.pt: its push failed silently and, once the big
+#     blob sat in local history, every later push failed with it.
+git add -f run.pt train.log prep.log
+git commit -qm "v5.0 registered run: checkpoint + logs"
+CKPT_OK=0
+for i in 1 2 3 4 5; do
+  if git push -f "$PUSH" results-v50-run; then
+    REMOTE=$(git ls-remote "$PUSH" results-v50-run | cut -f1)
+    if [ "$REMOTE" = "$(git rev-parse HEAD)" ]; then CKPT_OK=1; break; fi
+  fi
+  sleep 30
+done
+if [ "$CKPT_OK" = "1" ]; then
+  hb "checkpoint pushed and VERIFIED on remote"
+else
+  git reset --hard HEAD~1   # unblock small pushes
+  hb "CKPT PUSH FAILED after 5 tries - pod held 6h for manual rescue"
+  sleep 21600               # rescue window, then fall through to remove
+fi
+
 # --- evaluation on the held-out shard: tables, lesion, talk ---
 python -m iga.lm_eval --ckpt run.pt --data data/uc_eval --d 256 \
   --talk tick --lanes 4 --chunks 80 > eval_results.txt 2>&1
 hb "evaluation complete"
-
-git add -f run.pt train.log prep.log 2>/dev/null || true
-git commit -qm "v5.0 registered run: checkpoint + full logs" || true
-git push -qf "$PUSH" results-v50-run || true
 hb "phase complete"
 
 runpodctl remove pod "$RUNPOD_POD_ID" || runpodctl stop pod "$RUNPOD_POD_ID" || true

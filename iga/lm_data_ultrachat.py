@@ -141,20 +141,31 @@ class Instruments:
 
 
 def prepare(out_dir, n_convos=3000, seed=0, vocab=16384,
-            instrument_every=6, tok_sample=1500):
+            instrument_every=6, tok_sample=1500, tokenizer_path=None):
+    """tokenizer_path: REUSE an existing tokenizer instead of training
+    a fresh one. Mandatory for any shard evaluated against a model
+    trained on another shard — a fresh BPE speaks a different id
+    language and voids every measurement (the run-1 eval bug)."""
     os.makedirs(out_dir, exist_ok=True)
     rng = random.Random(seed)
-    print(f"streaming {tok_sample} convos for tokenizer training...")
-    sample_texts = []
-    for turns in iter_convos(tok_sample):
-        sample_texts.extend(turns)
-    sample_texts += [THANKS, "noted ."]
-    sample_texts += [f"by the way {n} kept a {c} {o} in the {r} ."
-                     for n in NAMES for o in OBJECTS[:2]
-                     for c in COLORS[:3] for r in ROOMS[:1]]
     tok_path = os.path.join(out_dir, "tokenizer.json")
-    tok = train_tokenizer(iter(sample_texts), tok_path, vocab)
-    print(f"tokenizer: {tok.get_vocab_size()} pieces -> {tok_path}")
+    if tokenizer_path:
+        import shutil
+        shutil.copy(tokenizer_path, tok_path)
+        tok = load_tokenizer(tok_path)
+        print(f"tokenizer: reused {tokenizer_path} "
+              f"({tok.get_vocab_size()} pieces)")
+    else:
+        print(f"streaming {tok_sample} convos for tokenizer training...")
+        sample_texts = []
+        for turns in iter_convos(tok_sample):
+            sample_texts.extend(turns)
+        sample_texts += [THANKS, "noted ."]
+        sample_texts += [f"by the way {n} kept a {c} {o} in the {r} ."
+                         for n in NAMES for o in OBJECTS[:2]
+                         for c in COLORS[:3] for r in ROOMS[:1]]
+        tok = train_tokenizer(iter(sample_texts), tok_path, vocab)
+        print(f"tokenizer: {tok.get_vocab_size()} pieces -> {tok_path}")
     eot_h = tok.token_to_id("<eot_human>")
     eot_m = tok.token_to_id("<eot_model>")
     assert eot_h is not None and eot_m is not None
@@ -254,6 +265,12 @@ class UltraConveyor:
         self.lane_events = [[] for _ in range(n_lanes)]
         for e in self.events:
             lane = min(e["pos"] // seg, n_lanes - 1)
+            if e["kind"] == "probe":
+                # a probe is answerable only if its plant lies inside
+                # the lane's segment — the model can't recall a fact
+                # it was never shown (run-1 eval fix)
+                e = {**e, "answerable":
+                     (e["pos"] - e["gap"]) >= lane * seg}
             self.lane_events[lane].append(e)
 
     def chunk(self, T):

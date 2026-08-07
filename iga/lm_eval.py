@@ -36,6 +36,8 @@ def recall_table(model, vocab, n_chunks=40, T=512, lanes=4, seed=0,
         for lane, evs in enumerate(events):
             for p, kind, d in evs:
                 if kind == "probe" and p > 0:
+                    if not d.get("answerable", True):
+                        continue  # plant outside this lane's segment
                     b = gap_bin(d["gap"])
                     prob = float(logp[lane, p - 1, d["answer"]].exp())
                     top1 = int(logits[lane, p - 1].argmax()) == d["answer"]
