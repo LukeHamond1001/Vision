@@ -45,7 +45,16 @@ def process_chunk(model, drive, conveyor, T, device, opt=None):
         for p, kind, d in sorted(evs, key=lambda e: e[0]):
             if kind == "probe" and p > 0:
                 prob = logp[lane, p - 1, d["answer"]].exp()
-                drive.probe(lane, prob, d["gap"])
+                if d.get("distractors"):
+                    # binding-margin channel (v5.1): pay only for
+                    # beating the other colors in play — prior- and
+                    # recency-tracking are worth exactly zero
+                    pd = torch.stack([logp[lane, p - 1, i].exp()
+                                      for i in d["distractors"]]).max()
+                    reading = torch.clamp(prob - pd, min=0.0)
+                else:
+                    reading = prob
+                drive.probe(lane, reading, d["gap"])
             elif kind == "earned":
                 drive.earned(lane, d["ok"])
     drive.step_t += T

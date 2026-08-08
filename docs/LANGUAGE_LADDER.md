@@ -446,6 +446,29 @@ scale, not blocking this one. Target cost: $15–40 total.
   densify instruments ~5x. One run at the frozen A12 config,
   ~$2.50.
 
+- **A16** (2026-08-07, pre-run, registered): **v5.1-lite — the
+  binding-curve probe.** Purpose: measure binding vs distance under a
+  pay rule that makes non-binding worth zero. Changes from A12, all
+  committed: (1) binding-margin channel — probe reading =
+  max(0, p(answer) - max p(distractors)), distractor colors recorded
+  per ask (pending + recent pool, min 3); (2) graduated instruments —
+  short self-contained units at ~48/200/800-token gaps (plant, filler
+  chatter, ask inside one slot) plus long facts at 3.2k/12.8k;
+  density instrument_every=1 (smoke shard: 570 probes/800 convos,
+  every curve bin populated, alignment token-exact); (3) debug scale:
+  d=128 (7.4M params), 10k steps, ~164M tokens, one epoch of 150k
+  dense conversations; ~2h, ~$0.50. Scope: mechanism probe — claims
+  at debug scale on synthetic-instrumented real chat; no calibration
+  pass (scaffold constants; ledgered). Registered read: the deliverable
+  is the binding-vs-distance CURVE on the held-out dense shard
+  (bins <64 / 64-256 / 256-1k / 1k-4k / 4k+), warm protocol, with
+  lesion and CE control. Interpretation table, committed in advance:
+  curve alive and extending -> scale (rung 2); solid short but dying
+  at fast-band reach -> the query-blind readout is convicted and the
+  rung-2 design is the clocked associative matrix (multiplicative
+  query-memory readout); flat even at gap<64 -> deeper objective or
+  capacity issue, debug before any scale-up.
+
 ## Status
 
 Assembled scene-free (A6), no registered runs. Weaver (`iga/lm_gen.py`),

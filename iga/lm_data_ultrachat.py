@@ -96,47 +96,105 @@ def load_tokenizer(path):
     return Tokenizer.from_file(path)
 
 
-class Instruments:
-    """Sparse planted facts + ask-backs between conversations."""
+FILLER = [
+    ("the weather changed that day .", "i see ."),
+    ("the market was busy again .", "noted ."),
+    ("the road was quiet for a while .", "i see ."),
+    ("the clock ran a little slow .", "noted ."),
+    ("the town settled down early .", "i see ."),
+]
 
-    def __init__(self, rng, bias=None):
+
+class Instruments:
+    """v5.1 graduated instruments. Short self-contained units carry
+    exact gaps of ~50-800 tokens inside one slot (plant, filler
+    chatter, ask); long facts span slots at 3.2k/12.8k. Every ask
+    records DISTRACTORS — the other colors currently in play — so the
+    binding-margin channel can pay binding and nothing else."""
+
+    def __init__(self, rng, bias=None, short_rate=0.6):
         self.rng = rng
         self.pending = []
         self.used = set()
-        self.bias = bias or [4, 3, 2, 1]
+        self.recent = []             # last asked colors: distractor pool
+        self.short_rate = short_rate
+
+    def _fact(self):
+        for _ in range(200):  # bounded; roster self-frees on ask
+            name, obj = self.rng.choice(NAMES), self.rng.choice(OBJECTS)
+            if (name, obj) not in self.used:
+                break
+        else:
+            return None
+        self.used.add((name, obj))
+        return {"name": name, "obj": obj, "col": self.rng.choice(COLORS)}
+
+    def _distractors(self, answer):
+        pool = [f["col"] for f in self.pending] + self.recent
+        pool = [c for c in dict.fromkeys(pool) if c != answer][:8]
+        while len(pool) < 3:
+            c = self.rng.choice(COLORS)
+            if c != answer and c not in pool:
+                pool.append(c)
+        return pool
+
+    def _remember(self, col):
+        self.recent = ([col] + [c for c in self.recent if c != col])[:8]
+
+    def _plant_words(self, f):
+        return (f"by the way {f['name']} kept a {f['col']} {f['obj']} "
+                f"in the {self.rng.choice(ROOMS)} .")
+
+    def _ask_turns(self, f):
+        return [(f"what color of {f['obj']} was {f['name']} kept ?", "human"),
+                (f"the {f['obj']} was {f['col']} .", "model"),
+                (THANKS, "human")]
 
     def maybe_convo(self, pos):
+        """Returns (turns, probes) or None. probes carry turn-relative
+        specs; prepare() finishes the position math at encode time."""
         due = [f for f in self.pending if pos >= f["due"]]
         if due:
             f = due[0]
             self.pending.remove(f)
-            # the pair frees when its fact is asked — the roster can
-            # never exhaust (the 64-combo spin that froze the first pod)
             self.used.discard((f["name"], f["obj"]))
-            ask = f"what color of {f['obj']} was {f['name']} kept ?"
-            ans_prefix = f"the {f['obj']} was "
-            answer = f["col"]
-            return ([(ask, "human"),
-                     (ans_prefix + answer + " .", "model"),
-                     (THANKS, "human")],
-                    {"kind": "ask", "prefix": ans_prefix, "answer": answer,
-                     "plant": f["plant"]})
-        if len(self.pending) < 8 and self.rng.random() < 0.5:
-            for _ in range(200):  # bounded; roster self-frees on ask
-                name, obj = self.rng.choice(NAMES), self.rng.choice(OBJECTS)
-                if (name, obj) not in self.used:
-                    break
-            else:
+            self._remember(f["col"])
+            turns = self._ask_turns(f)
+            probes = [{"turn_idx": 1, "prefix": f"the {f['obj']} was",
+                       "answer": f["col"],
+                       "distractors": self._distractors(f["col"]),
+                       "plant_abs": f["plant"]}]
+            return turns, probes
+        if self.rng.random() < self.short_rate:
+            f = self._fact()
+            if f is None:
                 return None
-            self.used.add((name, obj))
-            col = self.rng.choice(COLORS)
-            b = self.rng.choices(range(4), weights=self.bias)[0]
-            plant = f"by the way {name} kept a {col} {obj} in the {self.rng.choice(ROOMS)} ."
-            self.pending.append({"name": name, "obj": obj, "col": col,
-                                 "plant": None,  # set after encoding
-                                 "due_gap": GAP_TARGETS[b]})
-            return ([(plant, "human"), ("noted .", "model")],
-                    {"kind": "plant", "col": col})
+            self.used.discard((f["name"], f["obj"]))  # short: freed at once
+            turns = [(self._plant_words(f), "human"), ("noted .", "model")]
+            target = self.rng.choice([48, 48, 200, 200, 800])
+            approx = 16
+            while approx < target:
+                fh, fm = self.rng.choice(FILLER)
+                turns += [(fh, "human"), (fm, "model")]
+                approx += len(fh.split()) + len(fm.split()) + 2
+            turns += self._ask_turns(f)
+            self._remember(f["col"])
+            probes = [{"turn_idx": len(turns) - 2,
+                       "prefix": f"the {f['obj']} was",
+                       "answer": f["col"],
+                       "distractors": self._distractors(f["col"]),
+                       "plant_turn": 0,
+                       "plant_prefix": f"by the way {f['name']} kept a"}]
+            return turns, probes
+        if len(self.pending) < 8:
+            f = self._fact()
+            if f is None:
+                return None
+            f["plant"] = None       # prepare sets abs position + due
+            f["due_gap"] = self.rng.choices([3200, 12800], weights=[2, 1])[0]
+            self.pending.append(f)
+            return ([(self._plant_words(f), "human"), ("noted .", "model")],
+                    [])
         return None
 
 
@@ -185,26 +243,32 @@ def prepare(out_dir, n_convos=3000, seed=0, vocab=16384,
         got = inst.maybe_convo(len(stream))
         if not got:
             return
-        iturns, meta = got
+        iturns, probes = got
+        turn_pos = []
         for text, who in iturns:
-            ids = enc(text)
-            if meta["kind"] == "ask" and who == "model" \
-                    and text.startswith(meta["prefix"]):
-                off = len(enc(meta["prefix"].rstrip()))
-                apos = len(stream) + off
-                ans_ids = enc(" " + meta["answer"])
-                events.append({"pos": apos, "kind": "probe",
-                               "answer": ans_ids[0],
-                               "gap": apos - meta["plant"]})
-                n_probes += 1
-            stream.extend(ids)
+            turn_pos.append(len(stream))
+            stream.extend(enc(text))
             stream.append(eot_m if who == "model" else eot_h)
-        if meta["kind"] == "plant":
-            inst.pending[-1]["plant"] = len(stream)
-            inst.pending[-1]["due"] = len(stream) \
-                + inst.pending[-1]["due_gap"]
-            del inst.pending[-1]["due_gap"]
-        if meta["kind"] == "ask":
+        if not probes and inst.pending \
+                and inst.pending[-1].get("plant") is None:
+            f = inst.pending[-1]        # long plant: fix abs positions
+            off = len(enc(f"by the way {f['name']} kept a"))
+            f["plant"] = turn_pos[0] + off
+            f["due"] = f["plant"] + f.pop("due_gap")
+        for pr in probes:
+            apos = turn_pos[pr["turn_idx"]] + len(enc(pr["prefix"]))
+            if "plant_abs" in pr:
+                plant = pr["plant_abs"]
+            else:
+                plant = turn_pos[pr["plant_turn"]] \
+                    + len(enc(pr["plant_prefix"]))
+            events.append({"pos": apos, "kind": "probe",
+                           "answer": enc(" " + pr["answer"])[0],
+                           "gap": max(apos - plant, 1),
+                           "distractors": [enc(" " + c)[0]
+                                           for c in pr["distractors"]]})
+            n_probes += 1
+        if probes:
             events.append({"pos": len(stream) - 1, "kind": "earned",
                            "ok": True})
 
