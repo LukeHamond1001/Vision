@@ -254,6 +254,36 @@ class TestSlowWrites(unittest.TestCase):
         self.assertNotIn("fid:2", keys)
         self.assertIn("fid:3", keys)     # present organs still kept
 
+    def test_resume_continues_state_and_steps(self):
+        # A26: continuation — model/opt/drive EMAs carry, step
+        # numbering continues, trace keeps appending
+        import json
+        import os
+        import tempfile
+        with tempfile.TemporaryDirectory() as td:
+            ck = os.path.join(td, "r.pt")
+            m1, d1, _, _, _ = train(d=32, lanes=2, T=96, steps=4,
+                                    device="cpu", log_every=1,
+                                    arch="hybrid", ckpt=ck)
+            # ckpt writes every 500 steps only — save one by hand the
+            # way the trainer does, at step 4
+            torch.save({"model": m1.state_dict(),
+                        "opt": torch.optim.AdamW(
+                            m1.parameters()).state_dict(),
+                        "step": 4,
+                        "drive": {"ema": d1.ema, "records": d1.records,
+                                  "minted": sorted(d1.minted),
+                                  "holds_settled": len(d1.ledger),
+                                  "vetoes": d1.vetoes}}, ck)
+            m2, d2, _, _, _ = train(d=32, lanes=2, T=96, steps=3,
+                                    device="cpu", log_every=1,
+                                    arch="hybrid", ckpt=ck, resume=ck)
+            self.assertEqual(d2.step_t, (4 + 3) * 96)  # steps continued
+            for k, v in d1.ema.items():   # ema seeded from snapshot
+                self.assertIn(k, d2.ema)
+            lines = [json.loads(l) for l in open(ck + ".trace.jsonl")]
+            self.assertEqual(lines[-1]["step"], 7)
+
     def test_trace_file_written(self):
         import json
         import os

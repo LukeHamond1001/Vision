@@ -79,7 +79,15 @@ def process_chunk(model, drive, conveyor, T, device, opt=None):
 
 def train(d=64, lanes=4, T=256, steps=40, seed=0, device="cpu",
           ckpt=None, log_every=10, data=None, talk="dense", widths=None,
-          compile_model=False, constants=None, arch="bands"):
+          compile_model=False, constants=None, arch="bands",
+          resume=None, offset_frac=0.0):
+    """resume (A26): path to a checkpoint — model + optimizer + drive
+    EMAs/records/minted/vetoes continue; step numbering continues.
+    offset_frac: start each conveyor lane this far into its segment
+    (continuation rides the unseen tail; one-epoch law holds). Open
+    holds and band states are NOT in checkpoints — holds re-propose
+    within a sweep, slow states rebuild within a few clocks
+    (ledgered)."""
     if "cuda" in str(device):
         torch.set_float32_matmul_precision("high")  # TF32 (A12)
     torch.manual_seed(seed)  # reproducible init (A14)
@@ -89,7 +97,8 @@ def train(d=64, lanes=4, T=256, steps=40, seed=0, device="cpu",
     if data:  # prepared real-data shard (A8): UltraChat conveyor
         from .lm_data_ultrachat import UltraConveyor, load_tokenizer
         import os
-        conveyor = UltraConveyor(data, n_lanes=lanes)
+        conveyor = UltraConveyor(data, n_lanes=lanes,
+                                 offset_frac=offset_frac)
         tok = load_tokenizer(os.path.join(data, "tokenizer.json"))
         vocab, vocab_size = tok, tok.get_vocab_size()
     else:
@@ -114,14 +123,29 @@ def train(d=64, lanes=4, T=256, steps=40, seed=0, device="cpu",
             print(f"torch.compile unavailable ({e}); running eager")
     model._st = model.init_state(lanes, device)
     opt = torch.optim.AdamW(model.parameters(), lr=3e-4)
+    step0 = 0
+    if resume:
+        state = torch.load(resume, map_location=device,
+                           weights_only=False)
+        model.load_state_dict(state["model"])
+        opt.load_state_dict(state["opt"])
+        step0 = state.get("step", 0)
+        dsnap = state.get("drive", {})
+        drive.ema = dict(dsnap.get("ema", {}))
+        drive.records = dict(dsnap.get("records", {}))
+        drive.minted = set(dsnap.get("minted", []))
+        drive.vetoes = dsnap.get("vetoes", 0)
+        drive.step_t = step0 * T
+        print(f"resumed {resume} at step {step0} "
+              f"(ema keys: {sorted(drive.ema)})", flush=True)
     t0 = time.time()
     ce_first = None
     trace = (ckpt + ".trace.jsonl") if ckpt else None
-    for step in range(1, steps + 1):
+    for step in range(step0 + 1, step0 + steps + 1):
         ce, loss = process_chunk(model, drive, conveyor, T, device, opt)
         ce_first = ce_first or ce
         if step % log_every == 0 or step == 1:
-            tok_s = lanes * T * step / (time.time() - t0)
+            tok_s = lanes * T * (step - step0) / (time.time() - t0)
             # A24 L2: channel EMAs ride every log line — run 4's
             # cross-window transient lived and died between snapshots
             emas = " ".join(
@@ -171,6 +195,10 @@ def main():
                     help="calibrated constants json (lm_calibrate)")
     ap.add_argument("--arch", default="bands",
                     choices=["bands", "transformer", "hybrid"])
+    ap.add_argument("--resume", default=None,
+                    help="checkpoint to continue from (A26)")
+    ap.add_argument("--offset", type=float, default=0.0,
+                    help="conveyor lane offset fraction (A26)")
     a = ap.parse_args()
     if a.mode == "smoke":
         model, drive, vocab, ce0, ce1 = train(d=64, lanes=4, T=256, steps=40,
@@ -181,7 +209,8 @@ def main():
     else:
         train(d=a.d, lanes=a.lanes, T=a.chunk, steps=a.steps, seed=a.seed,
               device=a.device, ckpt=a.ckpt, log_every=50, data=a.data,
-              talk=a.talk, constants=a.constants, arch=a.arch)
+              talk=a.talk, constants=a.constants, arch=a.arch,
+              resume=a.resume, offset_frac=a.offset)
 
 
 if __name__ == "__main__":

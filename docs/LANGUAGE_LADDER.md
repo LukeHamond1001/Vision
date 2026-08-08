@@ -682,6 +682,60 @@ scale, not blocking this one. Target cost: $15–40 total.
   v5.3 (0.568/61%) and its decay slope under lam 0.25; the new
   384 bin's first window-edge curve.
 
+- **A25** (2026-08-08, v5.4 run CLEAN, verdict: IGNITION CAUGHT
+  MID-BIRTH): end-to-end delivery again (107k steps, 3h50m at
+  ~110k tok/s, ~$0.90; trace 2,141 rows at 50-step resolution —
+  the L2 instrument). **The L1 mechanism is confirmed at scale:**
+  fid:4 rose 0.25 -> 0.83 (negative all of run 4) and the veto
+  counter FROZE at 613,056 by step ~20k — zero vetoes for the
+  final 87k steps (run 4: 6.0M at a constant rate to the end).
+  The medium stayed predictable, frontiers stayed open, carry
+  was paid all run. **In-window binding ignited at step ~95k as
+  a sharp phase transition** — b0 flat at 0.03-0.07 for 94k
+  steps (genuinely flat: no precursor flickers at 50-step
+  resolution), then 0.27 (96k) -> 0.59 (98k) -> 0.67 (100k),
+  stable ~0.63 after. First fully-observed emergence of the
+  campaign; the run-4-vs-5 onset delta (<30k vs ~95k) reads as
+  onset variance under changed dynamics, and ignition WITH the
+  near-constant memory tokens present demotes the
+  attention-sink hypothesis. **Post-ignition, carry answered:**
+  b1 spiking 0.10-0.14 (repeatedly; pre-ignition ~0.04),
+  correlated with b0 life — forming under paid support, exactly
+  the A24 design intent. Eval fired ~10k steps after birth:
+  held-out 0-256 at 0.170/25% (2-3x floor, far below run 4's
+  mature 0.568/61%), cross-window at floor, lesion delta ~zero
+  (young circuit attention-pure — matches run 4's early phase
+  before memory-token integration). fid:5 never cleared floor
+  (0.061; too few 32k-clock ticks in one run). Primary A24 read
+  lands in the "incomplete, not negative" branch: the run ended
+  ~10k steps after its own ignition. Artifacts: results-v54
+  (pieces, eval shard, full trace, train.log).
+
+- **A26** (2026-08-08, pre-run, registered): **v5.5 — the
+  continuation.** Resume the just-ignited circuit rather than
+  re-roll a 94k-step ignition lottery: load the v5.4 final
+  checkpoint (model + optimizer + drive EMAs/records/minted/
+  vetoes; trainer --resume/--offset, suite-pinned), rebuild the
+  identical shard (v5.4's own tokenizer fetched from its branch
+  — same ids by construction; prep deterministic at seed 0),
+  and ride each lane's UNSEEN tail: offset_frac 0.7909347 (the
+  107k x 512 consumed mark), 28,000 steps to just before wrap —
+  the one-epoch no-repeat law holds. Known scars, accepted and
+  ledgered: open holds and band states are not checkpointed
+  (holds re-propose within a sweep; slow states rebuild within
+  ~64 chunks), and the tail's first ~12.8k tokens per lane carry
+  probes whose plants were consumed pre-continuation with cold
+  bands (reads ~0, drags EMAs briefly, self-corrects). ~70 min,
+  ~$0.30. Registered read: PRIMARY — does b1 (512-1024, now
+  populated by the 384/800 units) consolidate under continued
+  pay and show above the 0.083 held-out floor at end, with the
+  lesion at that bin as the carve-out; SECONDARY — b0
+  consolidation toward run-4 maturity (0.57/61%) and memory-token
+  integration beginning (lesion delta at 0-256 growing); if b1
+  stays at floor with b0 mature and gates open, the write/readout
+  path is genuinely short and the next lever is the dedicated
+  write head / associative matrix, designed on a full autopsy.
+
 ## Status
 
 Assembled scene-free (A6), no registered runs. Weaver (`iga/lm_gen.py`),
