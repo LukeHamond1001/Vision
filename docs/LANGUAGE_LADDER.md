@@ -531,6 +531,27 @@ scale, not blocking this one. Target cost: $15–40 total.
   (memory tokens + band reads zeroed) now carves it out
   specifically. Single arm, per the program's standing rule.
 
+- **A20** (2026-08-08, runs 1-2 VOID, infrastructure): both v5.3
+  launches died the same death — prep held the whole corpus as a
+  Python list (~60GB of PyObjects at 1.7B ids) and the host OOM
+  killer ended it silently (run 1 at 1.02B ids, run 2 at 1.70B; no
+  traceback, log truncates mid-line), training then crashed on the
+  missing tokens.bin in 3 seconds. Two wrapper lies compounded it:
+  the prep heartbeat announced "built" unconditionally over the
+  corpse, and run 1's checkpoint phase heartbeat "FULLY VERIFIED on
+  remote" vacuously over ZERO pieces (the piece loop never ran).
+  Run 1 was initially misdiagnosed as a dead GPU from eval's CUDA
+  warning — its train_tail.log shows the same FileNotFoundError.
+  ~$0.27 combined. Fixes, tested: TokenSink (disk-backed stream,
+  spill-equivalence pinned by test — byte-identical shard at any
+  spill; suite 53/53); wrapper v5.1 — prep beats every 5 min,
+  success heartbeat requires rc=0 AND tokens.bin on disk, missing
+  checkpoint FAILS the verify phase, CUDA canary at boot and
+  pre-train (real device allocation; nvidia-smi passes while cuInit
+  wedges), boot heartbeat carries host RAM, phase-complete carries
+  train rc + ckpt state. Trails archived:
+  results-v53-run1-prepoom, results-v53-run2-prepoom.
+
 ## Status
 
 Assembled scene-free (A6), no registered runs. Weaver (`iga/lm_gen.py`),

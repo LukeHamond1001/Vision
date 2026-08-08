@@ -21,14 +21,14 @@ mkdir -p /workspace/snap
 
 hb() {
   echo "$(date -u '+%H:%M:%S') $1" >> HEARTBEAT.log
-  for f in HEARTBEAT.log train_tail.log eval_results.txt; do
+  for f in HEARTBEAT.log train_tail.log eval_results.txt prep.log; do
     git add -f "$f" 2>/dev/null || true
   done
   git commit -qm "hb: $1" 2>/dev/null || true
   git push -qf "$PUSH" results-v53 2>/dev/null || true
 }
 
-hb "boot v53-complete $(nvidia-smi --query-gpu=name --format=csv,noheader 2>/dev/null | head -1)"
+hb "boot v53-complete $(nvidia-smi --query-gpu=name --format=csv,noheader 2>/dev/null | head -1) ram $(free -g 2>/dev/null | awk '/Mem:/{print $2}')G"
 pip install -q numpy tokenizers >> prep.log 2>&1
 hb "deps installed"
 
@@ -60,21 +60,42 @@ done
 curl -s -L "$BASE/train_9.jsonl" | head -n 6000 > data/ultrachat_heldout.jsonl
 hb "download: heldout"
 
-python - >> prep.log 2>&1 <<'EOF'
+# prep runs in the background with 5-min beats — this phase OOM-died
+# silently on runs 1-2 while an unconditional heartbeat said "built".
+# The success beat now requires rc=0 AND tokens.bin on disk.
+python - >> prep.log 2>&1 <<'EOF' &
 from iga.lm_data_ultrachat import prepare
 prepare("data/uc_v53", n_convos=1500000, seed=0, vocab=16384,
         instrument_every=1)
 EOF
+PREP_PID=$!
+while kill -0 $PREP_PID 2>/dev/null; do
+  sleep 300
+  kill -0 $PREP_PID 2>/dev/null && \
+    hb "prep beat: $(tail -1 prep.log | cut -c1-90)"
+done
+wait $PREP_PID; PREP_RC=$?
+if [ "$PREP_RC" -ne 0 ] || [ ! -s data/uc_v53/tokens.bin ]; then
+  hb "PREP FAILED (rc=$PREP_RC, tokens.bin $( [ -f data/uc_v53/tokens.bin ] && echo present || echo MISSING)) - see prep.log"
+  runpodctl remove pod "$RUNPOD_POD_ID" || true
+  sleep 120; exit 1
+fi
 rm -f data/ultrachat_raw.jsonl
-hb "prep: dense train shard built (raw deleted for disk)"
-python - >> prep.log 2>&1 <<'EOF'
+hb "prep: train shard built ($(stat -c%s data/uc_v53/tokens.bin) bytes tokens.bin, raw deleted)"
+if python - >> prep.log 2>&1 <<'EOF'
 import os
 os.environ["ULTRACHAT_JSONL"] = "data/ultrachat_heldout.jsonl"
 from iga.lm_data_ultrachat import prepare
 prepare("data/uc_v53_eval", n_convos=2500, seed=2, instrument_every=1,
         tokenizer_path="data/uc_v53/tokenizer.json")
 EOF
-hb "prep: dense eval shard built (train tokenizer reused)"
+then
+  hb "prep: dense eval shard built (train tokenizer reused)"
+else
+  hb "EVAL-SHARD PREP FAILED - see prep.log"
+  runpodctl remove pod "$RUNPOD_POD_ID" || true
+  sleep 120; exit 1
+fi
 
 # the GPU can also die during the ~45 CPU-minutes above — reprobe
 if ! cuda_canary >> prep.log 2>&1; then

@@ -219,6 +219,42 @@ class TestHybridComplete(unittest.TestCase):
         model.lesioned = set()
 
 
+class TestPrepareStreams(unittest.TestCase):
+    def test_spill_equivalence(self):
+        # regression: v5.3 runs 1-2 — prep held the whole corpus as a
+        # Python list and the OOM killer ended it silently. The sink
+        # spills to disk; spilling must not change one byte.
+        import hashlib
+        import os
+        import shutil
+        raw = "data/ultrachat_raw.jsonl"
+        tokref = "data/uc_tokref/tokenizer.json"
+        if not (os.path.exists(raw) and os.path.exists(tokref)):
+            self.skipTest("local raw corpus / tokref absent")
+        from iga import lm_data_ultrachat as u
+        prev = os.environ.get("ULTRACHAT_JSONL")
+        os.environ["ULTRACHAT_JSONL"] = raw
+        try:
+            digests = []
+            for name, spill in [("nospill", 10 ** 12), ("spill", 5000)]:
+                out = f"results/_prep_{name}"
+                shutil.rmtree(out, ignore_errors=True)
+                u.prepare(out, n_convos=300, seed=0, instrument_every=1,
+                          tokenizer_path=tokref, spill=spill)
+                with open(out + "/tokens.bin", "rb") as f:
+                    digests.append(hashlib.sha256(f.read()).hexdigest())
+            self.assertEqual(digests[0], digests[1])
+            self.assertEqual(open("results/_prep_nospill/events.jsonl").read(),
+                             open("results/_prep_spill/events.jsonl").read())
+        finally:
+            for name in ("nospill", "spill"):
+                shutil.rmtree(f"results/_prep_{name}", ignore_errors=True)
+            if prev is None:
+                os.environ.pop("ULTRACHAT_JSONL", None)
+            else:
+                os.environ["ULTRACHAT_JSONL"] = prev
+
+
 class TestEndToEnd(unittest.TestCase):
     def test_smoke_train_audit(self):
         model, drive, vocab, ce0, ce1 = train(d=48, lanes=2, T=192, steps=12,

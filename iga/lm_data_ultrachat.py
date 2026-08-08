@@ -198,8 +198,47 @@ class Instruments:
         return None
 
 
+class TokenSink:
+    """Disk-backed token stream with a list's interface. prepare() at
+    full corpus is ~1.7B ids — a Python list of those is ~60GB of
+    PyObjects, and the OOM killer ended prep silently on both v5.3
+    hosts (run 1 at 1.02B ids, run 2 at 1.70B). Ids spill to
+    tokens.bin as uint16 every `spill` appends; len() is the total
+    stream position, so all event bookkeeping is unchanged."""
+
+    def __init__(self, path, spill=4_000_000):
+        self.f = open(path, "wb")
+        self.buf = []
+        self.n = 0                       # ids already on disk
+        self.spill = spill
+
+    def __len__(self):
+        return self.n + len(self.buf)
+
+    def append(self, tid):
+        self.buf.append(tid)
+        if len(self.buf) >= self.spill:
+            self._flush()
+
+    def extend(self, ids):
+        self.buf.extend(ids)
+        if len(self.buf) >= self.spill:
+            self._flush()
+
+    def _flush(self):
+        np.array(self.buf, dtype=np.uint16).tofile(self.f)
+        self.n += len(self.buf)
+        self.buf = []
+
+    def close(self):
+        self._flush()
+        self.f.close()
+        return self.n
+
+
 def prepare(out_dir, n_convos=3000, seed=0, vocab=16384,
-            instrument_every=6, tok_sample=1500, tokenizer_path=None):
+            instrument_every=6, tok_sample=1500, tokenizer_path=None,
+            spill=4_000_000):
     """tokenizer_path: REUSE an existing tokenizer instead of training
     a fresh one. Mandatory for any shard evaluated against a model
     trained on another shard — a fresh BPE speaks a different id
@@ -232,7 +271,7 @@ def prepare(out_dir, n_convos=3000, seed=0, vocab=16384,
         return tok.encode(text).ids
 
     thanks_ids = enc(THANKS) + [eot_h]
-    stream = []
+    stream = TokenSink(os.path.join(out_dir, "tokens.bin"), spill=spill)
     events = []
     inst = Instruments(rng)
     n_probes = 0
@@ -301,12 +340,11 @@ def prepare(out_dir, n_convos=3000, seed=0, vocab=16384,
             batch_convos = []
     if batch_convos:
         flush(batch_convos)
-    arr = np.array(stream, dtype=np.uint16)
-    arr.tofile(os.path.join(out_dir, "tokens.bin"))
+    total = stream.close()
     with open(os.path.join(out_dir, "events.jsonl"), "w") as f:
         for e in sorted(events, key=lambda e: e["pos"]):
             f.write(json.dumps(e) + "\n")
-    print(f"wrote {len(arr):,} tokens, {len(events)} events "
+    print(f"wrote {total:,} tokens, {len(events)} events "
           f"({n_probes} probes) -> {out_dir}")
     return out_dir
 
