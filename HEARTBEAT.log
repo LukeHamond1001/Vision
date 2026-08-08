@@ -38,3 +38,4 @@
 01:54:13 training complete (rc=0)
 01:55:11 evaluation complete
 01:55:21 ckpt piece landed: run_fp16.pt
+01:55:29 ckpt piece landed: run_part_aa
