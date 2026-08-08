@@ -746,3 +746,4 @@ wrote 2,216,468,027 tokens, 3566240 events (1048947 probes) -> data/uc_v53
 tokenizer: reused data/uc_v53/tokenizer.json (16384 pieces)
   2000 convos, 2,352,050 tokens, 1446 probes
 wrote 2,905,322 tokens, 6108 events (1804 probes) -> data/uc_v53_eval
+NVIDIA GeForce RTX 3090
