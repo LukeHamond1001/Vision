@@ -1,0 +1,88 @@
+WARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager, possibly rendering your system unusable.It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv. Use the --root-user-action option if you know what you are doing and want to suppress this warning.
+
+[notice] A new release of pip is available: 24.2 -> 26.2.1
+[notice] To update, run: python -m pip install --upgrade pip
+
+
+
+streaming 1500 convos for tokenizer training...
+tokenizer: 16384 pieces -> data/uc_lite/tokenizer.json
+  2000 convos, 2,600,763 tokens, 1430 probes
+  4000 convos, 5,264,439 tokens, 2857 probes
+  6000 convos, 7,994,188 tokens, 4280 probes
+  8000 convos, 10,709,807 tokens, 5699 probes
+  10000 convos, 13,463,928 tokens, 7129 probes
+  12000 convos, 16,259,353 tokens, 8525 probes
+  14000 convos, 19,190,380 tokens, 9958 probes
+  16000 convos, 22,084,243 tokens, 11383 probes
+  18000 convos, 25,026,584 tokens, 12811 probes
+  20000 convos, 27,915,508 tokens, 14218 probes
+  22000 convos, 30,848,197 tokens, 15650 probes
+  24000 convos, 33,796,211 tokens, 17092 probes
+  26000 convos, 36,729,127 tokens, 18521 probes
+  28000 convos, 39,681,617 tokens, 19953 probes
+  30000 convos, 42,589,809 tokens, 21396 probes
+  32000 convos, 45,467,303 tokens, 22811 probes
+  34000 convos, 48,330,612 tokens, 24227 probes
+  36000 convos, 51,253,823 tokens, 25657 probes
+  38000 convos, 54,068,774 tokens, 27111 probes
+  40000 convos, 56,975,879 tokens, 28535 probes
+  42000 convos, 59,905,383 tokens, 29956 probes
+  44000 convos, 62,822,955 tokens, 31393 probes
+  46000 convos, 65,708,324 tokens, 32827 probes
+  48000 convos, 68,623,756 tokens, 34233 probes
+  50000 convos, 71,564,706 tokens, 35659 probes
+  52000 convos, 74,457,579 tokens, 37094 probes
+  54000 convos, 77,400,733 tokens, 38514 probes
+  56000 convos, 80,350,868 tokens, 39930 probes
+  58000 convos, 83,232,959 tokens, 41383 probes
+  60000 convos, 86,176,419 tokens, 42810 probes
+  62000 convos, 89,095,931 tokens, 44234 probes
+  64000 convos, 91,959,666 tokens, 45666 probes
+  66000 convos, 94,879,810 tokens, 47084 probes
+  68000 convos, 97,750,298 tokens, 48516 probes
+  70000 convos, 100,668,440 tokens, 49969 probes
+  72000 convos, 103,550,770 tokens, 51391 probes
+  74000 convos, 106,480,403 tokens, 52823 probes
+  76000 convos, 109,401,022 tokens, 54258 probes
+  78000 convos, 112,344,335 tokens, 55690 probes
+  80000 convos, 115,253,374 tokens, 57107 probes
+  82000 convos, 118,165,599 tokens, 58527 probes
+  84000 convos, 121,030,622 tokens, 59956 probes
+  86000 convos, 123,985,813 tokens, 61399 probes
+  88000 convos, 126,920,646 tokens, 62808 probes
+  90000 convos, 129,867,626 tokens, 64244 probes
+  92000 convos, 132,798,782 tokens, 65659 probes
+  94000 convos, 135,697,243 tokens, 67086 probes
+  96000 convos, 138,632,180 tokens, 68516 probes
+  98000 convos, 141,535,888 tokens, 69930 probes
+  100000 convos, 144,449,008 tokens, 71352 probes
+  102000 convos, 147,396,042 tokens, 72781 probes
+  104000 convos, 150,294,025 tokens, 74212 probes
+  106000 convos, 153,244,402 tokens, 75631 probes
+  108000 convos, 156,149,655 tokens, 77045 probes
+  110000 convos, 159,053,973 tokens, 78476 probes
+  112000 convos, 161,976,438 tokens, 79920 probes
+  114000 convos, 164,865,541 tokens, 81350 probes
+  116000 convos, 167,711,087 tokens, 82759 probes
+  118000 convos, 170,589,025 tokens, 84185 probes
+  120000 convos, 173,474,930 tokens, 85621 probes
+  122000 convos, 176,393,768 tokens, 87055 probes
+  124000 convos, 179,278,132 tokens, 88493 probes
+  126000 convos, 182,193,238 tokens, 89915 probes
+  128000 convos, 185,044,435 tokens, 91337 probes
+  130000 convos, 187,940,722 tokens, 92769 probes
+  132000 convos, 190,798,283 tokens, 94203 probes
+  134000 convos, 193,654,138 tokens, 95648 probes
+  136000 convos, 196,519,402 tokens, 97062 probes
+  138000 convos, 199,299,715 tokens, 98477 probes
+  140000 convos, 202,172,987 tokens, 99919 probes
+  142000 convos, 205,041,169 tokens, 101382 probes
+  144000 convos, 207,899,684 tokens, 102812 probes
+  146000 convos, 210,726,254 tokens, 104235 probes
+  148000 convos, 213,600,499 tokens, 105662 probes
+  150000 convos, 216,477,398 tokens, 107082 probes
+wrote 216,477,398 tokens, 364164 events (107082 probes) -> data/uc_lite
+tokenizer: reused data/uc_lite/tokenizer.json (16384 pieces)
+  2000 convos, 2,352,050 tokens, 1446 probes
+wrote 2,905,322 tokens, 6108 events (1804 probes) -> data/uc_lite_eval

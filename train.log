@@ -1,0 +1,307 @@
+step     1  ce 9.704  loss 9.802  holds    0  14,990 tok/s
+step    50  ce 6.920  loss 6.924  holds 2048  26,077 tok/s
+step   100  ce 6.747  loss 6.752  holds 4128  26,175 tok/s
+step   150  ce 6.113  loss 6.123  holds 6144  26,253 tok/s
+step   200  ce 6.150  loss 6.159  holds 8480  26,102 tok/s
+step   250  ce 5.952  loss 5.959  holds 10432  25,966 tok/s
+step   300  ce 5.473  loss 5.481  holds 12128  25,922 tok/s
+step   350  ce 5.109  loss 5.118  holds 13952  25,827 tok/s
+step   400  ce 5.492  loss 5.502  holds 15584  25,770 tok/s
+step   450  ce 5.420  loss 5.429  holds 17248  25,669 tok/s
+step   500  ce 5.451  loss 5.460  holds 18880  25,606 tok/s
+step   550  ce 5.072  loss 5.081  holds 20864  25,501 tok/s
+step   600  ce 4.780  loss 4.790  holds 22912  25,433 tok/s
+step   650  ce 5.054  loss 5.064  holds 24992  25,363 tok/s
+step   700  ce 4.728  loss 4.737  holds 27040  25,297 tok/s
+step   750  ce 5.055  loss 5.064  holds 29088  25,254 tok/s
+step   800  ce 4.450  loss 4.460  holds 31136  25,206 tok/s
+step   850  ce 4.606  loss 4.615  holds 33216  25,177 tok/s
+step   900  ce 4.946  loss 4.956  holds 35264  25,144 tok/s
+step   950  ce 4.831  loss 4.841  holds 37312  25,135 tok/s
+step  1000  ce 4.961  loss 4.971  holds 39360  25,109 tok/s
+step  1050  ce 4.610  loss 4.620  holds 41440  25,072 tok/s
+step  1100  ce 4.827  loss 4.837  holds 43488  25,059 tok/s
+step  1150  ce 4.413  loss 4.423  holds 45568  25,039 tok/s
+step  1200  ce 4.367  loss 4.377  holds 47584  25,029 tok/s
+step  1250  ce 4.738  loss 4.747  holds 49728  25,005 tok/s
+step  1300  ce 4.517  loss 4.527  holds 52096  24,990 tok/s
+step  1350  ce 4.660  loss 4.670  holds 54528  24,979 tok/s
+step  1400  ce 4.244  loss 4.255  holds 56928  24,955 tok/s
+step  1450  ce 4.503  loss 4.513  holds 59360  24,922 tok/s
+step  1500  ce 4.441  loss 4.451  holds 61728  24,912 tok/s
+step  1550  ce 4.012  loss 4.021  holds 64160  24,902 tok/s
+step  1600  ce 4.513  loss 4.524  holds 66528  24,885 tok/s
+step  1650  ce 4.430  loss 4.440  holds 68704  24,866 tok/s
+step  1700  ce 4.574  loss 4.584  holds 70688  24,865 tok/s
+step  1750  ce 4.430  loss 4.441  holds 72640  24,857 tok/s
+step  1800  ce 4.751  loss 4.762  holds 74240  24,848 tok/s
+step  1850  ce 4.392  loss 4.402  holds 75840  24,845 tok/s
+step  1900  ce 4.033  loss 4.043  holds 77472  24,850 tok/s
+step  1950  ce 4.203  loss 4.213  holds 79072  24,848 tok/s
+step  2000  ce 4.419  loss 4.430  holds 80672  24,846 tok/s
+step  2050  ce 4.047  loss 4.057  holds 82272  24,845 tok/s
+step  2100  ce 4.306  loss 4.317  holds 83872  24,843 tok/s
+step  2150  ce 4.148  loss 4.158  holds 85504  24,843 tok/s
+step  2200  ce 4.178  loss 4.188  holds 87104  24,838 tok/s
+step  2250  ce 4.092  loss 4.101  holds 88704  24,836 tok/s
+step  2300  ce 4.054  loss 4.064  holds 90304  24,833 tok/s
+step  2350  ce 4.114  loss 4.124  holds 91904  24,833 tok/s
+step  2400  ce 4.706  loss 4.717  holds 93536  24,827 tok/s
+step  2450  ce 3.860  loss 3.870  holds 95136  24,825 tok/s
+step  2500  ce 4.050  loss 4.060  holds 96736  24,823 tok/s
+step  2550  ce 4.238  loss 4.248  holds 98336  24,821 tok/s
+step  2600  ce 3.751  loss 3.762  holds 99936  24,823 tok/s
+step  2650  ce 3.799  loss 3.809  holds 101728  24,822 tok/s
+step  2700  ce 4.151  loss 4.161  holds 103744  24,821 tok/s
+step  2750  ce 3.862  loss 3.872  holds 105728  24,816 tok/s
+step  2800  ce 4.252  loss 4.263  holds 107744  24,812 tok/s
+step  2850  ce 3.941  loss 3.951  holds 109728  24,810 tok/s
+step  2900  ce 4.015  loss 4.025  holds 111776  24,807 tok/s
+step  2950  ce 4.109  loss 4.119  holds 113760  24,808 tok/s
+step  3000  ce 4.391  loss 4.401  holds 115616  24,808 tok/s
+step  3050  ce 3.837  loss 3.847  holds 117216  24,805 tok/s
+step  3100  ce 3.951  loss 3.961  holds 118816  24,807 tok/s
+step  3150  ce 4.172  loss 4.182  holds 120448  24,806 tok/s
+step  3200  ce 4.048  loss 4.059  holds 122048  24,807 tok/s
+step  3250  ce 4.159  loss 4.169  holds 123648  24,806 tok/s
+step  3300  ce 4.210  loss 4.220  holds 125248  24,804 tok/s
+step  3350  ce 4.189  loss 4.199  holds 126848  24,801 tok/s
+step  3400  ce 3.872  loss 3.882  holds 128480  24,796 tok/s
+step  3450  ce 3.761  loss 3.771  holds 130080  24,794 tok/s
+step  3500  ce 3.977  loss 3.988  holds 131680  24,798 tok/s
+step  3550  ce 3.922  loss 3.932  holds 133280  24,797 tok/s
+step  3600  ce 3.771  loss 3.781  holds 134880  24,797 tok/s
+step  3650  ce 3.809  loss 3.819  holds 136480  24,797 tok/s
+step  3700  ce 3.892  loss 3.902  holds 138112  24,798 tok/s
+step  3750  ce 3.756  loss 3.766  holds 139712  24,797 tok/s
+step  3800  ce 4.188  loss 4.199  holds 141312  24,797 tok/s
+step  3850  ce 4.025  loss 4.035  holds 142912  24,793 tok/s
+step  3900  ce 4.066  loss 4.077  holds 144512  24,794 tok/s
+step  3950  ce 3.727  loss 3.737  holds 146144  24,795 tok/s
+step  4000  ce 3.885  loss 3.896  holds 147744  24,798 tok/s
+step  4050  ce 3.681  loss 3.691  holds 149408  24,803 tok/s
+step  4100  ce 4.125  loss 4.136  holds 151392  24,804 tok/s
+step  4150  ce 3.896  loss 3.907  holds 153408  24,806 tok/s
+step  4200  ce 4.218  loss 4.229  holds 155424  24,811 tok/s
+step  4250  ce 3.968  loss 3.979  holds 157440  24,813 tok/s
+step  4300  ce 3.601  loss 3.611  holds 159424  24,814 tok/s
+step  4350  ce 3.974  loss 3.985  holds 161440  24,811 tok/s
+step  4400  ce 4.096  loss 4.107  holds 163424  24,811 tok/s
+step  4450  ce 3.595  loss 3.605  holds 165472  24,811 tok/s
+step  4500  ce 3.984  loss 3.995  holds 167456  24,812 tok/s
+step  4550  ce 3.626  loss 3.637  holds 169472  24,812 tok/s
+step  4600  ce 3.877  loss 3.888  holds 171456  24,814 tok/s
+step  4650  ce 3.918  loss 3.928  holds 173472  24,816 tok/s
+step  4700  ce 3.800  loss 3.811  holds 175488  24,815 tok/s
+step  4750  ce 3.803  loss 3.813  holds 177504  24,814 tok/s
+step  4800  ce 4.041  loss 4.053  holds 179488  24,816 tok/s
+step  4850  ce 3.751  loss 3.761  holds 181504  24,817 tok/s
+step  4900  ce 4.087  loss 4.097  holds 183488  24,822 tok/s
+step  4950  ce 3.815  loss 3.826  holds 185408  24,822 tok/s
+step  5000  ce 3.919  loss 3.930  holds 187008  24,821 tok/s
+step  5050  ce 3.907  loss 3.917  holds 188608  24,820 tok/s
+step  5100  ce 3.848  loss 3.859  holds 190208  24,820 tok/s
+step  5150  ce 3.887  loss 3.897  holds 191808  24,823 tok/s
+step  5200  ce 3.883  loss 3.895  holds 193760  24,824 tok/s
+step  5250  ce 3.875  loss 3.886  holds 195776  24,822 tok/s
+step  5300  ce 3.430  loss 3.441  holds 197760  24,820 tok/s
+step  5350  ce 3.754  loss 3.764  holds 199776  24,818 tok/s
+step  5400  ce 3.740  loss 3.751  holds 201760  24,815 tok/s
+step  5450  ce 3.789  loss 3.799  holds 203808  24,814 tok/s
+step  5500  ce 3.650  loss 3.661  holds 205792  24,816 tok/s
+step  5550  ce 3.865  loss 3.876  holds 207808  24,818 tok/s
+step  5600  ce 3.369  loss 3.380  holds 209792  24,819 tok/s
+step  5650  ce 3.912  loss 3.923  holds 211808  24,819 tok/s
+step  5700  ce 3.698  loss 3.709  holds 213792  24,820 tok/s
+step  5750  ce 3.825  loss 3.835  holds 215840  24,822 tok/s
+step  5800  ce 3.504  loss 3.515  holds 217824  24,823 tok/s
+step  5850  ce 3.470  loss 3.480  holds 219840  24,823 tok/s
+step  5900  ce 3.672  loss 3.682  holds 221824  24,824 tok/s
+step  5950  ce 3.400  loss 3.410  holds 223840  24,825 tok/s
+step  6000  ce 3.293  loss 3.304  holds 225856  24,828 tok/s
+step  6050  ce 3.813  loss 3.824  holds 227872  24,825 tok/s
+step  6100  ce 3.697  loss 3.707  holds 229856  24,827 tok/s
+step  6150  ce 3.774  loss 3.785  holds 231872  24,828 tok/s
+step  6200  ce 3.895  loss 3.907  holds 233856  24,828 tok/s
+step  6250  ce 3.830  loss 3.841  holds 235904  24,828 tok/s
+step  6300  ce 3.471  loss 3.481  holds 237888  24,827 tok/s
+step  6350  ce 3.445  loss 3.456  holds 239904  24,828 tok/s
+step  6400  ce 3.695  loss 3.707  holds 241888  24,829 tok/s
+step  6450  ce 3.611  loss 3.621  holds 243904  24,828 tok/s
+step  6500  ce 3.774  loss 3.784  holds 245920  24,829 tok/s
+step  6550  ce 3.917  loss 3.928  holds 247936  24,829 tok/s
+step  6600  ce 3.564  loss 3.575  holds 249920  24,830 tok/s
+step  6650  ce 3.562  loss 3.572  holds 251872  24,833 tok/s
+step  6700  ce 3.747  loss 3.758  holds 253472  24,834 tok/s
+step  6750  ce 3.564  loss 3.575  holds 255104  24,836 tok/s
+step  6800  ce 3.775  loss 3.786  holds 256704  24,837 tok/s
+step  6850  ce 3.791  loss 3.802  holds 258304  24,839 tok/s
+step  6900  ce 3.692  loss 3.703  holds 259904  24,841 tok/s
+step  6950  ce 3.470  loss 3.481  holds 261504  24,841 tok/s
+step  7000  ce 3.644  loss 3.655  holds 263136  24,842 tok/s
+step  7050  ce 3.431  loss 3.442  holds 264736  24,841 tok/s
+step  7100  ce 3.469  loss 3.479  holds 266336  24,842 tok/s
+step  7150  ce 3.438  loss 3.448  holds 267936  24,844 tok/s
+step  7200  ce 3.647  loss 3.658  holds 269536  24,845 tok/s
+step  7250  ce 3.667  loss 3.678  holds 271200  24,845 tok/s
+step  7300  ce 3.594  loss 3.604  holds 273216  24,845 tok/s
+step  7350  ce 3.678  loss 3.688  holds 275200  24,846 tok/s
+step  7400  ce 3.499  loss 3.509  holds 277216  24,847 tok/s
+step  7450  ce 3.656  loss 3.667  holds 279200  24,846 tok/s
+step  7500  ce 3.666  loss 3.676  holds 281248  24,847 tok/s
+step  7550  ce 3.772  loss 3.784  holds 283232  24,848 tok/s
+step  7600  ce 3.296  loss 3.307  holds 285248  24,848 tok/s
+step  7650  ce 3.353  loss 3.363  holds 287232  24,847 tok/s
+step  7700  ce 3.399  loss 3.409  holds 289248  24,847 tok/s
+step  7750  ce 3.419  loss 3.429  holds 291232  24,847 tok/s
+step  7800  ce 3.696  loss 3.707  holds 293152  24,847 tok/s
+step  7850  ce 3.607  loss 3.617  holds 294752  24,848 tok/s
+step  7900  ce 3.753  loss 3.763  holds 296352  24,849 tok/s
+step  7950  ce 3.559  loss 3.569  holds 297952  24,849 tok/s
+step  8000  ce 3.587  loss 3.599  holds 299552  24,848 tok/s
+step  8050  ce 3.378  loss 3.389  holds 301184  24,848 tok/s
+step  8100  ce 3.496  loss 3.507  holds 302784  24,849 tok/s
+step  8150  ce 3.291  loss 3.301  holds 304384  24,850 tok/s
+step  8200  ce 3.594  loss 3.605  holds 305984  24,849 tok/s
+step  8250  ce 3.520  loss 3.530  holds 307584  24,849 tok/s
+step  8300  ce 3.788  loss 3.799  holds 309216  24,850 tok/s
+step  8350  ce 3.348  loss 3.358  holds 310816  24,850 tok/s
+step  8400  ce 3.326  loss 3.337  holds 312416  24,850 tok/s
+step  8450  ce 3.526  loss 3.537  holds 314240  24,851 tok/s
+step  8500  ce 3.203  loss 3.213  holds 316224  24,851 tok/s
+step  8550  ce 3.458  loss 3.468  holds 318272  24,851 tok/s
+step  8600  ce 3.508  loss 3.518  holds 320256  24,852 tok/s
+step  8650  ce 3.006  loss 3.016  holds 322272  24,852 tok/s
+step  8700  ce 3.519  loss 3.529  holds 324000  24,851 tok/s
+step  8750  ce 3.553  loss 3.563  holds 325600  24,850 tok/s
+step  8800  ce 3.600  loss 3.611  holds 327232  24,851 tok/s
+step  8850  ce 3.445  loss 3.455  holds 328832  24,852 tok/s
+step  8900  ce 3.598  loss 3.609  holds 330848  24,853 tok/s
+step  8950  ce 3.542  loss 3.553  holds 332832  24,852 tok/s
+step  9000  ce 3.170  loss 3.180  holds 334848  24,852 tok/s
+step  9050  ce 3.268  loss 3.279  holds 336864  24,852 tok/s
+step  9100  ce 3.478  loss 3.488  holds 338880  24,852 tok/s
+step  9150  ce 3.653  loss 3.663  holds 340864  24,852 tok/s
+step  9200  ce 3.823  loss 3.835  holds 342880  24,853 tok/s
+step  9250  ce 3.580  loss 3.590  holds 344864  24,853 tok/s
+step  9300  ce 3.554  loss 3.565  holds 346912  24,854 tok/s
+step  9350  ce 3.437  loss 3.448  holds 348896  24,854 tok/s
+step  9400  ce 3.572  loss 3.583  holds 350912  24,855 tok/s
+step  9450  ce 3.173  loss 3.184  holds 352896  24,855 tok/s
+step  9500  ce 3.567  loss 3.577  holds 354912  24,854 tok/s
+step  9550  ce 3.283  loss 3.292  holds 356928  24,854 tok/s
+step  9600  ce 3.418  loss 3.429  holds 358944  24,855 tok/s
+step  9650  ce 3.644  loss 3.654  holds 360928  24,855 tok/s
+step  9700  ce 3.520  loss 3.531  holds 362944  24,856 tok/s
+step  9750  ce 3.750  loss 3.761  holds 364928  24,854 tok/s
+step  9800  ce 3.348  loss 3.359  holds 366976  24,856 tok/s
+step  9850  ce 3.661  loss 3.672  holds 368960  24,855 tok/s
+step  9900  ce 3.474  loss 3.484  holds 370976  24,855 tok/s
+step  9950  ce 3.595  loss 3.606  holds 372960  24,857 tok/s
+step 10000  ce 3.409  loss 3.420  holds 374976  24,857 tok/s
+audit: {'holds': 374976, 'telescoping_exact': True, 'scoped': True, 'vetoes': 26400, 'proposed': 430784}
+panel:
+lane0 frontier recall:b3      target 0.05 phi0 1.00 band 5 due 5148672
+lane0 maintain fid:3          target 0.20 phi0 0.43 band 3 due 5121536
+lane0 frontier recall:b0      target 0.10 phi0 0.98 band 2 due 5120512
+lane1 frontier recall:b3      target 0.05 phi0 1.00 band 5 due 5148672
+lane1 maintain fid:3          target 0.20 phi0 0.43 band 3 due 5121536
+lane1 frontier recall:b0      target 0.10 phi0 0.98 band 2 due 5120512
+lane2 frontier recall:b3      target 0.05 phi0 1.00 band 5 due 5148672
+lane2 maintain fid:3          target 0.20 phi0 0.43 band 3 due 5121536
+lane2 frontier recall:b0      target 0.10 phi0 0.98 band 2 due 5120512
+lane3 frontier recall:b3      target 0.05 phi0 1.00 band 5 due 5148672
+lane3 maintain fid:3          target 0.20 phi0 0.43 band 3 due 5121536
+lane3 frontier recall:b0      target 0.10 phi0 0.98 band 2 due 5120512
+lane4 frontier recall:b3      target 0.05 phi0 1.00 band 5 due 5148672
+lane4 maintain fid:3          target 0.20 phi0 0.43 band 3 due 5121536
+lane4 frontier recall:b0      target 0.10 phi0 0.98 band 2 due 5120512
+lane5 frontier recall:b3      target 0.05 phi0 1.00 band 5 due 5148672
+lane5 maintain fid:3          target 0.20 phi0 0.43 band 3 due 5121536
+lane5 frontier recall:b0      target 0.10 phi0 0.98 band 2 due 5120512
+lane6 frontier recall:b3      target 0.05 phi0 1.00 band 5 due 5148672
+lane6 maintain fid:3          target 0.20 phi0 0.43 band 3 due 5121536
+lane6 frontier recall:b0      target 0.10 phi0 0.98 band 2 due 5120512
+lane7 frontier recall:b3      target 0.05 phi0 1.00 band 5 due 5148672
+lane7 maintain fid:3          target 0.20 phi0 0.43 band 3 due 5121536
+lane7 frontier recall:b0      target 0.10 phi0 0.98 band 2 due 5120512
+lane8 frontier recall:b3      target 0.05 phi0 1.00 band 5 due 5148672
+lane8 maintain fid:3          target 0.20 phi0 0.43 band 3 due 5121536
+lane8 frontier recall:b0      target 0.10 phi0 0.98 band 2 due 5120512
+lane9 frontier recall:b3      target 0.05 phi0 1.00 band 5 due 5148672
+lane9 maintain fid:3          target 0.20 phi0 0.43 band 3 due 5121536
+lane9 frontier recall:b0      target 0.10 phi0 0.98 band 2 due 5120512
+lane10 frontier recall:b3      target 0.05 phi0 1.00 band 5 due 5148672
+lane10 maintain fid:3          target 0.20 phi0 0.43 band 3 due 5121536
+lane10 frontier recall:b0      target 0.10 phi0 0.98 band 2 due 5120512
+lane11 frontier recall:b3      target 0.05 phi0 1.00 band 5 due 5148672
+lane11 maintain fid:3          target 0.20 phi0 0.43 band 3 due 5121536
+lane11 frontier recall:b0      target 0.10 phi0 0.98 band 2 due 5120512
+lane12 frontier recall:b3      target 0.05 phi0 1.00 band 5 due 5148672
+lane12 maintain fid:3          target 0.20 phi0 0.43 band 3 due 5121536
+lane12 frontier recall:b0      target 0.10 phi0 0.98 band 2 due 5120512
+lane13 frontier recall:b3      target 0.05 phi0 1.00 band 5 due 5148672
+lane13 maintain fid:3          target 0.20 phi0 0.43 band 3 due 5121536
+lane13 frontier recall:b0      target 0.10 phi0 0.98 band 2 due 5120512
+lane14 frontier recall:b3      target 0.05 phi0 1.00 band 5 due 5148672
+lane14 maintain fid:3          target 0.20 phi0 0.43 band 3 due 5121536
+lane14 frontier recall:b0      target 0.10 phi0 0.98 band 2 due 5120512
+lane15 frontier recall:b3      target 0.05 phi0 1.00 band 5 due 5148672
+lane15 maintain fid:3          target 0.20 phi0 0.43 band 3 due 5121536
+lane15 frontier recall:b0      target 0.10 phi0 0.98 band 2 due 5120512
+lane16 frontier recall:b3      target 0.05 phi0 1.00 band 5 due 5148672
+lane16 maintain fid:3          target 0.20 phi0 0.43 band 3 due 5121536
+lane16 frontier recall:b0      target 0.10 phi0 0.98 band 2 due 5120512
+lane17 frontier recall:b3      target 0.05 phi0 1.00 band 5 due 5148672
+lane17 maintain fid:3          target 0.20 phi0 0.43 band 3 due 5121536
+lane17 frontier recall:b0      target 0.10 phi0 0.98 band 2 due 5120512
+lane18 frontier recall:b3      target 0.05 phi0 1.00 band 5 due 5148672
+lane18 maintain fid:3          target 0.20 phi0 0.43 band 3 due 5121536
+lane18 frontier recall:b0      target 0.10 phi0 0.98 band 2 due 5120512
+lane19 frontier recall:b3      target 0.05 phi0 1.00 band 5 due 5148672
+lane19 maintain fid:3          target 0.20 phi0 0.43 band 3 due 5121536
+lane19 frontier recall:b0      target 0.10 phi0 0.98 band 2 due 5120512
+lane20 frontier recall:b3      target 0.05 phi0 1.00 band 5 due 5148672
+lane20 maintain fid:3          target 0.20 phi0 0.43 band 3 due 5121536
+lane20 frontier recall:b0      target 0.10 phi0 0.98 band 2 due 5120512
+lane21 frontier recall:b3      target 0.05 phi0 1.00 band 5 due 5148672
+lane21 maintain fid:3          target 0.20 phi0 0.43 band 3 due 5121536
+lane21 frontier recall:b0      target 0.10 phi0 0.98 band 2 due 5120512
+lane22 frontier recall:b3      target 0.05 phi0 1.00 band 5 due 5148672
+lane22 maintain fid:3          target 0.20 phi0 0.43 band 3 due 5121536
+lane22 frontier recall:b0      target 0.10 phi0 0.98 band 2 due 5120512
+lane23 frontier recall:b3      target 0.05 phi0 1.00 band 5 due 5148672
+lane23 maintain fid:3          target 0.20 phi0 0.43 band 3 due 5121536
+lane23 frontier recall:b0      target 0.10 phi0 0.98 band 2 due 5120512
+lane24 frontier recall:b3      target 0.05 phi0 1.00 band 5 due 5148672
+lane24 maintain fid:3          target 0.20 phi0 0.43 band 3 due 5121536
+lane24 frontier recall:b0      target 0.10 phi0 0.98 band 2 due 5120512
+lane25 frontier recall:b3      target 0.05 phi0 1.00 band 5 due 5148672
+lane25 maintain fid:3          target 0.20 phi0 0.43 band 3 due 5121536
+lane25 frontier recall:b0      target 0.10 phi0 0.98 band 2 due 5120512
+lane26 frontier recall:b3      target 0.05 phi0 1.00 band 5 due 5148672
+lane26 maintain fid:3          target 0.20 phi0 0.43 band 3 due 5121536
+lane26 frontier recall:b0      target 0.10 phi0 0.98 band 2 due 5120512
+lane27 frontier recall:b3      target 0.05 phi0 1.00 band 5 due 5148672
+lane27 maintain fid:3          target 0.20 phi0 0.43 band 3 due 5121536
+lane27 frontier recall:b0      target 0.10 phi0 0.98 band 2 due 5120512
+lane28 frontier recall:b3      target 0.05 phi0 1.00 band 5 due 5148672
+lane28 maintain fid:3          target 0.20 phi0 0.43 band 3 due 5121536
+lane28 frontier recall:b0      target 0.10 phi0 0.98 band 2 due 5120512
+lane29 frontier recall:b3      target 0.05 phi0 1.00 band 5 due 5148672
+lane29 maintain fid:3          target 0.20 phi0 0.43 band 3 due 5121536
+lane29 frontier recall:b0      target 0.10 phi0 0.98 band 2 due 5120512
+lane30 frontier recall:b3      target 0.05 phi0 1.00 band 5 due 5148672
+lane30 maintain fid:3          target 0.20 phi0 0.43 band 3 due 5121536
+lane30 frontier recall:b0      target 0.10 phi0 0.98 band 2 due 5120512
+lane31 frontier recall:b3      target 0.05 phi0 1.00 band 5 due 5148672
+lane31 maintain fid:3          target 0.20 phi0 0.43 band 3 due 5121536
+lane31 frontier recall:b0      target 0.10 phi0 0.98 band 2 due 5120512
+record   fid:1          0.982 (ema 0.904)
+record   fid:2          0.999 (ema 0.925)
+record   fid:3          0.282 (ema 0.114)
+record   fid:4          0.581 (ema 0.576)
+record   fid:5          0.512 (ema 0.512)
+record   recall:b0      0.053 (ema 0.002)
+record   recall:b1      0.050 (ema 0.002)
+record   recall:b2      0.070 (ema 0.003)
