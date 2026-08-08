@@ -1,40 +1,60 @@
-step  4800  ce 4.041  loss 4.053  holds 179488  24,816 tok/s
-step  4850  ce 3.751  loss 3.761  holds 181504  24,817 tok/s
-step  4900  ce 4.087  loss 4.097  holds 183488  24,822 tok/s
-step  4950  ce 3.815  loss 3.826  holds 185408  24,822 tok/s
-step  5000  ce 3.919  loss 3.930  holds 187008  24,821 tok/s
-step  5050  ce 3.907  loss 3.917  holds 188608  24,820 tok/s
-step  5100  ce 3.848  loss 3.859  holds 190208  24,820 tok/s
-step  5150  ce 3.887  loss 3.897  holds 191808  24,823 tok/s
-step  5200  ce 3.883  loss 3.895  holds 193760  24,824 tok/s
-step  5250  ce 3.875  loss 3.886  holds 195776  24,822 tok/s
-step  5300  ce 3.430  loss 3.441  holds 197760  24,820 tok/s
-step  5350  ce 3.754  loss 3.764  holds 199776  24,818 tok/s
-step  5400  ce 3.740  loss 3.751  holds 201760  24,815 tok/s
-step  5450  ce 3.789  loss 3.799  holds 203808  24,814 tok/s
-step  5500  ce 3.650  loss 3.661  holds 205792  24,816 tok/s
-step  5550  ce 3.865  loss 3.876  holds 207808  24,818 tok/s
-step  5600  ce 3.369  loss 3.380  holds 209792  24,819 tok/s
-step  5650  ce 3.912  loss 3.923  holds 211808  24,819 tok/s
-step  5700  ce 3.698  loss 3.709  holds 213792  24,820 tok/s
-step  5750  ce 3.825  loss 3.835  holds 215840  24,822 tok/s
-step  5800  ce 3.504  loss 3.515  holds 217824  24,823 tok/s
-step  5850  ce 3.470  loss 3.480  holds 219840  24,823 tok/s
-step  5900  ce 3.672  loss 3.682  holds 221824  24,824 tok/s
-step  5950  ce 3.400  loss 3.410  holds 223840  24,825 tok/s
-step  6000  ce 3.293  loss 3.304  holds 225856  24,828 tok/s
-step  6050  ce 3.813  loss 3.824  holds 227872  24,825 tok/s
-step  6100  ce 3.697  loss 3.707  holds 229856  24,827 tok/s
-step  6150  ce 3.774  loss 3.785  holds 231872  24,828 tok/s
-step  6200  ce 3.895  loss 3.907  holds 233856  24,828 tok/s
-step  6250  ce 3.830  loss 3.841  holds 235904  24,828 tok/s
-step  6300  ce 3.471  loss 3.481  holds 237888  24,827 tok/s
-step  6350  ce 3.445  loss 3.456  holds 239904  24,828 tok/s
-step  6400  ce 3.695  loss 3.707  holds 241888  24,829 tok/s
-step  6450  ce 3.611  loss 3.621  holds 243904  24,828 tok/s
-step  6500  ce 3.774  loss 3.784  holds 245920  24,829 tok/s
-step  6550  ce 3.917  loss 3.928  holds 247936  24,829 tok/s
-step  6600  ce 3.564  loss 3.575  holds 249920  24,830 tok/s
-step  6650  ce 3.562  loss 3.572  holds 251872  24,833 tok/s
-step  6700  ce 3.747  loss 3.758  holds 253472  24,834 tok/s
-step  6750  ce 3.564  loss 3.575  holds 255104  24,836 tok/s
+lane14 frontier recall:b0      target 0.10 phi0 0.98 band 2 due 5120512
+lane15 frontier recall:b3      target 0.05 phi0 1.00 band 5 due 5148672
+lane15 maintain fid:3          target 0.20 phi0 0.43 band 3 due 5121536
+lane15 frontier recall:b0      target 0.10 phi0 0.98 band 2 due 5120512
+lane16 frontier recall:b3      target 0.05 phi0 1.00 band 5 due 5148672
+lane16 maintain fid:3          target 0.20 phi0 0.43 band 3 due 5121536
+lane16 frontier recall:b0      target 0.10 phi0 0.98 band 2 due 5120512
+lane17 frontier recall:b3      target 0.05 phi0 1.00 band 5 due 5148672
+lane17 maintain fid:3          target 0.20 phi0 0.43 band 3 due 5121536
+lane17 frontier recall:b0      target 0.10 phi0 0.98 band 2 due 5120512
+lane18 frontier recall:b3      target 0.05 phi0 1.00 band 5 due 5148672
+lane18 maintain fid:3          target 0.20 phi0 0.43 band 3 due 5121536
+lane18 frontier recall:b0      target 0.10 phi0 0.98 band 2 due 5120512
+lane19 frontier recall:b3      target 0.05 phi0 1.00 band 5 due 5148672
+lane19 maintain fid:3          target 0.20 phi0 0.43 band 3 due 5121536
+lane19 frontier recall:b0      target 0.10 phi0 0.98 band 2 due 5120512
+lane20 frontier recall:b3      target 0.05 phi0 1.00 band 5 due 5148672
+lane20 maintain fid:3          target 0.20 phi0 0.43 band 3 due 5121536
+lane20 frontier recall:b0      target 0.10 phi0 0.98 band 2 due 5120512
+lane21 frontier recall:b3      target 0.05 phi0 1.00 band 5 due 5148672
+lane21 maintain fid:3          target 0.20 phi0 0.43 band 3 due 5121536
+lane21 frontier recall:b0      target 0.10 phi0 0.98 band 2 due 5120512
+lane22 frontier recall:b3      target 0.05 phi0 1.00 band 5 due 5148672
+lane22 maintain fid:3          target 0.20 phi0 0.43 band 3 due 5121536
+lane22 frontier recall:b0      target 0.10 phi0 0.98 band 2 due 5120512
+lane23 frontier recall:b3      target 0.05 phi0 1.00 band 5 due 5148672
+lane23 maintain fid:3          target 0.20 phi0 0.43 band 3 due 5121536
+lane23 frontier recall:b0      target 0.10 phi0 0.98 band 2 due 5120512
+lane24 frontier recall:b3      target 0.05 phi0 1.00 band 5 due 5148672
+lane24 maintain fid:3          target 0.20 phi0 0.43 band 3 due 5121536
+lane24 frontier recall:b0      target 0.10 phi0 0.98 band 2 due 5120512
+lane25 frontier recall:b3      target 0.05 phi0 1.00 band 5 due 5148672
+lane25 maintain fid:3          target 0.20 phi0 0.43 band 3 due 5121536
+lane25 frontier recall:b0      target 0.10 phi0 0.98 band 2 due 5120512
+lane26 frontier recall:b3      target 0.05 phi0 1.00 band 5 due 5148672
+lane26 maintain fid:3          target 0.20 phi0 0.43 band 3 due 5121536
+lane26 frontier recall:b0      target 0.10 phi0 0.98 band 2 due 5120512
+lane27 frontier recall:b3      target 0.05 phi0 1.00 band 5 due 5148672
+lane27 maintain fid:3          target 0.20 phi0 0.43 band 3 due 5121536
+lane27 frontier recall:b0      target 0.10 phi0 0.98 band 2 due 5120512
+lane28 frontier recall:b3      target 0.05 phi0 1.00 band 5 due 5148672
+lane28 maintain fid:3          target 0.20 phi0 0.43 band 3 due 5121536
+lane28 frontier recall:b0      target 0.10 phi0 0.98 band 2 due 5120512
+lane29 frontier recall:b3      target 0.05 phi0 1.00 band 5 due 5148672
+lane29 maintain fid:3          target 0.20 phi0 0.43 band 3 due 5121536
+lane29 frontier recall:b0      target 0.10 phi0 0.98 band 2 due 5120512
+lane30 frontier recall:b3      target 0.05 phi0 1.00 band 5 due 5148672
+lane30 maintain fid:3          target 0.20 phi0 0.43 band 3 due 5121536
+lane30 frontier recall:b0      target 0.10 phi0 0.98 band 2 due 5120512
+lane31 frontier recall:b3      target 0.05 phi0 1.00 band 5 due 5148672
+lane31 maintain fid:3          target 0.20 phi0 0.43 band 3 due 5121536
+lane31 frontier recall:b0      target 0.10 phi0 0.98 band 2 due 5120512
+record   fid:1          0.982 (ema 0.904)
+record   fid:2          0.999 (ema 0.925)
+record   fid:3          0.282 (ema 0.114)
+record   fid:4          0.581 (ema 0.576)
+record   fid:5          0.512 (ema 0.512)
+record   recall:b0      0.053 (ema 0.002)
+record   recall:b1      0.050 (ema 0.002)
+record   recall:b2      0.070 (ema 0.003)

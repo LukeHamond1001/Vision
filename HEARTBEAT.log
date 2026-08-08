@@ -13,3 +13,4 @@
 04:15:02 training heartbeat: step  6750  ce 3.564  loss 3.575  holds 255104  24,836 tok/s
 04:30:03 training heartbeat: step  6750  ce 3.564  loss 3.575  holds 255104  24,836 tok/s
 04:45:04 training heartbeat: step  6750  ce 3.564  loss 3.575  holds 255104  24,836 tok/s
+04:49:36 training complete (rc=0)
