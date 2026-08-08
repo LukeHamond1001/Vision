@@ -566,6 +566,44 @@ scale, not blocking this one. Target cost: $15–40 total.
   first training heartbeats blind). ~$0.13. Run 4 is the same
   registered configuration, next host.
 
+- **A22** (2026-08-08, run 4 CLEAN, THE VERDICT): end-to-end
+  delivery — 107k steps at 142k tok/s (3h55m, ~$0.90; the A21 fix
+  is why), rc=0, eval ran, checkpoint pieces verified truthfully,
+  7,009,152 holds settled with the ledger EXACT and scoped;
+  6,002,016 of 13,397,632 proposals vetoed (the gate refusing
+  frontier targets on unpredictable carry bands — F2 live at
+  scale). CE 9.87 -> ~2.6. Held-out eval (n=250):
+  **in-context binding EMERGED** — gap 0-256: p(ans) 0.568, top1
+  61% vs the 0.083/8.5% color-prior floor both A18 twins sat at.
+  The A18 emergence-threshold reading is CONFIRMED: same
+  architecture class, ~10x tokens, binding appears — the first
+  demonstrated binding of the campaign, and the channel that paid
+  for it was the margin channel (prior-tracking worth zero), so
+  what was paid is what is real. Cross-window (256-2048:
+  0.073/0%; 2048-16384: 0.079/12%, n=91 — 12% vs 8.3% chance is
+  p~0.15, not a claim): NOT demonstrated at run's end. But the
+  drive records show it EXISTED: recall:b1 record 0.155,
+  recall:b2 record 0.142 mid-run — real margin over distractors —
+  then collapse to ~0.003 by the end, while fid:4 ended NEGATIVE
+  and fid:5 at zero: the carry medium was never predictable to
+  its own forward model, the gate vetoed its frontiers, and the
+  transient circuit lost to in-window specialization. Lesion
+  (0-256: 0.568 -> 0.047): general breakage, not band-borne
+  memory — band 3 updates only at 512-token chunk boundaries, so
+  a fact planted <256 tokens back has never entered ANY band;
+  zeroing memory tokens is an off-manifold input shift (the A15
+  lesson; the lesion instrument remains confounded for in-window
+  claims). Cosmetic: perpetual zero-pay fid:1/2 maintains (the
+  hybrid has no such organs; proposer should mask absent bands).
+  Autopsy material exists: rolling snapshots on results-v53-ckpt
+  bracket the b1/b2 rise and fall. Artifacts: results-v53-run4
+  (checkpoint pieces, eval shard, full train.log, eval tables).
+  Next levers, in order: (1) the transient — why cross-window
+  binding formed and died (snapshot autopsy); (2) selective band
+  writes (pooled-mean wash-out is the prime suspect); (3) fid
+  weight / stabilizing slow bands so the gate can open their
+  frontiers.
+
 ## Status
 
 Assembled scene-free (A6), no registered runs. Weaver (`iga/lm_gen.py`),
