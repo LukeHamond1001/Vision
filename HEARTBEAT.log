@@ -16,3 +16,4 @@
 05:44:47 training complete (rc=1)
 05:44:50 EVAL FAILED - traceback in eval_results.txt
 05:44:53 checkpoint FULLY VERIFIED on remote
+05:44:55 phase complete
