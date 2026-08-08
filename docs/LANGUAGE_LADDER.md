@@ -493,6 +493,22 @@ scale, not blocking this one. Target cost: $15–40 total.
   transformer parallelism makes this ~15-30 min, ~$0.15. The v5.1-lite
   band run (A16) proceeds in parallel as substrate science.
 
+- **A18** (2026-08-07, twin verdicts): v5.1-lite (bands) and v5.2
+  (transformer + drive) both trained clean at 164M tokens with the
+  margin channel and graduated instruments (255k holds settled on
+  lite; all pieces landed on both; ~$0.90 combined). Both read FLAT
+  at the color-prior floor at every gap — including gaps INSIDE the
+  transformer's attention window with the fact in plain view
+  (v5.2: 0.085/8% at 0-256; lite: 0.077/5%; n=250 each) — and
+  lesion deltas are negligible. The paired reading: this is not an
+  architecture verdict; it is an emergence-threshold verdict. Neither
+  substrate reaches in-context binding at 164M tokens / few-M params
+  — consistent with the known induction-emergence regime for small
+  transformers (~1B+ tokens). The A16 interpretation table's
+  "flat everywhere" branch fires, amended by the control: the deeper
+  issue is training quantity, shared by both substrates. Next:
+  v5.3 past the threshold.
+
 ## Status
 
 Assembled scene-free (A6), no registered runs. Weaver (`iga/lm_gen.py`),
