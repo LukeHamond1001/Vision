@@ -21,3 +21,4 @@
 19:19:50 prep: train shard built (4462309836 bytes tokens.bin, raw deleted)
 19:19:56 prep: dense eval shard built (train tokenizer reused)
 19:20:00 cuda canary passed pre-train
+19:35:01 training heartbeat: step 113900  ce 2.751  loss 2.753  holds 15040  132,541 tok/s  [fid:3=+0.981 fid:4=+0.700 fid:5=+0.034 b0=+0.566 b1=+0.070 b2=+0.048 b3=+0.010]
