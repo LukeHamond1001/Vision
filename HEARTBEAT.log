@@ -7,3 +7,4 @@
 04:00:41 prep: dense eval shard built (train tokenizer reused)
 04:15:42 training heartbeat: 
 04:30:44 training heartbeat: step  6750  ce 3.304  loss 3.304  holds 229440  79,631 tok/s
+04:34:54 training complete (rc=0)
