@@ -1,40 +1,60 @@
-step 32350  ce 3.205  loss 3.216  holds 35040  26,673 tok/s
-step 32400  ce 3.092  loss 3.104  holds 35040  26,673 tok/s
-step 32450  ce 3.042  loss 3.053  holds 35040  26,673 tok/s
-step 32500  ce 2.891  loss 2.902  holds 35040  26,673 tok/s
-step 32550  ce 2.971  loss 2.983  holds 35040  26,672 tok/s
-step 32600  ce 2.941  loss 2.953  holds 35040  26,672 tok/s
-step 32650  ce 2.838  loss 2.850  holds 35040  26,671 tok/s
-step 32700  ce 3.104  loss 3.116  holds 35040  26,671 tok/s
-step 32750  ce 3.031  loss 3.042  holds 35040  26,671 tok/s
-step 32800  ce 2.971  loss 2.983  holds 35040  26,671 tok/s
-step 32850  ce 2.941  loss 2.953  holds 35040  26,671 tok/s
-step 32900  ce 3.023  loss 3.034  holds 35040  26,671 tok/s
-step 32950  ce 2.954  loss 2.965  holds 35040  26,671 tok/s
-step 33000  ce 2.975  loss 2.987  holds 35040  26,671 tok/s
-step 33050  ce 2.949  loss 2.960  holds 35040  26,670 tok/s
-step 33100  ce 3.126  loss 3.138  holds 35040  26,670 tok/s
-step 33150  ce 2.818  loss 2.830  holds 35040  26,670 tok/s
-step 33200  ce 2.986  loss 2.998  holds 35040  26,670 tok/s
-step 33250  ce 2.890  loss 2.902  holds 35040  26,670 tok/s
-step 33300  ce 3.043  loss 3.054  holds 35040  26,670 tok/s
-step 33350  ce 2.960  loss 2.971  holds 35040  26,670 tok/s
-step 33400  ce 3.104  loss 3.117  holds 35040  26,672 tok/s
-step 33450  ce 3.006  loss 3.017  holds 35040  26,672 tok/s
-step 33500  ce 2.913  loss 2.924  holds 35040  26,673 tok/s
-step 33550  ce 3.050  loss 3.062  holds 35040  26,674 tok/s
-step 33600  ce 3.021  loss 3.034  holds 35040  26,675 tok/s
-step 33650  ce 2.974  loss 2.985  holds 35040  26,676 tok/s
-step 33700  ce 3.017  loss 3.028  holds 35040  26,677 tok/s
-step 33750  ce 3.009  loss 3.020  holds 35040  26,679 tok/s
-step 33800  ce 2.971  loss 2.983  holds 35040  26,679 tok/s
-step 33850  ce 2.986  loss 2.998  holds 35040  26,681 tok/s
-step 33900  ce 3.034  loss 3.045  holds 35040  26,682 tok/s
-step 33950  ce 3.000  loss 3.011  holds 35040  26,682 tok/s
-step 34000  ce 2.965  loss 2.977  holds 35040  26,682 tok/s
-step 34050  ce 2.961  loss 2.973  holds 35040  26,681 tok/s
 step 34100  ce 2.889  loss 2.900  holds 35040  26,681 tok/s
 step 34150  ce 2.914  loss 2.925  holds 35040  26,680 tok/s
 step 34200  ce 3.014  loss 3.026  holds 35040  26,680 tok/s
 step 34250  ce 2.914  loss 2.925  holds 35040  26,679 tok/s
 step 34300  ce 2.932  loss 2.944  holds 35040  26,678 tok/s
+step 34350  ce 3.005  loss 3.017  holds 35040  26,678 tok/s
+step 34400  ce 3.070  loss 3.082  holds 35040  26,677 tok/s
+step 34450  ce 2.969  loss 2.980  holds 35040  26,677 tok/s
+step 34500  ce 2.999  loss 3.010  holds 35040  26,676 tok/s
+step 34550  ce 2.848  loss 2.859  holds 35040  26,675 tok/s
+step 34600  ce 2.930  loss 2.942  holds 35040  26,675 tok/s
+step 34650  ce 2.959  loss 2.970  holds 35040  26,675 tok/s
+step 34700  ce 2.975  loss 2.986  holds 35040  26,674 tok/s
+step 34750  ce 2.918  loss 2.929  holds 35040  26,674 tok/s
+step 34800  ce 2.949  loss 2.961  holds 35040  26,673 tok/s
+step 34850  ce 2.794  loss 2.805  holds 35040  26,673 tok/s
+step 34900  ce 2.934  loss 2.946  holds 35040  26,672 tok/s
+step 34950  ce 2.974  loss 2.985  holds 35040  26,671 tok/s
+step 35000  ce 2.976  loss 2.988  holds 35040  26,671 tok/s
+step 35050  ce 2.877  loss 2.888  holds 35040  26,670 tok/s
+step 35100  ce 3.022  loss 3.033  holds 35040  26,669 tok/s
+step 35150  ce 2.943  loss 2.954  holds 35040  26,669 tok/s
+step 35200  ce 3.036  loss 3.049  holds 35040  26,669 tok/s
+step 35250  ce 2.983  loss 2.995  holds 35040  26,670 tok/s
+step 35300  ce 2.926  loss 2.937  holds 35040  26,670 tok/s
+step 35350  ce 2.898  loss 2.909  holds 35040  26,670 tok/s
+step 35400  ce 2.927  loss 2.939  holds 35040  26,670 tok/s
+step 35450  ce 2.987  loss 2.998  holds 35040  26,670 tok/s
+step 35500  ce 2.816  loss 2.827  holds 35040  26,670 tok/s
+step 35550  ce 2.990  loss 3.001  holds 35040  26,670 tok/s
+step 35600  ce 2.950  loss 2.962  holds 35040  26,670 tok/s
+step 35650  ce 2.798  loss 2.810  holds 35040  26,669 tok/s
+step 35700  ce 3.027  loss 3.038  holds 35040  26,670 tok/s
+step 35750  ce 3.027  loss 3.039  holds 35040  26,671 tok/s
+step 35800  ce 2.896  loss 2.908  holds 35040  26,670 tok/s
+step 35850  ce 2.928  loss 2.939  holds 35040  26,670 tok/s
+step 35900  ce 3.019  loss 3.030  holds 35040  26,669 tok/s
+step 35950  ce 3.039  loss 3.050  holds 35040  26,668 tok/s
+step 36000  ce 2.969  loss 2.981  holds 35040  26,668 tok/s
+step 36050  ce 2.942  loss 2.954  holds 35040  26,667 tok/s
+step 36100  ce 2.979  loss 2.990  holds 35040  26,666 tok/s
+step 36150  ce 2.832  loss 2.843  holds 35040  26,666 tok/s
+step 36200  ce 3.044  loss 3.056  holds 35040  26,665 tok/s
+step 36250  ce 3.031  loss 3.042  holds 35040  26,664 tok/s
+step 36300  ce 2.886  loss 2.897  holds 35040  26,664 tok/s
+step 36350  ce 2.878  loss 2.889  holds 35040  26,663 tok/s
+step 36400  ce 2.977  loss 2.989  holds 35040  26,663 tok/s
+step 36450  ce 2.944  loss 2.955  holds 35040  26,662 tok/s
+step 36500  ce 2.981  loss 2.993  holds 35040  26,662 tok/s
+step 36550  ce 3.063  loss 3.074  holds 35040  26,661 tok/s
+step 36600  ce 3.108  loss 3.121  holds 35040  26,660 tok/s
+audit: {'holds': 35040, 'telescoping_exact': True, 'scoped': True, 'vetoes': 50592, 'proposed': 85696}
+panel:
+record   fid:1          0.979 (ema 0.897)
+record   fid:2          0.998 (ema 0.886)
+record   fid:3          0.437 (ema 0.264)
+record   fid:4          0.510 (ema 0.241)
+record   fid:5          0.314 (ema 0.296)
+record   recall:b2      0.164 (ema 0.086)
+record   recall:b3      0.096 (ema 0.075)
