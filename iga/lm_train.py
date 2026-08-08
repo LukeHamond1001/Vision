@@ -23,6 +23,7 @@ from .lm_bands import BandLM
 from .lm_drive import Drive
 
 FID_W = 0.1
+WRITE_W = 0.01   # A24: gentle pressure to keep band writes sparse
 
 
 def process_chunk(model, drive, conveyor, T, device, opt=None):
@@ -40,6 +41,10 @@ def process_chunk(model, drive, conveyor, T, device, opt=None):
             drive.tick_fid(k, fid)
     if fid_terms:
         losses.append(FID_W * torch.stack(fid_terms).mean())
+    if hasattr(model, "pop_write_cost"):
+        wc = model.pop_write_cost()
+        if wc is not None:
+            losses.append(WRITE_W * wc)
     logp = torch.log_softmax(logits, dim=-1)
     for lane, evs in enumerate(events):
         for p, kind, d in sorted(evs, key=lambda e: e[0]):
@@ -79,7 +84,8 @@ def train(d=64, lanes=4, T=256, steps=40, seed=0, device="cpu",
         torch.set_float32_matmul_precision("high")  # TF32 (A12)
     torch.manual_seed(seed)  # reproducible init (A14)
     drive = Drive(n_lanes=lanes, seed=seed, constants=constants,
-                  imagination_absent=(arch == "transformer"))
+                  imagination_absent=(arch == "transformer"),
+                  absent_bands={1, 2} if arch == "hybrid" else ())
     if data:  # prepared real-data shard (A8): UltraChat conveyor
         from .lm_data_ultrachat import UltraConveyor, load_tokenizer
         import os
@@ -110,14 +116,29 @@ def train(d=64, lanes=4, T=256, steps=40, seed=0, device="cpu",
     opt = torch.optim.AdamW(model.parameters(), lr=3e-4)
     t0 = time.time()
     ce_first = None
+    trace = (ckpt + ".trace.jsonl") if ckpt else None
     for step in range(1, steps + 1):
         ce, loss = process_chunk(model, drive, conveyor, T, device, opt)
         ce_first = ce_first or ce
         if step % log_every == 0 or step == 1:
             tok_s = lanes * T * step / (time.time() - t0)
+            # A24 L2: channel EMAs ride every log line — run 4's
+            # cross-window transient lived and died between snapshots
+            emas = " ".join(
+                f"{k.replace('recall:', '')}={drive.ema[k]:+.3f}"
+                for k in sorted(drive.ema))
             print(f"step {step:5d}  ce {ce:.3f}  loss {loss:.3f}  "
-                  f"holds {len(drive.ledger):4d}  {tok_s:,.0f} tok/s",
-                  flush=True)
+                  f"holds {len(drive.ledger):4d}  {tok_s:,.0f} tok/s  "
+                  f"[{emas}]", flush=True)
+            if trace:
+                import json as _json
+                with open(trace, "a") as f:
+                    f.write(_json.dumps(
+                        {"step": step, "ce": round(ce, 4),
+                         "ema": {k: round(float(v), 5)
+                                 for k, v in drive.ema.items()},
+                         "vetoes": drive.vetoes,
+                         "holds": len(drive.ledger)}) + "\n")
         if ckpt and step % 500 == 0:
             torch.save({"model": model.state_dict(),
                         "opt": opt.state_dict(), "step": step,

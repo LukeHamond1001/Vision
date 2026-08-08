@@ -1,4 +1,4 @@
-"""v5.3 — the complete architecture as an LLM (A19).
+"""v5.4 — the complete architecture as an LLM (A19 + A24).
 
 Attention is the hands, the bands are the memory, imagination is the
 lookahead, the ledger is the law.
@@ -6,16 +6,21 @@ lookahead, the ledger is the law.
 Substrate: a standard decoder-only transformer over each 512-token
 window (language, in-window lookup). Riding above it: slow band
 latents at clocks 512 / 4096 / 32768 — persistent across the whole
-run, updated from pooled transformer states at their ticks, each with
-a predictor (the forward model: imagination's instrument, so the gate
-is LIVE here). The slow latents are injected back as MEMORY TOKENS
-the transformer attends over — query-conditioned readout of the
-latent ladder, the multiplicative lookup the pure-band machine
-lacked.
+run, injected back as MEMORY TOKENS the transformer attends over.
 
-Same forward API as BandLM/TransformerLM: (tokens, st, _) ->
-(logits, st, ticks). Lesion zeroes the memory tokens and band reads —
-the control is meaningful again.
+v5.4 (A24, from the run-4 autopsy): the v5.3 bands were written with
+the MEAN of all window hiddens each tick — an unforecastable soup;
+fid:4/5 sat below floor all run, the gate vetoed every cross-window
+frontier, and the real carry transient died unpaid. Now:
+  selective read — each band attention-pools the window with its own
+    learned query (it chooses what to look at, not everything);
+  closed-by-default write — an exposed-gate slow cell, update gate
+    biased shut at init, so the state drifts slowly and the band's
+    forward model has something learnable to predict;
+  write cost — a small penalty on open gates keeps writes sparse.
+
+Same forward API: (tokens, st, _) -> (logits, st, ticks). Lesion
+zeroes the memory tokens. The trainer reads model.pop_write_cost().
 """
 
 import torch
@@ -26,6 +31,24 @@ from .lm_transformer import Block
 
 HYBRID_CLOCKS = {3: 1, 4: 8, 5: 64}   # band idx -> tick every N chunks
                                        # (chunks of 512 -> 512/4k/32k)
+
+
+class SlowCell(nn.Module):
+    """Gated delta-write with the update gate biased closed at init:
+    h' = (1-z)*h + z*cand. At init z ~ sigmoid(gate_bias) so the
+    state barely moves until training earns the right to write."""
+
+    def __init__(self, d, gate_bias=-2.0):
+        super().__init__()
+        self.z = nn.Linear(2 * d, d)
+        self.cand = nn.Linear(2 * d, d)
+        nn.init.constant_(self.z.bias, gate_bias)
+
+    def forward(self, x, h):
+        hx = torch.cat([h, x], dim=-1)
+        z = torch.sigmoid(self.z(hx))
+        c = torch.tanh(self.cand(hx))
+        return (1 - z) * h + z * c, z.mean()
 
 
 class HybridLM(nn.Module):
@@ -43,12 +66,16 @@ class HybridLM(nn.Module):
         self.lnf = nn.LayerNorm(d)
         self.head = nn.Linear(d, vocab_size)
         self.cells = nn.ModuleDict(
-            {str(k): nn.GRUCell(d, d) for k in self.bands})
+            {str(k): SlowCell(d) for k in self.bands})
+        self.read_q = nn.ParameterDict(
+            {str(k): nn.Parameter(torch.randn(d) / d ** 0.5)
+             for k in self.bands})
         self.pred = nn.ModuleDict(
             {str(k): nn.Linear(d, d) for k in self.bands})
         self.mem_proj = nn.ModuleDict(
             {str(k): nn.Linear(d, d, bias=False) for k in self.bands})
         self.lesioned = set()
+        self._write_cost = None
 
     def init_state(self, B, device):
         return {"h": {k: torch.zeros(B, self.d, device=device)
@@ -94,12 +121,16 @@ class HybridLM(nn.Module):
             x = b(x, mask)
         hidden = x[:, M:]                        # text positions
         logits = self.head(self.lnf(hidden))
-        # band updates from the pooled window, on their clocks
-        window = hidden.mean(dim=1)
+        # band updates: each band SELECTS from the window with its own
+        # query (A24) instead of receiving the window mean
         ticks = [[] for _ in range(N_BANDS)]
         st["chunk"] += 1
+        wcost = []
         for k in self.bands:
-            st["acc"][k] = st["acc"][k] + window
+            w = torch.softmax(
+                hidden @ self.read_q[str(k)] / self.d ** 0.5, dim=1)
+            read = torch.einsum("bt,btd->bd", w, hidden)
+            st["acc"][k] = st["acc"][k] + read
             st["cnt"][k] += 1
             if st["chunk"] % HYBRID_CLOCKS[k] == 0:
                 pooled = st["acc"][k] / max(st["cnt"][k], 1)
@@ -107,11 +138,19 @@ class HybridLM(nn.Module):
                     fid = nn.functional.cosine_similarity(
                         st["pend"][k], pooled, dim=-1)
                     ticks[k].append((T - 1, fid))
-                st["h"][k] = self.cells[str(k)](pooled, st["h"][k])
+                st["h"][k], z = self.cells[str(k)](pooled, st["h"][k])
+                wcost.append(z)
                 st["pend"][k] = self.pred[str(k)](st["h"][k])
                 st["acc"][k] = torch.zeros_like(st["acc"][k])
                 st["cnt"][k] = 0
+        if wcost:
+            self._write_cost = torch.stack(wcost).mean()
         return logits, st, ticks
+
+    def pop_write_cost(self):
+        c = self._write_cost
+        self._write_cost = None
+        return c
 
     def n_params(self):
         return sum(p.numel() for p in self.parameters())

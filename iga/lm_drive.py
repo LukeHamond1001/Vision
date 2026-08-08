@@ -47,16 +47,22 @@ def horizon(band):
 
 
 class Drive:
-    def __init__(self, n_lanes, lam=0.1, seed=0, constants=None,
-                 imagination_absent=False):
+    def __init__(self, n_lanes, lam=0.25, seed=0, constants=None,
+                 imagination_absent=False, absent_bands=()):
         """constants: dict (or path to results/lm_constants.json) from
         iga.lm_calibrate — horizons and fid floors become data-set;
         absent, the scaffold defaults apply (debug only).
         imagination_absent (v5.2): the substrate carries no band
         predictors, so the imagination gate has no instrument — and an
         instrument that is absent holds no authority (F2). Fid-maintain
-        proposals and fid-floor vetoes are skipped, ledgered."""
+        proposals and fid-floor vetoes are skipped, ledgered.
+        absent_bands (v5.4): bands the substrate does not implement
+        (hybrid: 1, 2) — no organ, no maintain register; run 4 held
+        perpetual zero-pay fid:1/2 maintains on organs that never
+        existed. lam: 0.1 -> 0.25 (A24 L3) — run 4's in-window margin
+        decayed all run while CE improved; pay pressure was losing."""
         self.imagination_absent = imagination_absent
+        self.absent_bands = set(absent_bands)
         self.bin_band = dict(BIN_BAND)
         if isinstance(constants, str):
             import json as _json
@@ -113,6 +119,8 @@ class Drive:
         cands = []
         if not self.imagination_absent:
             for k in range(1, N_BANDS):
+                if k in self.absent_bands:
+                    continue          # no organ, no maintain register
                 key = f"fid:{k}"
                 if self.ema.get(key, 0.0) < FID_HEALTHY[0]:
                     cands.append(("maintain", key, k, FID_HEALTHY[0] + 0.05))
@@ -133,10 +141,13 @@ class Drive:
             self.proposed += 1
             carry = self.ema.get(f"fid:{band}", 0.0)
             if not self.imagination_absent:
-                fast = min(self.ema.get(f"fid:{k}", 1.0) for k in (1, 2))
+                fast = min((self.ema.get(f"fid:{k}", 1.0) for k in (1, 2)
+                            if k not in self.absent_bands), default=1.0)
                 floor = self._fid_floors.get(band, FID_FLOOR)
-                fast_floor = max(self._fid_floors.get(k, FID_FLOOR)
-                                 for k in (1, 2))
+                fast_floor = max((self._fid_floors.get(k, FID_FLOOR)
+                                  for k in (1, 2)
+                                  if k not in self.absent_bands),
+                                 default=0.0)
                 if kind == "frontier" and (carry < floor
                                            or fast < fast_floor):
                     self.vetoes += 1

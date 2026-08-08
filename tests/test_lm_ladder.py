@@ -217,6 +217,57 @@ class TestHybridComplete(unittest.TestCase):
         mem = model._mem_tokens(st, 2)
         self.assertEqual(float(mem.abs().sum()), 0.0)  # lesion works
         model.lesioned = set()
+        # A24: bands 1/2 have no organs in the hybrid — no maintains
+        for lane_holds in drive.holds:
+            for h in lane_holds:
+                self.assertNotIn(h["key"], ("fid:1", "fid:2"))
+
+
+class TestSlowWrites(unittest.TestCase):
+    def test_gate_closed_at_init_and_write_cost_flows(self):
+        # A24 L1: the state barely moves at init (the medium the
+        # forward model must predict is stable by construction)
+        import torch as t
+        from iga.lm_hybrid import SlowCell, HybridLM
+        cell = SlowCell(32)
+        h = t.randn(4, 32)
+        x = t.randn(4, 32)
+        h2, z = cell(x, h)
+        self.assertLess(float(z), 0.2)   # sigmoid(-2) ~ 0.12
+        drift = float((h2 - h).norm() / h.norm())
+        self.assertLess(drift, 0.5)
+        m = HybridLM(64, d=32, n_layers=1, n_heads=2, max_T=64)
+        st = m.init_state(2, "cpu")
+        _, st, _ = m(t.randint(0, 64, (2, 64)), st, None)
+        wc = m.pop_write_cost()
+        self.assertIsNotNone(wc)         # band 3 ticked this chunk
+        self.assertTrue(wc.requires_grad)
+        self.assertIsNone(m.pop_write_cost())  # popped clean
+
+    def test_absent_bands_never_maintained(self):
+        d = Drive(n_lanes=1, absent_bands={1, 2})
+        for k in range(1, N_BANDS):
+            d.ema[f"fid:{k}"] = 0.01     # everything unhealthy
+        d.sweep(losses=[])
+        keys = {h["key"] for h in d.holds[0]}
+        self.assertNotIn("fid:1", keys)
+        self.assertNotIn("fid:2", keys)
+        self.assertIn("fid:3", keys)     # present organs still kept
+
+    def test_trace_file_written(self):
+        import json
+        import os
+        import tempfile
+        with tempfile.TemporaryDirectory() as td:
+            ck = os.path.join(td, "t.pt")
+            train(d=32, lanes=2, T=96, steps=3, device="cpu",
+                  log_every=1, arch="hybrid", ckpt=ck)
+            trace = ck + ".trace.jsonl"
+            self.assertTrue(os.path.exists(trace))
+            lines = [json.loads(l) for l in open(trace)]
+            self.assertEqual(len(lines), 3)
+            self.assertIn("ema", lines[0])
+            self.assertIn("vetoes", lines[0])
 
 
 class TestPrepareStreams(unittest.TestCase):

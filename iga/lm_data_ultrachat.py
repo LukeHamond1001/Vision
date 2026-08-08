@@ -171,7 +171,9 @@ class Instruments:
                 return None
             self.used.discard((f["name"], f["obj"]))  # short: freed at once
             turns = [(self._plant_words(f), "human"), ("noted .", "model")]
-            target = self.rng.choice([48, 48, 200, 200, 800])
+            # 384 (A24): the run-4 autopsy found ZERO probes in
+            # 256-511 — the window-edge region was unmeasurable
+            target = self.rng.choice([48, 48, 200, 200, 384, 800])
             approx = 16
             while approx < target:
                 fh, fm = self.rng.choice(FILLER)

@@ -651,6 +651,37 @@ scale, not blocking this one. Target cost: $15–40 total.
   pay-weight vs CE calibration late in training (in-window decay
   under a live margin channel is a scheduler/weight question).
 
+- **A24** (2026-08-08, pre-run, registered): **v5.4 — pay the
+  carry.** The autopsy's levers, built: (L1) selective
+  closed-by-default band writes — each band attention-pools the
+  window with its own learned query (chooses, does not average);
+  SlowCell gated delta-write with the update gate biased shut at
+  init (sigmoid(-2)~0.12) so the medium drifts slowly and its
+  forward model has something learnable; write-sparsity cost
+  WRITE_W=0.01 on open gates. (L2) drive channel EMAs on every
+  train.log line + full trace (ckpt.trace.jsonl, 50-step
+  resolution, pushed in heartbeats) — no transient unobserved
+  again. (L3) lam 0.1 -> 0.25 against late-run CE competition.
+  Plus: absent-band mask (hybrid has no bands 1/2; no ghost
+  maintains), and 384-gap units close the 256-511 probe hole so
+  the window edge is measurable. Suite 57/57; 200-step smoke:
+  fid:4 POSITIVE (0.114-0.128 vs negative all of run 4), fid:3
+  0.392, recall:b1 FRONTIER HOLD OPEN (vetoed 6.0M/6.0M times in
+  run 4), ledger exact. Registered read for the run (same corpus
+  discipline, d=128, 107k steps, wrapper v5.1 renamed v54): the
+  primary question is whether PAID cross-window carry sustains —
+  confirm = fid:4/5 above floor for sustained stretches AND b1/b2
+  frontier holds open/settling with pay AND held-out 512-1024
+  above the 0.083 floor at end (then the lesion at those bins is
+  the carve-out); if fid clears floor and pay flows but carry
+  still dies, the gate was not the binding constraint and the
+  write/readout design is still short (next: dedicated write
+  head / associative matrix); if fid stays below floor, the gated
+  write failed to stabilize the medium (next: predictor targets
+  own next state, not next read). Secondary reads: in-window >=
+  v5.3 (0.568/61%) and its decay slope under lam 0.25; the new
+  384 bin's first window-edge curve.
+
 ## Status
 
 Assembled scene-free (A6), no registered runs. Weaver (`iga/lm_gen.py`),
