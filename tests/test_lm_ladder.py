@@ -199,6 +199,26 @@ class TestTransformerSubstrate(unittest.TestCase):
         self.assertEqual(d.vetoes, 0)
 
 
+class TestHybridComplete(unittest.TestCase):
+    def test_hybrid_trains_ticks_and_lesions(self):
+        # v5.3: the complete architecture — attention + slow latents +
+        # live imagination instrument + drive
+        model, drive, vocab, ce0, ce1 = train(
+            d=48, lanes=2, T=128, steps=16, device="cpu",
+            log_every=100, arch="hybrid")
+        self.assertLess(ce1, ce0)
+        self.assertTrue(drive.audit()["telescoping_exact"])
+        # slow-band predictors ticked (imagination instrument LIVE)
+        self.assertTrue(any(k.startswith("fid:") for k in drive.ema))
+        self.assertEqual(drive.bin_band[0], 3)  # carry-band remap
+        st = model._st
+        self.assertGreater(float(st["h"][3].abs().sum()), 0.0)
+        model.lesioned = {3, 4, 5}
+        mem = model._mem_tokens(st, 2)
+        self.assertEqual(float(mem.abs().sum()), 0.0)  # lesion works
+        model.lesioned = set()
+
+
 class TestEndToEnd(unittest.TestCase):
     def test_smoke_train_audit(self):
         model, drive, vocab, ce0, ce1 = train(d=48, lanes=2, T=192, steps=12,

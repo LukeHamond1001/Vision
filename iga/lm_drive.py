@@ -57,6 +57,7 @@ class Drive:
         instrument that is absent holds no authority (F2). Fid-maintain
         proposals and fid-floor vetoes are skipped, ledgered."""
         self.imagination_absent = imagination_absent
+        self.bin_band = dict(BIN_BAND)
         if isinstance(constants, str):
             import json as _json
             with open(constants) as f:
@@ -123,7 +124,8 @@ class Drive:
             level = int(rec / FRONTIER_DELTA)
             if (key, level) in self.levels_paid:
                 continue
-            cands.append(("frontier", key, BIN_BAND[b], rec + FRONTIER_DELTA))
+            cands.append(("frontier", key, self.bin_band[b],
+                          rec + FRONTIER_DELTA))
         scored = []
         for kind, key, band, target in cands:
             if key in open_keys:      # one register per channel per lane

@@ -94,6 +94,10 @@ def train(d=64, lanes=4, T=256, steps=40, seed=0, device="cpu",
     if arch == "transformer":
         from .lm_transformer import TransformerLM
         model = TransformerLM(vocab_size, d=d, max_T=T).to(device)
+    elif arch == "hybrid":
+        from .lm_hybrid import HybridLM
+        model = HybridLM(vocab_size, d=d, max_T=T).to(device)
+        drive.bin_band = {0: 3, 1: 3, 2: 4, 3: 5}  # carry bands (A19)
     else:
         model = BandLM(vocab_size, d=d, talk=talk,
                        widths=widths).to(device)
@@ -144,7 +148,7 @@ def main():
     ap.add_argument("--constants", default=None,
                     help="calibrated constants json (lm_calibrate)")
     ap.add_argument("--arch", default="bands",
-                    choices=["bands", "transformer"])
+                    choices=["bands", "transformer", "hybrid"])
     a = ap.parse_args()
     if a.mode == "smoke":
         model, drive, vocab, ce0, ce1 = train(d=64, lanes=4, T=256, steps=40,

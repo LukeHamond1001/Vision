@@ -119,7 +119,7 @@ def main():
     ap.add_argument("--lanes", type=int, default=4)
     ap.add_argument("--chunks", type=int, default=60)
     ap.add_argument("--arch", default="bands",
-                    choices=["bands", "transformer"])
+                    choices=["bands", "transformer", "hybrid"])
     ap.add_argument("--chunk", type=int, default=512)
     ap.add_argument("--device", default="cuda"
                     if torch.cuda.is_available() else "cpu")
@@ -129,6 +129,10 @@ def main():
         from .lm_transformer import TransformerLM
         model = TransformerLM(tok.get_vocab_size(), d=a.d,
                               max_T=a.chunk).to(a.device)
+    elif a.arch == "hybrid":
+        from .lm_hybrid import HybridLM
+        model = HybridLM(tok.get_vocab_size(), d=a.d,
+                         max_T=a.chunk).to(a.device)
     else:
         model = BandLM(tok.get_vocab_size(), d=a.d,
                        talk=a.talk).to(a.device)

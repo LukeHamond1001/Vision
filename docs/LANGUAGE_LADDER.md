@@ -509,6 +509,28 @@ scale, not blocking this one. Target cost: $15–40 total.
   issue is training quantity, shared by both substrates. Next:
   v5.3 past the threshold.
 
+- **A19** (2026-08-07, pre-run, registered): **v5.3 — the complete
+  architecture as an LLM, past the emergence threshold.** Substrate
+  (`iga/lm_hybrid.py`): a standard transformer over each 512 window
+  (language + in-window lookup) with slow band latents at clocks
+  512/4k/32k persisting across the whole run, updated from pooled
+  hidden states at their ticks, each carrying a predictor — so the
+  forward model exists and THE IMAGINATION GATE IS LIVE (smoke: 30
+  vetoes, fid:3 measuring, maintain holds on all slow bands, frontier
+  register open). The slow latents are injected back as MEMORY TOKENS
+  the transformer attends over — query-conditioned readout of the
+  latent ladder (the multiplicative lookup the pure-band machine
+  lacked). Full drive layer: margin-paid binding, graduated
+  instruments, minting, scheduler, exact ledger. Carry-band remap for
+  frontier proposals: bins 0-3 -> bands 3/3/4/5. Run: the ENTIRE
+  UltraChat corpus, ~1.5M conversations / ~1.75B unique tokens, one
+  epoch (no fact repeats), d=128, 107k steps, ~6 h, ~$1.40. Read
+  against the A18 twins as same-architecture-class controls at 164M:
+  the question is whether binding emerges past the threshold under
+  the complete machine, at which bins, and whether the lesion
+  (memory tokens + band reads zeroed) now carves it out
+  specifically. Single arm, per the program's standing rule.
+
 ## Status
 
 Assembled scene-free (A6), no registered runs. Weaver (`iga/lm_gen.py`),
