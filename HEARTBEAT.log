@@ -1,3 +1,4 @@
 18:41:28 boot v55-continuation NVIDIA GeForce RTX 3090 ram 125G
 18:41:32 deps installed
 18:41:37 cuda canary passed
+18:41:46 v54 checkpoint + tokenizer fetched (68060330 bytes)
