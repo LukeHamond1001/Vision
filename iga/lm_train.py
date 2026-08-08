@@ -24,6 +24,9 @@ from .lm_drive import Drive
 
 FID_W = 0.1
 WRITE_W = 0.01   # A24: gentle pressure to keep band writes sparse
+RECON_W = 0.05   # A28: write-fidelity — read back what was just
+                 # written; the in-chunk gradient path for the write
+                 # head (cross-chunk detachment blocks the other one)
 
 
 def process_chunk(model, drive, conveyor, T, device, opt=None):
@@ -45,6 +48,10 @@ def process_chunk(model, drive, conveyor, T, device, opt=None):
         wc = model.pop_write_cost()
         if wc is not None:
             losses.append(WRITE_W * wc)
+    if hasattr(model, "pop_recon"):
+        rc = model.pop_recon()
+        if rc is not None:
+            losses.append(RECON_W * rc)
     logp = torch.log_softmax(logits, dim=-1)
     for lane, evs in enumerate(events):
         for p, kind, d in sorted(evs, key=lambda e: e[0]):
@@ -80,7 +87,7 @@ def process_chunk(model, drive, conveyor, T, device, opt=None):
 def train(d=64, lanes=4, T=256, steps=40, seed=0, device="cpu",
           ckpt=None, log_every=10, data=None, talk="dense", widths=None,
           compile_model=False, constants=None, arch="bands",
-          resume=None, offset_frac=0.0):
+          resume=None, offset_frac=0.0, store="vector"):
     """resume (A26): path to a checkpoint — model + optimizer + drive
     EMAs/records/minted/vetoes continue; step numbering continues.
     offset_frac: start each conveyor lane this far into its segment
@@ -111,7 +118,8 @@ def train(d=64, lanes=4, T=256, steps=40, seed=0, device="cpu",
         model = TransformerLM(vocab_size, d=d, max_T=T).to(device)
     elif arch == "hybrid":
         from .lm_hybrid import HybridLM
-        model = HybridLM(vocab_size, d=d, max_T=T).to(device)
+        model = HybridLM(vocab_size, d=d, max_T=T,
+                         store=store).to(device)
         drive.bin_band = {0: 3, 1: 3, 2: 4, 3: 5}  # carry bands (A19)
     else:
         model = BandLM(vocab_size, d=d, talk=talk,
@@ -199,6 +207,9 @@ def main():
                     help="checkpoint to continue from (A26)")
     ap.add_argument("--offset", type=float, default=0.0,
                     help="conveyor lane offset fraction (A26)")
+    ap.add_argument("--store", default="vector",
+                    choices=["vector", "matrix"],
+                    help="hybrid band storage substrate (A28)")
     a = ap.parse_args()
     if a.mode == "smoke":
         model, drive, vocab, ce0, ce1 = train(d=64, lanes=4, T=256, steps=40,
@@ -210,7 +221,7 @@ def main():
         train(d=a.d, lanes=a.lanes, T=a.chunk, steps=a.steps, seed=a.seed,
               device=a.device, ckpt=a.ckpt, log_every=50, data=a.data,
               talk=a.talk, constants=a.constants, arch=a.arch,
-              resume=a.resume, offset_frac=a.offset)
+              resume=a.resume, offset_frac=a.offset, store=a.store)
 
 
 if __name__ == "__main__":

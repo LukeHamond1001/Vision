@@ -284,6 +284,55 @@ class TestSlowWrites(unittest.TestCase):
             lines = [json.loads(l) for l in open(ck + ".trace.jsonl")]
             self.assertEqual(lines[-1]["step"], 7)
 
+    def test_matrix_store_laws(self):
+        # A28: write recovers, capacity holds 8 pairs, decay
+        # half-life matches the clock
+        import torch as t
+        from iga.lm_hybrid import BandMatrix
+        t.manual_seed(0)
+        bm = BandMatrix(64, decay=0.0)
+        with t.no_grad():
+            bm.beta.fill_(10.0)          # sigmoid ~ 1: full writes
+            M = t.zeros(1, 64, 64)
+            xs = [t.randn(1, 64) for _ in range(8)]
+            for x in xs:
+                M, _ = bm.write(M, x)
+            coss = []
+            for x in xs:
+                k = t.nn.functional.normalize(bm.wk(x), dim=-1)
+                v = bm.wv(x)
+                back = t.einsum("bij,bj->bi", M, k)
+                coss.append(float(t.nn.functional.cosine_similarity(
+                    back, v, dim=-1)))
+            self.assertGreater(sum(coss) / len(coss), 0.7)  # capacity
+            self.assertGreater(coss[-1], 0.95)   # delta rule exact-ish
+            # decay half-life: clock-8 band loses half in 8 chunks
+            bm8 = BandMatrix(64, decay=1 - 0.5 ** (1 / 8))
+            M2 = t.ones(1, 64, 64)
+            for _ in range(8):
+                M2 = (1 - bm8.decay) * M2
+            self.assertAlmostEqual(float(M2[0, 0, 0]), 0.5, places=5)
+
+    def test_hybrid_matrix_trains_and_lesions(self):
+        model, drive, vocab, ce0, ce1 = train(
+            d=48, lanes=2, T=128, steps=16, device="cpu",
+            log_every=100, arch="hybrid", store="matrix")
+        self.assertLess(ce1, ce0)
+        self.assertTrue(drive.audit()["telescoping_exact"])
+        st = model._st
+        self.assertIn("M", st)
+        self.assertGreater(float(st["M"][3].abs().sum()), 0.0)
+        # lesioned bands are skipped in the read loop: with all
+        # lesioned, no band contributes (sum over empty = int 0)
+        import torch as t
+        model.lesioned = {3, 4, 5}
+        text = t.randn(2, 8, 48)
+        r = sum(model.mats[str(k)].read(st["M"][k], text)
+                for k in model.bands if k not in model.lesioned)
+        self.assertEqual(r, 0)
+        model.lesioned = set()
+        self.assertIsNone(model.pop_recon())  # popped by the trainer
+
     def test_trace_file_written(self):
         import json
         import os

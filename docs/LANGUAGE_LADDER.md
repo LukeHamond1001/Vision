@@ -768,6 +768,46 @@ scale, not blocking this one. Target cost: $15–40 total.
   v5.5 at identical budget, the last open architecture
   question. Artifacts: results-v55 (pieces, trace, tables).
 
+- **A28** (2026-08-08, pre-run, registered): **v5.6 — the matrix
+  arm.** The capacity math (ledgered in full in the A27-era
+  analysis): a squashing recurrent vector holds ~1-2 facts (every
+  write decays all content through (1-z)/tanh) against spans
+  holding 5-15 — reproducing all three runs' observations (band 3
+  partial, band 4 dead); a delta-rule fast-weights matrix holds
+  ~d/(2 ln d) pairs with graceful sqrt(n/d) crosstalk and d^2
+  state scaling. Build: BandMatrix per slow band — M in R^{dxd},
+  additive delta-rule writes EVERY chunk (storage non-destructive)
+  with dedicated write-selection head (separate from read query),
+  per-band DECAY as the timescale (half-life = the band's clock:
+  0.5/0.083/0.011 per chunk), per-position query-conditioned reads
+  injected mid-stack (reads see LAST chunks' matrices — no
+  same-chunk leak; in-window stays attention's job). The
+  learnability seam, addressed by construction: cross-chunk
+  detachment blocks write-path gradient from later reads, so
+  writes learn from an in-chunk write-fidelity loss (RECON_W=0.05:
+  read back the just-written pair) while the read path learns from
+  LM + pay downstream; keyspace alignment emerges because reading
+  where writing happened is the only place content exists. The
+  summary-vector path (SlowCell, predictors, fid ticks, memory
+  tokens) is UNCHANGED — instrument continuity; fid stays blind to
+  matrix content this run (scope note, ledgered). Suite 60/60
+  (matrix laws: 8-pair capacity cos>0.7, delta-rule readback
+  >0.95, decay half-life exact; matrix smoke: CE falls, ledger
+  exact, |M| ordering matches decay design). Arm A = v5.5's
+  registered result (in-window 0.505/64%, carry at floor). Arm B:
+  fresh 135k-step single epoch (2.21B of the 2.23B corpus), same
+  shard discipline, v5.4 tokenizer for table comparability, d=128.
+  Registered read: PRIMARY — held-out b1 (512-1024) AND
+  ignition-adjusted carry above the 0.083 floor with the lesion
+  carving it out at those bins (the lesion is now doubly
+  meaningful: reads are the only path to matrix content);
+  ignition-lottery risk ledgered — if ignition lands so late that
+  the post-ignition carry window is <20k steps, the read is
+  "incomplete" and a continuation decides; SECONDARY — in-window
+  parity (>=0.505/64%), fid instrument health, write-fidelity
+  (recon loss falling = the store is learning to store). ~5h,
+  ~$1.20.
+
 ## Status
 
 Assembled scene-free (A6), no registered runs. Weaver (`iga/lm_gen.py`),

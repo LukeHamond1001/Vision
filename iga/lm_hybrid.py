@@ -33,6 +33,48 @@ HYBRID_CLOCKS = {3: 1, 4: 8, 5: 64}   # band idx -> tick every N chunks
                                        # (chunks of 512 -> 512/4k/32k)
 
 
+class BandMatrix(nn.Module):
+    """A28: fast-weights associative store per slow band. The math
+    that chose it: a squashing recurrent vector holds ~1-2 facts
+    (every write decays all content by (1-z) through tanh) while the
+    spans hold 5-15; a delta-rule matrix holds ~d/(2 ln d) pairs with
+    crosstalk ~sqrt(n/d), degrading gracefully, and its capacity
+    grows with d^2 at scale. Writes are additive (no erasure); the
+    timescale ladder becomes per-band DECAY (half-life = the band's
+    clock). Write head is dedicated (separate from the read query).
+    Cross-chunk detachment breaks write-path gradient, so writes
+    learn from an in-chunk write-fidelity loss (read back the just-
+    written pair); the read path learns from LM + pay downstream."""
+
+    def __init__(self, d, decay):
+        super().__init__()
+        self.wk = nn.Linear(d, d, bias=False)
+        self.wv = nn.Linear(d, d, bias=False)
+        self.wq = nn.Linear(d, d, bias=False)
+        self.out = nn.Linear(d, d, bias=False)
+        self.decay = decay
+        self.beta = nn.Parameter(torch.tensor(0.0))  # sigmoid -> 0.5
+
+    def write(self, M, x):
+        """x: [B, d] this chunk's write selection. Delta rule:
+        M <- (1-decay) M + beta (v - M k) k^T. Returns (M', recon)."""
+        k = nn.functional.normalize(self.wk(x), dim=-1)
+        v = self.wv(x)
+        pred = torch.einsum("bij,bj->bi", M, k)
+        M = (1 - self.decay) * M + torch.sigmoid(self.beta) * \
+            torch.einsum("bi,bj->bij", v - pred, k)
+        back = torch.einsum("bij,bj->bi", M, k)
+        recon = (1 - nn.functional.cosine_similarity(
+            back, v, dim=-1)).mean()
+        return M, recon
+
+    def read(self, M, h):
+        """h: [B, T, d] -> per-position associative read [B, T, d]."""
+        q = nn.functional.normalize(self.wq(h), dim=-1)
+        r = torch.einsum("bij,btj->bti", M, q)
+        return self.out(r)
+
+
 class SlowCell(nn.Module):
     """Gated delta-write with the update gate biased closed at init:
     h' = (1-z)*h + z*cand. At init z ~ sigmoid(gate_bias) so the
@@ -53,11 +95,13 @@ class SlowCell(nn.Module):
 
 class HybridLM(nn.Module):
     def __init__(self, vocab_size, d=128, n_layers=6, n_heads=8,
-                 max_T=512, talk=None, widths=None):
+                 max_T=512, talk=None, widths=None, store="vector"):
         super().__init__()
         self.d = d
         self.vocab_size = vocab_size
         self.max_T = max_T
+        self.store = store
+        self.mid = n_layers // 2                    # read injection depth
         self.bands = sorted(HYBRID_CLOCKS)          # [3, 4, 5]
         self.embed = nn.Embedding(vocab_size, d)
         self.pos = nn.Embedding(max_T + len(self.bands), d)
@@ -74,23 +118,38 @@ class HybridLM(nn.Module):
             {str(k): nn.Linear(d, d) for k in self.bands})
         self.mem_proj = nn.ModuleDict(
             {str(k): nn.Linear(d, d, bias=False) for k in self.bands})
+        if store == "matrix":
+            # half-life = the band's clock, in chunks
+            self.mats = nn.ModuleDict(
+                {str(k): BandMatrix(d, 1 - 0.5 ** (1 / HYBRID_CLOCKS[k]))
+                 for k in self.bands})
+            self.write_q = nn.ParameterDict(
+                {str(k): nn.Parameter(torch.randn(d) / d ** 0.5)
+                 for k in self.bands})
         self.lesioned = set()
         self._write_cost = None
+        self._recon = None
 
     def init_state(self, B, device):
-        return {"h": {k: torch.zeros(B, self.d, device=device)
+        st = {"h": {k: torch.zeros(B, self.d, device=device)
+                    for k in self.bands},
+              "acc": {k: torch.zeros(B, self.d, device=device)
                       for k in self.bands},
-                "acc": {k: torch.zeros(B, self.d, device=device)
-                        for k in self.bands},
-                "cnt": {k: 0 for k in self.bands},
-                "pend": {k: None for k in self.bands},
-                "chunk": 0}
+              "cnt": {k: 0 for k in self.bands},
+              "pend": {k: None for k in self.bands},
+              "chunk": 0}
+        if self.store == "matrix":
+            st["M"] = {k: torch.zeros(B, self.d, self.d, device=device)
+                       for k in self.bands}
+        return st
 
     def detach_state(self, st):
         st["h"] = {k: v.detach() for k, v in st["h"].items()}
         st["acc"] = {k: v.detach() for k, v in st["acc"].items()}
         st["pend"] = {k: (p.detach() if p is not None else None)
                       for k, p in st["pend"].items()}
+        if "M" in st:
+            st["M"] = {k: v.detach() for k, v in st["M"].items()}
         return st
 
     def _mem_tokens(self, st, B):
@@ -117,8 +176,19 @@ class HybridLM(nn.Module):
                                      dtype=torch.bool), diagonal=1)
         mask[:M, :] = True
         mask[torch.arange(M + T), torch.arange(M + T)] = False
-        for b in self.blocks:
+        for i, b in enumerate(self.blocks):
             x = b(x, mask)
+            if self.store == "matrix" and i == self.mid - 1:
+                # per-position associative reads from LAST chunks'
+                # matrices (written at prior chunk ends: no
+                # same-chunk leak; in-window is attention's job)
+                text = x[:, M:]
+                r = torch.zeros_like(text)
+                for k in self.bands:
+                    if k in self.lesioned:
+                        continue
+                    r = r + self.mats[str(k)].read(st["M"][k], text)
+                x = torch.cat([x[:, :M], text + r], dim=1)
         hidden = x[:, M:]                        # text positions
         logits = self.head(self.lnf(hidden))
         # band updates: each band SELECTS from the window with its own
@@ -145,11 +215,27 @@ class HybridLM(nn.Module):
                 st["cnt"][k] = 0
         if wcost:
             self._write_cost = torch.stack(wcost).mean()
+        if self.store == "matrix":
+            # dedicated write selection + additive write, EVERY chunk
+            # (storage is non-destructive; decay is the timescale)
+            recon = []
+            for k in self.bands:
+                w = torch.softmax(
+                    hidden @ self.write_q[str(k)] / self.d ** 0.5, dim=1)
+                sel = torch.einsum("bt,btd->bd", w, hidden)
+                st["M"][k], rc = self.mats[str(k)].write(st["M"][k], sel)
+                recon.append(rc)
+            self._recon = torch.stack(recon).mean()
         return logits, st, ticks
 
     def pop_write_cost(self):
         c = self._write_cost
         self._write_cost = None
+        return c
+
+    def pop_recon(self):
+        c = self._recon
+        self._recon = None
         return c
 
     def n_params(self):
