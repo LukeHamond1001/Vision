@@ -552,6 +552,20 @@ scale, not blocking this one. Target cost: $15–40 total.
   train rc + ckpt state. Trails archived:
   results-v53-run1-prepoom, results-v53-run2-prepoom.
 
+- **A21** (2026-08-08, run 3 VOID, infrastructure): the streaming
+  prep worked first try (2.216B tokens / 4.43GB tokens.bin on disk,
+  RAM flat, 15 min — past both prior death points) and every
+  preflight passed — but training CRAWLED instead of crashing: GPU
+  0% with one CPU core pegged. Cause: UltraConveyor.chunk()'s
+  per-chunk linear scan over ALL lane events — O(30ms) at v5.0's
+  150k events, ~1 s/step at the full corpus's ~4M, a ~30-hour /
+  ~$7 run instead of ~6 h / ~$1.40. Fix: events are written sorted,
+  so the in-window slice is two np.searchsorted calls; equivalence
+  with the linear scan pinned by test on a real shard (54/54).
+  Trainer step prints now flush (the 8KB stdout buffer made the
+  first training heartbeats blind). ~$0.13. Run 4 is the same
+  registered configuration, next host.
+
 ## Status
 
 Assembled scene-free (A6), no registered runs. Weaver (`iga/lm_gen.py`),

@@ -116,7 +116,8 @@ def train(d=64, lanes=4, T=256, steps=40, seed=0, device="cpu",
         if step % log_every == 0 or step == 1:
             tok_s = lanes * T * step / (time.time() - t0)
             print(f"step {step:5d}  ce {ce:.3f}  loss {loss:.3f}  "
-                  f"holds {len(drive.ledger):4d}  {tok_s:,.0f} tok/s")
+                  f"holds {len(drive.ledger):4d}  {tok_s:,.0f} tok/s",
+                  flush=True)
         if ckpt and step % 500 == 0:
             torch.save({"model": model.state_dict(),
                         "opt": opt.state_dict(), "step": step,

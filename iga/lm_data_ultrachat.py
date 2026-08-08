@@ -374,6 +374,13 @@ class UltraConveyor:
                 e = {**e, "answerable":
                      (e["pos"] - e["gap"]) >= lane * seg}
             self.lane_events[lane].append(e)
+        # events arrive sorted by pos (prepare() writes them sorted);
+        # per-chunk lookup is a binary search over these positions.
+        # The linear scan it replaces was O(all lane events) PER CHUNK
+        # — invisible at v5.0's 150k events, ~30 CPU-hours at the full
+        # corpus's ~4M (v5.3 run 3: GPU idle, one core pegged).
+        self.lane_epos = [np.array([e["pos"] for e in le], dtype=np.int64)
+                          for le in self.lane_events]
 
     def chunk(self, T):
         toks, tgts, events = [], [], []
@@ -385,8 +392,11 @@ class UltraConveyor:
             window = self.tokens[c:c + T + 1].astype(np.int64)
             toks.append(window[:T])
             tgts.append(window[1:T + 1])
-            evs = [(e["pos"] - c, e["kind"], e) for e in self.lane_events[lane]
-                   if c <= e["pos"] < c + T]
+            i0 = int(np.searchsorted(self.lane_epos[lane], c, side="left"))
+            i1 = int(np.searchsorted(self.lane_epos[lane], c + T,
+                                     side="left"))
+            evs = [(e["pos"] - c, e["kind"], e)
+                   for e in self.lane_events[lane][i0:i1]]
             events.append(evs)
             self.cursor[lane] = c + T
         return (torch.from_numpy(np.stack(toks)),

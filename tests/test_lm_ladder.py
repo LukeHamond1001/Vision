@@ -255,6 +255,34 @@ class TestPrepareStreams(unittest.TestCase):
                 os.environ["ULTRACHAT_JSONL"] = prev
 
 
+class TestConveyorEventLookup(unittest.TestCase):
+    def test_binary_search_matches_linear_scan(self):
+        # regression: v5.3 run 3 — the per-chunk linear scan over ALL
+        # lane events was ~30 CPU-hours at full corpus. The
+        # searchsorted window must select the identical events.
+        import os
+        shard = "data/uc_lite_smoke"
+        if not os.path.exists(os.path.join(shard, "tokens.bin")):
+            self.skipTest("local smoke shard absent")
+        from iga.lm_data_ultrachat import UltraConveyor
+        conv = UltraConveyor(shard, n_lanes=4)
+        seen = 0
+        for _ in range(200):
+            cursors = list(conv.cursor)
+            _, _, events = conv.chunk(256)
+            for lane, evs in enumerate(events):
+                c = cursors[lane]
+                lo, hi = lane * conv.seg, (lane + 1) * conv.seg
+                if c + 256 + 1 > hi:
+                    c = lo
+                linear = [(e["pos"] - c, e["kind"], e)
+                          for e in conv.lane_events[lane]
+                          if c <= e["pos"] < c + 256]
+                self.assertEqual(evs, linear)
+                seen += len(evs)
+        self.assertGreater(seen, 50)  # the comparison actually bit
+
+
 class TestEndToEnd(unittest.TestCase):
     def test_smoke_train_audit(self):
         model, drive, vocab, ce0, ce1 = train(d=48, lanes=2, T=192, steps=12,
