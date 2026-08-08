@@ -32,6 +32,25 @@ hb "boot v53-complete $(nvidia-smi --query-gpu=name --format=csv,noheader 2>/dev
 pip install -q numpy tokenizers >> prep.log 2>&1
 hb "deps installed"
 
+# CUDA canary (wrapper v5): nvidia-smi can pass while cuInit is wedged —
+# run 1's GPU was dead the whole time and we spent 47 CPU-minutes
+# finding out. Probe with a real device allocation BEFORE downloads.
+cuda_canary() {
+  python - <<'EOF'
+import torch
+assert torch.cuda.is_available(), "cuda not available"
+x = torch.zeros(8, device="cuda") + 1  # force real allocation + kernel
+torch.cuda.synchronize()
+print(torch.cuda.get_device_name(0))
+EOF
+}
+if ! cuda_canary >> prep.log 2>&1; then
+  hb "CUDA BROKEN AT BOOT - canary failed, aborting (see prep.log)"
+  runpodctl remove pod "$RUNPOD_POD_ID" || true
+  sleep 120; exit 1
+fi
+hb "cuda canary passed"
+
 mkdir -p data
 BASE="https://huggingface.co/datasets/stingning/ultrachat/resolve/main"
 for i in 0 1 2 3 4 5 6 7 8 9; do
@@ -56,6 +75,14 @@ prepare("data/uc_v53_eval", n_convos=2500, seed=2, instrument_every=1,
         tokenizer_path="data/uc_v53/tokenizer.json")
 EOF
 hb "prep: dense eval shard built (train tokenizer reused)"
+
+# the GPU can also die during the ~45 CPU-minutes above — reprobe
+if ! cuda_canary >> prep.log 2>&1; then
+  hb "CUDA DIED PRE-TRAIN - canary failed, aborting (see prep.log)"
+  runpodctl remove pod "$RUNPOD_POD_ID" || true
+  sleep 120; exit 1
+fi
+hb "cuda canary passed pre-train"
 
 ( C=0; while true; do sleep 900; C=$((C+1)); \
     tail -40 train.log > train_tail.log; \
@@ -85,8 +112,15 @@ else
   hb "EVAL FAILED - traceback in eval_results.txt"
 fi
 
-split -b 25m v53.pt v53_part_
+# truthfulness (wrapper v5): a missing checkpoint must FAIL this phase,
+# not vacuously pass it — run 1 heartbeat "FULLY VERIFIED" with no
+# checkpoint in existence because the piece loop ran zero times
 BASE_SHA=$(git rev-parse HEAD)
+if [ ! -f v53.pt ]; then
+  hb "NO CHECKPOINT EXISTS - nothing to verify (train rc=$TRAIN_RC)"
+  CKPT_OK=0
+else
+split -b 25m v53.pt v53_part_
 CKPT_OK=1
 for f in $(ls v53_part_*); do
   git add -f "$f" && git commit -qm "ckpt piece: $f"
@@ -101,6 +135,7 @@ for f in $(ls v53_part_*); do
   if [ "$PUSHED" != "1" ]; then CKPT_OK=0; break; fi
   hb "ckpt piece landed: $f"
 done
+fi
 # the eval shard comes home too: the binding curve is computed locally
 git add -f data/uc_v53_eval/tokens.bin data/uc_v53_eval/events.jsonl \
   data/uc_v53_eval/tokenizer.json train.log prep.log 2>/dev/null || true
@@ -108,11 +143,11 @@ git commit -qm "eval shard + logs" 2>/dev/null || true
 git push -qf "$PUSH" results-v53 2>/dev/null || true
 if [ "$CKPT_OK" = "1" ]; then
   hb "checkpoint FULLY VERIFIED on remote"
-else
+elif [ -f v53.pt ]; then
   git reset --mixed "$BASE_SHA"
   hb "ckpt git pushes incomplete"
 fi
-hb "phase complete"
+hb "phase complete (train rc=$TRAIN_RC, ckpt_ok=$CKPT_OK)"
 
 runpodctl remove pod "$RUNPOD_POD_ID" || runpodctl stop pod "$RUNPOD_POD_ID" || true
 sleep 120
