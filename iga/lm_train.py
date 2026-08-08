@@ -74,11 +74,12 @@ def process_chunk(model, drive, conveyor, T, device, opt=None):
 
 def train(d=64, lanes=4, T=256, steps=40, seed=0, device="cpu",
           ckpt=None, log_every=10, data=None, talk="dense", widths=None,
-          compile_model=False, constants=None):
+          compile_model=False, constants=None, arch="bands"):
     if "cuda" in str(device):
         torch.set_float32_matmul_precision("high")  # TF32 (A12)
     torch.manual_seed(seed)  # reproducible init (A14)
-    drive = Drive(n_lanes=lanes, seed=seed, constants=constants)
+    drive = Drive(n_lanes=lanes, seed=seed, constants=constants,
+                  imagination_absent=(arch == "transformer"))
     if data:  # prepared real-data shard (A8): UltraChat conveyor
         from .lm_data_ultrachat import UltraConveyor, load_tokenizer
         import os
@@ -90,7 +91,12 @@ def train(d=64, lanes=4, T=256, steps=40, seed=0, device="cpu",
         vocab_size = len(vocab)
         conveyor = Conveyor(vocab, n_lanes=lanes, seed=splits(seed)["train"],
                             bias_fn=drive.bin_weights)
-    model = BandLM(vocab_size, d=d, talk=talk, widths=widths).to(device)
+    if arch == "transformer":
+        from .lm_transformer import TransformerLM
+        model = TransformerLM(vocab_size, d=d, max_T=T).to(device)
+    else:
+        model = BandLM(vocab_size, d=d, talk=talk,
+                       widths=widths).to(device)
     if compile_model:
         try:
             model = torch.compile(model)
@@ -137,6 +143,8 @@ def main():
     ap.add_argument("--talk", default="tick")
     ap.add_argument("--constants", default=None,
                     help="calibrated constants json (lm_calibrate)")
+    ap.add_argument("--arch", default="bands",
+                    choices=["bands", "transformer"])
     a = ap.parse_args()
     if a.mode == "smoke":
         model, drive, vocab, ce0, ce1 = train(d=64, lanes=4, T=256, steps=40,
@@ -147,7 +155,7 @@ def main():
     else:
         train(d=a.d, lanes=a.lanes, T=a.chunk, steps=a.steps, seed=a.seed,
               device=a.device, ckpt=a.ckpt, log_every=50, data=a.data,
-              talk=a.talk, constants=a.constants)
+              talk=a.talk, constants=a.constants, arch=a.arch)
 
 
 if __name__ == "__main__":

@@ -181,6 +181,24 @@ class TestCalibration(unittest.TestCase):
         self.assertEqual(d.horizon_for(1), horizon(1))  # default fallback
 
 
+class TestTransformerSubstrate(unittest.TestCase):
+    def test_smoke_train_and_absent_imagination(self):
+        # v5.2: standard transformer under the drive layer
+        model, drive, vocab, ce0, ce1 = train(
+            d=48, lanes=2, T=192, steps=10, device="cpu",
+            log_every=100, arch="transformer")
+        self.assertLess(ce1, ce0)
+        self.assertTrue(drive.audit()["telescoping_exact"])
+        # absent instrument holds no authority: frontier proposes
+        # without fid readings once a channel is minted
+        d = Drive(n_lanes=1, imagination_absent=True)
+        d.probe(0, torch.tensor(0.4), gap=100)
+        d.earned(0, ok=True)
+        d.sweep(losses=[])
+        self.assertTrue(any(h["kind"] == "frontier" for h in d.holds[0]))
+        self.assertEqual(d.vetoes, 0)
+
+
 class TestEndToEnd(unittest.TestCase):
     def test_smoke_train_audit(self):
         model, drive, vocab, ce0, ce1 = train(d=48, lanes=2, T=192, steps=12,

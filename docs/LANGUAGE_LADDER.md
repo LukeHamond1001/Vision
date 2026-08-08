@@ -469,6 +469,30 @@ scale, not blocking this one. Target cost: $15–40 total.
   query-memory readout); flat even at gap<64 -> deeper objective or
   capacity issue, debug before any scale-up.
 
+- **A17** (2026-08-07, pre-run, registered — user intent clarified):
+  **v5.2 — the Crafter machine on an LLM.** The claim was never
+  "language without attention"; it is the drive layer that worked on
+  Crafter, working on a language model. Substrate: a standard
+  decoder-only transformer, regular attention intact, unmodified —
+  playing exactly PPO's role from the agent campaign. On top, the
+  full drive layer: frozen instruments, registers per timescale,
+  maintain+frontier proposer, telescoping ledger, thanks-minting,
+  binding-margin channel, graduated instruments, scheduler. One
+  ledgered subtraction: the imagination gate's forward model was the
+  band predictors; the transformer carries none, so the gate holds no
+  authority (F2: absent instruments cannot veto) — fid-maintain and
+  fid vetoes are skipped. One arm, existence claim: an LLM whose
+  training is governed by an unfarmable goal ledger — margin-verified
+  binding, self-scheduled practice, wants readable as text, exact
+  accounting. Physics printed in advance: the transformer's memory
+  ends at its 512-token window, so the binding curve is expected to
+  show native binding inside the window and a wall at its edge — the
+  wall is a measurement of standard training's boundary, not a
+  failure, and it is where the band ladder would later earn its place
+  as extension. d=128-class, 10k steps, one epoch of the dense shard;
+  transformer parallelism makes this ~15-30 min, ~$0.15. The v5.1-lite
+  band run (A16) proceeds in parallel as substrate science.
+
 ## Status
 
 Assembled scene-free (A6), no registered runs. Weaver (`iga/lm_gen.py`),
