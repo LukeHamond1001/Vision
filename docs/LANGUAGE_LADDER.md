@@ -410,6 +410,42 @@ scale, not blocking this one. Target cost: $15–40 total.
   hb reports eval/train exit codes truthfully; eval widened to 160
   chunks for larger n (pre-run, ledgered).
 
+- **A15** (2026-08-07, THE VERDICT — run 3, valid end to end): the
+  infrastructure was flawless (heartbeats, rolling snapshots, eval
+  first, all checkpoint pieces verified on remote, self-removed;
+  6.2 h training at 26.7k tok/s, CE 2.93 — best of campaign, ~$1.40).
+  The science verdict, printed in full: **L1 NOT DEMONSTRATED at
+  16.7M under this training signal.** Registered cold tables (n=16):
+  full 0.072/top1 12%, lesioned 0.040/6% — above the weak registered
+  floor, AT the honest color-prior floor (~0.083). The local battery
+  on the final weights settled every open question: (1) lesion-CE
+  control FAILED memory-specificity — warm CE rose +27.2% under
+  lesion (bar: <10%), so the recall drop is general breakage, not
+  removed memory; (2) warm-protocol recall is prior-level
+  (0.069/9%, n=23); (3) binding margins are zero-to-negative
+  (-0.010 vs all colors, -0.003 vs recency set). The replicated
+  training-stream signal (EMA ~0.076, records 0.13-0.15) is now
+  fully explained as instrument FORMAT plus a drifting color prior
+  (uniform-over-12 = 0.083; favored-cluster = 1/8 pending set) —
+  not recall. Root cause, stated in the architecture's own terms:
+  the channel paid on p(answer), prior-tracking was the cheapest
+  path to that pay, and the machine learned exactly what the ledger
+  rewarded and nothing more — the v3.0 mis-specification lesson,
+  recursively demonstrated on our own instrument. What HELD: bands
+  carry real predictive context (held-out CE 5.46 cold -> 4.64 warm,
+  ~0.8 nats of band-borne context; lesion breaks it), all six band
+  predictors learn (fid:5 to 0.36), the exact-accounting ledger was
+  perfect across all three runs, and telemetry replicated 3x.
+- **v5.1 (design, not run):** make binding the only paid path —
+  (1) binding-margin channel: pay p(correct) minus max p(other
+  pending colors), closed-form, parameter-free; prior- and
+  recency-tracking become worth exactly zero; (2) graduated gap
+  curriculum: restore short-gap instruments so binding is learned
+  first where it is nearly free, then frontiered outward — the
+  proposer's own philosophy applied to the training data; (3)
+  densify instruments ~5x. One run at the frozen A12 config,
+  ~$2.50.
+
 ## Status
 
 Assembled scene-free (A6), no registered runs. Weaver (`iga/lm_gen.py`),
