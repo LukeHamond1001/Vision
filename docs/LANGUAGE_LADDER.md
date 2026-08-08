@@ -736,6 +736,38 @@ scale, not blocking this one. Target cost: $15–40 total.
   path is genuinely short and the next lever is the dedicated
   write head / associative matrix, designed on a full autopsy.
 
+- **A27** (2026-08-08, v5.5 continuation CLEAN, verdict: THE
+  VECTOR IS THE BOTTLENECK): resume worked — b0 at 0.57 on the
+  first heartbeat, step numbering/trace continuous, fid:4
+  rebuilt 0.50 -> 0.82 through the ledgered cold-band scar
+  (~10k steps), ledger exact across the boundary; 133k tok/s,
+  ~$0.25. OFFSET CORRECTION (miss, printed): the 0.7909347
+  offset was computed from run 3b's pre-384 shard size; true
+  consumed mark on the v5.4 shard (2,231,154,918 tokens) is
+  0.785732 — the continuation started ~362k tokens/lane deep,
+  SKIPPING ~11.6M unseen tokens (2.4% of tail). Safe direction
+  (nothing repeated), bounded scar. **In-window matured:
+  held-out 0.505 / 64% top1** (from 0.170/25% at 107k;
+  secondary read MET — top1 above run 4's 61%), still fully
+  attention-pure (lesion delta ZERO — the model near-ignores
+  the memory tokens, consistent with a store carrying almost
+  nothing). **Cross-window: PRIMARY READ NOT MET** — held-out
+  b1 0.078/10% (n=52), b2 0.074/7%: at floor. But the trace
+  shows carry was NOT a transient this time: b1 held 0.04-0.10
+  and b2 0.01-0.095 for the ENTIRE continuation — persistent,
+  paid, PARTIAL carry (~10-15% of probes by margin mass),
+  below held-out detection. The elimination is now complete:
+  medium predictable, gate open (vetoes froze at 908k by step
+  ~118k after the cold rebuild), pay active, in-window mature —
+  and a single d-vector per band still cannot reliably hold
+  multi-fact spans (bands 3/4 face ~2-15 concurrent facts).
+  Q1 of the closure plan is ANSWERED: per-band associative
+  storage is required. Next (A28, to be registered): the
+  matrix A/B — fast-weights store per slow band (outer-product
+  writes, query reads) + dedicated write head, head-to-head vs
+  v5.5 at identical budget, the last open architecture
+  question. Artifacts: results-v55 (pieces, trace, tables).
+
 ## Status
 
 Assembled scene-free (A6), no registered runs. Weaver (`iga/lm_gen.py`),
