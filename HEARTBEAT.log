@@ -27,3 +27,4 @@
 23:40:21 training heartbeat: step 20600  ce 3.014  loss 3.027  holds 35008  26,656 tok/s
 23:41:27 rolling ckpt snapshot pushed
 23:56:28 training heartbeat: step 20600  ce 3.014  loss 3.027  holds 35008  26,656 tok/s
+00:11:30 training heartbeat: step 20600  ce 3.014  loss 3.027  holds 35008  26,656 tok/s
