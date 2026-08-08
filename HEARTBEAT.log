@@ -37,3 +37,4 @@
 01:42:44 rolling ckpt snapshot pushed
 01:54:13 training complete (rc=0)
 01:55:11 evaluation complete
+01:55:21 ckpt piece landed: run_fp16.pt
