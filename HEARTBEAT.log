@@ -15,3 +15,4 @@
 06:13:05 prep: dense train shard built (raw deleted for disk)
 06:13:10 prep: dense eval shard built (train tokenizer reused)
 06:13:13 cuda canary passed pre-train
+06:13:16 training complete (rc=1)

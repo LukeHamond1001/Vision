@@ -1,0 +1,14 @@
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/workspace/iga-scale/iga/lm_train.py", line 166, in <module>
+    main()
+  File "/workspace/iga-scale/iga/lm_train.py", line 160, in main
+    train(d=a.d, lanes=a.lanes, T=a.chunk, steps=a.steps, seed=a.seed,
+  File "/workspace/iga-scale/iga/lm_train.py", line 86, in train
+    conveyor = UltraConveyor(data, n_lanes=lanes)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/iga-scale/iga/lm_data_ultrachat.py", line 320, in __init__
+    self.tokens = np.fromfile(os.path.join(out_dir, "tokens.bin"),
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: 'data/uc_v53/tokens.bin'
