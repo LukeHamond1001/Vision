@@ -22,3 +22,4 @@
 21:43:19 prep: dense eval shard built (train tokenizer reused)
 21:43:23 cuda canary passed pre-train
 21:58:24 training heartbeat: step  6600  ce 3.834  loss 3.887  holds 30176  124,162 tok/s  [fid:3=+0.990 fid:4=-0.051 fid:5=-0.003 b0=+0.002 b1=+0.002 b2=+0.003 b3=+0.001]
+22:13:26 training heartbeat: step 13900  ce 3.568  loss 3.568  holds 38656  128,274 tok/s  [fid:3=+0.991 fid:4=+0.131 fid:5=-0.047 b0=+0.002 b1=+0.003 b2=+0.003 b3=+0.002]
