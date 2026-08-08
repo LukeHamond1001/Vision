@@ -1,0 +1,16 @@
+
+== snap1 (step 30500) fine bins ==
+  gap     0-64     p 0.868  top1 0.88  n=33
+  gap    64-128    p 0.824  top1 0.83  n=35
+  gap   128-256    p 0.587  top1 0.60  n=62
+  gap   512-1024   p 0.044  top1 0.07  n=29
+  gap  2048-8192   p 0.065  top1 0.06  n=64
+  gap  8192-32768  p 0.067  top1 0.07  n=27
+
+== final (step 107000) fine bins ==
+  gap     0-64     p 0.700  top1 0.76  n=33
+  gap    64-128    p 0.652  top1 0.71  n=35
+  gap   128-256    p 0.450  top1 0.47  n=62
+  gap   512-1024   p 0.073  top1 0.00  n=29
+  gap  2048-8192   p 0.082  top1 0.14  n=64
+  gap  8192-32768  p 0.072  top1 0.07  n=27

@@ -604,6 +604,53 @@ scale, not blocking this one. Target cost: $15–40 total.
   weight / stabilizing slow bands so the gate can open their
   frontiers.
 
+- **A23** (2026-08-08, THE AUTOPSY — four checkpoints: steps
+  30.5k/61.5k/93.5k/107k vs the run-4 eval shard;
+  results/v53_autopsy.json, results/v53_finebins.txt):
+  (1) **The transient was real cross-window carry.** The eval
+  curriculum has ZERO probes at gaps 256-511 (units target ~200
+  then ~800), so bin b1 is purely cross-window — the training
+  margin records (b1 0.155 before 30.5k; b2 spiking to 0.142
+  between 30.5k-61.5k, long after the color prior formed, over
+  recency-matched distractors) cannot be an in-window slice or a
+  prior artifact. Genuine band-borne binding existed twice and
+  died both times. No weight snapshot brackets a living episode
+  (hourly cadence, transients shorter); no held-out witness
+  exists. (2) **It died unpaid, by the gate's own correct hand.**
+  fid:4/5 sat below floor from the start (fid:4 ema NEGATIVE all
+  run — pooled-mean writes of fast-evolving hiddens are
+  unpredictable to the band's forward model), so every b1/b2
+  frontier proposal was vetoed (~65/step, 6.0M total): F2
+  enforced exactly as designed, and therefore the carry circuit
+  got zero pay support at the moments it lived. Instrument
+  mismatch, not law violation: a band can carry a retrievable
+  fact while being globally unpredictable — global next-window
+  fidelity is the wrong reachability instrument for a carry
+  target. (3) **The lesion story reverses A22's reading:** at
+  30.5k the lesion barely moves in-window binding (0.722 ->
+  0.685 — pure-attention circuit); by 61.5k it collapses it
+  (0.618 -> 0.146); by the end 0.568 -> 0.047. The model
+  progressively REROUTED binding through the memory tokens —
+  real pathway integration (asymmetry check: lesion hits binding
+  bins 12x, floor bins 2.5x — specific, not off-manifold). The
+  intended wiring integrated; the latents just never held stable
+  facts, so integration bought fragility without range. (4)
+  **In-window binding peaked early and decayed all run** at
+  every fine distance (0-64: 0.868 -> 0.700; 64-128: 0.824 ->
+  0.652; 128-256: 0.587 -> 0.450) while train CE improved:
+  margin pay at lam=0.1 loses to the LM objective late; binding
+  is also steeply distance-graded well inside the window (the
+  2-block transformer's induction is short-ranged). Lessons ->
+  levers, evidence-ranked: (L1) selective/gated band writes so
+  slow bands become predictable -> fid clears floor -> the gate
+  can OPEN cross-window frontiers and pay the transient when it
+  appears (the veto ledger is direct evidence pay was withheld
+  exactly where support was needed); (L2) drive channel EMAs
+  printed every train.log line — the b1 transient lived and died
+  entirely between snapshots; never again unobserved; (L3)
+  pay-weight vs CE calibration late in training (in-window decay
+  under a live margin channel is a scheduler/weight question).
+
 ## Status
 
 Assembled scene-free (A6), no registered runs. Weaver (`iga/lm_gen.py`),
