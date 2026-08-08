@@ -12,3 +12,4 @@
 05:26:42 download: part 9 (1468348 lines)
 05:26:49 download: heldout
 05:44:38 prep: dense train shard built (raw deleted for disk)
+05:44:44 prep: dense eval shard built (train tokenizer reused)
