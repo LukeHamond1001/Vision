@@ -18,3 +18,4 @@
 06:13:16 training complete (rc=1)
 06:13:20 EVAL FAILED - traceback in eval_results.txt
 06:13:21 NO CHECKPOINT EXISTS - nothing to verify (train rc=1)
+06:13:24 phase complete (train rc=1, ckpt_ok=0)
