@@ -20,3 +20,4 @@
 21:38:11 prep beat:   1304000 convos, 2,036,752,847 tokens, 931646 probes
 21:43:14 prep: train shard built (4462309836 bytes tokens.bin, raw deleted)
 21:43:19 prep: dense eval shard built (train tokenizer reused)
+21:43:23 cuda canary passed pre-train
