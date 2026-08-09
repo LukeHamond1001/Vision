@@ -941,12 +941,27 @@ scale, not blocking this one. Target cost: $15–40 total.
   BELOW full-time-XL v5.8 (0.226/0.150) despite halving the
   crutch. Training margins healthy (b0 0.87, b1 0.46). No A34
   branch fires cleanly; the honest read spans the family:
-  same-config-class held-out outcomes of 0.68 (v5.5), 0.31
-  (v5.8), 0.05-0.13 (v5.9) mean SINGLE-RUN CIRCUIT-QUALITY
-  VARIANCE is large at this scale — the ignition lottery draws
-  circuits of different generalization quality, and single-run
-  attributions (including parts of A33's XL-trade read) carry
-  that noise floor. Consequence, and the vindication of the
+  held-out outcomes of 0.68 (v5.5), 0.31 (v5.8), 0.05-0.13
+  (v5.9) cannot be attributed, because those three runs are NOT
+  the same config — v5.5 was store=vector/no-XL, v5.8 added
+  matrix+XL+gates, v5.9 added XL-dropout. **AMENDED (same day,
+  on the user's challenge): the original wording — "single-run
+  circuit-quality variance is LARGE at this scale" — was an
+  overstatement inferred from confounded data. We have never run
+  an identical config twice, so we have NO direct measurement of
+  seed variance, and the spread is equally consistent with each
+  config change simply hurting.** What the evidence does support
+  is narrower: single-run attributions across differing configs
+  cannot separate config effect from seed/timing effect, and
+  ignition TIMING is known to move (94k in v5.4 vs ~35k in v5.6),
+  so any held-out number read while the curve is still climbing
+  is phase-dependent (A25 measured one mid-birth). The practical
+  test is free and in-run: if the holdout trace is FLAT over the
+  final ~30k steps, the reading sits on a plateau and needs no
+  variance discount; if still rising, it is a timing read. On
+  aggregate metrics at ~2B tokens, seed noise is small — the
+  concern was only ever narrow emergent circuits near threshold.
+  Consequence, and the vindication of the
   user's one-arm directive (ledgered same day): stop attributing
   across runs; build the best-evidence machine and let the
   replication gate handle variance. XL BENCHED with receipts:
