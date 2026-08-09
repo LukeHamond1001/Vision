@@ -46,3 +46,4 @@
 02:30:01 training heartbeat: step 132850  ce 2.566  loss 2.567  holds 239168  126,811 tok/s  [fid:3=+0.993 fid:4=+0.869 fid:5=+0.147 b0=+0.716 b1=+0.057 b2=+0.001 b3=+0.002]
 02:34:26 training complete (rc=0)
 02:34:33 evaluation complete
+02:34:41 ckpt piece landed: v56_part_aa
