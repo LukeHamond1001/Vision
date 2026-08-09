@@ -862,6 +862,47 @@ scale, not blocking this one. Target cost: $15–40 total.
   gates never open: the store is unused -> predictor/write
   redesign. ~5.5h, ~$1.30.
 
+- **A31** (2026-08-09, v5.7 CLEAN delivery, verdict + instrument
+  anomaly): run clean (135k steps, ~5.9h, ~$1.30, 90-105k tok/s).
+  Training-stream binding was the strongest ever recorded — b0
+  0.96, b1 0.65, co-igniting at ~22k (earliest ever) — and the
+  OFFLINE-CONSENSUS held-out verdict is a severe REGRESSION:
+  same-chunk 0.18-0.25/26-31% (v5.5: 0.68/88%), straddle
+  0.02-0.07 (XL did not deliver held-out), cross floor; lesion
+  ~zero; read gate 3 OPEN (0.25 — band-3 matrix recruited on the
+  training stream, without generalizing). The train->held-out gap
+  (0.96 vs 0.2) says the XL-era machinery fit the stream in a
+  non-generalizing way. Registered A30 read: FAILED on same-chunk
+  parity. CONFOUND, owned: v5.7 bundled TWO deltas (XL carry AND
+  the gated matrix), so attribution requires decomposition.
+  **Instrument anomaly, documented**: the live probes reported
+  late-run same-chunk intervals ~0.9 (cumulative 0.433/50%) that
+  NO fixed-weight offline measurement reproduces — not cold/50/
+  150-chunk warmups, not a 500-chunk depth curve, not the 114.5k
+  snapshot (0.23-0.25 everywhere), and the probe FUNCTION itself
+  verified correct in isolation (67-call local replication with
+  final weights: 0.203 — matches offline). Only untestable
+  difference: the pod probe's persistent state was written by an
+  ensemble of evolving weights. The live numbers are ruled
+  unreliable; probe redesigned (A32) to fresh state + fixed
+  warmup per call, mirroring registered-eval conditions.
+  Artifacts: results-v57 (+ckpt snapshots), autopsy scripts.
+
+- **A32** (2026-08-09, pre-run, registered): **v5.8 — the
+  decomposition.** One lever back: v5.5's exact machine
+  (store=vector, the best held-out binder: 0.68/88% same-chunk)
+  PLUS the XL chunk carry only — no matrix, no gates. If v5.8
+  holds same-chunk ~0.68 AND straddle climbs above floor, XL is
+  exonerated and A28's matrix+gates was the poison (v5.9 re-adds
+  storage under stronger protections); if same-chunk regresses
+  again, XL itself is the poison — abandon carry-by-attention and
+  return cross-boundary duty to the bands. Probe v2 (fresh state
+  + 12-chunk warmup, cumulative agg) ships in this run. Same
+  discipline: fresh 135k-step epoch, v5.4 tokenizer, d=128.
+  ~5.5h, ~$1.30. Per the user's standing order (2026-08-09,
+  ledgered): runs launch autonomously on each verdict until the
+  freeze checklist completes; pause only when scale-ready.
+
 ## Status
 
 Assembled scene-free (A6), no registered runs. Weaver (`iga/lm_gen.py`),

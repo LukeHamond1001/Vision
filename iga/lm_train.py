@@ -85,17 +85,21 @@ def process_chunk(model, drive, conveyor, T, device, opt=None):
 
 
 @torch.no_grad()
-def holdout_probe(model, pe, T, device):
-    """A30: live held-out mini-eval — v5.6 trained 100k steps with a
-    binding circuit that never generalized, invisible to the trace.
-    Runs a few chunks on a persistent held-out conveyor; classifies
-    probes same-chunk / straddle / cross; accumulates cumulatively."""
+def holdout_probe(model, pe, T, device, warm=12, score=8):
+    """A30/A32: live held-out mini-eval. v5.8 redesign: FRESH state
+    per call + fixed warmup — v5.7's persistent probe state (written
+    by an ensemble of past weights) reported binding that no fixed-
+    weight offline measurement could reproduce at any state depth;
+    the probe now mirrors the registered eval's conditions."""
     model.eval()
     seg = pe["conv"].seg
-    for _ in range(8):
+    st = model.init_state(pe["conv"].n_lanes, device)
+    for ci in range(warm + score):
         x, y, events = pe["conv"].chunk(T)
         x = x.to(device)
-        logits, pe["st"], _ = model(x, pe["st"], None)
+        logits, st, _ = model(x, st, None)
+        if ci < warm:
+            continue
         logp = torch.log_softmax(logits, dim=-1)
         for lane, evs in enumerate(events):
             lo = lane * seg
@@ -115,7 +119,6 @@ def holdout_probe(model, pe, T, device):
                 s[1] += int(int(logits[lane, p - 1].argmax())
                             == dd["answer"])
                 s[2] += 1
-    pe["st"] = model.detach_state(pe["st"])
     model.train()
     return {k: [round(v[0] / v[2], 3), round(v[1] / v[2], 2), v[2]]
             for k, v in sorted(pe["agg"].items()) if v[2]}
@@ -186,8 +189,7 @@ def train(d=64, lanes=4, T=256, steps=40, seed=0, device="cpu",
     peval = None
     if data and eval_data:
         from .lm_data_ultrachat import UltraConveyor as _UC
-        peval = {"conv": _UC(eval_data, n_lanes=2),
-                 "st": model.init_state(2, device), "agg": {}}
+        peval = {"conv": _UC(eval_data, n_lanes=2), "agg": {}}
     t0 = time.time()
     ce_first = None
     trace = (ckpt + ".trace.jsonl") if ckpt else None

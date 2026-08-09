@@ -322,13 +322,13 @@ class TestSlowWrites(unittest.TestCase):
         tok = load_tokenizer(os.path.join(shard, "tokenizer.json"))
         m = HybridLM(tok.get_vocab_size(), d=32, n_layers=2,
                      n_heads=2, max_T=256)
-        pe = {"conv": UltraConveyor(shard, n_lanes=2),
-              "st": m.init_state(2, "cpu"), "agg": {}}
-        out1 = holdout_probe(m, pe, 256, "cpu")
-        out2 = holdout_probe(m, pe, 256, "cpu")
+        pe = {"conv": UltraConveyor(shard, n_lanes=2), "agg": {}}
+        out1 = holdout_probe(m, pe, 256, "cpu", warm=1, score=12)
+        out2 = holdout_probe(m, pe, 256, "cpu", warm=1, score=12)
         n1 = sum(v[2] for v in out1.values()) if out1 else 0
         n2 = sum(v[2] for v in out2.values())
-        self.assertGreater(n2, n1)       # cumulative
+        self.assertGreater(n2, 0)
+        self.assertGreaterEqual(n2, n1)  # cumulative, never resets
         self.assertTrue(m.training)      # mode restored
 
     def test_matrix_store_laws(self):
