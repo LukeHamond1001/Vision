@@ -990,6 +990,20 @@ scale, not blocking this one. Target cost: $15–40 total.
   confirmation requires the replication gate regardless of how
   good the tables look. 135k steps, ~5.5h, ~$1.30.
 
+- **A37** (2026-08-09, user directive, mid-v6.0): **replication
+  gate waived at debug tier.** "i dont think we need another
+  seed at this size." The freeze checklist drops its third item
+  at d=128: a PRIMARY confirm on the one machine is scale-ready
+  by itself — no seed-1 twin first. The A35 variance risk is
+  accepted, not refuted: it rides forward onto the scale run,
+  which now doubles as the replication (different seed, different
+  width, more data — if the debug read was a lottery draw, the
+  scale run is where that surfaces, at scale-run cost). A
+  staged parallel twin (pod_v60b.sh, seed 1) was built and then
+  deleted unlaunched under this directive. New freeze rule:
+  held-out carry beyond one chunk + lesion carve-out → freeze,
+  report scale-ready, wait.
+
 ## Status
 
 Assembled scene-free (A6), no registered runs. Weaver (`iga/lm_gen.py`),
