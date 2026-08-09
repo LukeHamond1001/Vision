@@ -311,6 +311,28 @@ class TestSlowWrites(unittest.TestCase):
         delta = float((logits_carry - logits_blank).abs().mean())
         self.assertGreater(delta, 1e-4)  # last chunk reaches this one
 
+    def test_xl_dropout_trains_blind_sometimes_evals_always(self):
+        # A34: in train mode the carry is dropped ~half the time;
+        # in eval mode it is always used
+        import torch as t
+        from iga.lm_hybrid import HybridLM
+        t.manual_seed(0)
+        m = HybridLM(64, d=32, n_layers=2, n_heads=2, max_T=64)
+        st = m.init_state(1, "cpu")
+        x = t.randint(0, 64, (1, 64))
+        _, st, _ = m(x, st, None)          # prime the cache
+        m.train()
+        used = []
+        for _ in range(40):
+            _, st, _ = m(x, st, None)
+            used.append(m._xl_used)
+        self.assertIn(True, used)
+        self.assertIn(False, used)
+        m.eval()
+        for _ in range(5):
+            _, st, _ = m(x, st, None)
+            self.assertTrue(m._xl_used)
+
     def test_holdout_probe_runs_and_accumulates(self):
         import os
         shard = "data/uc_lite_smoke"

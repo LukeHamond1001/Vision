@@ -903,6 +903,38 @@ scale, not blocking this one. Target cost: $15–40 total.
   ledgered): runs launch autonomously on each verdict until the
   freeze checklist completes; pause only when scale-ready.
 
+- **A33** (2026-08-09, v5.8 CLEAN, verdict: THE XL TRADE,
+  QUANTIFIED — and the crowding-out LAW generalizes): registered
+  b1 (256-2048) at 0.150/17% (n=52, p~0.02) — the FIRST
+  above-floor cross-window bin in campaign history, all
+  attention-borne (lesion delta ~zero). The split: same-chunk
+  0.68 -> 0.314/45% (HALVED vs v5.5), straddle 0.053 -> 0.131/16%
+  (TRIPLED), reach stops at exactly one boundary (near-cross
+  512-1024: floor). Training margins 0.96/0.74 vs held-out
+  0.31/0.13: the carry makes the training exam too easy for
+  robust induction to be worth forming. With v5.6 this is now a
+  demonstrated LAW of the machine at this scale: an easier path
+  crowds out the generalizing circuit — matrix reads did it,
+  attention-to-attention carry does it too. Probe v2 agreed with
+  the registered tables all run (instrument fleet coherent).
+  ~$1.30.
+
+- **A34** (2026-08-09, pre-run, registered): **v5.9 — keep the
+  capability, deny the crutch: XL-dropout.** One lever on v5.8:
+  in training, the carry is dropped per-chunk with p=0.5 (eval
+  always carries; law test pins both). Half the chunks train
+  blind, forcing position-general induction to form; the other
+  half keep the reach. Registered read: same-chunk RECOVERS
+  toward 0.68/88% AND straddle HOLDS >= 0.13/16% -> both regimes
+  won, and capability-under-dropout becomes the template for
+  re-adding storage (v6.0: matrix + gates + read-dropout); if
+  same-chunk recovers but straddle collapses -> the reach was
+  pure crutch, drop XL and the bands own everything cross-chunk;
+  if same-chunk still fails to recover -> the suppressor is not
+  the carry (suspect: pay saturation at lam 0.25 — margins 0.96
+  leave no induction pressure) -> next lever is pay-side. Same
+  discipline, 135k steps, ~$1.30.
+
 ## Status
 
 Assembled scene-free (A6), no registered runs. Weaver (`iga/lm_gen.py`),

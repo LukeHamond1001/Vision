@@ -193,6 +193,14 @@ class HybridLM(nn.Module):
         sq[:M, :] = True
         sq[torch.arange(M + T), torch.arange(M + T)] = False
         xl = st.get("xl")
+        if self.training and xl is not None and \
+                float(torch.rand(())) < 0.5:
+            # A34: XL-dropout — v5.8 proved the carry crowds out
+            # induction (same-chunk 0.68 -> 0.31 while straddle
+            # tripled); half the chunks train blind so the robust
+            # circuit must form, the other half keep the reach
+            xl = None
+        self._xl_used = xl is not None
         if xl is not None:
             # XL carry (A30): previous chunk's per-layer text hiddens
             # as extra keys — text rows attend all of them (they are
