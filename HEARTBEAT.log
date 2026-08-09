@@ -46,3 +46,4 @@
 21:52:11 training heartbeat:     holdout(cum): {'cross': [0.055, 0.06, 155], 'same': [0.05, 0.08, 83], 'straddle': [0.061, 0.09, 55]}
 22:07:12 training heartbeat: step 119950  ce 2.673  loss 2.674  holds 105248  108,829 tok/s  [fid:3=+0.981 fid:4=+0.849 fid:5=+0.040 b0=+0.775 b1=+0.358 b2=+0.003 b3=+0.002]
 22:07:30 rolling ckpt snapshot pushed
+22:22:31 training heartbeat: step 126200  ce 2.613  loss 2.621  holds 106016  108,934 tok/s  [fid:3=+0.983 fid:4=+0.853 fid:5=+0.040 b0=+0.783 b1=+0.285 b2=+0.001 b3=+0.003]
