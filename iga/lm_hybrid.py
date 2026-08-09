@@ -95,12 +95,16 @@ class SlowCell(nn.Module):
 
 class HybridLM(nn.Module):
     def __init__(self, vocab_size, d=128, n_layers=6, n_heads=8,
-                 max_T=512, talk=None, widths=None, store="vector"):
+                 max_T=512, talk=None, widths=None, store="vector",
+                 use_xl=True):
         super().__init__()
         self.d = d
         self.vocab_size = vocab_size
         self.max_T = max_T
         self.store = store
+        self.use_xl = use_xl   # A36: benched in v6.0 — real one-boundary
+                               # reach (A33) but unresolved held-out cost
+                               # and large run-variance; revisit at scale
         self.mid = n_layers // 2                    # read injection depth
         self.bands = sorted(HYBRID_CLOCKS)          # [3, 4, 5]
         self.embed = nn.Embedding(vocab_size, d)
@@ -192,7 +196,7 @@ class HybridLM(nn.Module):
                                    dtype=torch.bool), diagonal=1)
         sq[:M, :] = True
         sq[torch.arange(M + T), torch.arange(M + T)] = False
-        xl = st.get("xl")
+        xl = st.get("xl") if self.use_xl else None
         if self.training and xl is not None and \
                 float(torch.rand(())) < 0.5:
             # A34: XL-dropout — v5.8 proved the carry crowds out
@@ -212,14 +216,18 @@ class HybridLM(nn.Module):
         else:
             mask = sq
         new_xl = []
+        read_ok = (not self.training) or float(torch.rand(())) >= 0.5
+        self._reads_used = read_ok and self.store == "matrix"
         for i, b in enumerate(self.blocks):
-            new_xl.append(x[:, M:].detach())
+            if self.use_xl:
+                new_xl.append(x[:, M:].detach())
             kv = (xl[i] + self.xl_tag) if xl is not None else None
             x = b(x, mask if xl is not None else sq, kv=kv)
-            if self.store == "matrix" and i == self.mid - 1:
+            if self.store == "matrix" and i == self.mid - 1 and read_ok:
                 # per-position associative reads from LAST chunks'
-                # matrices, gated shut at init (A30) — no same-chunk
-                # leak; short range is attention's job
+                # matrices, gated shut at init (A30) + read-dropout
+                # (A36: the crowding-out law — half the chunks train
+                # storeless so induction must form)
                 text = x[:, M:]
                 r = torch.zeros_like(text)
                 for k in self.bands:
@@ -228,7 +236,7 @@ class HybridLM(nn.Module):
                     g = torch.sigmoid(self.read_gate[str(k)])
                     r = r + g * self.mats[str(k)].read(st["M"][k], text)
                 x = torch.cat([x[:, :M], text + r], dim=1)
-        st["xl"] = new_xl
+        st["xl"] = new_xl if self.use_xl else None
         hidden = x[:, M:]                        # text positions
         logits = self.head(self.lnf(hidden))
         # band updates: each band SELECTS from the window with its own

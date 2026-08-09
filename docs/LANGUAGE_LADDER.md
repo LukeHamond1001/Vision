@@ -935,6 +935,46 @@ scale, not blocking this one. Target cost: $15–40 total.
   leave no induction pressure) -> next lever is pay-side. Same
   discipline, 135k steps, ~$1.30.
 
+- **A35** (2026-08-09, v5.9 CLEAN, verdict: dropout did NOT
+  rescue — and THE VARIANCE DISCOVERY): held-out 0-256 at
+  0.126/16%, b1 0.045, b2 0.049 — the weakest of the XL family,
+  BELOW full-time-XL v5.8 (0.226/0.150) despite halving the
+  crutch. Training margins healthy (b0 0.87, b1 0.46). No A34
+  branch fires cleanly; the honest read spans the family:
+  same-config-class held-out outcomes of 0.68 (v5.5), 0.31
+  (v5.8), 0.05-0.13 (v5.9) mean SINGLE-RUN CIRCUIT-QUALITY
+  VARIANCE is large at this scale — the ignition lottery draws
+  circuits of different generalization quality, and single-run
+  attributions (including parts of A33's XL-trade read) carry
+  that noise floor. Consequence, and the vindication of the
+  user's one-arm directive (ledgered same day): stop attributing
+  across runs; build the best-evidence machine and let the
+  replication gate handle variance. XL BENCHED with receipts:
+  genuinely delivered the campaign's only above-floor
+  cross-window bin (A33), unresolved held-out cost, high
+  variance; revisit at scale. ~$1.30.
+
+- **A36** (2026-08-09, pre-run, registered): **v6.0 — THE
+  MACHINE.** One arm, per the standing directive; every future
+  verdict amends this lineage. Config, each choice with its
+  receipt: the v5.5 base (best demonstrated held-out binder,
+  0.68/88% same-chunk — SlowCell selective writes, mem tokens,
+  predictors LIVE, lam 0.25, absent-band mask, 384 units); NO
+  XL (A35 bench); + the gated matrix store (A28 math: the only
+  candidate for >1024) under BOTH protections the crowding-out
+  law demands — read gates shut at init AND read-dropout p=0.5
+  (train half the chunks storeless; law test pins train/eval
+  behavior); probe v2 + trace + all wrapper protections.
+  Registered read: PRIMARY — the one open question: held-out
+  carry beyond one chunk (straddle from the BANDS/matrix now,
+  not XL; cross >1024 above floor with gates opening and the
+  lesion carving it out); SECONDARY — same-chunk back at
+  0.5-0.68 territory (v5.5 base + protected store should not
+  crowd out); recon falling (store storing). Variance caveat
+  registered: single-run reads carry the A35 noise floor —
+  confirmation requires the replication gate regardless of how
+  good the tables look. 135k steps, ~5.5h, ~$1.30.
+
 ## Status
 
 Assembled scene-free (A6), no registered runs. Weaver (`iga/lm_gen.py`),

@@ -333,6 +333,30 @@ class TestSlowWrites(unittest.TestCase):
             _, st, _ = m(x, st, None)
             self.assertTrue(m._xl_used)
 
+    def test_v60_machine_no_xl_gated_dropout_reads(self):
+        # A36: THE machine — xl off (cache stays None), matrix reads
+        # gated AND dropped-out in training, always on in eval
+        import torch as t
+        from iga.lm_hybrid import HybridLM
+        t.manual_seed(0)
+        m = HybridLM(64, d=32, n_layers=2, n_heads=2, max_T=64,
+                     store="matrix", use_xl=False)
+        st = m.init_state(1, "cpu")
+        x = t.randint(0, 64, (1, 64))
+        _, st, _ = m(x, st, None)
+        self.assertIsNone(st["xl"])          # no carry cached
+        m.train()
+        used = []
+        for _ in range(40):
+            _, st, _ = m(x, st, None)
+            used.append(m._reads_used)
+        self.assertIn(True, used)            # reads sometimes on
+        self.assertIn(False, used)           # and sometimes dropped
+        m.eval()
+        for _ in range(5):
+            _, st, _ = m(x, st, None)
+            self.assertTrue(m._reads_used)   # eval always reads
+
     def test_holdout_probe_runs_and_accumulates(self):
         import os
         shard = "data/uc_lite_smoke"

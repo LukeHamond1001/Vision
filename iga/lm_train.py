@@ -127,7 +127,8 @@ def holdout_probe(model, pe, T, device, warm=12, score=8):
 def train(d=64, lanes=4, T=256, steps=40, seed=0, device="cpu",
           ckpt=None, log_every=10, data=None, talk="dense", widths=None,
           compile_model=False, constants=None, arch="bands",
-          resume=None, offset_frac=0.0, store="vector", eval_data=None):
+          resume=None, offset_frac=0.0, store="vector", eval_data=None,
+          use_xl=True):
     """resume (A26): path to a checkpoint — model + optimizer + drive
     EMAs/records/minted/vetoes continue; step numbering continues.
     offset_frac: start each conveyor lane this far into its segment
@@ -158,8 +159,8 @@ def train(d=64, lanes=4, T=256, steps=40, seed=0, device="cpu",
         model = TransformerLM(vocab_size, d=d, max_T=T).to(device)
     elif arch == "hybrid":
         from .lm_hybrid import HybridLM
-        model = HybridLM(vocab_size, d=d, max_T=T,
-                         store=store).to(device)
+        model = HybridLM(vocab_size, d=d, max_T=T, store=store,
+                         use_xl=use_xl).to(device)
         drive.bin_band = {0: 3, 1: 3, 2: 4, 3: 5}  # carry bands (A19)
     else:
         model = BandLM(vocab_size, d=d, talk=talk,
@@ -260,6 +261,8 @@ def main():
                     help="hybrid band storage substrate (A28)")
     ap.add_argument("--eval-data", default=None, dest="eval_data",
                     help="held-out shard for live circuit probes (A30)")
+    ap.add_argument("--xl", default="on", choices=["on", "off"],
+                    help="Transformer-XL chunk carry (A36: benched)")
     a = ap.parse_args()
     if a.mode == "smoke":
         model, drive, vocab, ce0, ce1 = train(d=64, lanes=4, T=256, steps=40,
@@ -272,7 +275,7 @@ def main():
               device=a.device, ckpt=a.ckpt, log_every=50, data=a.data,
               talk=a.talk, constants=a.constants, arch=a.arch,
               resume=a.resume, offset_frac=a.offset, store=a.store,
-              eval_data=a.eval_data)
+              eval_data=a.eval_data, use_xl=(a.xl == "on"))
 
 
 if __name__ == "__main__":

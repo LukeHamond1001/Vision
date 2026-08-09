@@ -123,6 +123,7 @@ def main():
     ap.add_argument("--chunk", type=int, default=512)
     ap.add_argument("--store", default="vector",
                     choices=["vector", "matrix"])
+    ap.add_argument("--xl", default="on", choices=["on", "off"])
     ap.add_argument("--device", default="cuda"
                     if torch.cuda.is_available() else "cpu")
     a = ap.parse_args()
@@ -134,7 +135,8 @@ def main():
     elif a.arch == "hybrid":
         from .lm_hybrid import HybridLM
         model = HybridLM(tok.get_vocab_size(), d=a.d, max_T=a.chunk,
-                         store=a.store).to(a.device)
+                         store=a.store,
+                         use_xl=(a.xl == "on")).to(a.device)
     else:
         model = BandLM(tok.get_vocab_size(), d=a.d,
                        talk=a.talk).to(a.device)
