@@ -84,10 +84,47 @@ def process_chunk(model, drive, conveyor, T, device, opt=None):
     return float(ce.detach()), float(loss.detach())
 
 
+@torch.no_grad()
+def holdout_probe(model, pe, T, device):
+    """A30: live held-out mini-eval — v5.6 trained 100k steps with a
+    binding circuit that never generalized, invisible to the trace.
+    Runs a few chunks on a persistent held-out conveyor; classifies
+    probes same-chunk / straddle / cross; accumulates cumulatively."""
+    model.eval()
+    seg = pe["conv"].seg
+    for _ in range(8):
+        x, y, events = pe["conv"].chunk(T)
+        x = x.to(device)
+        logits, pe["st"], _ = model(x, pe["st"], None)
+        logp = torch.log_softmax(logits, dim=-1)
+        for lane, evs in enumerate(events):
+            lo = lane * seg
+            for p, kind, dd in evs:
+                if kind != "probe" or p <= 0 or \
+                        not dd.get("answerable", True):
+                    continue
+                pos, plant = dd["pos"], dd["pos"] - dd["gap"]
+                if (pos - lo) // T == (plant - lo) // T:
+                    key = "same"
+                elif dd["gap"] <= T:
+                    key = "straddle"
+                else:
+                    key = "cross"
+                s = pe["agg"].setdefault(key, [0.0, 0, 0])
+                s[0] += float(logp[lane, p - 1, dd["answer"]].exp())
+                s[1] += int(int(logits[lane, p - 1].argmax())
+                            == dd["answer"])
+                s[2] += 1
+    pe["st"] = model.detach_state(pe["st"])
+    model.train()
+    return {k: [round(v[0] / v[2], 3), round(v[1] / v[2], 2), v[2]]
+            for k, v in sorted(pe["agg"].items()) if v[2]}
+
+
 def train(d=64, lanes=4, T=256, steps=40, seed=0, device="cpu",
           ckpt=None, log_every=10, data=None, talk="dense", widths=None,
           compile_model=False, constants=None, arch="bands",
-          resume=None, offset_frac=0.0, store="vector"):
+          resume=None, offset_frac=0.0, store="vector", eval_data=None):
     """resume (A26): path to a checkpoint — model + optimizer + drive
     EMAs/records/minted/vetoes continue; step numbering continues.
     offset_frac: start each conveyor lane this far into its segment
@@ -146,6 +183,11 @@ def train(d=64, lanes=4, T=256, steps=40, seed=0, device="cpu",
         drive.step_t = step0 * T
         print(f"resumed {resume} at step {step0} "
               f"(ema keys: {sorted(drive.ema)})", flush=True)
+    peval = None
+    if data and eval_data:
+        from .lm_data_ultrachat import UltraConveyor as _UC
+        peval = {"conv": _UC(eval_data, n_lanes=2),
+                 "st": model.init_state(2, device), "agg": {}}
     t0 = time.time()
     ce_first = None
     trace = (ckpt + ".trace.jsonl") if ckpt else None
@@ -162,15 +204,19 @@ def train(d=64, lanes=4, T=256, steps=40, seed=0, device="cpu",
             print(f"step {step:5d}  ce {ce:.3f}  loss {loss:.3f}  "
                   f"holds {len(drive.ledger):4d}  {tok_s:,.0f} tok/s  "
                   f"[{emas}]", flush=True)
+            row = {"step": step, "ce": round(ce, 4),
+                   "ema": {k: round(float(v), 5)
+                           for k, v in drive.ema.items()},
+                   "vetoes": drive.vetoes,
+                   "holds": len(drive.ledger)}
+            if peval and step % 2000 < log_every:
+                hp = holdout_probe(model, peval, T, device)
+                row["holdout"] = hp
+                print(f"    holdout(cum): {hp}", flush=True)
             if trace:
                 import json as _json
                 with open(trace, "a") as f:
-                    f.write(_json.dumps(
-                        {"step": step, "ce": round(ce, 4),
-                         "ema": {k: round(float(v), 5)
-                                 for k, v in drive.ema.items()},
-                         "vetoes": drive.vetoes,
-                         "holds": len(drive.ledger)}) + "\n")
+                    f.write(_json.dumps(row) + "\n")
         if ckpt and step % 500 == 0:
             torch.save({"model": model.state_dict(),
                         "opt": opt.state_dict(), "step": step,
@@ -210,6 +256,8 @@ def main():
     ap.add_argument("--store", default="vector",
                     choices=["vector", "matrix"],
                     help="hybrid band storage substrate (A28)")
+    ap.add_argument("--eval-data", default=None, dest="eval_data",
+                    help="held-out shard for live circuit probes (A30)")
     a = ap.parse_args()
     if a.mode == "smoke":
         model, drive, vocab, ce0, ce1 = train(d=64, lanes=4, T=256, steps=40,
@@ -221,7 +269,8 @@ def main():
         train(d=a.d, lanes=a.lanes, T=a.chunk, steps=a.steps, seed=a.seed,
               device=a.device, ckpt=a.ckpt, log_every=50, data=a.data,
               talk=a.talk, constants=a.constants, arch=a.arch,
-              resume=a.resume, offset_frac=a.offset, store=a.store)
+              resume=a.resume, offset_frac=a.offset, store=a.store,
+              eval_data=a.eval_data)
 
 
 if __name__ == "__main__":

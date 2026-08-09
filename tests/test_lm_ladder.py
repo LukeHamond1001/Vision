@@ -284,6 +284,53 @@ class TestSlowWrites(unittest.TestCase):
             lines = [json.loads(l) for l in open(ck + ".trace.jsonl")]
             self.assertEqual(lines[-1]["step"], 7)
 
+    def test_xl_carry_and_gated_reads(self):
+        # A30: information flows across the chunk boundary through
+        # attention (XL carry), and matrix reads start gated shut
+        import torch as t
+        from iga.lm_hybrid import HybridLM
+        t.manual_seed(0)
+        m = HybridLM(64, d=32, n_layers=2, n_heads=2, max_T=64,
+                     store="matrix")
+        m.eval()
+        for k in m.bands:   # gates shut at init
+            self.assertLess(float(t.sigmoid(m.read_gate[str(k)])),
+                            0.05)
+        a = t.randint(0, 64, (1, 64))
+        b = t.randint(0, 64, (1, 64))
+        with t.no_grad():
+            st = m.init_state(1, "cpu")
+            _, st, _ = m(a, st, None)
+            self.assertIsNotNone(st["xl"])
+            self.assertEqual(st["xl"][0].shape, (1, 64, 32))
+            logits_carry, _, _ = m(b, {**st, "xl": [h.clone()
+                                   for h in st["xl"]]}, None)
+            st_blank = {**st, "xl": [t.zeros_like(h)
+                                     for h in st["xl"]]}
+            logits_blank, _, _ = m(b, st_blank, None)
+        delta = float((logits_carry - logits_blank).abs().mean())
+        self.assertGreater(delta, 1e-4)  # last chunk reaches this one
+
+    def test_holdout_probe_runs_and_accumulates(self):
+        import os
+        shard = "data/uc_lite_smoke"
+        if not os.path.exists(os.path.join(shard, "tokens.bin")):
+            self.skipTest("local smoke shard absent")
+        from iga.lm_data_ultrachat import UltraConveyor, load_tokenizer
+        from iga.lm_train import holdout_probe
+        from iga.lm_hybrid import HybridLM
+        tok = load_tokenizer(os.path.join(shard, "tokenizer.json"))
+        m = HybridLM(tok.get_vocab_size(), d=32, n_layers=2,
+                     n_heads=2, max_T=256)
+        pe = {"conv": UltraConveyor(shard, n_lanes=2),
+              "st": m.init_state(2, "cpu"), "agg": {}}
+        out1 = holdout_probe(m, pe, 256, "cpu")
+        out2 = holdout_probe(m, pe, 256, "cpu")
+        n1 = sum(v[2] for v in out1.values()) if out1 else 0
+        n2 = sum(v[2] for v in out2.values())
+        self.assertGreater(n2, n1)       # cumulative
+        self.assertTrue(m.training)      # mode restored
+
     def test_matrix_store_laws(self):
         # A28: write recovers, capacity holds 8 pairs, decay
         # half-life matches the clock

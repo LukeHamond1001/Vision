@@ -25,9 +25,18 @@ class Block(nn.Module):
         self.mlp = nn.Sequential(nn.Linear(d, 4 * d), nn.GELU(),
                                  nn.Linear(4 * d, d))
 
-    def forward(self, x, mask):
+    def forward(self, x, mask, kv=None):
+        """kv (A30): extra key/value context prepended to this
+        block's own keys — the previous chunk's cached hiddens
+        (Transformer-XL carry). mask must then be [Lq, len(kv)+Lq]."""
         h = self.ln1(x)
-        a, _ = self.attn(h, h, h, attn_mask=mask, need_weights=False)
+        if kv is not None:
+            hk = torch.cat([kv, h], dim=1)
+            a, _ = self.attn(h, hk, hk, attn_mask=mask,
+                             need_weights=False)
+        else:
+            a, _ = self.attn(h, h, h, attn_mask=mask,
+                             need_weights=False)
         x = x + a
         return x + self.mlp(self.ln2(x))
 

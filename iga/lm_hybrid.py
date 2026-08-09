@@ -126,6 +126,19 @@ class HybridLM(nn.Module):
             self.write_q = nn.ParameterDict(
                 {str(k): nn.Parameter(torch.randn(d) / d ** 0.5)
                  for k in self.bands})
+            # A30: reads gated shut at init (sigmoid(-4) ~ 0.018) —
+            # v5.6 proved ungated per-position reads crowd out
+            # induction formation; the model must opt in
+            self.read_gate = nn.ParameterDict(
+                {str(k): nn.Parameter(torch.tensor(-4.0))
+                 for k in self.bands})
+        # A30: Transformer-XL chunk carry — the previous chunk's
+        # hiddens as attendable keys. v5.6's autopsy: chunks were
+        # processed independently, so ANY boundary-straddling gap
+        # (even 48 tokens) was invisible to attention and fell to
+        # the store. Attention now owns everything within one chunk
+        # of lookback; the store owes only true long range.
+        self.xl_tag = nn.Parameter(torch.zeros(d))
         self.lesioned = set()
         self._write_cost = None
         self._recon = None
@@ -141,6 +154,7 @@ class HybridLM(nn.Module):
         if self.store == "matrix":
             st["M"] = {k: torch.zeros(B, self.d, self.d, device=device)
                        for k in self.bands}
+        st["xl"] = None            # per-layer cached hiddens (A30)
         return st
 
     def detach_state(self, st):
@@ -150,6 +164,8 @@ class HybridLM(nn.Module):
                       for k, p in st["pend"].items()}
         if "M" in st:
             st["M"] = {k: v.detach() for k, v in st["M"].items()}
+        if st.get("xl") is not None:
+            st["xl"] = [h.detach() for h in st["xl"]]
         return st
 
     def _mem_tokens(self, st, B):
@@ -172,23 +188,39 @@ class HybridLM(nn.Module):
         x = torch.cat([mem, x], dim=1)           # [B, M+T, d]
         # causal over text; every text position may attend all memory;
         # memory rows attend only themselves
-        mask = torch.triu(torch.ones(M + T, M + T, device=dev,
-                                     dtype=torch.bool), diagonal=1)
-        mask[:M, :] = True
-        mask[torch.arange(M + T), torch.arange(M + T)] = False
+        sq = torch.triu(torch.ones(M + T, M + T, device=dev,
+                                   dtype=torch.bool), diagonal=1)
+        sq[:M, :] = True
+        sq[torch.arange(M + T), torch.arange(M + T)] = False
+        xl = st.get("xl")
+        if xl is not None:
+            # XL carry (A30): previous chunk's per-layer text hiddens
+            # as extra keys — text rows attend all of them (they are
+            # wholly past); mem-token rows still attend only self
+            xT = xl[0].shape[1]
+            left = torch.ones(M + T, xT, device=dev, dtype=torch.bool)
+            left[M:, :] = False
+            mask = torch.cat([left, sq], dim=1)
+        else:
+            mask = sq
+        new_xl = []
         for i, b in enumerate(self.blocks):
-            x = b(x, mask)
+            new_xl.append(x[:, M:].detach())
+            kv = (xl[i] + self.xl_tag) if xl is not None else None
+            x = b(x, mask if xl is not None else sq, kv=kv)
             if self.store == "matrix" and i == self.mid - 1:
                 # per-position associative reads from LAST chunks'
-                # matrices (written at prior chunk ends: no
-                # same-chunk leak; in-window is attention's job)
+                # matrices, gated shut at init (A30) — no same-chunk
+                # leak; short range is attention's job
                 text = x[:, M:]
                 r = torch.zeros_like(text)
                 for k in self.bands:
                     if k in self.lesioned:
                         continue
-                    r = r + self.mats[str(k)].read(st["M"][k], text)
+                    g = torch.sigmoid(self.read_gate[str(k)])
+                    r = r + g * self.mats[str(k)].read(st["M"][k], text)
                 x = torch.cat([x[:, :M], text + r], dim=1)
+        st["xl"] = new_xl
         hidden = x[:, M:]                        # text positions
         logits = self.head(self.lnf(hidden))
         # band updates: each band SELECTS from the window with its own

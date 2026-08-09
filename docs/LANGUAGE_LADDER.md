@@ -808,6 +808,60 @@ scale, not blocking this one. Target cost: $15–40 total.
   (recon loss falling = the store is learning to store). ~5h,
   ~$1.20.
 
+- **A29** (2026-08-09, v5.6 CLEAN delivery, verdict + THE STRADDLE
+  DISCOVERY): run clean (135k steps, ~5h, ~$1.20; one broken-CUDA
+  host caught by the boot canary in 28 s). Both registered reads
+  FAILED, and the autopsy (results/v56_autopsy discriminators:
+  straddle split, M-zeroed pathway lesion, warmup sweep, v5.5
+  contrast) explains everything: (1) **held-out in-window
+  collapsed** (0.086/13% vs the vector arm's 0.505/64%) while
+  training b0 rode at 0.72 — and the M-ZEROED eval is unchanged
+  (0.102): the matrices contribute NOTHING retrievable at eval;
+  (2) **induction never formed**: same-chunk probes 0.108/17% vs
+  v5.5's 0.680/88% on the identical split — ungated per-position
+  associative reads gave training-stream binding a cheaper path
+  and CROWDED OUT induction-head formation; the trace's
+  "ignition" at ~35k was the non-generalizing matrix circuit;
+  (3) **the discovery that reframes the campaign**: v5.5's
+  "in-window 0.505" decomposes into same-chunk 0.680/88% and
+  straddle 0.053/3% — chunks are processed independently, so
+  attention has NO memory across a chunk boundary at ANY gap;
+  even 48-token straddles fell to the store. The real division
+  of labor was never gap-size bins; it is same-chunk vs
+  cross-chunk, and the store was silently owed EVERY boundary
+  crossing. Trainer-trace blindness to circuit TYPE is the
+  instrument gap (100k steps of non-generalizing binding looked
+  identical to the real thing).
+
+- **A30** (2026-08-09, pre-run, registered): **v5.7 — attention
+  gets its memory back, the store gets a fair job.** (1)
+  Transformer-XL chunk carry: each block attends the previous
+  chunk's cached per-layer hiddens (detached, tagged with a
+  learned past-marker; text rows attend all carry keys) — gaps
+  <= 512 across a boundary become attention's job, pinned by an
+  information-flow law test; lesion still zeroes only band/matrix
+  paths, so the carve-out gets CLEANER (short-range survives
+  lesion, true long-range dies). (2) Matrix reads gated shut at
+  init (sigmoid(-4) ~ 0.018 per band, learnable): induction forms
+  first, the model opts into reads — the v5.6 crowding-out
+  cannot recur by construction. (3) Live held-out circuit probes
+  in the trainer (every 2000 steps, persistent 2-lane held-out
+  conveyor, cumulative same/straddle/cross split into trace +
+  log): circuit type is never invisible again. Suite 62/62;
+  smoke: CE falls, ledger exact, gates 0.018, xl cache flowing.
+  Run: fresh 135k-step epoch, same discipline, v5.4 tokenizer.
+  Registered read: PRIMARY — held-out cross-chunk carry
+  (straddle bin above floor is necessary but NOT sufficient — XL
+  alone should clear straddle; the store's claim is gaps > 1024)
+  AND same-chunk parity with v5.5 (>= 0.68/88%, proving
+  crowding-out is gone); SECONDARY — read gates opening
+  (sigmoid(alpha) rising = the model finding the store useful),
+  live-probe cross bin above floor by run's end. If same-chunk
+  restores but cross stays at floor with gates open: the store
+  learnability seam persists -> TBPTT-through-write is next. If
+  gates never open: the store is unused -> predictor/write
+  redesign. ~5.5h, ~$1.30.
+
 ## Status
 
 Assembled scene-free (A6), no registered runs. Weaver (`iga/lm_gen.py`),
