@@ -104,7 +104,8 @@ class SlowCell(nn.Module):
 class HybridLM(nn.Module):
     def __init__(self, vocab_size, d=128, n_layers=6, n_heads=8,
                  max_T=512, talk=None, widths=None, store="vector",
-                 use_xl=True, gate_init=-4.0, read_drop=0.5):
+                 use_xl=True, gate_init=-4.0, read_drop=0.5,
+                 gate_mode="scalar"):
         super().__init__()
         self.d = d
         self.vocab_size = vocab_size
@@ -146,6 +147,22 @@ class HybridLM(nn.Module):
             self.read_gate = nn.ParameterDict(
                 {str(k): nn.Parameter(torch.tensor(float(gate_init)))
                  for k in self.bands})
+            # A41 candidate — per-position read gates: the v6.1 82k
+            # snapshot showed the DILUTION stall (betas 0.94/0.99 =
+            # write path engaged; scalar gates pinned = one knob
+            # cannot price reads that help at ask-positions and cost
+            # noise at the other 511). gate_mode="position" gives
+            # each position its own learned gate (d->1, bias at
+            # gate_init): asks can open the vault while chatter
+            # keeps it shut. Same protection at init.
+            self.gate_mode = gate_mode
+            if gate_mode == "position":
+                self.read_gate_pos = nn.ModuleDict()
+                for k in self.bands:
+                    lin = nn.Linear(d, 1)
+                    nn.init.zeros_(lin.weight)
+                    nn.init.constant_(lin.bias, float(gate_init))
+                    self.read_gate_pos[str(k)] = lin
         self.read_drop = read_drop
         # A30: Transformer-XL chunk carry — the previous chunk's
         # hiddens as attendable keys. v5.6's autopsy: chunks were
@@ -248,7 +265,11 @@ class HybridLM(nn.Module):
                 for k in self.bands:
                     if k in self.lesioned:
                         continue
-                    g = torch.sigmoid(self.read_gate[str(k)])
+                    if getattr(self, "gate_mode", "scalar") == "position":
+                        # [B, T, 1] — each position prices its own read
+                        g = torch.sigmoid(self.read_gate_pos[str(k)](text))
+                    else:
+                        g = torch.sigmoid(self.read_gate[str(k)])
                     r = r + g * self.mats[str(k)].read(st["M"][k], text)
                 x = torch.cat([x[:, :M], text + r], dim=1)
         st["xl"] = new_xl if self.use_xl else None

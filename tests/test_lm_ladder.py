@@ -432,6 +432,45 @@ class TestSlowWrites(unittest.TestCase):
             _, st, _ = m2(x, st, None)
             self.assertFalse(m2._reads_used)
 
+    def test_position_gate_init_equivalent_and_trainable(self):
+        # A41 candidate: per-position read gates — at init (zero
+        # weights, bias=gate_init) every position's gate equals the
+        # scalar gate's value; the head is trainable (gradient
+        # reaches it through a read); scalar mode stays the default
+        import torch as t
+        from iga.lm_hybrid import HybridLM
+        t.manual_seed(0)
+        m = HybridLM(64, d=32, n_layers=2, n_heads=2, max_T=64,
+                     store="matrix", use_xl=False, gate_mode="position")
+        lin = m.read_gate_pos["4"]
+        x = t.randn(2, 7, 32)
+        g = t.sigmoid(lin(x))
+        self.assertTrue(t.allclose(
+            g, t.full_like(g, float(t.sigmoid(t.tensor(-4.0))))))
+        m.train()
+        st = m.init_state(1, "cpu")
+        toks = t.randint(0, 64, (1, 64))
+        with t.no_grad():
+            _, st, _ = m(toks, st, None)   # populate M (chunk-1 store
+        st = m.detach_state(st)            # is all zeros: reads are 0)
+        s = None
+        for cand in range(50):
+            t.manual_seed(cand)
+            if float(t.rand(())) >= 0.5:
+                s = cand
+                break
+        t.manual_seed(s)
+        logits, st, _ = m(toks, st, None)
+        self.assertTrue(m._reads_used)
+        m.zero_grad()
+        logits.mean().backward()
+        self.assertIsNotNone(lin.bias.grad)
+        self.assertGreater(float(lin.bias.grad.abs().sum()), 0.0)
+        m_def = HybridLM(64, d=32, n_layers=2, n_heads=2, max_T=64,
+                         store="matrix", use_xl=False)
+        self.assertEqual(getattr(m_def, "gate_mode", "scalar"), "scalar")
+        self.assertFalse(hasattr(m_def, "read_gate_pos"))
+
     def test_write_credit_reaches_selector_next_chunk(self):
         # A38: the store pass carries ONE write-op of graph across the
         # boundary — a read at chunk t+1 must send gradient back to

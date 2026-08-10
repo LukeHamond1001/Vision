@@ -129,7 +129,7 @@ def train(d=64, lanes=4, T=256, steps=40, seed=0, device="cpu",
           compile_model=False, constants=None, arch="bands",
           resume=None, offset_frac=0.0, store="vector", eval_data=None,
           use_xl=True, gate_init=-4.0, read_drop=0.5,
-          read_drop_end=None):
+          read_drop_end=None, gate_mode="scalar"):
     """resume (A26): path to a checkpoint — model + optimizer + drive
     EMAs/records/minted/vetoes continue; step numbering continues.
     offset_frac: start each conveyor lane this far into its segment
@@ -162,7 +162,8 @@ def train(d=64, lanes=4, T=256, steps=40, seed=0, device="cpu",
         from .lm_hybrid import HybridLM
         model = HybridLM(vocab_size, d=d, max_T=T, store=store,
                          use_xl=use_xl, gate_init=gate_init,
-                         read_drop=read_drop).to(device)
+                         read_drop=read_drop,
+                         gate_mode=gate_mode).to(device)
         drive.bin_band = {0: 3, 1: 3, 2: 4, 3: 5}  # carry bands (A19)
     else:
         model = BandLM(vocab_size, d=d, talk=talk,
@@ -279,6 +280,10 @@ def main():
     ap.add_argument("--read-drop-end", type=float, default=None,
                     dest="read_drop_end",
                     help="linear anneal target for read-dropout (A39)")
+    ap.add_argument("--gate-mode", default="scalar", dest="gate_mode",
+                    choices=["scalar", "position"],
+                    help="matrix read gate: scalar per band, or "
+                         "per-position learned head (A41 candidate)")
     a = ap.parse_args()
     if a.mode == "smoke":
         model, drive, vocab, ce0, ce1 = train(d=64, lanes=4, T=256, steps=40,
@@ -293,7 +298,7 @@ def main():
               resume=a.resume, offset_frac=a.offset, store=a.store,
               eval_data=a.eval_data, use_xl=(a.xl == "on"),
               gate_init=a.gate_init, read_drop=a.read_drop,
-              read_drop_end=a.read_drop_end)
+              read_drop_end=a.read_drop_end, gate_mode=a.gate_mode)
 
 
 if __name__ == "__main__":
