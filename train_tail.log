@@ -1,40 +1,60 @@
-step 129800  ce 2.527  loss 2.534  holds 183904  132,561 tok/s  [fid:3=+0.984 fid:4=+0.847 fid:5=+0.052 b0=+0.695 b1=+0.071 b2=+0.002 b3=+0.002]
-step 129850  ce 2.611  loss 2.612  holds 183904  132,574 tok/s  [fid:3=+0.986 fid:4=+0.847 fid:5=+0.052 b0=+0.602 b1=+0.064 b2=+0.003 b3=+0.002]
-step 129900  ce 2.638  loss 2.640  holds 183936  132,569 tok/s  [fid:3=+0.985 fid:4=+0.847 fid:5=+0.052 b0=+0.701 b1=+0.085 b2=+0.002 b3=+0.002]
-step 129950  ce 2.636  loss 2.638  holds 183936  132,563 tok/s  [fid:3=+0.984 fid:4=+0.847 fid:5=+0.052 b0=+0.645 b1=+0.061 b2=+0.002 b3=+0.002]
-step 130000  ce 2.818  loss 2.826  holds 183936  132,575 tok/s  [fid:3=+0.984 fid:4=+0.848 fid:5=+0.052 b0=+0.618 b1=+0.043 b2=+0.001 b3=+0.002]
-    holdout(cum): {'cross': [0.055, 0.05, 168], 'same': [0.476, 0.59, 98], 'straddle': [0.088, 0.08, 59]}
-step 130050  ce 2.501  loss 2.502  holds 183968  132,567 tok/s  [fid:3=+0.983 fid:4=+0.848 fid:5=+0.052 b0=+0.722 b1=+0.052 b2=+0.002 b3=+0.002]
-step 130100  ce 2.522  loss 2.523  holds 183968  132,579 tok/s  [fid:3=+0.985 fid:4=+0.848 fid:5=+0.052 b0=+0.598 b1=+0.052 b2=+0.003 b3=+0.002]
-step 130150  ce 2.545  loss 2.546  holds 184000  132,575 tok/s  [fid:3=+0.983 fid:4=+0.848 fid:5=+0.052 b0=+0.673 b1=+0.098 b2=+0.002 b3=+0.002]
-step 130200  ce 2.913  loss 2.921  holds 184000  132,570 tok/s  [fid:3=+0.985 fid:4=+0.847 fid:5=+0.052 b0=+0.664 b1=+0.082 b2=+0.003 b3=+0.002]
-step 130250  ce 2.615  loss 2.616  holds 184000  132,582 tok/s  [fid:3=+0.986 fid:4=+0.848 fid:5=+0.052 b0=+0.726 b1=+0.055 b2=+0.003 b3=+0.002]
-step 130300  ce 2.740  loss 2.741  holds 184000  132,576 tok/s  [fid:3=+0.986 fid:4=+0.848 fid:5=+0.052 b0=+0.657 b1=+0.106 b2=+0.003 b3=+0.002]
-step 130350  ce 2.563  loss 2.567  holds 184032  132,588 tok/s  [fid:3=+0.984 fid:4=+0.848 fid:5=+0.052 b0=+0.714 b1=+0.077 b2=+0.005 b3=+0.002]
-step 130400  ce 2.520  loss 2.528  holds 184064  132,585 tok/s  [fid:3=+0.984 fid:4=+0.849 fid:5=+0.052 b0=+0.717 b1=+0.059 b2=+0.004 b3=+0.002]
-step 130450  ce 2.773  loss 2.775  holds 184064  132,579 tok/s  [fid:3=+0.985 fid:4=+0.849 fid:5=+0.052 b0=+0.799 b1=+0.064 b2=+0.002 b3=+0.002]
-step 130500  ce 2.671  loss 2.675  holds 184064  132,591 tok/s  [fid:3=+0.985 fid:4=+0.848 fid:5=+0.052 b0=+0.740 b1=+0.124 b2=+0.002 b3=+0.002]
-step 130550  ce 2.661  loss 2.663  holds 184064  132,584 tok/s  [fid:3=+0.985 fid:4=+0.848 fid:5=+0.052 b0=+0.706 b1=+0.080 b2=+0.003 b3=+0.002]
-step 130600  ce 2.747  loss 2.755  holds 184096  132,580 tok/s  [fid:3=+0.986 fid:4=+0.849 fid:5=+0.052 b0=+0.696 b1=+0.098 b2=+0.004 b3=+0.002]
-step 130650  ce 2.705  loss 2.710  holds 184128  132,592 tok/s  [fid:3=+0.983 fid:4=+0.849 fid:5=+0.052 b0=+0.659 b1=+0.040 b2=+0.004 b3=+0.002]
-step 130700  ce 2.672  loss 2.675  holds 184128  132,588 tok/s  [fid:3=+0.983 fid:4=+0.849 fid:5=+0.052 b0=+0.663 b1=+0.058 b2=+0.004 b3=+0.002]
-step 130750  ce 2.686  loss 2.688  holds 184128  132,599 tok/s  [fid:3=+0.985 fid:4=+0.849 fid:5=+0.052 b0=+0.658 b1=+0.069 b2=+0.003 b3=+0.002]
-step 130800  ce 2.483  loss 2.491  holds 184128  132,594 tok/s  [fid:3=+0.985 fid:4=+0.849 fid:5=+0.052 b0=+0.679 b1=+0.036 b2=+0.005 b3=+0.002]
-step 130850  ce 2.563  loss 2.564  holds 184160  132,589 tok/s  [fid:3=+0.986 fid:4=+0.849 fid:5=+0.052 b0=+0.621 b1=+0.098 b2=+0.006 b3=+0.002]
-step 130900  ce 2.467  loss 2.469  holds 184192  132,602 tok/s  [fid:3=+0.986 fid:4=+0.850 fid:5=+0.052 b0=+0.593 b1=+0.118 b2=+0.002 b3=+0.002]
-step 130950  ce 2.870  loss 2.871  holds 184192  132,598 tok/s  [fid:3=+0.986 fid:4=+0.850 fid:5=+0.052 b0=+0.643 b1=+0.049 b2=+0.005 b3=+0.002]
-step 131000  ce 2.719  loss 2.728  holds 184192  132,611 tok/s  [fid:3=+0.985 fid:4=+0.849 fid:5=+0.052 b0=+0.691 b1=+0.063 b2=+0.002 b3=+0.002]
-step 131050  ce 2.604  loss 2.605  holds 184192  132,604 tok/s  [fid:3=+0.985 fid:4=+0.849 fid:5=+0.052 b0=+0.636 b1=+0.045 b2=+0.005 b3=+0.002]
-step 131100  ce 2.827  loss 2.829  holds 184224  132,600 tok/s  [fid:3=+0.985 fid:4=+0.848 fid:5=+0.052 b0=+0.678 b1=+0.094 b2=+0.004 b3=+0.002]
-step 131150  ce 2.736  loss 2.738  holds 184256  132,610 tok/s  [fid:3=+0.985 fid:4=+0.849 fid:5=+0.052 b0=+0.661 b1=+0.087 b2=+0.002 b3=+0.002]
-step 131200  ce 2.623  loss 2.660  holds 184256  132,606 tok/s  [fid:3=+0.986 fid:4=+0.849 fid:5=+0.052 b0=+0.696 b1=+0.129 b2=+0.001 b3=+0.002]
-step 131250  ce 2.859  loss 2.861  holds 184256  132,618 tok/s  [fid:3=+0.985 fid:4=+0.849 fid:5=+0.052 b0=+0.680 b1=+0.089 b2=+0.001 b3=+0.002]
-step 131300  ce 2.535  loss 2.537  holds 184256  132,614 tok/s  [fid:3=+0.985 fid:4=+0.849 fid:5=+0.052 b0=+0.711 b1=+0.082 b2=+0.003 b3=+0.002]
-step 131350  ce 2.689  loss 2.690  holds 184288  132,607 tok/s  [fid:3=+0.984 fid:4=+0.850 fid:5=+0.052 b0=+0.610 b1=+0.106 b2=+0.002 b3=+0.002]
-step 131400  ce 2.838  loss 2.847  holds 184320  132,619 tok/s  [fid:3=+0.983 fid:4=+0.848 fid:5=+0.052 b0=+0.645 b1=+0.133 b2=+0.003 b3=+0.002]
-step 131450  ce 2.761  loss 2.762  holds 184320  132,613 tok/s  [fid:3=+0.984 fid:4=+0.847 fid:5=+0.052 b0=+0.675 b1=+0.061 b2=+0.002 b3=+0.002]
-step 131500  ce 2.479  loss 2.480  holds 184320  132,625 tok/s  [fid:3=+0.985 fid:4=+0.848 fid:5=+0.052 b0=+0.684 b1=+0.043 b2=+0.001 b3=+0.002]
-step 131550  ce 2.599  loss 2.600  holds 184320  132,617 tok/s  [fid:3=+0.985 fid:4=+0.848 fid:5=+0.052 b0=+0.715 b1=+0.061 b2=+0.001 b3=+0.002]
-step 131600  ce 2.601  loss 2.609  holds 184352  132,613 tok/s  [fid:3=+0.986 fid:4=+0.848 fid:5=+0.052 b0=+0.639 b1=+0.064 b2=+0.001 b3=+0.002]
-step 131650  ce 2.797  loss 2.799  holds 184384  132,625 tok/s  [fid:3=+0.985 fid:4=+0.848 fid:5=+0.052 b0=+0.715 b1=+0.051 b2=+0.004 b3=+0.002]
-step 131700  ce 2.834  loss 2.836  holds 184384  132,621 tok/s  [fid:3=+0.986 fid:4=+0.848 fid:5=+0.052 b0=+0.696 b1=+0.055 b2=+0.004 b3=+0.002]
+lane5 frontier recall:b3      target 0.07 phi0 0.95 band 5 due 69238784
+lane6 maintain fid:5          target 0.20 phi0 0.74 band 5 due 69206528
+lane6 frontier recall:b3      target 0.07 phi0 0.95 band 5 due 69238784
+lane7 maintain fid:5          target 0.20 phi0 0.74 band 5 due 69206528
+lane7 frontier recall:b3      target 0.07 phi0 0.95 band 5 due 69238784
+lane8 maintain fid:5          target 0.20 phi0 0.74 band 5 due 69206528
+lane8 frontier recall:b3      target 0.07 phi0 0.95 band 5 due 69238784
+lane9 maintain fid:5          target 0.20 phi0 0.74 band 5 due 69206528
+lane9 frontier recall:b3      target 0.07 phi0 0.95 band 5 due 69238784
+lane10 maintain fid:5          target 0.20 phi0 0.74 band 5 due 69206528
+lane10 frontier recall:b3      target 0.07 phi0 0.95 band 5 due 69238784
+lane11 maintain fid:5          target 0.20 phi0 0.74 band 5 due 69206528
+lane11 frontier recall:b3      target 0.07 phi0 0.95 band 5 due 69238784
+lane12 maintain fid:5          target 0.20 phi0 0.74 band 5 due 69206528
+lane12 frontier recall:b3      target 0.07 phi0 0.95 band 5 due 69238784
+lane13 maintain fid:5          target 0.20 phi0 0.74 band 5 due 69206528
+lane13 frontier recall:b3      target 0.07 phi0 0.95 band 5 due 69238784
+lane14 maintain fid:5          target 0.20 phi0 0.74 band 5 due 69206528
+lane14 frontier recall:b3      target 0.07 phi0 0.95 band 5 due 69238784
+lane15 maintain fid:5          target 0.20 phi0 0.74 band 5 due 69206528
+lane15 frontier recall:b3      target 0.07 phi0 0.95 band 5 due 69238784
+lane16 maintain fid:5          target 0.20 phi0 0.74 band 5 due 69206528
+lane16 frontier recall:b3      target 0.07 phi0 0.95 band 5 due 69238784
+lane17 maintain fid:5          target 0.20 phi0 0.74 band 5 due 69206528
+lane17 frontier recall:b3      target 0.07 phi0 0.95 band 5 due 69238784
+lane18 maintain fid:5          target 0.20 phi0 0.74 band 5 due 69206528
+lane18 frontier recall:b3      target 0.07 phi0 0.95 band 5 due 69238784
+lane19 maintain fid:5          target 0.20 phi0 0.74 band 5 due 69206528
+lane19 frontier recall:b3      target 0.07 phi0 0.95 band 5 due 69238784
+lane20 maintain fid:5          target 0.20 phi0 0.74 band 5 due 69206528
+lane20 frontier recall:b3      target 0.07 phi0 0.95 band 5 due 69238784
+lane21 maintain fid:5          target 0.20 phi0 0.74 band 5 due 69206528
+lane21 frontier recall:b3      target 0.07 phi0 0.95 band 5 due 69238784
+lane22 maintain fid:5          target 0.20 phi0 0.74 band 5 due 69206528
+lane22 frontier recall:b3      target 0.07 phi0 0.95 band 5 due 69238784
+lane23 maintain fid:5          target 0.20 phi0 0.74 band 5 due 69206528
+lane23 frontier recall:b3      target 0.07 phi0 0.95 band 5 due 69238784
+lane24 maintain fid:5          target 0.20 phi0 0.74 band 5 due 69206528
+lane24 frontier recall:b3      target 0.07 phi0 0.95 band 5 due 69238784
+lane25 maintain fid:5          target 0.20 phi0 0.74 band 5 due 69206528
+lane25 frontier recall:b3      target 0.07 phi0 0.95 band 5 due 69238784
+lane26 maintain fid:5          target 0.20 phi0 0.74 band 5 due 69206528
+lane26 frontier recall:b3      target 0.07 phi0 0.95 band 5 due 69238784
+lane27 maintain fid:5          target 0.20 phi0 0.74 band 5 due 69206528
+lane27 frontier recall:b3      target 0.07 phi0 0.95 band 5 due 69238784
+lane28 maintain fid:5          target 0.20 phi0 0.74 band 5 due 69206528
+lane28 frontier recall:b3      target 0.07 phi0 0.95 band 5 due 69238784
+lane29 maintain fid:5          target 0.20 phi0 0.74 band 5 due 69206528
+lane29 frontier recall:b3      target 0.07 phi0 0.95 band 5 due 69238784
+lane30 maintain fid:5          target 0.20 phi0 0.74 band 5 due 69206528
+lane30 frontier recall:b3      target 0.07 phi0 0.95 band 5 due 69238784
+lane31 maintain fid:5          target 0.20 phi0 0.74 band 5 due 69206528
+lane31 frontier recall:b3      target 0.07 phi0 0.95 band 5 due 69238784
+record   fid:3          0.987 (ema 0.984)
+record   fid:4          0.851 (ema 0.849)
+record   fid:5          0.092 (ema 0.052)
+record   recall:b0      0.853 (ema 0.663)
+record   recall:b1      0.256 (ema 0.083)
+record   recall:b2      0.132 (ema 0.002)
+record   recall:b3      0.017 (ema 0.004)
