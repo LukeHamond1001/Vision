@@ -17,3 +17,4 @@
 15:54:01 prep beat:   688000 convos, 987,358,226 tokens, 878485 probes
 15:59:03 prep beat:   996000 convos, 1,526,336,023 tokens, 1274965 probes
 16:04:05 prep beat:   1322000 convos, 1,988,763,555 tokens, 1695979 probes
+16:09:08 prep: train shard built (4308642150 bytes tokens.bin, raw deleted)
