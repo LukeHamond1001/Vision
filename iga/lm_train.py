@@ -29,6 +29,22 @@ RECON_W = 0.05   # A28: write-fidelity — read back what was just
                  # head (cross-chunk detachment blocks the other one)
 
 
+def cap_gate_norms(model, max_norm=1.0):
+    """A42: bound the per-position gate heads. v6.2's only
+    monotonically growing quantity was these weight norms
+    (0->1.72), and held-out binding collapsed late as they
+    sharpened — the crowding-out law's late-onset clause. The cap
+    keeps position-selectivity while bounding how strong the read
+    path can ever get."""
+    if not hasattr(model, "read_gate_pos"):
+        return
+    with torch.no_grad():
+        for lin in model.read_gate_pos.values():
+            n = float(lin.weight.norm())
+            if n > max_norm:
+                lin.weight.mul_(max_norm / n)
+
+
 def process_chunk(model, drive, conveyor, T, device, opt=None):
     x, y, events = conveyor.chunk(T)
     x, y = x.to(device), y.to(device)
@@ -77,6 +93,7 @@ def process_chunk(model, drive, conveyor, T, device, opt=None):
         loss.backward()
         torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
         opt.step()
+        cap_gate_norms(model)
     model._st = model.detach_state(model._st)
     # reading tensors retained across the boundary leave the graph here:
     # pay gradients flow through settlement-chunk readings only
@@ -224,6 +241,30 @@ def train(d=64, lanes=4, T=256, steps=40, seed=0, device="cpu",
                 hp = holdout_probe(model, peval, T, device)
                 row["holdout"] = hp
                 print(f"    holdout(cum): {hp}", flush=True)
+                # A42: recent-window same-chunk + best-ckpt banking.
+                # v6.2's cumulative average hid an 8k-step held-out
+                # collapse; the peak model existed only as a lucky
+                # rolling snapshot. Track the delta since the last
+                # probe and bank the best model seen.
+                if "same" in hp:
+                    s_now, _, n_now = hp["same"]
+                    p_sum, p_n = peval.get("prev_same", (0.0, 0))
+                    dn = n_now - p_n
+                    if dn > 0:
+                        recent = (s_now * n_now - p_sum) / dn
+                        row["same_recent"] = round(recent, 4)
+                        print(f"    same(recent {dn} probes): "
+                              f"{recent:.3f}", flush=True)
+                        if ckpt and recent > peval.get("best", -1.0) \
+                                and n_now >= 20:
+                            peval["best"] = recent
+                            torch.save({"model": model.state_dict(),
+                                        "step": step,
+                                        "same_recent": recent},
+                                       ckpt + ".best.pt")
+                            print(f"    best banked @ {step} "
+                                  f"({recent:.3f})", flush=True)
+                    peval["prev_same"] = (s_now * n_now, n_now)
             if trace:
                 import json as _json
                 with open(trace, "a") as f:

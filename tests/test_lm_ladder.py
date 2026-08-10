@@ -432,6 +432,28 @@ class TestSlowWrites(unittest.TestCase):
             _, st, _ = m2(x, st, None)
             self.assertFalse(m2._reads_used)
 
+    def test_gate_norm_cap(self):
+        # A42: gate-head weight norms are capped at 1.0 (the v6.2
+        # late-collapse suspect grew unbounded 0->1.72); cap leaves
+        # under-norm weights untouched and rescales over-norm ones
+        import torch as t
+        from iga.lm_hybrid import HybridLM
+        from iga.lm_train import cap_gate_norms
+        t.manual_seed(0)
+        m = HybridLM(64, d=32, n_layers=2, n_heads=2, max_T=64,
+                     store="matrix", use_xl=False, gate_mode="position")
+        with t.no_grad():
+            m.read_gate_pos["4"].weight.fill_(1.0)   # norm sqrt(32)
+            m.read_gate_pos["3"].weight.fill_(0.01)  # tiny norm
+        small = m.read_gate_pos["3"].weight.clone()
+        cap_gate_norms(m)
+        self.assertAlmostEqual(
+            float(m.read_gate_pos["4"].weight.norm()), 1.0, places=5)
+        self.assertTrue(t.equal(m.read_gate_pos["3"].weight, small))
+        cap_gate_norms(HybridLM(64, d=32, n_layers=2, n_heads=2,
+                                max_T=64, store="matrix",
+                                use_xl=False))  # scalar mode: no-op
+
     def test_position_gate_init_equivalent_and_trainable(self):
         # A41 candidate: per-position read gates — at init (zero
         # weights, bias=gate_init) every position's gate equals the

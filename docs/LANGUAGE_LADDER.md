@@ -1134,6 +1134,37 @@ scale, not blocking this one. Target cost: $15–40 total.
   their own reads), launched on this verdict. v7.0 scale stays
   parked per A40 (user gate).
 
+- **A41 VERDICT** (2026-08-10, v6.2 CLEAN rc=0, autopsies local +
+  pod agree): **FAIL both reads — the gates engaged, the carry
+  did not come, and a LATE HELD-OUT COLLAPSE the cumulative
+  probe hid.** Mechanism receipts: per-position gate heads
+  differentiated all run (weight norms 0→0.84→1.39→1.72 band 4;
+  biases rose above init all bands — no slam, the dilution fix
+  mechanically worked). But: final fresh-state same 0.209/29%
+  (pod eval 0.157 agrees) vs live cumulative 0.461 — recent-
+  window math on the cumulative shows same-chunk ~0.49 through
+  126k then ~0.16 for the last 8k steps, while CE and training
+  margins (b0 0.66) stayed healthy: a late train/held-out
+  divergence, v5.7's signature, arriving at the END of a run for
+  the first time. The 88.5k rolling snapshot reads 0.336 fresh —
+  degradation was underway by then. cross3k 0.011 with lesioned
+  0.009: the final model lost even the context-prior behavior on
+  long bins. INSTRUMENT AMENDMENTS: (1) cumulative holdout
+  reporting HID an 8k-step collapse — trace now must be read as
+  recent-window deltas; (2) rolling snapshots are the only thing
+  that banked a better model — best-holdout checkpointing is now
+  mandatory. Attribution (best available, to be causally tested):
+  the gate-head norms are the machine's only monotonically
+  growing quantity; as they sharpened, training-stream read
+  reliance grew while held-out binding decayed — the crowding-out
+  law's LATE-ONSET clause: a formed circuit is not safe while an
+  alternate path keeps strengthening without bound. v6.3 (A42):
+  max-norm cap 1.0 on read_gate_pos weights (bounds the suspect;
+  causal test of the attribution) + best-holdout ckpt banking
+  (instrument). If v6.3 collapses late under a capped norm, the
+  cause is elsewhere (drive pay surge next suspect: holds tripled
+  96k→116k).
+
 ## Status
 
 Assembled scene-free (A6), no registered runs. Weaver (`iga/lm_gen.py`),
