@@ -1046,6 +1046,31 @@ scale, not blocking this one. Target cost: $15–40 total.
   the diagnosis, re-diagnose with v6.1 in flight and ledger any
   attribution confound between the overlapping reads honestly.
 
+- **A36 VERDICT** (2026-08-10, v6.0 CLEAN: 135k steps, rc=0, ckpt
+  verified, autopsy on fresh state warm=12): **PRIMARY FAIL,
+  SECONDARY narrow miss, and THE GATE VERDICT — the store's
+  no-credit equilibrium is now measured.** Splits: same 0.482 /
+  top1 71% (n=76; bar was 0.5-0.68 — misses the p(ans) bar by
+  0.018 while setting the matrix-arm top1 record; v5.5's 0.68/88%
+  remains the lineage best, A35 variance noted), straddle 0.041
+  (n=48; the mid-run ~0.10 edge FADED to below floor by run end —
+  the redundant-gist content lost the endgame to induction, the
+  crowding dynamic in miniature), cross-3.2k 0.050 (n=98) and
+  cross-12.8k 0.052 (n=25) — floor. Read gates: band 3 OPENED
+  0.018→0.632; bands 4/5 SLAMMED SHUT below init (0.002/0.001).
+  Lesions: band 3 carries +0.034 of SAME-chunk (0.482→0.448) and
+  nothing else; all-bands −0.082 same, cross bins unmoved. The
+  equilibrium without write credit, stated plainly: a store that
+  cannot learn WHAT to keep converges to a previous-chunk gist
+  booster for in-window answers (the one job needing no
+  selection), and the long-horizon vaults are sealed as noise.
+  Recon fell all run (writes faithful; contents worthless).
+  A38's diagnosis is STRENGTHENED, not contradicted — v6.1
+  stands, and its prediction sharpens: under write credit, gates
+  4/5 should OPEN rather than slam, and the cross bins should
+  follow. v6.1 mid-flight at this writing (~30k steps, igniting
+  faster than v6.0: b0 0.241 at 30k vs 0.080 at 32k).
+
 ## Status
 
 Assembled scene-free (A6), no registered runs. Weaver (`iga/lm_gen.py`),
