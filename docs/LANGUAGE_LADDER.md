@@ -1081,11 +1081,15 @@ scale, not blocking this one. Target cost: $15–40 total.
   softer gate init (-1), or dropout anneal (0.5→0.2), per where
   the instruments say the loop stalled. Suite 66/66.
 
-- **A40** (2026-08-10, registered, launch GATED on v6.1 PRIMARY):
-  **v7.0 — THE SCALE RUN, width only.** User directive supersedes
-  the pause-at-scale-ready order: "dont just wait. if 6.1 is the
-  one then can we scale" — on v6.1 PRIMARY confirm, v7.0 launches
-  immediately, no pause. One change from the certified machine:
+- **A40** (2026-08-10, registered, launch GATED on explicit user
+  go): **v7.0 — THE SCALE RUN, width only.** Gate history, both
+  user directives ledgered: first "dont just wait. if 6.1 is the
+  one then can we scale" (auto-launch on confirm was armed), then
+  the correction "hold up there we dont know if 6.1 will be the
+  one" — REVERTED to the A37 pause: on v6.1 PRIMARY confirm,
+  report SCALE-READY with the verdict and WAIT; v7.0 launches
+  only on the user's word. Debug-tier amendments (v6.2 on a
+  stall) remain autonomous per standing orders. One change from the certified machine:
   d 128→384 (matrix capacity/band 13→32 slots by d/(2 ln d), ~26M
   params, ~4.4x). Everything else IDENTICAL: 6 layers, T=512,
   clocks {1,8,64}, same corpus/tokenizer/instruments/steps (135k,
