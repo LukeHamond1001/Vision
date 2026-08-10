@@ -1036,6 +1036,15 @@ scale, not blocking this one. Target cost: $15–40 total.
   floor if and only if the missing ingredient was write credit.
   If v6.0's own tables surprise (cross alive, or recon sick),
   re-diagnose before launching.
+  **Launch-gate override (2026-08-10 ~01:45 UTC, user directive
+  "why not launch now"):** v6.1 launched BEFORE the v6.0 autopsy
+  (pod y585duh95piu2m, RTX 3090). Reasoning accepted: the
+  diagnosis is structural (the severed write-path credit is a fact
+  of the code), cross is floor-dead at n=88 with half the run gone,
+  the change is additive, and waiting costs ~2.5h against a ~$1
+  worst case. Standing correction: if the v6.0 autopsy contradicts
+  the diagnosis, re-diagnose with v6.1 in flight and ledger any
+  attribution confound between the overlapping reads honestly.
 
 ## Status
 
