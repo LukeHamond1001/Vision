@@ -720,3 +720,22 @@ tokenizer: reused data/tokref/tokenizer.json (16384 pieces)
   1428000 convos, 2,183,263,754 tokens, 1020421 probes
   1430000 convos, 2,185,638,128 tokens, 1021830 probes
   1432000 convos, 2,187,986,890 tokens, 1023235 probes
+  1434000 convos, 2,190,353,061 tokens, 1024668 probes
+  1436000 convos, 2,192,731,614 tokens, 1026103 probes
+  1438000 convos, 2,195,068,578 tokens, 1027538 probes
+  1440000 convos, 2,197,434,972 tokens, 1028973 probes
+  1442000 convos, 2,199,784,513 tokens, 1030423 probes
+  1444000 convos, 2,202,173,813 tokens, 1031844 probes
+  1446000 convos, 2,204,571,778 tokens, 1033277 probes
+  1448000 convos, 2,206,976,543 tokens, 1034702 probes
+  1450000 convos, 2,209,360,839 tokens, 1036157 probes
+  1452000 convos, 2,211,748,295 tokens, 1037571 probes
+  1454000 convos, 2,214,152,199 tokens, 1039002 probes
+  1456000 convos, 2,216,525,245 tokens, 1040419 probes
+  1458000 convos, 2,218,904,560 tokens, 1041870 probes
+  1460000 convos, 2,221,306,204 tokens, 1043306 probes
+  1462000 convos, 2,223,663,563 tokens, 1044742 probes
+  1464000 convos, 2,226,015,782 tokens, 1046165 probes
+  1466000 convos, 2,228,398,948 tokens, 1047581 probes
+  1468000 convos, 2,230,750,943 tokens, 1049012 probes
+wrote 2,231,154,918 tokens, 3566848 events (1049251 probes) -> data/uc_v61
