@@ -21,3 +21,4 @@
 23:16:29 cuda canary passed pre-train
 23:31:30 training heartbeat: step  7300  ce 3.731  loss 3.732  holds 33152  136,310 tok/s  [fid:3=+0.985 fid:4=+0.200 fid:5=-0.002 b0=+0.003 b1=+0.002 b2=+0.002 b3=+0.003]
 23:46:31 training heartbeat: step 15550  ce 3.389  loss 3.390  holds 34176  143,157 tok/s  [fid:3=+0.985 fid:4=+0.375 fid:5=+0.016 b0=+0.003 b1=+0.004 b2=+0.002 b3=+0.002]
+00:01:33 training heartbeat: step 23850  ce 2.917  loss 2.920  holds 35232  145,594 tok/s  [fid:3=+0.984 fid:4=+0.601 fid:5=+0.048 b0=+0.002 b1=+0.003 b2=+0.002 b3=+0.002]
