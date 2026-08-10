@@ -432,27 +432,56 @@ class TestSlowWrites(unittest.TestCase):
             _, st, _ = m2(x, st, None)
             self.assertFalse(m2._reads_used)
 
-    def test_long_pending_density_lever(self):
-        # A43: long_pending caps in-flight long facts; default 8
-        # preserves every prior shard, higher values spawn more.
-        # Long facts spawn only on the non-short branch, so force
-        # short_rate=0 and count spawns until each cap saturates.
+    def test_long_boost_density_end_to_end(self):
+        # A43 (corrected): the cap alone was a NO-OP (steady-state
+        # in-flight ~1.7 << 8 — caught by identical probes/convo in
+        # the first v6.4 prep). long_boost plants several facts per
+        # spawn slot; this test runs REAL prepare() on a synthetic
+        # corpus and counts long-gap probes — the check that would
+        # have caught the no-op before launch.
+        import json
+        import os
         import random
-        from iga.lm_data_ultrachat import Instruments
-        for cap in (8, 32):
-            inst = Instruments(random.Random(0), short_rate=0.0,
-                               long_pending=cap)
-            spawned = 0
-            for _ in range(200):
-                out = inst.maybe_convo(pos=0)
-                if out is None:
-                    break
-                turns, probes = out
-                if not probes:            # long-fact plant, no ask yet
-                    inst.pending[-1]["due"] = 10 ** 9  # never due
-                    spawned += 1
-            self.assertEqual(spawned, cap)
-        self.assertEqual(Instruments(random.Random(0)).long_pending, 8)
+        import shutil
+        import tempfile
+        from iga.lm_data_ultrachat import Instruments, prepare
+        self.assertEqual(Instruments(random.Random(0)).long_boost, 1)
+        tmp = tempfile.mkdtemp()
+        raw = os.path.join(tmp, "raw.jsonl")
+        rng = random.Random(0)
+        words = ("the sky turned grey over the harbor and the boats "
+                 "came in early carrying nets full of silver fish "
+                 "while the market stayed busy until dark").split()
+        with open(raw, "w") as f:
+            for _ in range(150):
+                turns = [" ".join(rng.choices(words, k=40)) + " ."
+                         for _ in range(6)]
+                f.write(json.dumps({"data": turns}) + "\n")
+        prev = os.environ.get("ULTRACHAT_JSONL")
+        os.environ["ULTRACHAT_JSONL"] = raw
+        try:
+            counts = {}
+            for tag, kw in (("std", {}),
+                            ("dense", {"long_pending": 32,
+                                       "long_boost": 3,
+                                       "short_rate": 0.3})):
+                out = os.path.join(tmp, tag)
+                prepare(out, n_convos=150, seed=0, vocab=512,
+                        instrument_every=1, tok_sample=50, **kw)
+                evs = [json.loads(l) for l in
+                       open(os.path.join(out, "events.jsonl"))]
+                counts[tag] = sum(
+                    1 for e in evs
+                    if e.get("kind") == "probe"
+                    and e.get("gap", 0) > 2000)
+            self.assertGreater(counts["std"], 0)
+            self.assertGreater(counts["dense"], counts["std"] * 2)
+        finally:
+            if prev is None:
+                os.environ.pop("ULTRACHAT_JSONL", None)
+            else:
+                os.environ["ULTRACHAT_JSONL"] = prev
+            shutil.rmtree(tmp, ignore_errors=True)
 
     def test_gate_norm_cap(self):
         # A42: gate-head weight norms are capped at 1.0 (the v6.2

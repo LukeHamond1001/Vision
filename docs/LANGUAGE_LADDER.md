@@ -1189,6 +1189,25 @@ scale, not blocking this one. Target cost: $15–40 total.
   (251G fingerprint, canary caught both in <10s); v6.3 riding an
   A4000 at 89k tok/s.
 
+- **A43 CORRECTION** (2026-08-10, ~40 min after launch): **the
+  first density lever was a NO-OP, caught by its own prep
+  telemetry.** The v6.4 pod's probes/convo (0.715) matched the
+  standard shard (0.714) exactly; the math confirms why: long
+  facts spawn once per non-short slot (40% of calls) and live
+  ~2-8 convos, so steady-state in-flight is ~1.7 — the 8-cap
+  never binds, and raising it to 32 changed nothing. Pod killed
+  (~$0.10). Second finding while fixing: the SLOT ECONOMY —
+  asks and spawns compete for the same non-short slots and
+  plants must equal asks in steady state, so ANY boost saturates
+  below 2x. Real lever (law-tested end-to-end on a synthetic
+  corpus — the test that would have caught the no-op): serve ALL
+  due asks per slot + long_boost=3 plants per spawn slot +
+  short_rate 0.6→0.3 — measured 3.55x long-gap probe density.
+  prepare() fix: multi-plant units get per-fact position fix-up
+  (the old code positioned only pending[-1] — would have crashed
+  prep). v6.4 relaunched with the corrected shard; defaults
+  preserve all prior shards byte-exact (law-tested).
+
 ## Status
 
 Assembled scene-free (A6), no registered runs. Weaver (`iga/lm_gen.py`),

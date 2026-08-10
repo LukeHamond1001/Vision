@@ -79,7 +79,7 @@ python - >> prep.log 2>&1 <<'EOF' &
 from iga.lm_data_ultrachat import prepare
 prepare("data/uc_v64", n_convos=1500000, seed=0, vocab=16384,
         instrument_every=1, tokenizer_path="data/tokref/tokenizer.json",
-        long_pending=32)
+        long_pending=32, long_boost=3, short_rate=0.3)
 EOF
 PREP_PID=$!
 while kill -0 $PREP_PID 2>/dev/null; do
@@ -100,7 +100,8 @@ import os
 os.environ["ULTRACHAT_JSONL"] = "data/ultrachat_heldout.jsonl"
 from iga.lm_data_ultrachat import prepare
 prepare("data/uc_v64_eval", n_convos=2500, seed=2, instrument_every=1,
-        tokenizer_path="data/uc_v64/tokenizer.json", long_pending=32)
+        tokenizer_path="data/uc_v64/tokenizer.json",
+        long_pending=32, long_boost=3, short_rate=0.3)
 EOF
 then
   hb "prep: dense eval shard built (train tokenizer reused)"

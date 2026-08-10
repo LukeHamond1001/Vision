@@ -112,18 +112,21 @@ class Instruments:
     records DISTRACTORS — the other colors currently in play — so the
     binding-margin channel can pay binding and nothing else."""
 
-    def __init__(self, rng, bias=None, short_rate=0.6, long_pending=8):
+    def __init__(self, rng, bias=None, short_rate=0.6, long_pending=8,
+                 long_boost=1):
         self.rng = rng
         self.pending = []
         self.used = set()
         self.recent = []             # last asked colors: distractor pool
         self.short_rate = short_rate
-        # A43: demand density — long facts (3.2k/12.8k) spawn only
-        # while fewer than this many are in flight per lane. Six carry
-        # failures all changed the architecture; none tested whether
-        # the data asks loudly enough. Default preserves every prior
-        # shard exactly.
+        # A43 (corrected): demand density. The cap alone was a NO-OP —
+        # spawn rate (one per non-short slot, 40% of calls) x fact
+        # lifetime (~2-8 convos) gives steady-state in-flight ~1.7,
+        # far under any cap; caught by identical probes/convo in the
+        # first v6.4 prep. The REAL lever is long_boost: plants per
+        # spawn slot. Defaults preserve every prior shard exactly.
         self.long_pending = long_pending
+        self.long_boost = long_boost
 
     def _fact(self):
         for _ in range(200):  # bounded; roster self-frees on ask
@@ -161,15 +164,21 @@ class Instruments:
         specs; prepare() finishes the position math at encode time."""
         due = [f for f in self.pending if pos >= f["due"]]
         if due:
-            f = due[0]
-            self.pending.remove(f)
-            self.used.discard((f["name"], f["obj"]))
-            self._remember(f["col"])
-            turns = self._ask_turns(f)
-            probes = [{"turn_idx": 1, "prefix": f"the {f['obj']} was",
-                       "answer": f["col"],
-                       "distractors": self._distractors(f["col"]),
-                       "plant_abs": f["plant"]}]
+            # A43: serve ALL due asks in one unit. One-ask-per-slot
+            # made ask capacity ration the spawn slots (plants must
+            # equal asks in steady state), silently capping any
+            # density boost below 2x — measured in the law test.
+            turns, probes = [], []
+            for f in due:
+                self.pending.remove(f)
+                self.used.discard((f["name"], f["obj"]))
+                self._remember(f["col"])
+                probes.append({"turn_idx": len(turns) + 1,
+                               "prefix": f"the {f['obj']} was",
+                               "answer": f["col"],
+                               "distractors": self._distractors(f["col"]),
+                               "plant_abs": f["plant"]})
+                turns += self._ask_turns(f)
             return turns, probes
         if self.rng.random() < self.short_rate:
             f = self._fact()
@@ -194,15 +203,19 @@ class Instruments:
                        "plant_turn": 0,
                        "plant_prefix": f"by the way {f['name']} kept a"}]
             return turns, probes
-        if len(self.pending) < self.long_pending:
+        turns = []
+        for _ in range(self.long_boost):
+            if len(self.pending) >= self.long_pending:
+                break
             f = self._fact()
             if f is None:
-                return None
+                break
             f["plant"] = None       # prepare sets abs position + due
             f["due_gap"] = self.rng.choices([3200, 12800], weights=[2, 1])[0]
             self.pending.append(f)
-            return ([(self._plant_words(f), "human"), ("noted .", "model")],
-                    [])
+            turns += [(self._plant_words(f), "human"), ("noted .", "model")]
+        if turns:
+            return turns, []
         return None
 
 
@@ -246,7 +259,8 @@ class TokenSink:
 
 def prepare(out_dir, n_convos=3000, seed=0, vocab=16384,
             instrument_every=6, tok_sample=1500, tokenizer_path=None,
-            spill=4_000_000, long_pending=8):
+            spill=4_000_000, long_pending=8, long_boost=1,
+            short_rate=0.6):
     """tokenizer_path: REUSE an existing tokenizer instead of training
     a fresh one. Mandatory for any shard evaluated against a model
     trained on another shard — a fresh BPE speaks a different id
@@ -281,7 +295,8 @@ def prepare(out_dir, n_convos=3000, seed=0, vocab=16384,
     thanks_ids = enc(THANKS) + [eot_h]
     stream = TokenSink(os.path.join(out_dir, "tokens.bin"), spill=spill)
     events = []
-    inst = Instruments(rng, long_pending=long_pending)
+    inst = Instruments(rng, long_pending=long_pending,
+                       long_boost=long_boost, short_rate=short_rate)
     n_probes = 0
     ci = 0
 
@@ -296,12 +311,15 @@ def prepare(out_dir, n_convos=3000, seed=0, vocab=16384,
             turn_pos.append(len(stream))
             stream.extend(enc(text))
             stream.append(eot_m if who == "model" else eot_h)
-        if not probes and inst.pending \
-                and inst.pending[-1].get("plant") is None:
-            f = inst.pending[-1]        # long plant: fix abs positions
-            off = len(enc(f"by the way {f['name']} kept a"))
-            f["plant"] = turn_pos[0] + off
-            f["due"] = f["plant"] + f.pop("due_gap")
+        if not probes:
+            # long plants: fix abs positions. A43 long_boost can plant
+            # several facts in one unit — fact i's plant is turn 2i
+            # (each plant = human turn + "noted ." model turn)
+            fresh = [f for f in inst.pending if f.get("plant") is None]
+            for i, f in enumerate(fresh):
+                off = len(enc(f"by the way {f['name']} kept a"))
+                f["plant"] = turn_pos[2 * i] + off
+                f["due"] = f["plant"] + f.pop("due_gap")
         for pr in probes:
             apos = turn_pos[pr["turn_idx"]] + len(enc(pr["prefix"]))
             if "plant_abs" in pr:
