@@ -1103,6 +1103,37 @@ scale, not blocking this one. Target cost: $15–40 total.
   est $7-15). If v6.1 FAILS primary, v7.0 stays parked and the
   A39 knob chosen by the autopsy becomes v6.2 at d=128.
 
+- **A38 VERDICT** (2026-08-10, v6.1 CLEAN: 135k steps, rc=0, ckpt
+  verified; autopsy fresh-state warm=12): **SECONDARY SMASHED,
+  PRIMARY FAIL, DILUTION CONFIRMED — plus a floor recalibration
+  the lesions caught.** Splits: same **0.774 / top1 0.88** (n=76)
+  — the best held-out binding of the campaign, EXCEEDING v5.5's
+  0.68/0.88 receipt; straddle 0.094 (n=48) and cross-12.8k 0.103
+  (n=25) both read above the 1/12=0.083 floor, BUT every lesion
+  (per-band and ALL) leaves them unchanged (0.091/0.106 with the
+  entire memory system zeroed) — the above-floor readings are
+  CONTEXT PRIORS in the eval distribution, not recall.
+  INSTRUMENT AMENDMENT: the empirical no-memory baseline for
+  straddle/cross bins is ~0.09-0.10, not 1/12; all future carry
+  claims must clear the LESIONED baseline, not the theoretical
+  floor. cross-3.2k 0.054 dead. Final structural reads: gates
+  g3 0.088 (rose 5x, but its content is now worth ~nothing to
+  same-chunk: lesion delta -0.005 vs v6.0's -0.034 — attention
+  took the job back), g4 0.0147 / g5 0.0109 PINNED at/below
+  init; betas b4 0.933 / b5 0.990 MAXED from 0.5. The write
+  credit worked on the write path (A38's mechanism verified:
+  gradient reached and trained the writers hard) and the scalar
+  read gates never opened — the DILUTION stall exactly as the
+  82k snapshot diagnosed: one scalar cannot price reads that
+  help at ~1 ask-position per chunk and cost noise at the other
+  511. Same-chunk record credited to the amendment's side
+  effect: with hiddens detached from the write path, the
+  transformer stopped bending toward writability and induction
+  formed cleaner than ever. VERDICT ACTION: v6.2 = A41
+  per-position read gates (--gate-mode position; asks price
+  their own reads), launched on this verdict. v7.0 scale stays
+  parked per A40 (user gate).
+
 ## Status
 
 Assembled scene-free (A6), no registered runs. Weaver (`iga/lm_gen.py`),
