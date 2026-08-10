@@ -1004,6 +1004,39 @@ scale, not blocking this one. Target cost: $15–40 total.
   held-out carry beyond one chunk + lesion carve-out → freeze,
   report scale-ready, wait.
 
+- **A38** (2026-08-10, registered CANDIDATE mid-v6.0, launch gated
+  on the v6.0 autopsy): **v6.1 — WRITE CREDIT ("the librarian's
+  hindsight").** Diagnosis, from structure + v6.0's mid-run reads
+  (same-chunk recovering, straddle ~0.10 above floor, cross >1024
+  dead; training b2 flickered at ignition then collapsed): the
+  matrix's write path is BLIND — cross-chunk detachment severs the
+  only credit that could teach write selection what deserves
+  storing; its lone teacher (in-chunk recon) is content-agnostic (a
+  topic-gist vector reconstructs as well as a fact); and under
+  gist-selection the delta rule degenerates by math to one decaying
+  summary slot (similar keys -> each write overwrites the last).
+  Vague summary is the WIRING's default equilibrium, not a capacity
+  limit (~13 slots/band at d=128 sit unused). The change (one
+  mechanism): the stored M carries exactly ONE write-op of graph
+  across the chunk boundary — M input detached at the write site,
+  window hiddens detached into selection, parameters applied as
+  CLONES in the store pass (opt.step bumps versions in place;
+  clones keep saved tensors valid; one-step-stale TBPTT) — so
+  read-success at chunk t+1 backpropagates into write_q/wk/wv/beta
+  of the write at chunk t. Recon still teaches in-chunk via a
+  separate pass (shared nodes would double-free). Consequence owned:
+  hidden states no longer receive recon/write gradient (the
+  transformer is a constant to the write path); selection heads now
+  learn WHAT to store from whether storing it helped. Law test
+  pins next-chunk gradient reach + multi-boundary legality; full
+  train pins version-safety under opt.step. Suite 65/65.
+  Registered read for v6.1 (same config as v6.0 otherwise, one
+  change): PRIMARY unchanged (held-out carry beyond one chunk);
+  the specific new prediction — cross bins (3.2k/12.8k) leave the
+  floor if and only if the missing ingredient was write credit.
+  If v6.0's own tables surprise (cross alive, or recon sick),
+  re-diagnose before launching.
+
 ## Status
 
 Assembled scene-free (A6), no registered runs. Weaver (`iga/lm_gen.py`),

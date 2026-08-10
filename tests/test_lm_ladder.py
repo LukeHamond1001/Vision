@@ -406,6 +406,46 @@ class TestSlowWrites(unittest.TestCase):
                 M2 = (1 - bm8.decay) * M2
             self.assertAlmostEqual(float(M2[0, 0, 0]), 0.5, places=5)
 
+    def test_write_credit_reaches_selector_next_chunk(self):
+        # A38: the store pass carries ONE write-op of graph across the
+        # boundary — a read at chunk t+1 must send gradient back to
+        # write_q/wk/wv/beta of the write at chunk t; recon backward at
+        # chunk t must not free anything chunk t+1 needs; and graph
+        # depth must not grow (three boundaries, one backward each).
+        import torch as t
+        from iga.lm_hybrid import HybridLM
+        t.manual_seed(0)
+        m = HybridLM(64, d=32, n_layers=2, n_heads=2, max_T=64,
+                     store="matrix", use_xl=False)
+        m.train()
+        st = m.init_state(1, "cpu")
+        x = t.randint(0, 64, (1, 64))
+        for boundary in range(3):
+            # force the read path on: read_ok draws one rand — find a
+            # seed whose first draw is >= 0.5, then replay it
+            s = None
+            for cand in range(50):
+                t.manual_seed(cand)
+                if float(t.rand(())) >= 0.5:
+                    s = cand
+                    break
+            self.assertIsNotNone(s)
+            t.manual_seed(s)
+            logits, st, _ = m(x, st, None)
+            self.assertTrue(m._reads_used)
+            loss = logits.mean() + 0.05 * m.pop_recon()
+            m.zero_grad()
+            loss.backward()          # legal every chunk, no retain
+            if boundary > 0:         # reads touched the PREVIOUS write
+                for name in ("write_q", "read_gate"):
+                    g = getattr(m, name)["3"].grad
+                    self.assertIsNotNone(g, name)
+                self.assertGreater(
+                    float(m.write_q["3"].grad.abs().sum()), 0.0)
+                self.assertIsNotNone(m.mats["3"].wk.weight.grad)
+                self.assertIsNotNone(m.mats["3"].beta.grad)
+            st = m.detach_state(st)  # must NOT sever the credit path
+
     def test_hybrid_matrix_trains_and_lesions(self):
         model, drive, vocab, ce0, ce1 = train(
             d=48, lanes=2, T=128, steps=16, device="cpu",

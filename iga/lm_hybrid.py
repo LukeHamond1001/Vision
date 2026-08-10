@@ -55,11 +55,19 @@ class BandMatrix(nn.Module):
         self.decay = decay
         self.beta = nn.Parameter(torch.tensor(0.0))  # sigmoid -> 0.5
 
-    def write(self, M, x):
+    def write(self, M, x, stale_ok=False):
         """x: [B, d] this chunk's write selection. Delta rule:
-        M <- (1-decay) M + beta (v - M k) k^T. Returns (M', recon)."""
-        k = nn.functional.normalize(self.wk(x), dim=-1)
-        v = self.wv(x)
+        M <- (1-decay) M + beta (v - M k) k^T. Returns (M', recon).
+        stale_ok (A38): the store pass's backward runs from the NEXT
+        chunk, after opt.step() has bumped parameter versions in
+        place — apply CLONED weights so the saved tensors stay valid.
+        Gradient still reaches the parameter leaves through the
+        clone; values are one step stale (standard TBPTT)."""
+        Wk = self.wk.weight.clone() if stale_ok else self.wk.weight
+        Wv = self.wv.weight.clone() if stale_ok else self.wv.weight
+        k = nn.functional.normalize(
+            nn.functional.linear(x, Wk), dim=-1)
+        v = nn.functional.linear(x, Wv)
         pred = torch.einsum("bij,bj->bi", M, k)
         M = (1 - self.decay) * M + torch.sigmoid(self.beta) * \
             torch.einsum("bi,bj->bij", v - pred, k)
@@ -166,8 +174,11 @@ class HybridLM(nn.Module):
         st["acc"] = {k: v.detach() for k, v in st["acc"].items()}
         st["pend"] = {k: (p.detach() if p is not None else None)
                       for k, p in st["pend"].items()}
-        if "M" in st:
-            st["M"] = {k: v.detach() for k, v in st["M"].items()}
+        # A38: M is deliberately NOT detached here — it carries one
+        # write-op of graph across the boundary (inputs were detached
+        # at the write site), so the next chunk's read backward can
+        # credit the write head. Depth cannot grow: each write starts
+        # from M.detach().
         if st.get("xl") is not None:
             st["xl"] = [h.detach() for h in st["xl"]]
         return st
@@ -265,14 +276,31 @@ class HybridLM(nn.Module):
             self._write_cost = torch.stack(wcost).mean()
         if self.store == "matrix":
             # dedicated write selection + additive write, EVERY chunk
-            # (storage is non-destructive; decay is the timescale)
+            # (storage is non-destructive; decay is the timescale).
+            # A38: the write path learns from NEXT-chunk reads. The
+            # stored M keeps exactly one write-op of graph across the
+            # boundary (its M input detached, window hiddens detached),
+            # so read-success backward at chunk t+1 reaches write_q/
+            # wk/wv/beta — the severed credit that left the selector
+            # blind (v5.6-v6.0: gist equilibrium, cross bins dead).
+            # Two passes over identical math: the recon pass is
+            # traversed by THIS chunk's backward, the store pass by
+            # the NEXT chunk's — shared nodes would be freed twice.
             recon = []
+            h_wr = hidden.detach()
             for k in self.bands:
+                M_in = st["M"][k].detach()
                 w = torch.softmax(
-                    hidden @ self.write_q[str(k)] / self.d ** 0.5, dim=1)
-                sel = torch.einsum("bt,btd->bd", w, hidden)
-                st["M"][k], rc = self.mats[str(k)].write(st["M"][k], sel)
+                    h_wr @ self.write_q[str(k)] / self.d ** 0.5, dim=1)
+                sel = torch.einsum("bt,btd->bd", w, h_wr)
+                _, rc = self.mats[str(k)].write(M_in, sel)
                 recon.append(rc)
+                w2 = torch.softmax(
+                    h_wr @ self.write_q[str(k)].clone() / self.d ** 0.5,
+                    dim=1)
+                sel2 = torch.einsum("bt,btd->bd", w2, h_wr)
+                st["M"][k], _ = self.mats[str(k)].write(
+                    M_in, sel2, stale_ok=True)
             self._recon = torch.stack(recon).mean()
         return logits, st, ticks
 
