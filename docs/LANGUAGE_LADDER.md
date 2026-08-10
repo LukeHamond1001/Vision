@@ -1165,6 +1165,30 @@ scale, not blocking this one. Target cost: $15–40 total.
   cause is elsewhere (drive pay surge next suspect: holds tripled
   96k→116k).
 
+- **A43** (2026-08-10, registered + launched in parallel per user
+  directive "why not just have all 3 launched"): **THE PARALLEL
+  SWEEP — three independent hypotheses, one night.** (1) v6.3
+  (in flight): the collapse attribution causal test (capped
+  gates). (2) **v6.4 DENSE DEMAND** (d=128, current machine,
+  ONE data change: long_pending 8→32 in train AND eval prep —
+  ~4x long-fact density): six carry failures changed
+  architecture, none tested whether the data asks loudly enough;
+  registered read = cross bins clearing the LESIONED baseline
+  with carve-out; comparability with prior tables is knowingly
+  broken (denser instruments shift priors — the lesioned
+  baseline is the only valid bar). (3) **v7.0 WIDTH** (d=384,
+  user gate LIFTED — this launch is the explicit go): re-derived
+  to carry the CURRENT machine (position gates + norm cap +
+  best-ckpt banking), standard density; conditional two-branch
+  read registered UP FRONT: if v6.4 lights the bins at d=128 →
+  v7.0 scores as replication + capacity-growth of a working
+  mechanism; if v6.4 is null → v7.0 is the width-threshold test
+  (13→32 slots at fixed everything-else). Owned risk: if density
+  proves the key, v7.0's sparse instruments may warrant a dense
+  rerun (~$8). Ops note: second dead-3090 host this campaign
+  (251G fingerprint, canary caught both in <10s); v6.3 riding an
+  A4000 at 89k tok/s.
+
 ## Status
 
 Assembled scene-free (A6), no registered runs. Weaver (`iga/lm_gen.py`),

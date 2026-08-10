@@ -432,6 +432,28 @@ class TestSlowWrites(unittest.TestCase):
             _, st, _ = m2(x, st, None)
             self.assertFalse(m2._reads_used)
 
+    def test_long_pending_density_lever(self):
+        # A43: long_pending caps in-flight long facts; default 8
+        # preserves every prior shard, higher values spawn more.
+        # Long facts spawn only on the non-short branch, so force
+        # short_rate=0 and count spawns until each cap saturates.
+        import random
+        from iga.lm_data_ultrachat import Instruments
+        for cap in (8, 32):
+            inst = Instruments(random.Random(0), short_rate=0.0,
+                               long_pending=cap)
+            spawned = 0
+            for _ in range(200):
+                out = inst.maybe_convo(pos=0)
+                if out is None:
+                    break
+                turns, probes = out
+                if not probes:            # long-fact plant, no ask yet
+                    inst.pending[-1]["due"] = 10 ** 9  # never due
+                    spawned += 1
+            self.assertEqual(spawned, cap)
+        self.assertEqual(Instruments(random.Random(0)).long_pending, 8)
+
     def test_gate_norm_cap(self):
         # A42: gate-head weight norms are capped at 1.0 (the v6.2
         # late-collapse suspect grew unbounded 0->1.72); cap leaves

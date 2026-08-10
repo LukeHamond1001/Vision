@@ -13,7 +13,7 @@ cd iga-scale
 PUSH="https://x-access-token:${GIT_TOKEN}@github.com/LukeHamond1001/iga-scale.git"
 git config user.email "pod@iga-scale"
 git config user.name "iga-pod"
-git checkout -b results-v70
+git checkout -b results-v64
 
 mkdir -p /workspace/snap
 ( cd /workspace/snap && git init -q && git checkout -qb snap \
@@ -21,14 +21,14 @@ mkdir -p /workspace/snap
 
 hb() {
   echo "$(date -u '+%H:%M:%S') $1" >> HEARTBEAT.log
-  for f in HEARTBEAT.log train_tail.log eval_results.txt prep.log v70.pt.trace.jsonl; do
+  for f in HEARTBEAT.log train_tail.log eval_results.txt prep.log v64.pt.trace.jsonl; do
     git add -f "$f" 2>/dev/null || true
   done
   git commit -qm "hb: $1" 2>/dev/null || true
-  git push -qf "$PUSH" results-v70 2>/dev/null || true
+  git push -qf "$PUSH" results-v64 2>/dev/null || true
 }
 
-hb "boot v70-SCALE-WIDTH-d384 $(nvidia-smi --query-gpu=name --format=csv,noheader 2>/dev/null | head -1) ram $(free -g 2>/dev/null | awk '/Mem:/{print $2}')G"
+hb "boot v64-DENSE-DEMAND $(nvidia-smi --query-gpu=name --format=csv,noheader 2>/dev/null | head -1) ram $(free -g 2>/dev/null | awk '/Mem:/{print $2}')G"
 pip install -q numpy tokenizers >> prep.log 2>&1
 hb "deps installed"
 
@@ -77,8 +77,9 @@ hb "download: heldout"
 # The success beat now requires rc=0 AND tokens.bin on disk.
 python - >> prep.log 2>&1 <<'EOF' &
 from iga.lm_data_ultrachat import prepare
-prepare("data/uc_v70", n_convos=1500000, seed=0, vocab=16384,
-        instrument_every=1, tokenizer_path="data/tokref/tokenizer.json")
+prepare("data/uc_v64", n_convos=1500000, seed=0, vocab=16384,
+        instrument_every=1, tokenizer_path="data/tokref/tokenizer.json",
+        long_pending=32)
 EOF
 PREP_PID=$!
 while kill -0 $PREP_PID 2>/dev/null; do
@@ -87,19 +88,19 @@ while kill -0 $PREP_PID 2>/dev/null; do
     hb "prep beat: $(tail -1 prep.log | cut -c1-90)"
 done
 wait $PREP_PID; PREP_RC=$?
-if [ "$PREP_RC" -ne 0 ] || [ ! -s data/uc_v70/tokens.bin ]; then
-  hb "PREP FAILED (rc=$PREP_RC, tokens.bin $( [ -f data/uc_v70/tokens.bin ] && echo present || echo MISSING)) - see prep.log"
+if [ "$PREP_RC" -ne 0 ] || [ ! -s data/uc_v64/tokens.bin ]; then
+  hb "PREP FAILED (rc=$PREP_RC, tokens.bin $( [ -f data/uc_v64/tokens.bin ] && echo present || echo MISSING)) - see prep.log"
   runpodctl remove pod "$RUNPOD_POD_ID" || true
   sleep 120; exit 1
 fi
 rm -f data/ultrachat_raw.jsonl
-hb "prep: train shard built ($(stat -c%s data/uc_v70/tokens.bin) bytes tokens.bin, raw deleted)"
+hb "prep: train shard built ($(stat -c%s data/uc_v64/tokens.bin) bytes tokens.bin, raw deleted)"
 if python - >> prep.log 2>&1 <<'EOF'
 import os
 os.environ["ULTRACHAT_JSONL"] = "data/ultrachat_heldout.jsonl"
 from iga.lm_data_ultrachat import prepare
-prepare("data/uc_v70_eval", n_convos=2500, seed=2, instrument_every=1,
-        tokenizer_path="data/uc_v70/tokenizer.json")
+prepare("data/uc_v64_eval", n_convos=2500, seed=2, instrument_every=1,
+        tokenizer_path="data/uc_v64/tokenizer.json", long_pending=32)
 EOF
 then
   hb "prep: dense eval shard built (train tokenizer reused)"
@@ -120,26 +121,26 @@ hb "cuda canary passed pre-train"
 ( C=0; while true; do sleep 900; C=$((C+1)); \
     tail -40 train.log > train_tail.log; \
     hb "training heartbeat: $(tail -1 train_tail.log)"; \
-    if [ $((C % 4)) -eq 0 ] && [ -f v70.pt ]; then \
-      cp v70.pt /workspace/snap/s.pt && \
+    if [ $((C % 4)) -eq 0 ] && [ -f v64.pt ]; then \
+      cp v64.pt /workspace/snap/s.pt && \
       ( cd /workspace/snap && rm -f snap_part_* && \
         split -b 25m s.pt snap_part_ && rm -f s.pt && \
         git add -A && git commit -qm "rolling snapshot" && \
-        git push -qf "$PUSH" snap:results-v70-ckpt ) && \
+        git push -qf "$PUSH" snap:results-v64-ckpt ) && \
       hb "rolling ckpt snapshot pushed"; \
     fi; done ) &
 HBPID=$!
-python -m iga.lm_train run --data data/uc_v70 --d 384 --lanes 32 \
+python -m iga.lm_train run --data data/uc_v64 --d 128 --lanes 32 \
   --chunk 512 --steps 135000 --talk tick --arch hybrid --device cuda \
-  --store matrix --xl off --gate-mode position --eval-data data/uc_v70_eval \
-  --ckpt v70.pt > train.log 2>&1
+  --store matrix --xl off --gate-mode position --eval-data data/uc_v64_eval \
+  --ckpt v64.pt > train.log 2>&1
 TRAIN_RC=$?
 kill $HBPID 2>/dev/null
 tail -60 train.log > train_tail.log
 hb "training complete (rc=$TRAIN_RC)"
 
-if python -m iga.lm_eval --ckpt v70.pt --data data/uc_v70_eval \
-    --d 384 --arch hybrid --store matrix --xl off --gate-mode position --chunk 512 --lanes 4 --chunks 200 \
+if python -m iga.lm_eval --ckpt v64.pt --data data/uc_v64_eval \
+    --d 128 --arch hybrid --store matrix --xl off --gate-mode position --chunk 512 --lanes 4 --chunks 200 \
     > eval_results.txt 2>&1; then
   hb "evaluation complete"
 else
@@ -147,10 +148,10 @@ else
 fi
 # A42: the banked best-holdout model is evaluated too — v6.2's peak
 # existed only as a lucky rolling snapshot
-if [ -f v70.pt.best.pt ]; then
+if [ -f v64.pt.best.pt ]; then
   echo "===== BEST-HOLDOUT CKPT =====" >> eval_results.txt
-  python -m iga.lm_eval --ckpt v70.pt.best.pt --data data/uc_v70_eval \
-    --d 384 --arch hybrid --store matrix --xl off --gate-mode position --chunk 512 --lanes 4 --chunks 200 \
+  python -m iga.lm_eval --ckpt v64.pt.best.pt --data data/uc_v64_eval \
+    --d 128 --arch hybrid --store matrix --xl off --gate-mode position --chunk 512 --lanes 4 --chunks 200 \
     >> eval_results.txt 2>&1 && hb "best-ckpt evaluation complete"
 fi
 
@@ -158,21 +159,21 @@ fi
 # not vacuously pass it — run 1 heartbeat "FULLY VERIFIED" with no
 # checkpoint in existence because the piece loop ran zero times
 BASE_SHA=$(git rev-parse HEAD)
-if [ ! -f v70.pt ]; then
+if [ ! -f v64.pt ]; then
   hb "NO CHECKPOINT EXISTS - nothing to verify (train rc=$TRAIN_RC)"
   CKPT_OK=0
 else
-split -b 25m v70.pt v70_part_
-if [ -f v70.pt.best.pt ]; then
-  split -b 25m v70.pt.best.pt v70best_part_
+split -b 25m v64.pt v64_part_
+if [ -f v64.pt.best.pt ]; then
+  split -b 25m v64.pt.best.pt v64best_part_
 fi
 CKPT_OK=1
-for f in $(ls v70_part_* v70best_part_* 2>/dev/null); do
+for f in $(ls v64_part_* v64best_part_* 2>/dev/null); do
   git add -f "$f" && git commit -qm "ckpt piece: $f"
   PUSHED=0
   for i in 1 2 3 4; do
-    if git push -f "$PUSH" results-v70 && \
-       [ "$(git ls-remote "$PUSH" results-v70 | cut -f1)" = "$(git rev-parse HEAD)" ]; then
+    if git push -f "$PUSH" results-v64 && \
+       [ "$(git ls-remote "$PUSH" results-v64 | cut -f1)" = "$(git rev-parse HEAD)" ]; then
       PUSHED=1; break
     fi
     sleep 20
@@ -182,14 +183,14 @@ for f in $(ls v70_part_* v70best_part_* 2>/dev/null); do
 done
 fi
 # the eval shard comes home too: the binding curve is computed locally
-git add -f data/uc_v70_eval/tokens.bin data/uc_v70_eval/events.jsonl \
-  data/uc_v70_eval/tokenizer.json train.log prep.log \
-  v70.pt.trace.jsonl 2>/dev/null || true
+git add -f data/uc_v64_eval/tokens.bin data/uc_v64_eval/events.jsonl \
+  data/uc_v64_eval/tokenizer.json train.log prep.log \
+  v64.pt.trace.jsonl 2>/dev/null || true
 git commit -qm "eval shard + logs" 2>/dev/null || true
-git push -qf "$PUSH" results-v70 2>/dev/null || true
+git push -qf "$PUSH" results-v64 2>/dev/null || true
 if [ "$CKPT_OK" = "1" ]; then
   hb "checkpoint FULLY VERIFIED on remote"
-elif [ -f v70.pt ]; then
+elif [ -f v64.pt ]; then
   git reset --mixed "$BASE_SHA"
   hb "ckpt git pushes incomplete"
 fi

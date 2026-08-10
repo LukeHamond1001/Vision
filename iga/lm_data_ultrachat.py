@@ -112,12 +112,18 @@ class Instruments:
     records DISTRACTORS — the other colors currently in play — so the
     binding-margin channel can pay binding and nothing else."""
 
-    def __init__(self, rng, bias=None, short_rate=0.6):
+    def __init__(self, rng, bias=None, short_rate=0.6, long_pending=8):
         self.rng = rng
         self.pending = []
         self.used = set()
         self.recent = []             # last asked colors: distractor pool
         self.short_rate = short_rate
+        # A43: demand density — long facts (3.2k/12.8k) spawn only
+        # while fewer than this many are in flight per lane. Six carry
+        # failures all changed the architecture; none tested whether
+        # the data asks loudly enough. Default preserves every prior
+        # shard exactly.
+        self.long_pending = long_pending
 
     def _fact(self):
         for _ in range(200):  # bounded; roster self-frees on ask
@@ -188,7 +194,7 @@ class Instruments:
                        "plant_turn": 0,
                        "plant_prefix": f"by the way {f['name']} kept a"}]
             return turns, probes
-        if len(self.pending) < 8:
+        if len(self.pending) < self.long_pending:
             f = self._fact()
             if f is None:
                 return None
@@ -240,7 +246,7 @@ class TokenSink:
 
 def prepare(out_dir, n_convos=3000, seed=0, vocab=16384,
             instrument_every=6, tok_sample=1500, tokenizer_path=None,
-            spill=4_000_000):
+            spill=4_000_000, long_pending=8):
     """tokenizer_path: REUSE an existing tokenizer instead of training
     a fresh one. Mandatory for any shard evaluated against a model
     trained on another shard — a fresh BPE speaks a different id
@@ -275,7 +281,7 @@ def prepare(out_dir, n_convos=3000, seed=0, vocab=16384,
     thanks_ids = enc(THANKS) + [eot_h]
     stream = TokenSink(os.path.join(out_dir, "tokens.bin"), spill=spill)
     events = []
-    inst = Instruments(rng)
+    inst = Instruments(rng, long_pending=long_pending)
     n_probes = 0
     ci = 0
 
