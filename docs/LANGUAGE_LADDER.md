@@ -1246,6 +1246,20 @@ scale, not blocking this one. Target cost: $15–40 total.
   path's confidence — metamemory; biology + adaptive-retrieval
   precedent), designed off tonight's gate forensics.
 
+- **A44** (2026-08-10 ~22:15 UTC, registered + launched on user
+  go): **v7.1 — THE SCALE GATE.** The never-collapsed record
+  config (v6.1: write credit, scalar read gates shut at init, NO
+  position gates, read-dropout 0.5, no XL) at d=384 with best-
+  holdout banking + same_recent channel + standard curriculum.
+  Registered read: PRIMARY — same-chunk ≥0.7 fresh-state AT RUN
+  END (no rot: this config has never collapsed; v7.0's banked
+  best already showed 0.832/91% at 30k, so the question is
+  purely endgame survival); SECONDARY — band-lesion bite on
+  same-chunk grows vs d=128 (gist channel scales); cross bins
+  observational (no carry expected — read organ still open).
+  On confirm: core certified at two widths end-to-end → full
+  scale-up (v8) design unblocked.
+
 ## Status
 
 Assembled scene-free (A6), no registered runs. Weaver (`iga/lm_gen.py`),
