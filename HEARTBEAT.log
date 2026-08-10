@@ -46,3 +46,4 @@
 03:42:21 ckpt piece landed: v60_part_ab
 03:42:26 ckpt piece landed: v60_part_ac
 03:42:29 checkpoint FULLY VERIFIED on remote
+03:42:30 phase complete (train rc=0, ckpt_ok=1)
