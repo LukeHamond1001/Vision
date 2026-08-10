@@ -1208,6 +1208,44 @@ scale, not blocking this one. Target cost: $15–40 total.
   prep). v6.4 relaunched with the corrected shard; defaults
   preserve all prior shards byte-exact (law-tested).
 
+- **A42/A43 COMPOSITE VERDICT** (2026-08-10 night, v6.3 + v7.0
+  clean rc=0 both, v6.4 mid-flight): **five findings, one night.**
+  (1) **WIDTH SCALES THE BINDER — new campaign record**: v7.0's
+  banked best (d=384, step 30k) reads same-chunk **0.832/91%**
+  fresh-state fine-bin (vs v6.1's 0.774/88% at d=128/135k; pod
+  panel 0.632/68%); band-5 lesion bite −0.056 (gist channel grows
+  with capacity). The core (transformer + gist bands + credit
+  writes) is now certified at TWO widths. (2) **CAP FALSIFIED,
+  READ-RELIANCE CONFIRMED**: v6.3 (capped, d=128) collapsed
+  worst-yet (final 0.126/19%); v7.0 (capped, d=384) collapsed
+  TOTALLY (final 0.017 EVERYWHERE — at width the reads fully
+  replace the answer circuit on the trained stream). Config
+  alignment: v6.1 scalar-shut gates = no collapse ever; every
+  position-gate run = collapse; severity tracks read-path
+  activity. THE READ-RELIANCE LAW: an inference-time read path
+  available during training becomes a train-only shortcut at
+  ask positions; held-out asks die while CE stays healthy.
+  (3) **NO CARRY ANYWHERE**: every cross-boundary bin in every
+  checkpoint tonight (finals + banked bests, both widths) is
+  lesion-invariant at baseline; the live-probe straddle 0.13-0.22
+  on v7.0 did not survive the fresh-state deep-warm read
+  (persistent-probe shallow-state + small-n artifact — v5.7's
+  lesson recurring in miniature; deep-warm fine-bin table is the
+  authoritative read). The read organ remains THE open problem.
+  (4) **BANKING IS MANDATORY**: both record models of the night
+  (0.645/69% d=128 @86k; 0.832/91% d=384 @30k) exist ONLY
+  because of best-holdout banking — both finals are wreckage.
+  (5) **CURRICULUM LAW (pending v6.4 final)**: the dense shard
+  (short_rate 0.3) is unignited at 103k — past v5.4's 94k
+  precedent; short units look load-bearing for emergence, and
+  the density lever's bundled confound is the ledgered lesson.
+  FORWARD (two tracks): Track 1 = v7.1: v6.1-config (scalar
+  shut gates, NO position gates) at d=384 + banking — scale the
+  never-collapsed record machine (user gate). Track 2 =
+  uncertainty-gated reads at d=128 (the gate driven by the blind
+  path's confidence — metamemory; biology + adaptive-retrieval
+  precedent), designed off tonight's gate forensics.
+
 ## Status
 
 Assembled scene-free (A6), no registered runs. Weaver (`iga/lm_gen.py`),
