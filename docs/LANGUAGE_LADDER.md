@@ -1260,6 +1260,27 @@ scale, not blocking this one. Target cost: $15–40 total.
   On confirm: core certified at two widths end-to-end → full
   scale-up (v8) design unblocked.
 
+- **A43 v6.4 VERDICT** (2026-08-10 23:28 UTC, CLEAN rc=0):
+  **THE CURRICULUM LAW.** The dense shard (short_rate 0.6→0.3,
+  long_boost 3) never ignited: 135k steps, 2.2B tokens, b0
+  pinned at 0.001 throughout (every standard-curriculum run in
+  the lineage ignited by 22-94k). Tables floor everywhere
+  (final AND best, full AND lesioned; the n=400 long bins pin
+  the no-memory floor at 0.068-0.077 — the campaign's tightest
+  baseline measurement, a lasting instrument gift). The
+  dissociation that makes it a law and not a shrug: fid:5
+  reached 0.171 — the HIGHEST slow-band forecast fidelity ever
+  recorded — so the dense long facts taught band-5's forecaster
+  while binding never emerged at all. Forecast learning and
+  binding emergence are separate processes with separate
+  curricula: SHORT UNITS (plant→filler→ask inside one window)
+  are the load-bearing teacher of binding; long facts alone
+  teach prediction, not recall. The density lever's bundled
+  confound (halving shorts to boost longs) was not noise — it
+  was the experiment. v8 data-recipe implication, binding:
+  dense long facts must ride ON TOP of the full short
+  curriculum, never instead of it.
+
 ## Status
 
 Assembled scene-free (A6), no registered runs. Weaver (`iga/lm_gen.py`),
