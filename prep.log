@@ -739,3 +739,6 @@ tokenizer: reused data/tokref/tokenizer.json (16384 pieces)
   1466000 convos, 2,151,680,453 tokens, 1881958 probes
   1468000 convos, 2,153,931,644 tokens, 1884488 probes
 wrote 2,154,321,075 tokens, 4271868 events (1884946 probes) -> data/uc_v64
+tokenizer: reused data/uc_v64/tokenizer.json (16384 pieces)
+  2000 convos, 2,262,728 tokens, 2597 probes
+wrote 2,794,227 tokens, 7303 events (3255 probes) -> data/uc_v64_eval
