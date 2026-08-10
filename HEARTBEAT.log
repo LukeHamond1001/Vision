@@ -46,3 +46,4 @@
 21:28:10 training heartbeat: step 128650  ce 2.097  loss 2.098  holds 326343  119,197 tok/s  [fid:3=+0.983 fid:4=+0.937 fid:5=+0.233 b0=+0.739 b1=+0.135 b2=+0.043 b3=+0.076]
 21:41:45 training complete (rc=0)
 21:41:55 evaluation complete
+21:42:05 best-ckpt evaluation complete
