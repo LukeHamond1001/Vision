@@ -128,7 +128,8 @@ def train(d=64, lanes=4, T=256, steps=40, seed=0, device="cpu",
           ckpt=None, log_every=10, data=None, talk="dense", widths=None,
           compile_model=False, constants=None, arch="bands",
           resume=None, offset_frac=0.0, store="vector", eval_data=None,
-          use_xl=True):
+          use_xl=True, gate_init=-4.0, read_drop=0.5,
+          read_drop_end=None):
     """resume (A26): path to a checkpoint — model + optimizer + drive
     EMAs/records/minted/vetoes continue; step numbering continues.
     offset_frac: start each conveyor lane this far into its segment
@@ -160,7 +161,8 @@ def train(d=64, lanes=4, T=256, steps=40, seed=0, device="cpu",
     elif arch == "hybrid":
         from .lm_hybrid import HybridLM
         model = HybridLM(vocab_size, d=d, max_T=T, store=store,
-                         use_xl=use_xl).to(device)
+                         use_xl=use_xl, gate_init=gate_init,
+                         read_drop=read_drop).to(device)
         drive.bin_band = {0: 3, 1: 3, 2: 4, 3: 5}  # carry bands (A19)
     else:
         model = BandLM(vocab_size, d=d, talk=talk,
@@ -195,6 +197,11 @@ def train(d=64, lanes=4, T=256, steps=40, seed=0, device="cpu",
     ce_first = None
     trace = (ckpt + ".trace.jsonl") if ckpt else None
     for step in range(step0 + 1, step0 + steps + 1):
+        if read_drop_end is not None and hasattr(model, "read_drop"):
+            # A39 bootstrap knob: linear read-dropout anneal — early
+            # protection for induction, late oxygen for the store
+            frac = (step - step0) / max(steps, 1)
+            model.read_drop = read_drop + (read_drop_end - read_drop) * frac
         ce, loss = process_chunk(model, drive, conveyor, T, device, opt)
         ce_first = ce_first or ce
         if step % log_every == 0 or step == 1:
@@ -263,6 +270,15 @@ def main():
                     help="held-out shard for live circuit probes (A30)")
     ap.add_argument("--xl", default="on", choices=["on", "off"],
                     help="Transformer-XL chunk carry (A36: benched)")
+    ap.add_argument("--gate-init", type=float, default=-4.0,
+                    dest="gate_init",
+                    help="read-gate init logit (A39 bootstrap knob)")
+    ap.add_argument("--read-drop", type=float, default=0.5,
+                    dest="read_drop",
+                    help="matrix read-dropout p (A39 bootstrap knob)")
+    ap.add_argument("--read-drop-end", type=float, default=None,
+                    dest="read_drop_end",
+                    help="linear anneal target for read-dropout (A39)")
     a = ap.parse_args()
     if a.mode == "smoke":
         model, drive, vocab, ce0, ce1 = train(d=64, lanes=4, T=256, steps=40,
@@ -275,7 +291,9 @@ def main():
               device=a.device, ckpt=a.ckpt, log_every=50, data=a.data,
               talk=a.talk, constants=a.constants, arch=a.arch,
               resume=a.resume, offset_frac=a.offset, store=a.store,
-              eval_data=a.eval_data, use_xl=(a.xl == "on"))
+              eval_data=a.eval_data, use_xl=(a.xl == "on"),
+              gate_init=a.gate_init, read_drop=a.read_drop,
+              read_drop_end=a.read_drop_end)
 
 
 if __name__ == "__main__":

@@ -406,6 +406,32 @@ class TestSlowWrites(unittest.TestCase):
                 M2 = (1 - bm8.decay) * M2
             self.assertAlmostEqual(float(M2[0, 0, 0]), 0.5, places=5)
 
+    def test_bootstrap_knobs_default_identical(self):
+        # A39: gate_init/read_drop knobs — defaults reproduce the
+        # v6.0/v6.1 machine exactly; non-default values take effect
+        import torch as t
+        from iga.lm_hybrid import HybridLM
+        t.manual_seed(0)
+        m = HybridLM(64, d=32, n_layers=2, n_heads=2, max_T=64,
+                     store="matrix", use_xl=False)
+        self.assertAlmostEqual(float(m.read_gate["3"]), -4.0)
+        self.assertEqual(m.read_drop, 0.5)
+        m2 = HybridLM(64, d=32, n_layers=2, n_heads=2, max_T=64,
+                      store="matrix", use_xl=False,
+                      gate_init=-1.0, read_drop=0.2)
+        self.assertAlmostEqual(float(m2.read_gate["4"]), -1.0)
+        m2.train()
+        m2.read_drop = 0.0        # anneal endpoint: reads always on
+        st = m2.init_state(1, "cpu")
+        x = t.randint(0, 64, (1, 64))
+        for _ in range(6):
+            _, st, _ = m2(x, st, None)
+            self.assertTrue(m2._reads_used)
+        m2.read_drop = 1.0        # full dropout: reads never on
+        for _ in range(6):
+            _, st, _ = m2(x, st, None)
+            self.assertFalse(m2._reads_used)
+
     def test_write_credit_reaches_selector_next_chunk(self):
         # A38: the store pass carries ONE write-op of graph across the
         # boundary — a read at chunk t+1 must send gradient back to

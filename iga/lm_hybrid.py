@@ -104,7 +104,7 @@ class SlowCell(nn.Module):
 class HybridLM(nn.Module):
     def __init__(self, vocab_size, d=128, n_layers=6, n_heads=8,
                  max_T=512, talk=None, widths=None, store="vector",
-                 use_xl=True):
+                 use_xl=True, gate_init=-4.0, read_drop=0.5):
         super().__init__()
         self.d = d
         self.vocab_size = vocab_size
@@ -140,10 +140,13 @@ class HybridLM(nn.Module):
                  for k in self.bands})
             # A30: reads gated shut at init (sigmoid(-4) ~ 0.018) —
             # v5.6 proved ungated per-position reads crowd out
-            # induction formation; the model must opt in
+            # induction formation; the model must opt in. gate_init
+            # and read_drop are v6.2 bootstrap knobs (A39): defaults
+            # reproduce v6.0/v6.1 exactly.
             self.read_gate = nn.ParameterDict(
-                {str(k): nn.Parameter(torch.tensor(-4.0))
+                {str(k): nn.Parameter(torch.tensor(float(gate_init)))
                  for k in self.bands})
+        self.read_drop = read_drop
         # A30: Transformer-XL chunk carry — the previous chunk's
         # hiddens as attendable keys. v5.6's autopsy: chunks were
         # processed independently, so ANY boundary-straddling gap
@@ -227,7 +230,8 @@ class HybridLM(nn.Module):
         else:
             mask = sq
         new_xl = []
-        read_ok = (not self.training) or float(torch.rand(())) >= 0.5
+        read_ok = (not self.training) or \
+            float(torch.rand(())) >= self.read_drop
         self._reads_used = read_ok and self.store == "matrix"
         for i, b in enumerate(self.blocks):
             if self.use_xl:
