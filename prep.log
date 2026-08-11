@@ -28,3 +28,27 @@ virtual memory              (kbytes, -v) unlimited
 file locks                          (-x) unlimited
 124999999488
 ========================
+phase: start
+phase: tokenizer-sample
+phase: tokenizer-train (401 texts, 2,645,350 chars)
+
+
+
+tokenizer: 32768 pieces -> data/mix_v80s/tokenizer.json
+phase: stream
+  500 docs, 1,260,280 tokens, 389 planted + 0 natural probes, mix {'code': 408096, 'wiki': 696151, 'digest': 19014, 'chat': 47148}
+  1000 docs, 2,614,719 tokens, 785 planted + 0 natural probes, mix {'code': 1010358, 'wiki': 1284094, 'digest': 34231, 'chat': 100148}
+  1500 docs, 3,919,250 tokens, 1177 planted + 0 natural probes, mix {'code': 1630868, 'wiki': 1805091, 'digest': 50410, 'chat': 156922}
+  2000 docs, 5,063,793 tokens, 1566 planted + 0 natural probes, mix {'code': 2138234, 'wiki': 2261405, 'digest': 71299, 'chat': 215993}
+  2500 docs, 6,347,085 tokens, 1955 planted + 0 natural probes, mix {'code': 2746126, 'wiki': 2769125, 'digest': 90725, 'chat': 268239}
+  3000 docs, 7,316,750 tokens, 2343 planted + 0 natural probes, mix {'code': 3181235, 'wiki': 3131810, 'digest': 110824, 'chat': 329075}
+  3500 docs, 8,404,790 tokens, 2732 planted + 0 natural probes, mix {'code': 3660503, 'wiki': 3551791, 'digest': 136018, 'chat': 397315}
+  4000 docs, 9,748,962 tokens, 3119 planted + 0 natural probes, mix {'code': 4256277, 'wiki': 4124452, 'digest': 164443, 'chat': 456292}
+  4500 docs, 11,136,598 tokens, 3504 planted + 0 natural probes, mix {'code': 4893715, 'wiki': 4698782, 'digest': 184958, 'chat': 526286}
+  5000 docs, 12,512,872 tokens, 3894 planted + 0 natural probes, mix {'code': 5564398, 'wiki': 5224057, 'digest': 213813, 'chat': 589384}
+  5500 docs, 13,494,527 tokens, 4273 planted + 0 natural probes, mix {'code': 6036619, 'wiki': 5567467, 'digest': 237015, 'chat': 638121}
+  6000 docs, 14,613,709 tokens, 4655 planted + 0 natural probes, mix {'code': 6586718, 'wiki': 5956761, 'digest': 265932, 'chat': 700776}
+  6500 docs, 15,924,677 tokens, 5042 planted + 0 natural probes, mix {'code': 7226950, 'wiki': 6398812, 'digest': 323684, 'chat': 760848}
+  7000 docs, 17,231,654 tokens, 5420 planted + 0 natural probes, mix {'code': 7803112, 'wiki': 6963573, 'digest': 350411, 'chat': 818478}
+  7500 docs, 18,467,406 tokens, 5813 planted + 0 natural probes, mix {'code': 8390566, 'wiki': 7399800, 'digest': 390624, 'chat': 881048}
+  8000 docs, 19,525,451 tokens, 6191 planted + 0 natural probes, mix {'code': 8826272, 'wiki': 7804861, 'digest': 442271, 'chat': 942878}
