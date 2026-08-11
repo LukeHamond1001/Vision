@@ -1395,6 +1395,26 @@ scale, not blocking this one. Target cost: $15–40 total.
   incl. GPL in the corpus (research use now, revisit at
   release). Suite 72/72 after hardening.
 
+- **A46 SHAKEDOWN VERDICT — GREEN** (2026-08-11 14:13 UTC, 3rd
+  attempt, rc=0 end-to-end): the v8 pipeline is certified.
+  Numbers: **79,700 tok/s at d=512/T=2048/8 lanes on a clean
+  4090** (61.4M params; attention fast path engaged, no OOM);
+  prep 120M tokens in 8 min (~15M tok/min); Python yield ~16M
+  tok/code-shard (v8.0 = ~220-250 shards ≈ 85GB, 100GB disk +
+  stream-delete); natural miner on real code: **2,397 probes,
+  gap median 728, max 14,950, with 409 in 2-8k and 49 beyond 8k**
+  — the free eval battery spans every claimed range; planted
+  instruments + eval harness run clean at T=2048; mix ratios
+  skew when a source exhausts (attempt 2's train shard hit 27%
+  code on 2 shards — v8.0 sizes the shard list from measured
+  yield). Ops laws banked on the way: doc-size caps (a giant
+  parquet row OOM-killed the container 3x silently) and the
+  CAPACITY CANARY (an alive GPU can still be dirty — a co-tenant
+  held ~18GB on a 'secure' 4090; canary now claims 14GB before
+  committing). Shakedown cost ~$0.9 across 3 attempts. FIRM
+  v8.0 QUOTE: 6B tokens ≈ 21h train + ~7h prep ≈ **~$21**; 8B
+  ≈ **~$26**; single secure 4090, 100GB disk. AWAITING USER GO.
+
 ## Status
 
 Assembled scene-free (A6), no registered runs. Weaver (`iga/lm_gen.py`),
