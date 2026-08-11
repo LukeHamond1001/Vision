@@ -197,3 +197,20 @@ phase: stream
   79500 docs, 113,119,252 tokens, 60873 planted + 0 natural probes, mix {'code': 32072448, 'wiki': 42313385, 'digest': 6008198, 'chat': 17721844}
   80000 docs, 113,885,056 tokens, 61251 planted + 0 natural probes, mix {'code': 32072448, 'wiki': 42798073, 'digest': 6008198, 'chat': 17927922}
   80500 docs, 114,588,995 tokens, 61630 planted + 0 natural probes, mix {'code': 32072448, 'wiki': 43195868, 'digest': 6008198, 'chat': 18148544}
+  81000 docs, 115,243,622 tokens, 62007 planted + 0 natural probes, mix {'code': 32072448, 'wiki': 43561155, 'digest': 6008198, 'chat': 18355372}
+  81500 docs, 115,900,041 tokens, 62382 planted + 0 natural probes, mix {'code': 32072448, 'wiki': 43922471, 'digest': 6008198, 'chat': 18572169}
+  82000 docs, 116,625,497 tokens, 62762 planted + 0 natural probes, mix {'code': 32072448, 'wiki': 44369854, 'digest': 6008198, 'chat': 18768020}
+  82500 docs, 117,274,429 tokens, 63149 planted + 0 natural probes, mix {'code': 32072448, 'wiki': 44705443, 'digest': 6008198, 'chat': 18996351}
+  83000 docs, 117,910,990 tokens, 63528 planted + 0 natural probes, mix {'code': 32072448, 'wiki': 45064648, 'digest': 6008198, 'chat': 19194443}
+  83500 docs, 118,578,086 tokens, 63908 planted + 0 natural probes, mix {'code': 32072448, 'wiki': 45404042, 'digest': 6008198, 'chat': 19440089}
+  84000 docs, 119,294,495 tokens, 64290 planted + 0 natural probes, mix {'code': 32072448, 'wiki': 45831831, 'digest': 6008198, 'chat': 19643301}
+  84500 docs, 119,968,656 tokens, 64676 planted + 0 natural probes, mix {'code': 32072448, 'wiki': 46206269, 'digest': 6008198, 'chat': 19855385}
+wrote 120,001,091 tokens, 207907 events (64692 planted, 0 natural) mix={'code': 32072448, 'wiki': 46222604, 'digest': 6008198, 'chat': 19869503} -> data/mix_v80s
+phase: start
+tokenizer: reused data/mix_v80s/tokenizer.json (32768 pieces)
+phase: stream
+  500 docs, 1,304,842 tokens, 392 planted + 585 natural probes, mix {'code': 553402, 'wiki': 602969, 'digest': 19104, 'chat': 38250}
+  1000 docs, 2,803,264 tokens, 777 planted + 1142 natural probes, mix {'code': 1259292, 'wiki': 1236318, 'digest': 33852, 'chat': 89429}
+  1500 docs, 4,003,529 tokens, 1156 planted + 1561 natural probes, mix {'code': 1738924, 'wiki': 1794510, 'digest': 53501, 'chat': 144549}
+  2000 docs, 5,115,913 tokens, 1541 planted + 2048 natural probes, mix {'code': 2189910, 'wiki': 2288927, 'digest': 72873, 'chat': 202081}
+wrote 6,002,168 tokens, 8057 events (1785 planted, 2397 natural) mix={'code': 2660817, 'wiki': 2597102, 'digest': 84839, 'chat': 237825} -> data/mix_v80s_eval

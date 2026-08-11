@@ -12,3 +12,4 @@
 14:00:25 prep beat:   37000 docs, 68,462,603 tokens, 28495 planted + 0 natural probes, mix {'code': 32072448, 
 14:01:12 prep beat:   59000 docs, 91,231,522 tokens, 45254 planted + 0 natural probes, mix {'code': 32072448, 
 14:01:59 prep beat:   80000 docs, 113,885,056 tokens, 61251 planted + 0 natural probes, mix {'code': 32072448,
+14:02:46 prep: mix shard built (240002182 bytes)
