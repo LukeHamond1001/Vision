@@ -17,3 +17,4 @@
 14:12:52 training heartbeat: step  2900  ce 5.113  loss 5.115  holds 49848  79,639 tok/s  [fid:3=+0.971 fid:4=+0.029 fid:5=-0.065 b0=+0.001 b1=+0.001 b2=+0.001 b3=+0.002]
 14:13:18 training complete (rc=0)
 14:13:25 evaluation complete
+14:13:29 phase complete (train rc=0) — SHAKEDOWN, no ckpt landing
