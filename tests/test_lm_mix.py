@@ -145,6 +145,26 @@ class TestPrepareMix(unittest.TestCase):
             shutil.rmtree(tmp, ignore_errors=True)
 
 
+class TestBf16(unittest.TestCase):
+    def test_bf16_train_ledger_exact_and_states_fp32(self):
+        # A49: bf16 autocast — the exact ledger must stay exact, CE
+        # finite, and chunk-boundary states re-anchored to fp32 so
+        # precision-sensitive accumulators never compound in bf16
+        from iga.lm_train import train
+        import torch as t
+        model, drive, vocab, ce0, ce1 = train(
+            d=32, lanes=2, T=128, steps=6, device="cpu",
+            log_every=100, arch="hybrid", store="matrix",
+            use_xl=False, bf16=True)
+        self.assertTrue(drive.audit()["telescoping_exact"])
+        self.assertTrue(ce1 == ce1 and ce1 < 20)     # finite
+        st = model._st
+        for k in st["h"]:
+            self.assertEqual(st["h"][k].dtype, t.float32)
+        for k in st["M"]:
+            self.assertEqual(st["M"][k].dtype, t.float32)
+
+
 class TestJsonlSource(unittest.TestCase):
     def test_jsonl_code_source_roundtrip(self):
         import json as _json

@@ -1461,6 +1461,25 @@ scale, not blocking this one. Target cost: $15–40 total.
   (uncertainty-gated reads) proceeds in parallel at d=128 and
   grafts in when solved.
 
+- **A49** (2026-08-11, user directive — "get rid of whatever we
+  dont need we need speed"): **ROADMAP COMPRESSED.** v8.5 cut as
+  a run (instruction-coding pairs become a v10 mix source — the
+  digest-source template carries any (human,model) pair data);
+  v9 outcome-RL deferred to a post-v10 fine-tune (RL-last is the
+  standard order; executor + ledger rewards are cheaper on a big
+  base). KEPT: v8.0's verdict (gates everything v10 inherits)
+  and the v10 shakedown (this week's shakedowns caught an OOM, a
+  dirty GPU, a disk trap, and a corrupted eval — cheap insurance
+  is not optional on a ~$200 run). Owned cost of compression:
+  v10 bundles scale + T + bf16 + instruction data at once —
+  attribution muddier on underdelivery; mitigated by shakedown
+  early-reads + banking + recent-window kill-authority at ~20%
+  spend. New line: v8.0 verdict → v10 shakedown → v10 (d~1024,
+  T=4096, 15-25B tokens, H100-class, ~$150-300) → RL/read-organ
+  as fine-tunes. Enabling work starting now: bf16 (ledger must
+  prove exact under autocast) + instruction-data sourcing +
+  memoized-shard CPU prep.
+
 ## Status
 
 Assembled scene-free (A6), no registered runs. Weaver (`iga/lm_gen.py`),

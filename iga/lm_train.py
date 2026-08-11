@@ -45,12 +45,22 @@ def cap_gate_norms(model, max_norm=1.0):
                 lin.weight.mul_(max_norm / n)
 
 
-def process_chunk(model, drive, conveyor, T, device, opt=None):
+def process_chunk(model, drive, conveyor, T, device, opt=None,
+                  bf16=False):
     x, y, events = conveyor.chunk(T)
     x, y = x.to(device), y.to(device)
-    logits, model._st, ticks = model(x, model._st, None)
+    # A49: bf16 autocast covers forward + loss build; backward and
+    # opt run outside; states are re-anchored to fp32 at the chunk
+    # boundary so precision-sensitive accumulators (band vectors,
+    # matrix decay products) never compound in bf16 storage
+    dev_type = "cuda" if "cuda" in str(device) else "cpu"
+    import contextlib
+    ac = (torch.autocast(dev_type, dtype=torch.bfloat16)
+          if bf16 else contextlib.nullcontext())
+    with ac:
+        logits, model._st, ticks = model(x, model._st, None)
     ce = torch.nn.functional.cross_entropy(
-        logits.reshape(-1, model.vocab_size), y.reshape(-1))
+        logits.float().reshape(-1, model.vocab_size), y.reshape(-1))
     losses = [ce]
     fid_terms = []
     for k in range(1, len(ticks)):
@@ -68,7 +78,7 @@ def process_chunk(model, drive, conveyor, T, device, opt=None):
         rc = model.pop_recon()
         if rc is not None:
             losses.append(RECON_W * rc)
-    logp = torch.log_softmax(logits, dim=-1)
+    logp = torch.log_softmax(logits.float(), dim=-1)
     for lane, evs in enumerate(events):
         for p, kind, d in sorted(evs, key=lambda e: e[0]):
             if kind == "probe" and p > 0:
@@ -87,7 +97,8 @@ def process_chunk(model, drive, conveyor, T, device, opt=None):
                 drive.earned(lane, d["ok"])
     drive.step_t += T
     drive.sweep(losses)
-    loss = torch.stack([l if l.dim() == 0 else l.mean() for l in losses]).sum()
+    loss = torch.stack([(l if l.dim() == 0 else l.mean()).float()
+                        for l in losses]).sum()
     if opt is not None:
         opt.zero_grad()
         loss.backward()
@@ -95,6 +106,13 @@ def process_chunk(model, drive, conveyor, T, device, opt=None):
         opt.step()
         cap_gate_norms(model)
     model._st = model.detach_state(model._st)
+    if bf16:
+        st = model._st
+        for key in ("h", "acc", "M"):
+            if key in st:
+                st[key] = {k: v.float() for k, v in st[key].items()}
+        st["pend"] = {k: (v.float() if v is not None else None)
+                      for k, v in st.get("pend", {}).items()}
     # reading tensors retained across the boundary leave the graph here:
     # pay gradients flow through settlement-chunk readings only
     drive.detach_readings()
@@ -146,7 +164,8 @@ def train(d=64, lanes=4, T=256, steps=40, seed=0, device="cpu",
           compile_model=False, constants=None, arch="bands",
           resume=None, offset_frac=0.0, store="vector", eval_data=None,
           use_xl=True, gate_init=-4.0, read_drop=0.5,
-          read_drop_end=None, gate_mode="scalar", lr=3e-4):
+          read_drop_end=None, gate_mode="scalar", lr=3e-4,
+          bf16=False):
     """resume (A26): path to a checkpoint — model + optimizer + drive
     EMAs/records/minted/vetoes continue; step numbering continues.
     offset_frac: start each conveyor lane this far into its segment
@@ -224,7 +243,8 @@ def train(d=64, lanes=4, T=256, steps=40, seed=0, device="cpu",
             # protection for induction, late oxygen for the store
             frac = (step - step0) / max(steps, 1)
             model.read_drop = read_drop + (read_drop_end - read_drop) * frac
-        ce, loss = process_chunk(model, drive, conveyor, T, device, opt)
+        ce, loss = process_chunk(model, drive, conveyor, T, device,
+                                 opt, bf16=bf16)
         ce_first = ce_first or ce
         if step % log_every == 0 or step == 1:
             tok_s = lanes * T * (step - step0) / (time.time() - t0)
@@ -326,6 +346,7 @@ def main():
                     dest="read_drop_end",
                     help="linear anneal target for read-dropout (A39)")
     ap.add_argument("--lr", type=float, default=3e-4)
+    ap.add_argument("--bf16", action="store_true")
     ap.add_argument("--gate-mode", default="scalar", dest="gate_mode",
                     choices=["scalar", "position"],
                     help="matrix read gate: scalar per band, or "
@@ -345,7 +366,7 @@ def main():
               eval_data=a.eval_data, use_xl=(a.xl == "on"),
               gate_init=a.gate_init, read_drop=a.read_drop,
               read_drop_end=a.read_drop_end, gate_mode=a.gate_mode,
-              lr=a.lr)
+              lr=a.lr, bf16=a.bf16)
 
 
 if __name__ == "__main__":
