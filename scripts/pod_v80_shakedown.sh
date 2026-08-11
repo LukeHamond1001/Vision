@@ -36,6 +36,16 @@ assert torch.cuda.is_available(), "cuda not available"
 x = torch.zeros(8, device="cuda") + 1
 torch.cuda.synchronize()
 print(torch.cuda.get_device_name(0))
+free, total = torch.cuda.mem_get_info()
+print(f"vram free {free/2**30:.1f} / total {total/2**30:.1f} GiB")
+# capacity canary (A46 ops): an ALIVE gpu can still be DIRTY — a
+# co-tenant/zombie held ~18GB and we OOMd at step 1 with the small
+# canary green. Claim a real training-sized block before committing.
+assert free > 18 * 2**30, f"GPU DIRTY/UNDERSIZED: {free/2**30:.1f} GiB free"
+big = torch.empty(int(14e9) // 4, dtype=torch.float32, device="cuda")
+del big
+torch.cuda.empty_cache()
+print("capacity canary passed (14GB claim)")
 EOF
 }
 if ! cuda_canary >> prep.log 2>&1; then
