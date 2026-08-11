@@ -1440,6 +1440,27 @@ scale, not blocking this one. Target cost: $15–40 total.
   ~28h wall (7h prep + 21h train). Banking + recent-window +
   capacity canary + rolling 2h snapshots all standard.
 
+- **A48** (2026-08-11, registered — the post-v8.0 ladder, user
+  direction "feed it agent coding prompts then answers, reward
+  at the end"): the agent-training sequence, ordered by the
+  v1.1 Crafter law (reward cannot create competence, only
+  select among competencies — three arms, 1M steps, all rewards
+  taught nothing from scratch). **v8.0** (running): raw-code
+  pretraining builds the prior; note the drive layer ALREADY
+  pays outcome-shaped reward at micro-episode scale (margin
+  settles at ask-time). **v8.5 — TASK FORMAT**: instruction-
+  coding prompt→answer pairs woven as turns; structurally a
+  data swap — the digest source (code→docstring) is the
+  template for any (human,model) pair source. **v9 — OUTCOME
+  RL**: end-of-task VERIFIABLE reward (execute generated code
+  against tests; pay the ledger on pass) — requires an
+  execution harness (real engineering block); this is where
+  the architecture's distinctive claim lands: outcome-RL
+  through the exact-ledger drive layer, the anti-Goodhart
+  design BoatRace certified at toy scale. Read-organ track
+  (uncertainty-gated reads) proceeds in parallel at d=128 and
+  grafts in when solved.
+
 ## Status
 
 Assembled scene-free (A6), no registered runs. Weaver (`iga/lm_gen.py`),
