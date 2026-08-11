@@ -26,3 +26,4 @@
 20:15:51 download: ultrachat 3 parts (450000 lines)
 20:20:48 eval sources downloaded (held-out shards)
 20:20:50 prep launched (pid 17788)
+20:21:37 prep beat:   9000 docs, 21,996,853 tokens, 6960 planted + 0 natural probes, mix {'code': 10111656, 'w
