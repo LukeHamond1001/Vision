@@ -44,3 +44,4 @@
 03:11:33 training heartbeat:     holdout(cum): {'cross': [0.032, 0.03, 188], 'same': [0.378, 0.43, 100], 'straddle': [0.035, 0.05, 60]}
 03:25:25 training complete (rc=0)
 03:25:34 evaluation complete
+03:25:41 best-ckpt evaluation complete
