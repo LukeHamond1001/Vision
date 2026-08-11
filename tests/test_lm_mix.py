@@ -145,5 +145,24 @@ class TestPrepareMix(unittest.TestCase):
             shutil.rmtree(tmp, ignore_errors=True)
 
 
+class TestJsonlSource(unittest.TestCase):
+    def test_jsonl_code_source_roundtrip(self):
+        import json as _json
+        from iga.lm_data_mix import iter_jsonl_texts
+        tmp = tempfile.mkdtemp()
+        try:
+            p = os.path.join(tmp, "code.jsonl")
+            with open(p, "w") as f:
+                f.write(_json.dumps({"text": SYNTH_CODE}) + "\n")
+                f.write("not json\n")
+                f.write(_json.dumps({"text": "x"}) + "\n")   # too short
+                f.write(_json.dumps({"text": SYNTH_CODE * 2}) + "\n")
+            docs = list(iter_jsonl_texts(p))
+            self.assertEqual(len(docs), 2)
+            self.assertTrue(docs[0].startswith("\ndef compute_total"))
+        finally:
+            shutil.rmtree(tmp, ignore_errors=True)
+
+
 if __name__ == "__main__":
     unittest.main()

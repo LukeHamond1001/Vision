@@ -335,3 +335,20 @@ def source_chat(n_convos):
         for turns in iter_convos(n_convos):
             yield "\n".join(turns)
     return ("chat", 0.10, it)
+
+def iter_jsonl_texts(path, min_chars=200, max_chars=200_000):
+    """v8.0 stream-extract-delete: code shards are downloaded one at
+    a time, Python rows extracted to a compact jsonl, parquet deleted
+    — 230 shards never coexist on disk. This iterates the result."""
+    with open(path) as f:
+        for line in f:
+            try:
+                text = json.loads(line)["text"]
+            except (json.JSONDecodeError, KeyError):
+                continue
+            if text and len(text) >= min_chars:
+                yield text[:max_chars]
+
+
+def source_code_jsonl(path, weight=0.55):
+    return ("code", weight, lambda: iter_jsonl_texts(path))

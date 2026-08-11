@@ -1415,6 +1415,31 @@ scale, not blocking this one. Target cost: $15–40 total.
   v8.0 QUOTE: 6B tokens ≈ 21h train + ~7h prep ≈ **~$21**; 8B
   ≈ **~$26**; single secure 4090, 100GB disk. AWAITING USER GO.
 
+- **A47** (2026-08-11, registered + launched on user go — "do
+  it"): **v8.0 — THE BUILD RUN.** The certified core (d=512,
+  61.4M params, scalar shut gates, write credit, no XL) at
+  T=2048 (clocks 2k/16k/128k tokens), lr 7e-5 (the width-LR law
+  line for 1.33x v7.2's width), constant (cosine decay =
+  ledgered v8.1 candidate — one-change discipline), on the real
+  mix: 6B tokens = Python code (230 shards stream-extract-
+  deleted) + wikipedia (8 shards) + code_search_net digest
+  pairs + UltraChat register, instruments at standard density
+  woven per the curriculum law; 366,000 steps ≈ one epoch.
+  EVAL from held-out sources only (code shards 230-231, wiki
+  shard 40, csn test, ultrachat tail) — the first shard of the
+  campaign with no carrier overlap — with the natural
+  identifier-probe battery (mine_ids) + planted instruments.
+  Registered reads: PRIMARY = natural identifier recall at
+  distance clearing the lesioned baseline (the architecture's
+  claim measured on real code, free of instrument grammar);
+  SECONDARY = planted same-chunk ceiling-class at T=2048,
+  same_recent stable wire-to-wire at 7e-5, digest-channel
+  samples coherent, gist lesion bite grows. OBSERVATIONAL:
+  cross bins (reads silent — no carry claim; the read organ
+  lands in v8.1+ via the parallel track). Quote: ~$21-26,
+  ~28h wall (7h prep + 21h train). Banking + recent-window +
+  capacity canary + rolling 2h snapshots all standard.
+
 ## Status
 
 Assembled scene-free (A6), no registered runs. Weaver (`iga/lm_gen.py`),
