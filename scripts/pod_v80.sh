@@ -70,12 +70,14 @@ for i in $(seq 0 229); do
     sleep 10
   done
   if [ "$OK" != "1" ]; then SKIPPED=$((SKIPPED+1)); continue; fi
+  # A47 ops: batch 1024 (64 was ~35s/shard of python overhead vs
+  # ~5s of network — the extractor, not the download, was the drag)
   python - <<'EXEOF' >> prep.log 2>&1
 import json
 import pyarrow.parquet as pq
 pf = pq.ParquetFile("data/mixsrc/cur.parquet")
 with open("data/code_texts.jsonl", "a") as out:
-    for batch in pf.iter_batches(batch_size=64,
+    for batch in pf.iter_batches(batch_size=1024,
                                  columns=["code", "language"]):
         d = batch.to_pydict()
         for code, lang in zip(d["code"], d["language"]):
