@@ -1344,6 +1344,30 @@ scale, not blocking this one. Target cost: $15–40 total.
   decision. Campaign: 19 launches, ~$50, eight laws, one
   perfect table. PAUSED AWAITING USER per standing orders.
 
+- **A46** (2026-08-11, BUILT on user go — "go start the data
+  build"): **the v8 data pipeline.** iga/lm_data_mix.py: mixed
+  long-structure corpus — code (github-code-clean, Python-
+  filtered; the load-bearing slice: real repos carry NATURAL
+  dense exact long-range dependencies, solving A43's demand
+  starvation with data instead of against it), prose (wikipedia),
+  digest pairs (code_search_net function→docstring — the
+  short-clear-verdict channel trained as ordinary next-token on
+  model turns), chat register (UltraChat slice). Ladder format
+  preserved exactly (two-speaker turns, Instruments woven at
+  standard density per the curriculum law, TokenSink, events).
+  NATURAL IDENTIFIER PROBES (eval shards only, "nat": true):
+  definitions → later uses at controlled gaps, answer = the
+  token at the use site (law-tested: answer equals the streamed
+  token at pos), distractors = sibling identifiers. Deterministic
+  weighted mixing under seed with per-source token accounting
+  (law-tested byte-identical across repeat runs). T=2048 serving
+  + training smoke-tested locally (d=32 hybrid, ledger exact).
+  All sources verified ungated. pod_v80_shakedown.sh staged:
+  ~120M-token mix + 32k tokenizer + 3000 steps at d=512 T=2048
+  lanes 16 on a 4090 — prices VRAM/throughput and certifies the
+  pipeline, no science. Suite 72/72. Shakedown launch and v8.0
+  proper both await user word.
+
 ## Status
 
 Assembled scene-free (A6), no registered runs. Weaver (`iga/lm_gen.py`),
