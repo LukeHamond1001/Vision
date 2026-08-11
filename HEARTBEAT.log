@@ -1,3 +1,4 @@
 13:54:54 boot v80-SHAKEDOWN NVIDIA GeForce RTX 4090 ram 1007G
 13:55:01 deps installed
 13:55:06 cuda canary passed
+13:57:03 download: data/mixsrc/code0.parquet (355122552 bytes)
