@@ -28,3 +28,4 @@
 20:20:50 prep launched (pid 17788)
 20:21:37 prep beat:   9000 docs, 21,996,853 tokens, 6960 planted + 0 natural probes, mix {'code': 10111656, 'w
 20:22:27 prep beat:   23000 docs, 49,264,519 tokens, 17823 planted + 0 natural probes, mix {'code': 26016707, 
+20:23:13 prep beat:   37000 docs, 73,873,300 tokens, 28680 planted + 0 natural probes, mix {'code': 42544022, 
