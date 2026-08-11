@@ -1322,6 +1322,28 @@ scale, not blocking this one. Target cost: $15–40 total.
   best-ckpt banking has now saved THE decisive artifact three
   runs straight — promoted from insurance to primary output.
 
+- **A45 VERDICT — SCALE GATE PASSED** (2026-08-11 06:36 UTC,
+  v7.2 CLEAN rc=0): **the perfect table at the FINAL step.**
+  Fine-bin fresh-state at 135,000: same-chunk **0.979 / top1
+  0.99** (n=76) — the A45 bar was ≥0.7; the run ended at
+  ceiling. Not a banked rescue: same_recent held 0.97-1.02
+  wire-to-wire (best banked at 126k reads identically to the
+  final — the run simply never degraded). Cross bins at floor,
+  lesion-invariant, gates shut (no carry claim — the read organ
+  remains the parked open problem). THE WIDTH-LR LAW, causally
+  confirmed: identical machines at d=384 — 3e-4 rotted from 42k
+  to 0.425; 1e-4 held ceiling to 0.979. THE CORE IS CERTIFIED
+  AT TWO WIDTHS END-TO-END: d=128 @ 3e-4 (0.774/88%, v6.1) and
+  d=384 @ 1e-4 (0.979/99%, v7.2), stable training both,
+  capability GROWING with width. Freeze state: the certified
+  machine = transformer + slow-band gist + credit-trained
+  writes (reads silent) + drive layer + banking/recent-window
+  instruments; scaling knobs = d (with lr ~ 1/width) and T;
+  curriculum law governs data. v8 (real data, T 2048, d
+  512-768) is design work on a certified foundation — user
+  decision. Campaign: 19 launches, ~$50, eight laws, one
+  perfect table. PAUSED AWAITING USER per standing orders.
+
 ## Status
 
 Assembled scene-free (A6), no registered runs. Weaver (`iga/lm_gen.py`),
