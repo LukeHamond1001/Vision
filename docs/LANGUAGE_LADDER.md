@@ -1281,6 +1281,24 @@ scale, not blocking this one. Target cost: $15–40 total.
   dense long facts must ride ON TOP of the full short
   curriculum, never instead of it.
 
+- **A45** (2026-08-11 ~01:40 UTC, registered + launched): **v7.2
+  — THE LR-SCALED GATE.** v7.1's mid-run evidence sealed the
+  diagnosis early: with gates SHUT (scalar config), held-out
+  same_recent windows read ~0.0 for 30k consecutive steps
+  (66-72k: 0.010/0.004/-0.018/0.040) while training CE sat at
+  2.10 — the never-rotted config rots at width. Read-reliance
+  cannot explain it (no reads); the standing suspect is
+  UNSCALED LR: d=128's 3e-4 carried into 4.4x params churns the
+  binding circuit under updates the loss barely notices
+  (ceiling → bleed → zero, classic). v7.2 = identical gate run
+  at --lr 1e-4 (width-scaled), launched before v7.1's tables on
+  the strength of the 30k-step dead-window record (v7.1 runs to
+  completion for the full trajectory + banked best). Registered
+  read: PRIMARY unchanged (same ≥0.7 fresh AT RUN END); the
+  specific prediction — the bleed does not occur at scaled LR.
+  If it bleeds anyway: LR falsified, drive-pay surge next
+  (holds 147k@74k), then raw width-overfit.
+
 ## Status
 
 Assembled scene-free (A6), no registered runs. Weaver (`iga/lm_gen.py`),
