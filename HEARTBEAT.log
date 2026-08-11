@@ -14,3 +14,4 @@
 14:01:59 prep beat:   80000 docs, 113,885,056 tokens, 61251 planted + 0 natural probes, mix {'code': 32072448,
 14:02:46 prep: mix shard built (240002182 bytes)
 14:07:50 training heartbeat: step  1400  ce 5.393  loss 5.444  holds 24160  79,800 tok/s  [fid:3=+0.965 fid:4=+0.010 fid:5=-0.051 b0=+0.000 b1=+0.000 b2=+0.000 b3=+0.001]
+14:12:52 training heartbeat: step  2900  ce 5.113  loss 5.115  holds 49848  79,639 tok/s  [fid:3=+0.971 fid:4=+0.029 fid:5=-0.065 b0=+0.001 b1=+0.001 b2=+0.001 b3=+0.002]
