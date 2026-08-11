@@ -5,3 +5,26 @@ WARNING: Running pip as the 'root' user can result in broken permissions and con
 NVIDIA GeForce RTX 4090
 vram free 23.1 / total 23.5 GiB
 capacity canary passed (14GB claim)
+=== container limits ===
+               total        used        free      shared  buff/cache   available
+Mem:            1007         166         202           0         638         834
+Swap:              0           0           0
+real-time non-blocking time  (microseconds, -R) unlimited
+core file size              (blocks, -c) unlimited
+data seg size               (kbytes, -d) unlimited
+scheduling priority                 (-e) 0
+file size                   (blocks, -f) unlimited
+pending signals                     (-i) 4125745
+max locked memory           (kbytes, -l) 8192
+max memory size             (kbytes, -m) unlimited
+open files                          (-n) 1024
+pipe size                (512 bytes, -p) 8
+POSIX message queues         (bytes, -q) 819200
+real-time priority                  (-r) 0
+stack size                  (kbytes, -s) 8192
+cpu time                   (seconds, -t) unlimited
+max user processes                  (-u) unlimited
+virtual memory              (kbytes, -v) unlimited
+file locks                          (-x) unlimited
+124999999488
+========================
