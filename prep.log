@@ -742,3 +742,4 @@ wrote 2,239,384,569 tokens, 3589833 events (1087547 probes) -> data/uc_v72
 tokenizer: reused data/uc_v72/tokenizer.json (16384 pieces)
   2000 convos, 2,387,812 tokens, 1496 probes
 wrote 2,951,077 tokens, 6132 events (1867 probes) -> data/uc_v72_eval
+NVIDIA GeForce RTX 4090
