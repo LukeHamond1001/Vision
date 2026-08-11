@@ -58,6 +58,7 @@ UC="https://huggingface.co/datasets/stingning/ultrachat/resolve/main"
 curl -s -L "$UC/train_0.jsonl" | head -n 30000 > data/ultrachat_raw.jsonl
 hb "download: ultrachat slice ($(wc -l < data/ultrachat_raw.jsonl) lines)"
 
+( echo "=== container limits ==="; free -g; ulimit -a;   cat /sys/fs/cgroup/memory.max 2>/dev/null ||   cat /sys/fs/cgroup/memory/memory.limit_in_bytes 2>/dev/null;   echo "========================" ) >> prep.log 2>&1
 python - >> prep.log 2>&1 <<'EOF' &
 from iga.lm_data_mix import (prepare_mix, source_code, source_wiki,
                              source_digest, source_chat)
@@ -78,8 +79,11 @@ prepare_mix("data/mix_v80s_eval", sources_ev, budget_tokens=6_000_000,
             mine_ids=True)
 EOF
 PREP_PID=$!
+hb "prep launched (pid $PREP_PID)"
+E=0
 while kill -0 $PREP_PID 2>/dev/null; do
-  sleep 300
+  if [ $E -lt 16 ]; then sleep 45; else sleep 300; fi
+  E=$((E+1))
   kill -0 $PREP_PID 2>/dev/null && \
     hb "prep beat: $(tail -1 prep.log | cut -c1-90)"
 done

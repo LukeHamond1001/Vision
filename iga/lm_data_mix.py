@@ -45,7 +45,7 @@ _PY_KEYWORDS = {"if", "else", "elif", "for", "while", "return", "self",
 
 
 def iter_parquet_texts(paths, columns, filter_col=None, filter_val=None,
-                       min_chars=200):
+                       min_chars=200, max_chars=200_000):
     """Stream text from parquet shards. `columns` is a preference
     list — the first present column wins (dataset schemas drift)."""
     import pyarrow.parquet as pq
@@ -63,7 +63,7 @@ def iter_parquet_texts(paths, columns, filter_col=None, filter_val=None,
                         d[filter_col][i] != filter_val:
                     continue
                 if text and len(text) >= min_chars:
-                    yield text
+                    yield text[:max_chars]
 
 
 def doc_to_turns(text, rng, max_turn_chars=1200, max_doc_chars=60000):
@@ -160,6 +160,7 @@ def prepare_mix(out_dir, sources, budget_tokens, seed=0, vocab=32768,
     os.makedirs(out_dir, exist_ok=True)
     rng = random.Random(seed)
     tok_path = os.path.join(out_dir, "tokenizer.json")
+    print("phase: start", flush=True)
     if tokenizer_path:
         import shutil
         shutil.copy(tokenizer_path, tok_path)
@@ -167,6 +168,7 @@ def prepare_mix(out_dir, sources, budget_tokens, seed=0, vocab=32768,
         print(f"tokenizer: reused {tokenizer_path} "
               f"({tok.get_vocab_size()} pieces)")
     else:
+        print("phase: tokenizer-sample", flush=True)
         sample = []
         for name, _, factory in sources:
             it = factory()
@@ -175,9 +177,12 @@ def prepare_mix(out_dir, sources, budget_tokens, seed=0, vocab=32768,
                     doc = next(it)
                 except StopIteration:
                     break
-                sample.append(doc[1] + "\n" + doc[2]
-                              if isinstance(doc, tuple) else doc)
+                text = (doc[1] + "\n" + doc[2]
+                        if isinstance(doc, tuple) else doc)
+                sample.append(text[:20_000])
         sample.append(THANKS)
+        print(f"phase: tokenizer-train ({len(sample)} texts, "
+              f"{sum(len(t) for t in sample):,} chars)", flush=True)
         tok = train_tokenizer(iter(sample), tok_path, vocab)
         print(f"tokenizer: {tok.get_vocab_size()} pieces -> {tok_path}")
     assert tok.get_vocab_size() <= 65535, "uint16 stream"
@@ -230,6 +235,7 @@ def prepare_mix(out_dir, sources, budget_tokens, seed=0, vocab=32768,
             events.append({"pos": len(stream) - 1, "kind": "earned",
                            "ok": True})
 
+    print("phase: stream", flush=True)
     iters = {name: factory() for name, _, factory in sources}
     weights = {name: w for name, w, _ in sources}
     live = set(iters)
@@ -275,7 +281,7 @@ def prepare_mix(out_dir, sources, budget_tokens, seed=0, vocab=32768,
         events.append({"pos": len(stream) - 1, "kind": "earned",
                        "ok": True})
         di += 1
-        if di % 2000 == 0:
+        if di % 500 == 0:
             print(f"  {di} docs, {len(stream):,} tokens, "
                   f"{n_probes} planted + {n_nat} natural probes, "
                   f"mix {stats}", flush=True)
