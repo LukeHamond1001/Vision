@@ -78,3 +78,4 @@
 23:25:24 prep beat:   3615000 docs, 5,912,803,943 tokens, 2792665 planted + 0 natural probes, mix {'code': 367
 23:30:27 prep: mix shard built (12000002860 bytes, raw deleted)
 23:30:35 capacity canary passed pre-train
+23:45:44 training heartbeat: step  3750  ce 4.666  loss 4.667  holds 64912  78,317 tok/s  [fid:3=+0.950 fid:4=+0.102 fid:5=-0.036 b0=+0.002 b1=+0.000 b2=+0.001 b3=+0.001]
