@@ -146,7 +146,7 @@ def train(d=64, lanes=4, T=256, steps=40, seed=0, device="cpu",
           compile_model=False, constants=None, arch="bands",
           resume=None, offset_frac=0.0, store="vector", eval_data=None,
           use_xl=True, gate_init=-4.0, read_drop=0.5,
-          read_drop_end=None, gate_mode="scalar"):
+          read_drop_end=None, gate_mode="scalar", lr=3e-4):
     """resume (A26): path to a checkpoint — model + optimizer + drive
     EMAs/records/minted/vetoes continue; step numbering continues.
     offset_frac: start each conveyor lane this far into its segment
@@ -191,7 +191,11 @@ def train(d=64, lanes=4, T=256, steps=40, seed=0, device="cpu",
         except Exception as e:
             print(f"torch.compile unavailable ({e}); running eager")
     model._st = model.init_state(lanes, device)
-    opt = torch.optim.AdamW(model.parameters(), lr=3e-4)
+    # A45: lr is width-sensitive — d=128's 3e-4 carried into
+    # d=384 (4.4x params) is the lead suspect for v7.1's
+    # gates-shut held-out bleed (circuit churn under updates
+    # the loss barely notices)
+    opt = torch.optim.AdamW(model.parameters(), lr=lr)
     step0 = 0
     if resume:
         state = torch.load(resume, map_location=device,
@@ -321,6 +325,7 @@ def main():
     ap.add_argument("--read-drop-end", type=float, default=None,
                     dest="read_drop_end",
                     help="linear anneal target for read-dropout (A39)")
+    ap.add_argument("--lr", type=float, default=3e-4)
     ap.add_argument("--gate-mode", default="scalar", dest="gate_mode",
                     choices=["scalar", "position"],
                     help="matrix read gate: scalar per band, or "
@@ -339,7 +344,8 @@ def main():
               resume=a.resume, offset_frac=a.offset, store=a.store,
               eval_data=a.eval_data, use_xl=(a.xl == "on"),
               gate_init=a.gate_init, read_drop=a.read_drop,
-              read_drop_end=a.read_drop_end, gate_mode=a.gate_mode)
+              read_drop_end=a.read_drop_end, gate_mode=a.gate_mode,
+              lr=a.lr)
 
 
 if __name__ == "__main__":
