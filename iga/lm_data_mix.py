@@ -88,6 +88,13 @@ def mine_identifier_probes(code, tok, base_pos, min_gap_chars=1000,
     """Natural exact-recall probes from real code. Returns (events,
     n_tokens_checked) with positions relative to base_pos, computed
     through the tokenizer's char offsets."""
+    if not code.isascii():
+        # A46 review hardening: tokenizer offsets are byte-indexed at
+        # the ByteLevel while regex positions are char-indexed — on
+        # non-ASCII files the two drift and a probe would silently
+        # point at the WRONG token (inflating the natural read with
+        # predictable junk). ASCII-only mining makes bytes == chars.
+        return []
     defs = {}
     for m in DEF_RE.finditer(code):
         name = m.group(1) or m.group(2) or m.group(3)
@@ -119,6 +126,12 @@ def mine_identifier_probes(code, tok, base_pos, min_gap_chars=1000,
         upos = uses[0] if rng is None else rng.choice(uses)
         ti, di = char_to_tok(upos), char_to_tok(dpos)
         if ti is None or di is None or ti <= di:
+            continue
+        # belt-and-braces: the token at the probe position must
+        # actually spell the start of the identifier — any residual
+        # misalignment drops the probe instead of corrupting the read
+        piece = tok.decode([ids[ti]]).strip()
+        if not piece or not name.startswith(piece):
             continue
         distract = [n for n in names if n != name][:6]
         d_ids = []

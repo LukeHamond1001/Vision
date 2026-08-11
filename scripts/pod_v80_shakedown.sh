@@ -101,7 +101,7 @@ fi
     tail -30 train.log > train_tail.log; \
     hb "training heartbeat: $(tail -1 train_tail.log)"; done ) &
 HBPID=$!
-python -m iga.lm_train run --data data/mix_v80s --d 512 --lanes 16 \
+python -m iga.lm_train run --data data/mix_v80s --d 512 --lanes 8 \
   --chunk 2048 --steps 3000 --talk tick --arch hybrid --device cuda \
   --store matrix --xl off --lr 7e-5 --eval-data data/mix_v80s_eval \
   --ckpt v80s.pt > train.log 2>&1

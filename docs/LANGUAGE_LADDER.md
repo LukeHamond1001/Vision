@@ -1368,6 +1368,33 @@ scale, not blocking this one. Target cost: $15–40 total.
   pipeline, no science. Suite 72/72. Shakedown launch and v8.0
   proper both await user word.
 
+- **A46 REVIEW** (2026-08-11, pre-launch red-team on user
+  request): three real risks found and closed BEFORE any spend.
+  (1) **Silent natural-probe corruption**: tokenizer offsets are
+  byte-indexed, regex positions char-indexed — on non-ASCII
+  files a probe could point at the wrong token and inflate the
+  PRIMARY read with predictable junk; fixed with ASCII-only
+  mining (bytes==chars) + a decode-prefix guard (the token at
+  the probe position must spell the identifier's start, else the
+  probe is dropped). (2) **Probable OOM at T=2048**:
+  nn.MultiheadAttention can fall back to materialized 2048^2
+  scores (~13GB at 16 lanes); shakedown set to 8 lanes (worst
+  case fits 24GB; same 16,384 tokens/step as v7.x so tok/s reads
+  comparably); SDPA-fastpath verification is an explicit
+  shakedown output; forced-SDPA migration is the fallback if the
+  math path shows. (3) **v8.0 disk math**: full corpus downloads
+  (~70-80 code shards) exceed the 30GB standing container —
+  v8.0's pod gets 100GB + download-extract-delete streaming; the
+  shakedown's Python-yield-per-shard stat sizes the real
+  download list. DATASET VERDICT: github-code-clean (deduped —
+  the emergence law rides on unique tokens) Python-only (miner
+  is Python-shaped; coherent identifier conventions) is the
+  right bulk slice; wikipedia/code_search_net/UltraChat
+  confirmed; The Stack rejected (gated ToS = token handling on
+  pods); license note for any future release: mixed licenses
+  incl. GPL in the corpus (research use now, revisit at
+  release). Suite 72/72 after hardening.
+
 ## Status
 
 Assembled scene-free (A6), no registered runs. Weaver (`iga/lm_gen.py`),
