@@ -1299,6 +1299,29 @@ scale, not blocking this one. Target cost: $15–40 total.
   If it bleeds anyway: LR falsified, drive-pay surge next
   (holds 147k@74k), then raw width-overfit.
 
+- **A44 VERDICT** (2026-08-11 03:28 UTC, v7.1 CLEAN rc=0):
+  **PRIMARY FAIL at run end — and THE PERFECT TABLE exists.**
+  Banked best (step 26k, fine-bin fresh-state): same-chunk
+  **0.980 / top1 1.00** (n=76) — every held-out probe answered
+  correctly; the binding task is SOLVED at d=384. Ladder of
+  bests: v6.1 0.774/88% (d=128) → v7.0 0.832/91% (d=384,
+  position-gate era) → v7.1 0.980/100% (d=384, record config).
+  Final (135k): 0.425/62%, with lesion-ALL 0.268 — the bled
+  model leans on band-gist (+0.157), i.e., LR churn kills the
+  delicate attention circuit first and the coarse gist channel
+  survives. Cross bins floor, lesion-invariant (gates shut ✓).
+  The rot: same_recent ceiling (~1.0) through 40k → bleed from
+  42k → dead windows (~0.0) from 66k, ALL with gates shut and
+  CE healthy-to-excellent (2.05 final) — WIDTH-LR LAW candidate
+  formalized: unscaled LR (3e-4 at 4.4x params) churns formed
+  circuits under updates the loss barely registers. v7.2
+  (identical, lr 1e-4) is the causal test, mid-flight: at 36k
+  its windows are STILL at ceiling (0.984/0.986/0.997) at the
+  depth where v7.1 cracked. If it holds to END: scale gate
+  passes with LR-scaling as the one extra law. Instrument note:
+  best-ckpt banking has now saved THE decisive artifact three
+  runs straight — promoted from insurance to primary output.
+
 ## Status
 
 Assembled scene-free (A6), no registered runs. Weaver (`iga/lm_gen.py`),
