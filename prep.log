@@ -75,3 +75,38 @@ phase: stream
   18500 docs, 42,102,282 tokens, 14293 planted + 0 natural probes, mix {'code': 20955710, 'wiki': 14231160, 'digest': 1131956, 'chat': 2224892}
   19000 docs, 42,933,141 tokens, 14692 planted + 0 natural probes, mix {'code': 21505314, 'wiki': 14354921, 'digest': 1150454, 'chat': 2271834}
   19500 docs, 43,941,464 tokens, 15085 planted + 0 natural probes, mix {'code': 22223233, 'wiki': 14471829, 'digest': 1163879, 'chat': 2335997}
+  20000 docs, 44,801,314 tokens, 15465 planted + 0 natural probes, mix {'code': 22742778, 'wiki': 14622963, 'digest': 1203643, 'chat': 2397274}
+  20500 docs, 45,617,207 tokens, 15841 planted + 0 natural probes, mix {'code': 23299342, 'wiki': 14713562, 'digest': 1227376, 'chat': 2463839}
+  21000 docs, 46,297,883 tokens, 16218 planted + 0 natural probes, mix {'code': 23671971, 'wiki': 14827167, 'digest': 1258670, 'chat': 2529900}
+  21500 docs, 47,320,639 tokens, 16597 planted + 0 natural probes, mix {'code': 24291993, 'wiki': 14989954, 'digest': 1326587, 'chat': 2580617}
+  22000 docs, 48,287,615 tokens, 16988 planted + 0 natural probes, mix {'code': 24822560, 'wiki': 15161361, 'digest': 1394068, 'chat': 2638564}
+  22500 docs, 49,203,295 tokens, 17373 planted + 0 natural probes, mix {'code': 25433773, 'wiki': 15272418, 'digest': 1425187, 'chat': 2705306}
+  23000 docs, 50,068,377 tokens, 17759 planted + 0 natural probes, mix {'code': 26025128, 'wiki': 15391823, 'digest': 1440374, 'chat': 2760283}
+  23500 docs, 50,859,789 tokens, 18147 planted + 0 natural probes, mix {'code': 26490679, 'wiki': 15542833, 'digest': 1459624, 'chat': 2823359}
+  24000 docs, 51,633,683 tokens, 18538 planted + 0 natural probes, mix {'code': 26988593, 'wiki': 15649498, 'digest': 1487615, 'chat': 2867801}
+  24500 docs, 52,499,455 tokens, 18920 planted + 0 natural probes, mix {'code': 27568243, 'wiki': 15781772, 'digest': 1503519, 'chat': 2923202}
+  25000 docs, 53,514,625 tokens, 19310 planted + 0 natural probes, mix {'code': 28288148, 'wiki': 15913161, 'digest': 1521379, 'chat': 2980900}
+  25500 docs, 54,341,693 tokens, 19689 planted + 0 natural probes, mix {'code': 28848827, 'wiki': 16014869, 'digest': 1548305, 'chat': 3038126}
+  26000 docs, 55,102,012 tokens, 20085 planted + 0 natural probes, mix {'code': 29322636, 'wiki': 16136734, 'digest': 1580897, 'chat': 3072214}
+  26500 docs, 56,079,341 tokens, 20464 planted + 0 natural probes, mix {'code': 29969584, 'wiki': 16266626, 'digest': 1612634, 'chat': 3145019}
+  27000 docs, 56,964,790 tokens, 20854 planted + 0 natural probes, mix {'code': 30533174, 'wiki': 16414517, 'digest': 1632255, 'chat': 3203057}
+  27500 docs, 58,028,794 tokens, 21254 planted + 0 natural probes, mix {'code': 31299645, 'wiki': 16525128, 'digest': 1660363, 'chat': 3254427}
+  28000 docs, 58,977,775 tokens, 21638 planted + 0 natural probes, mix {'code': 31952885, 'wiki': 16647305, 'digest': 1679372, 'chat': 3320349}
+  28500 docs, 59,525,075 tokens, 22008 planted + 0 natural probes, mix {'code': 32072448, 'wiki': 16847504, 'digest': 1711786, 'chat': 3434021}
+  29000 docs, 60,043,322 tokens, 22397 planted + 0 natural probes, mix {'code': 32072448, 'wiki': 17131188, 'digest': 1750751, 'chat': 3529303}
+  29500 docs, 60,530,052 tokens, 22774 planted + 0 natural probes, mix {'code': 32072448, 'wiki': 17355297, 'digest': 1781116, 'chat': 3670322}
+  30000 docs, 61,077,551 tokens, 23156 planted + 0 natural probes, mix {'code': 32072448, 'wiki': 17638096, 'digest': 1814278, 'chat': 3805322}
+  30500 docs, 61,594,209 tokens, 23551 planted + 0 natural probes, mix {'code': 32072448, 'wiki': 17903448, 'digest': 1840399, 'chat': 3939836}
+  31000 docs, 62,076,810 tokens, 23924 planted + 0 natural probes, mix {'code': 32072448, 'wiki': 18131784, 'digest': 1876458, 'chat': 4077795}
+  31500 docs, 62,668,125 tokens, 24312 planted + 0 natural probes, mix {'code': 32072448, 'wiki': 18453190, 'digest': 1919000, 'chat': 4208766}
+  32000 docs, 63,146,792 tokens, 24698 planted + 0 natural probes, mix {'code': 32072448, 'wiki': 18677224, 'digest': 1955458, 'chat': 4335548}
+  32500 docs, 63,646,394 tokens, 25088 planted + 0 natural probes, mix {'code': 32072448, 'wiki': 18920185, 'digest': 1985449, 'chat': 4463384}
+  33000 docs, 64,181,677 tokens, 25467 planted + 0 natural probes, mix {'code': 32072448, 'wiki': 19156480, 'digest': 2032506, 'chat': 4616857}
+  33500 docs, 64,763,331 tokens, 25845 planted + 0 natural probes, mix {'code': 32072448, 'wiki': 19412524, 'digest': 2110918, 'chat': 4761599}
+  34000 docs, 65,239,157 tokens, 26230 planted + 0 natural probes, mix {'code': 32072448, 'wiki': 19611198, 'digest': 2173150, 'chat': 4880164}
+  34500 docs, 65,808,033 tokens, 26610 planted + 0 natural probes, mix {'code': 32072448, 'wiki': 19896004, 'digest': 2223127, 'chat': 5012711}
+  35000 docs, 66,378,541 tokens, 26991 planted + 0 natural probes, mix {'code': 32072448, 'wiki': 20175332, 'digest': 2297636, 'chat': 5136633}
+  35500 docs, 66,965,015 tokens, 27371 planted + 0 natural probes, mix {'code': 32072448, 'wiki': 20466660, 'digest': 2362116, 'chat': 5271254}
+  36000 docs, 67,485,729 tokens, 27736 planted + 0 natural probes, mix {'code': 32072448, 'wiki': 20707739, 'digest': 2419619, 'chat': 5403799}
+  36500 docs, 67,951,840 tokens, 28109 planted + 0 natural probes, mix {'code': 32072448, 'wiki': 20886060, 'digest': 2467092, 'chat': 5551525}
+  37000 docs, 68,462,603 tokens, 28495 planted + 0 natural probes, mix {'code': 32072448, 'wiki': 21124567, 'digest': 2520493, 'chat': 5663835}
