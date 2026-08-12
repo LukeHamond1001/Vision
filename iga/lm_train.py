@@ -389,7 +389,7 @@ def main():
     ap.add_argument("--lam", type=float, default=0.25,
                     help="drive pay weight (A51 ablation: 0)")
     ap.add_argument("--gate-mode", default="scalar", dest="gate_mode",
-                    choices=["scalar", "position"],
+                    choices=["scalar", "position", "entropy"],
                     help="matrix read gate: scalar per band, or "
                          "per-position learned head (A41 candidate)")
     a = ap.parse_args()
