@@ -1480,6 +1480,41 @@ scale, not blocking this one. Target cost: $15–40 total.
   prove exact under autocast) + instruction-data sourcing +
   memoized-shard CPU prep.
 
+- **A50** (2026-08-12 01:20 UTC, PRE-REGISTERED before v8.0
+  tables — adversarial external review + accepted corrections):
+  an independent critic read A20-A49 + the code and delivered
+  findings the campaign accepts: (1) the 0.980 "perfect table"
+  is template-grammar recall paid for by an explicit aux loss,
+  and NO plain-transformer null has run at emergent scale —
+  lesions measure reliance, not counterfactual value; (2)
+  width-LR and curriculum "laws" are n=1 contrasts; width-LR +
+  read-reliance are jointly unfalsifiable as posed (the
+  discriminating cell — position gates at 1e-4 — never ran);
+  (3) banked-best numbers carry winner's-curse inflation
+  (argmax over ~65 evals on the reporting shard); (4) CODE
+  FINDING: drive's scheduler is INERT on all real-data runs
+  (UltraConveyor built without bias_fn) and the drive has never
+  been ablated in the LM campaign; (5) 55% of v8.0 params are
+  untied embeddings; no RoPE; (6) the A47 gate had no decision
+  rule and the "usable model" goal is dominated by free
+  same-size industrial models with no usefulness instruments in
+  the harness. ACCEPTED CORRECTIONS, registered now: **A47
+  DECISION RULE** — the organ read is the NATURAL 2-8k gap bin
+  (n≈409): PRIMARY PASS requires full-model p(ans) to exceed
+  the lesion-ALL baseline by ≥50% relative AND the 2-8k top1 to
+  exceed lesioned top1 by ≥5 points; in-window natural bins are
+  explicitly non-evidence for organs (attention's job); if the
+  2-8k read is lesion-invariant, v8.0 scores ORGANS-NULL
+  regardless of how pretty the in-window tables are. **THE
+  TWIN GATE** — before any v10 spend: v8.0T, arch=transformer,
+  byte-identical shard (deterministic re-prep), same steps/lr/
+  losses, ~$21; the organ program's value = hybrid minus twin,
+  measured for the first time. **DRIVE ABLATION** queued at
+  debug tier (lam=0 arm) + the inert-bias_fn finding to be
+  either fixed-and-tested or ledgered as intended-off. v10
+  sizing decision (2-3x step vs 5-16x) deferred until twin +
+  v8.0 verdicts are both in; user owns the call.
+
 ## Status
 
 Assembled scene-free (A6), no registered runs. Weaver (`iga/lm_gen.py`),
