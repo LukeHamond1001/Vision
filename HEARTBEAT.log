@@ -79,3 +79,4 @@
 23:30:27 prep: mix shard built (12000002860 bytes, raw deleted)
 23:30:35 capacity canary passed pre-train
 23:45:44 training heartbeat: step  3750  ce 4.666  loss 4.667  holds 64912  78,317 tok/s  [fid:3=+0.950 fid:4=+0.102 fid:5=-0.036 b0=+0.002 b1=+0.000 b2=+0.001 b3=+0.001]
+00:00:49 training heartbeat: step  8150  ce 3.850  loss 3.850  holds 140264  78,826 tok/s  [fid:3=+0.984 fid:4=+0.121 fid:5=-0.060 b0=+0.004 b1=+0.003 b2=+0.001 b3=+0.002]
