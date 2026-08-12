@@ -8,3 +8,4 @@
 22:16:08 code extraction done (3137786699B, skipped 0/50)
 22:18:55 sources ready
 22:18:59 prep launched (pid 909)
+22:19:49 prep beat:   24500 docs, 51,843,067 tokens, 19004 planted + 0 natural probes, mix {'code': 27746549, 
