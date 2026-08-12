@@ -25,3 +25,4 @@
 22:31:13 prep beat:   455000 docs, 788,304,478 tokens, 352261 planted + 0 natural probes, mix {'code': 5198716
 22:32:01 prep beat:   483500 docs, 836,934,243 tokens, 374264 planted + 0 natural probes, mix {'code': 5520027
 22:37:05 prep beat:   669500 docs, 1,154,486,063 tokens, 518273 planted + 0 natural probes, mix {'code': 76360
+22:42:11 RMIX READY (2400004114B train, 14004832B eval)
