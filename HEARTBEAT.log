@@ -172,3 +172,4 @@
 20:37:23 training heartbeat: step 365300  ce 2.070  loss 2.071  holds 5946200  78,870 tok/s  [fid:3=+0.995 fid:4=+0.952 fid:5=+0.115 b0=+0.967 b1=+0.727 b2=+0.001 b3=+0.002]
 20:39:50 training complete (rc=0)
 20:39:59 evaluation complete: v80.pt
+20:40:14 evaluation complete: v80.pt.best.pt

@@ -43,3 +43,22 @@ Therailie
 
 
 
+===== EVAL v80.pt.best.pt =====
+/workspace/iga-scale/iga/lm_eval.py:145: FutureWarning: You are using `torch.load` with `weights_only=False` (the current default value), which uses the default pickle module implicitly. It is possible to construct malicious pickle data which will execute arbitrary code during unpickling (See https://github.com/pytorch/pytorch/blob/main/SECURITY.md#untrusted-models for more details). In a future release, the default value for `weights_only` will be flipped to `True`. This limits the functions that could be executed during unpickling. Arbitrary objects will no longer be allowed to be loaded via this mode unless they are explicitly allowlisted by the user via `torch.serialization.add_safe_globals`. We recommend you start setting `weights_only=True` for any use case where you don't have full control of the loaded file. Please open an issue on GitHub for any issues related to this experimental feature.
+  state = torch.load(a.ckpt, map_location=a.device)
+loaded v80.pt.best.pt (step 36000), 61,425,158 params
+
+== recall at distance (full model) ==
+  gap          0-256  p(ans) 0.663  top1 0.69  n=16
+  gap       256-2048  p(ans) 0.191  top1 0.32  n=66
+  gap     2048-16384  p(ans) 0.099  top1 0.16  n=32
+  gap 16384-1000000000  p(ans) 0.106  top1 0.50  n=2
+
+== recall at distance (bands 4-6 lesioned) ==
+  gap          0-256  p(ans) 0.657  top1 0.69  n=16
+  gap       256-2048  p(ans) 0.179  top1 0.30  n=66
+  gap     2048-16384  p(ans) 0.096  top1 0.12  n=32
+  gap 16384-1000000000  p(ans) 0.103  top1 0.50  n=2
+
+== talk (one agent turn, greedy) ==
+not_1.*?)<eot_model>
