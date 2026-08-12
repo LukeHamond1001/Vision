@@ -91,8 +91,16 @@ def process_chunk(model, drive, conveyor, T, device, opt=None,
             y.reshape(-1))
         lp = torch.log_softmax(logits_a.float().detach(), dim=-1)
         H = -(lp.exp() * lp).sum(-1)                # [B, T]
+        del lp
         model.entropy_gate = torch.sigmoid(
             model.ent_a * (H - model.ent_tau))
+        if opt is not None:
+            # free the blind graph BEFORE the real pass (16GB cards):
+            # gradients accumulate; the opt block must not re-zero
+            opt.zero_grad()
+            ce_blind.backward()
+        ce_blind = ce_blind.detach()
+        del logits_a
         model._st = real_st
     with ac:
         logits, model._st, ticks = model(x, model._st, None)
@@ -100,7 +108,7 @@ def process_chunk(model, drive, conveyor, T, device, opt=None,
         model.entropy_gate = None
     ce = torch.nn.functional.cross_entropy(
         logits.float().reshape(-1, model.vocab_size), y.reshape(-1))
-    losses = [ce] if ce_blind is None else [ce, ce_blind]
+    losses = [ce]
     fid_terms = []
     for k in range(1, len(ticks)):
         for _, fid in ticks[k]:
@@ -139,7 +147,8 @@ def process_chunk(model, drive, conveyor, T, device, opt=None,
     loss = torch.stack([(l if l.dim() == 0 else l.mean()).float()
                         for l in losses]).sum()
     if opt is not None:
-        opt.zero_grad()
+        if ce_blind is None:
+            opt.zero_grad()          # entropy branch already zeroed
         loss.backward()
         torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
         opt.step()

@@ -53,8 +53,8 @@ hb "shard found ($(stat -c%s /workspace/rmix/mix_r1/tokens.bin)B) — training"
 ( while true; do sleep 900; tail -40 train.log > train_tail.log; \
     hb "training heartbeat: $(tail -1 train_tail.log)"; done ) &
 HBPID=$!
-python -m iga.lm_train run --data /workspace/rmix/mix_r1 --d 256 --lanes 16 \
-  --chunk 1024 --steps 75000 --talk tick --arch hybrid --device cuda \
+python -m iga.lm_train run --data /workspace/rmix/mix_r1 --d 256 --lanes 8 \
+  --chunk 1024 --steps 150000 --talk tick --arch hybrid --device cuda \
   --store matrix --xl off --lr 1.5e-4 --gate-mode entropy \
   --eval-data /workspace/rmix/mix_r1_eval \
   --ckpt r2.pt > train.log 2>&1
