@@ -1,2 +1,3 @@
 23:27:44 boot r2-ENTROPY-READS trainer NVIDIA RTX A4500
 23:27:55 shard found (2400004114B) — training
+23:42:59 training heartbeat: step  2750  ce 4.781  loss 4.792  holds 18408  26,006 tok/s  [fid:3=+0.916 fid:4=+0.119 fid:5=-0.057 b0=+0.018 b1=+0.044 b2=+0.024 b3=+0.010]
