@@ -156,6 +156,18 @@ class HybridLM(nn.Module):
             # gate_init): asks can open the vault while chatter
             # keeps it shut. Same protection at init.
             self.gate_mode = gate_mode
+            if gate_mode == "entropy":
+                # A51 (R2): metamemory — reads flow only where the
+                # BLIND path is uncertain. The trainer runs a blind
+                # pass (reads off, throwaway state), computes
+                # per-position entropy H, and sets entropy_gate =
+                # sigmoid(ent_a*(H - ent_tau)) before the real pass.
+                # The crutch loop is broken twice: blind CE trains
+                # the base every chunk, and confident positions get
+                # no read at all.
+                self.ent_a = nn.Parameter(torch.tensor(1.0))
+                self.ent_tau = nn.Parameter(torch.tensor(2.0))
+                self.entropy_gate = None
             if gate_mode == "position":
                 self.read_gate_pos = nn.ModuleDict()
                 for k in self.bands:
@@ -265,9 +277,16 @@ class HybridLM(nn.Module):
                 for k in self.bands:
                     if k in self.lesioned:
                         continue
-                    if getattr(self, "gate_mode", "scalar") == "position":
+                    gm = getattr(self, "gate_mode", "scalar")
+                    if gm == "position":
                         # [B, T, 1] — each position prices its own read
                         g = torch.sigmoid(self.read_gate_pos[str(k)](text))
+                    elif gm == "entropy":
+                        eg = getattr(self, "entropy_gate", None)
+                        if eg is None:
+                            g = 0.0          # no uncertainty signal: blind
+                        else:
+                            g = eg.unsqueeze(-1)     # [B, T, 1]
                     else:
                         g = torch.sigmoid(self.read_gate[str(k)])
                     r = r + g * self.mats[str(k)].read(st["M"][k], text)

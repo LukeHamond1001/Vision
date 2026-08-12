@@ -118,9 +118,16 @@ def mine_identifier_probes(code, tok, base_pos, min_gap_chars=1000,
     for name, dpos in defs.items():
         if len(events) >= max_probes:
             break
-        uses = [m.start() for m in
-                re.finditer(r"\b%s\b" % re.escape(name), code)
-                if m.start() >= dpos + min_gap_chars]
+        mentions = [m.start() for m in
+                    re.finditer(r"\b%s\b" % re.escape(name), code)]
+        # A51 instrument correction: a probe only demands MEMORY if no
+        # mention of the identifier sits in the visible window before
+        # the use (v8.0 audit: 72% of def-gap probes were in-window
+        # repeats). clean_window is chars, ~4 chars/token.
+        clean_w = 4500
+        uses = [u for u in mentions
+                if u >= dpos + min_gap_chars
+                and not any(u - clean_w < mm < u for mm in mentions)]
         if not uses:
             continue
         upos = uses[0] if rng is None else rng.choice(uses)

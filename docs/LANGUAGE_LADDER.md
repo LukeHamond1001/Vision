@@ -1544,6 +1544,33 @@ scale, not blocking this one. Target cost: $15–40 total.
   decides whether even the core's ceiling numbers need the
   organs at all; v10 remains HELD on the twin per A50.
 
+- **A51** (2026-08-12 ~23:30 UTC, registered + launched on user
+  go — the PARALLEL READ-ORGAN NIGHT + drive ablation; twin
+  cancelled by user directive, lesion evidence substitutes):
+  three simultaneous debug runs. **R1 — GATED READS ON CODE**
+  (d=256, T=1024, 1.2B-token code mini-mix, lr 1.5e-4, scalar
+  gates OPENED to sigmoid(-2)=0.12): the distribution-symmetry
+  bet — on code, memory demand is native to the LM loss
+  everywhere, so reads should train as a skill, not the
+  train-only ask-position crutch that rotted every chat-era
+  activation. **R2 — ENTROPY READS (metamemory)** (same shard/
+  config, gate_mode=entropy): blind pass on a throwaway state
+  copy trains base CE every chunk + supplies per-position
+  entropy; reads flow only where the blind path is uncertain
+  (g = sigmoid(a(H-tau)), learnable); the crutch loop is broken
+  twice (blind CE maintains the base; confident positions get
+  no read). Law-tested: bands tick once per chunk, ledger
+  exact, blind-fallback at eval (caveat: pod eval reports
+  BLIND numbers; the A51 read runs two-pass in the local
+  autopsy). **ABL — DRIVE ABLATION** (v6.1 config exactly,
+  --lam 0): does binding emerge without pay? Comparator =
+  v6.1's 0.774/88%. INSTRUMENT: the corrected miner (clean-use
+  filter — no mention within ~4.5k chars before the use) ships
+  in both R shards; the A51 registered read = TRUE-memory
+  natural probes, full vs lesion-ALL, same +50%-relative /
+  +5pt-top1 bar as A50. Prediction registered: R2 > R1 > null;
+  ablation binds fine (pay not necessary). ~$6 total.
+
 ## Status
 
 Assembled scene-free (A6), no registered runs. Weaver (`iga/lm_gen.py`),

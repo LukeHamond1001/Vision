@@ -184,5 +184,30 @@ class TestJsonlSource(unittest.TestCase):
             shutil.rmtree(tmp, ignore_errors=True)
 
 
+class TestEntropyReads(unittest.TestCase):
+    def test_entropy_gate_trains_and_ticks_once(self):
+        # A51 R2: two-pass metamemory — bands tick ONCE per chunk
+        # (blind pass runs on a throwaway state), blind CE trains,
+        # gate params learn, eval falls back to blind (gate None)
+        import torch as t
+        from iga.lm_train import train
+        model, drive, vocab, ce0, ce1 = train(
+            d=32, lanes=2, T=128, steps=6, device="cpu",
+            log_every=100, arch="hybrid", store="matrix",
+            use_xl=False, gate_mode="entropy", lr=1e-3)
+        self.assertTrue(drive.audit()["telescoping_exact"])
+        self.assertEqual(model._st["chunk"], 6)      # once per chunk
+        self.assertIsNone(model.entropy_gate)
+        self.assertTrue(model.ent_a.requires_grad)
+        m = model
+        m.eval()
+        st = m.init_state(1, "cpu")
+        x = t.randint(0, vocab.get_vocab_size()
+                      if hasattr(vocab, "get_vocab_size") else 40,
+                      (1, 128))
+        logits, st, _ = m(x, st, None)               # blind eval OK
+        self.assertEqual(logits.shape[1], 128)
+
+
 if __name__ == "__main__":
     unittest.main()

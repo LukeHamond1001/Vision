@@ -57,11 +57,50 @@ def process_chunk(model, drive, conveyor, T, device, opt=None,
     import contextlib
     ac = (torch.autocast(dev_type, dtype=torch.bfloat16)
           if bf16 else contextlib.nullcontext())
+    ce_blind = None
+    if getattr(model, "gate_mode", "") == "entropy" and \
+            model.training:
+        # A51 R2 metamemory: blind pass on a THROWAWAY state copy
+        # (bands tick once per chunk — on the real pass only). Blind
+        # CE trains every chunk so reads can never hollow the base;
+        # its entropy decides where reads flow on the real pass.
+        def _st_copy(st):
+            out = {}
+            for k, v in st.items():
+                if isinstance(v, dict):
+                    out[k] = {kk: (vv.detach().clone()
+                                   if torch.is_tensor(vv) else vv)
+                              for kk, vv in v.items()}
+                elif torch.is_tensor(v):
+                    out[k] = v.detach().clone()
+                elif isinstance(v, list):
+                    out[k] = [t.detach().clone()
+                              if torch.is_tensor(t) else t for t in v]
+                else:
+                    out[k] = v
+            return out
+        real_st = model._st
+        model.entropy_gate = None
+        model._st = _st_copy(real_st)   # detached throwaway (A38's
+        # write-credit graph on M must not leak into the blind pass)
+        with ac:
+            logits_a, _, _ = model(x, model._st, None)
+        model.pop_write_cost(); model.pop_recon()   # discard pass-A aux
+        ce_blind = torch.nn.functional.cross_entropy(
+            logits_a.float().reshape(-1, model.vocab_size),
+            y.reshape(-1))
+        lp = torch.log_softmax(logits_a.float().detach(), dim=-1)
+        H = -(lp.exp() * lp).sum(-1)                # [B, T]
+        model.entropy_gate = torch.sigmoid(
+            model.ent_a * (H - model.ent_tau))
+        model._st = real_st
     with ac:
         logits, model._st, ticks = model(x, model._st, None)
+    if getattr(model, "gate_mode", "") == "entropy":
+        model.entropy_gate = None
     ce = torch.nn.functional.cross_entropy(
         logits.float().reshape(-1, model.vocab_size), y.reshape(-1))
-    losses = [ce]
+    losses = [ce] if ce_blind is None else [ce, ce_blind]
     fid_terms = []
     for k in range(1, len(ticks)):
         for _, fid in ticks[k]:
@@ -165,7 +204,7 @@ def train(d=64, lanes=4, T=256, steps=40, seed=0, device="cpu",
           resume=None, offset_frac=0.0, store="vector", eval_data=None,
           use_xl=True, gate_init=-4.0, read_drop=0.5,
           read_drop_end=None, gate_mode="scalar", lr=3e-4,
-          bf16=False):
+          bf16=False, lam=0.25):
     """resume (A26): path to a checkpoint — model + optimizer + drive
     EMAs/records/minted/vetoes continue; step numbering continues.
     offset_frac: start each conveyor lane this far into its segment
@@ -176,7 +215,7 @@ def train(d=64, lanes=4, T=256, steps=40, seed=0, device="cpu",
     if "cuda" in str(device):
         torch.set_float32_matmul_precision("high")  # TF32 (A12)
     torch.manual_seed(seed)  # reproducible init (A14)
-    drive = Drive(n_lanes=lanes, seed=seed, constants=constants,
+    drive = Drive(n_lanes=lanes, lam=lam, seed=seed, constants=constants,
                   imagination_absent=(arch == "transformer"),
                   absent_bands={1, 2} if arch == "hybrid" else ())
     if data:  # prepared real-data shard (A8): UltraChat conveyor
@@ -347,6 +386,8 @@ def main():
                     help="linear anneal target for read-dropout (A39)")
     ap.add_argument("--lr", type=float, default=3e-4)
     ap.add_argument("--bf16", action="store_true")
+    ap.add_argument("--lam", type=float, default=0.25,
+                    help="drive pay weight (A51 ablation: 0)")
     ap.add_argument("--gate-mode", default="scalar", dest="gate_mode",
                     choices=["scalar", "position"],
                     help="matrix read gate: scalar per band, or "
@@ -366,7 +407,7 @@ def main():
               eval_data=a.eval_data, use_xl=(a.xl == "on"),
               gate_init=a.gate_init, read_drop=a.read_drop,
               read_drop_end=a.read_drop_end, gate_mode=a.gate_mode,
-              lr=a.lr, bf16=a.bf16)
+              lr=a.lr, bf16=a.bf16, lam=a.lam)
 
 
 if __name__ == "__main__":
