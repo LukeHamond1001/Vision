@@ -1515,6 +1515,35 @@ scale, not blocking this one. Target cost: $15–40 total.
   sizing decision (2-3x step vs 5-16x) deferred until twin +
   v8.0 verdicts are both in; user owns the call.
 
+- **A47 VERDICT** (2026-08-12 21:50 UTC, v8.0 CLEAN rc=0, scored
+  per pre-registered A50 rule): **ORGANS-NULL — and the natural
+  battery confessed under interrogation.** A50 organ read:
+  nat 2-8k full 0.220/31% (n=62) vs lesion-ALL 0.218/31% —
+  lesion-invariant, FAIL. Post-hoc instrument audit explains the
+  above-floor level: 72% of gap≥2048 natural probes (714/991)
+  have the answer token VISIBLE in the preceding 2048-token
+  window — identifiers repeat, so miner gap (distance from
+  DEFINITION) ≠ memory demand (distance from nearest mention).
+  On the 277 TRUE beyond-window probes: full 0.013/3%,
+  lesion-ALL 0.012/3% (n=30 scored) — CHANCE, invariant. v8.0
+  has no beyond-window memory from any component. INSTRUMENT
+  CORRECTION (permanent): the miner must exclude uses with
+  in-window intermediate mentions; the true-memory subset is
+  the only valid organ read. WHAT HELD: planted same-window at
+  T=2048 in the banked best = **0.930 / top1 1.00** (n=96) —
+  the core's binding is ceiling-class at 4x the certified
+  window on real mixed data (SECONDARY strong). WHAT ROTTED:
+  the final is destroyed (pod panels ~0.02-0.03 everywhere);
+  best banked at step 36,000 of 366,000 — the model peaked at
+  10% of the run and bled for 90% at lr 7e-5/d=512 with CE
+  excellent throughout (1.45 final): width-LR data point 3, now
+  entangled with DURATION (366k steps vs 135k in all prior
+  runs). Gates at init; nothing recruited. Campaign state:
+  the A50 critique's predictions stand confirmed by
+  pre-registered scoring — the twin (v8.0T, launching) now
+  decides whether even the core's ceiling numbers need the
+  organs at all; v10 remains HELD on the twin per A50.
+
 ## Status
 
 Assembled scene-free (A6), no registered runs. Weaver (`iga/lm_gen.py`),
