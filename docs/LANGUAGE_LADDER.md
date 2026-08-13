@@ -1615,6 +1615,35 @@ scale, not blocking this one. Target cost: $15–40 total.
   — prediction: TM-null likewise; its value reduces to the
   metamemory gate behavior itself.
 
+- **A51-R2 VERDICT** (2026-08-13, r2 CLEAN rc=0, 150k steps,
+  entropy gate, A4500): **A51 bar FAIL on retrieval — third
+  consecutive TM-null — but METAMEMORY IS CERTIFIED and the
+  diagnosis sharpens.** TRUE-memory (n=51 scored / 928 in shard):
+  best 0.010/2%, final 0.019/2% — gated == blind == lesion-ALL ==
+  lesion-b3 to the third decimal. Chance, lesion-invariant,
+  matching v8.0 and R1. THE GATE LEARNED THE RIGHT FUNCTION:
+  ent_a 1.0→0.556, ent_tau 2.0→3.09 (soft gate centered H≈3.1);
+  gate-at-probe orders every bin by true memory-need — pl-same
+  0.21 (SHUT where attention has the answer), pl-cross 0.48, TM
+  0.57, pl-strad 0.69 (OPEN just-beyond-window). Mean gate
+  0.47→0.43: reads flowed on ~half of all positions the whole
+  run, zero rot, binding 0.83→0.90/0.92 still climbing at the
+  wire — REPLICATES R1's amended read-rot law with a distinct
+  gate mechanism (n=2): rot was data asymmetry, not reads.
+  Blind-vs-gated deltas ≈0 in EVERY bin (−0.009..+0.002) — even
+  at pl-strad with the gate 0.69 open, the store returns nothing.
+  Conclusion: WHEN-TO-READ IS SOLVED (the model knows when it
+  doesn't know); WHAT-TO-FETCH is the sole broken link —
+  addressing. The A51 night closes: pay = amplifier (ABL), rot =
+  data (R1), demand = works (R2), retrieval = null ×3 runs.
+  R4 token-keyed storage is the registered candidate aimed
+  squarely at addressing; build gated on user go. (Instrument
+  note: same_recent >1.0 overshoots in entropy mode traced to
+  holdout probe-set misalignment between evals — accumulator
+  artifact; autopsy tables authoritative. On-pod lm_eval crashed
+  on missing --gate-mode entropy; superseded by local two-pass
+  autopsy.)
+
 ## Status
 
 Assembled scene-free (A6), no registered runs. Weaver (`iga/lm_gen.py`),
