@@ -1688,6 +1688,42 @@ scale, not blocking this one. Target cost: $15–40 total.
   Suite 79/79. Throughput datum: 29.3k tok/s on A4500 (write-
   heavy vs R1's config) -> ~11.5h, ~$2.9, above the $1.5 estimate.
 
+- **A52-R4 VERDICT** (2026-08-13 19:18 UTC pod 3 CLEAN rc=0, 75k
+  steps, A4500, $1.61): **A51 bar FAIL — fourth TM-null — but the
+  most diagnostic failure yet: reads finally DO something, and the
+  failure has a named incentive bug.** TRUE-memory (n=51/928):
+  best 0.017/2%, final 0.013/0% — full == lesion-ALL, chance.
+  TWO FIRSTS: (1) first lesion-sensitive read effect of the
+  campaign — lesion b3 costs pl-same 0.040 p(ans) (0.806->0.766;
+  lesion-ALL 0.771 vs full 0.806, +4.5% rel), where R1/R2 lesion
+  tables were identical to 3 decimals. The token-keyed store IS
+  read and used — as a SHORT-RANGE GLUE ECHO. (2) Named cause:
+  tok_u GAMED THE RECON LOSS — the s-weighted write-fidelity term
+  is minimized by pushing strength onto frequent, easy, constantly
+  rewritten keys. tok_u TOP-40 = 'the', '=', '.', newlines (glue);
+  identifiers suppressed; sharpening best->final (std 0.68->0.84)
+  while the read effect SHRANK (+0.035->+0.008) and g3 drifted
+  down (0.116->0.110). qmix collapsed to offsets 1-2 (echo query,
+  not bridge search — downstream of tok_u since read-mix logits =
+  qmix_r + tok_u[t]). Selectivity optimized STORABILITY, not
+  RETRIEVABILITY: the exact-addressing machinery (law-tested,
+  betas 0.99) was never pointed at identifiers. In-flight note:
+  cross-boundary b1 EMA 0.442 = campaign record, reached ~6x
+  faster than R2; b0 0.955; elevation of strad/cross bins vs R2
+  is lesion-INSENSITIVE (trunk, not reads) — run-variance until
+  replicated. Wire-to-wire stable (rot law n=3). Ops: pod 1
+  vanished silently (hb hardened), pod 2 NaN (convex-write fix +
+  saturation law), pod 3 clean at 33->53k tok/s.
+  **R4b REGISTERED (one variable): detach the recon weighting**
+  (w = (s/sum s).detach() in write_keyed) — kills the gaming
+  gradient; tok_u then trains ONLY on read-usefulness (dense:
+  read-mix logits price every window token by whether its slot
+  helps LM; plus A38 next-chunk credit). Prediction: tok_u
+  inverts (identifiers up), qmix broadens, pl-same read effect
+  survives, and the TM/strad bins are the test of whether
+  correctly-aimed discrete addressing retrieves. Same config
+  otherwise; ~$1.7 on the cached shard.
+
 ## Status
 
 Assembled scene-free (A6), no registered runs. Weaver (`iga/lm_gen.py`),
