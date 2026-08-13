@@ -42,3 +42,4 @@
 09:30:51 training heartbeat: step 126650  ce 1.924  loss 1.929  holds 392064  28,700 tok/s  [fid:3=+0.977 fid:4=+0.766 fid:5=+0.120 b0=+0.846 b1=+0.493 b2=+0.005 b3=+0.004]
 09:45:56 training heartbeat: step 129750  ce 2.363  loss 2.369  holds 404656  28,686 tok/s  [fid:3=+0.975 fid:4=+0.780 fid:5=+0.122 b0=+0.894 b1=+0.482 b2=+0.003 b3=+0.007]
 10:01:01 training heartbeat: step 132850  ce 2.139  loss 2.141  holds 417248  28,672 tok/s  [fid:3=+0.983 fid:4=+0.804 fid:5=+0.122 b0=+0.744 b1=+0.469 b2=+0.014 b3=+0.010]
+10:16:06 training heartbeat: step 135950  ce 2.080  loss 2.083  holds 429848  28,656 tok/s  [fid:3=+0.977 fid:4=+0.775 fid:5=+0.122 b0=+0.842 b1=+0.428 b2=+0.002 b3=+0.004]
