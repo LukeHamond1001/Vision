@@ -108,7 +108,14 @@ class BandMatrix(nn.Module):
         M = (1 - self.decay) * M + torch.sigmoid(self.beta) * \
             upd / denom.unsqueeze(-1).unsqueeze(-1)
         back = torch.einsum("bij,btj->bti", M, K)
-        w = s / (s.sum(dim=1, keepdim=True) + 1e-6)
+        # A52b: recon weights DETACHED from the strength path. R4
+        # proved tok_u games an s-weighted fidelity loss: pushing
+        # strength onto frequent easy keys ('the', '=', newlines)
+        # minimizes weighted recon while making the store a glue
+        # echo. Detached, recon still measures fidelity where mass
+        # actually sits, but tok_u learns ONLY from read-usefulness
+        # (read-mix logits every position + A38 next-chunk credit).
+        w = (s / (s.sum(dim=1, keepdim=True) + 1e-6)).detach()
         recon = ((1 - nn.functional.cosine_similarity(back, v, dim=-1))
                  * w).sum(dim=1).mean()
         return M, recon

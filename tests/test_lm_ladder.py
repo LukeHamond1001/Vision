@@ -759,6 +759,39 @@ class TestTokenKeyed(unittest.TestCase):
         M1, _ = mat.write_keyed(M0, K, V, torch.zeros(1, 1))
         self.assertLess(float(M1.abs().max()), 1e-7)
 
+    def test_keyed_recon_cannot_train_selectivity(self):
+        # A52b anti-gaming law: the recon loss must carry NO
+        # gradient into tok_u through the recon WEIGHTS — R4's
+        # tok_u minimized s-weighted fidelity by storing glue
+        # ('the', '=') and suppressing identifiers. tok_u may
+        # learn only from read-usefulness. The strength path into
+        # the WRITE itself (s scaling the update) keeps gradient:
+        # that one is priced by next-chunk read credit (A38).
+        torch.manual_seed(3)
+        from iga.lm_hybrid import HybridLM
+        m = HybridLM(64, d=32, max_T=16, store="matrix",
+                     use_xl=False, keyed="token")
+        E = torch.nn.functional.normalize(
+            m.embed.weight, dim=-1).detach()
+        toks = torch.tensor([[5, 9, 5, 11]])
+        K = E[toks]
+        V = torch.randn(1, 4, 32)
+        s = torch.sigmoid(m.tok_u[toks])
+        M0 = torch.zeros(1, 32, 32)
+        _, recon = m.mats["3"].write_keyed(M0, K, V, s)
+        recon.backward()
+        g = m.tok_u.grad
+        self.assertIsNotNone(g)        # write-path gradient flows...
+        # ...but re-run with the write path cut: recon-weight-only
+        # gradient must be exactly zero
+        m.tok_u.grad = None
+        s2 = torch.sigmoid(m.tok_u[toks])
+        M1, recon2 = m.mats["3"].write_keyed(
+            M0, K, V, s2 * 0 + s2.detach())   # weights see s2 only
+        recon2.backward()
+        self.assertTrue(m.tok_u.grad is None or
+                        float(m.tok_u.grad.abs().max()) == 0.0)
+
     def test_keyed_trains_end_to_end_and_ledger_exact(self):
         # 6 CPU steps through the full trainer: exact ledger, one
         # band tick per chunk, and the selectivity params exist,
