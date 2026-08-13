@@ -15,11 +15,16 @@ git checkout -b results-r4
 
 hb() {
   echo "$(date -u '+%H:%M:%S') $1" >> HEARTBEAT.log
-  for f in HEARTBEAT.log train_tail.log eval_results.txt r4.pt.trace.jsonl; do
+  for f in HEARTBEAT.log train_tail.log eval_results.txt \
+           r4.pt.trace.jsonl canary.log; do
     git add -f "$f" 2>/dev/null || true
   done
   git commit -qm "hb: $1" 2>/dev/null || true
-  git push -qf "$PUSH" results-r4 2>/dev/null || true
+  # push retries: a silently-dropped abort heartbeat cost us the
+  # post-mortem on the first r4 pod (booted, vanished, no reason)
+  git push -qf "$PUSH" results-r4 2>/dev/null || \
+    { sleep 15; git push -qf "$PUSH" results-r4 2>/dev/null; } || \
+    { sleep 45; git push -qf "$PUSH" results-r4 2>/dev/null; } || true
 }
 hb "boot r4-TOKEN-KEYED trainer $(nvidia-smi --query-gpu=name --format=csv,noheader 2>/dev/null | head -1)"
 pip install -q numpy tokenizers >> /dev/null 2>&1
