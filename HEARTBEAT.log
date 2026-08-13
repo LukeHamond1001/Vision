@@ -2,3 +2,4 @@
 23:27:55 shard found (2400004114B) — training
 23:42:59 training heartbeat: step  2750  ce 4.781  loss 4.792  holds 18408  26,006 tok/s  [fid:3=+0.916 fid:4=+0.119 fid:5=-0.057 b0=+0.018 b1=+0.044 b2=+0.024 b3=+0.010]
 23:58:04 training heartbeat: step  5950  ce 4.487  loss 4.502  holds 28936  27,512 tok/s  [fid:3=+0.925 fid:4=+0.126 fid:5=-0.022 b0=+0.003 b1=+0.003 b2=+0.003 b3=+0.003]
+00:13:08 training heartbeat: step  9400  ce 4.739  loss 4.787  holds 30880  28,684 tok/s  [fid:3=+0.921 fid:4=+0.102 fid:5=+0.030 b0=+0.002 b1=+0.002 b2=+0.001 b3=+0.001]
