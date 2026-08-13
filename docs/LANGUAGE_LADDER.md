@@ -1644,6 +1644,34 @@ scale, not blocking this one. Target cost: $15–40 total.
   on missing --gate-mode entropy; superseded by local two-pass
   autopsy.)
 
+- **A52 candidate staged (R4: TOKEN-KEYED STORAGE)** (2026-08-13):
+  the addressing fix for TM-null ×3. Mechanism (`--keyed token`,
+  default off; otherwise R1's config IDENTICAL — one variable):
+  (1) WRITES: one pair per POSITION — key = the stored token's own
+  unit embedding (detached; the address is the token's IDENTITY,
+  not a learned projection), value = wv(h_i), strength =
+  sigmoid(tok_u[t]) with tok_u in R^vocab learning which token
+  TYPES earn storage (identifiers vs glue). Replaces the
+  one-softmax-gist-per-chunk write. (2) READS query the SAME
+  space: q = unit mix of the last 8 tokens' embeddings, weights
+  softmax(qmix_r + tok_u[t_j-r]) — a shared rare token (arg name,
+  object) bridges use site to definition site with zero learned
+  alignment. (3) Chunkwise-parallel delta rule (predictions vs
+  chunk-initial M); A38 two-pass credit preserved (recon pass
+  this chunk, cloned-param store pass for next-chunk read
+  credit). BUILD DISCOVERY: the old write path stored ONE blended
+  gist per chunk per band — specific items were never separately
+  written, so the d/(2 ln d) capacity argument was moot; the R4
+  diagnosis covers both the soup keys and this bottleneck. Law
+  tests: exact-address recall cos>0.99 with 3x norm separation on
+  a foreign key; s=0 leaves no trace; 6-step e2e ledger exact,
+  tok_u moves. Suite 78/78. lm_eval gains --keyed and the missing
+  'entropy' gate-mode choice (R2 pod-eval crash cause). Bar
+  unchanged (A51): TM +50% rel p(ans) AND +5pt top1, full vs
+  lesion-ALL. Registered prediction: the effect must arrive via
+  bridge tokens (the instrument scores first-token onset, not
+  completion), so partial credit = TM off chance without the bar.
+
 ## Status
 
 Assembled scene-free (A6), no registered runs. Weaver (`iga/lm_gen.py`),

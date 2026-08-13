@@ -213,7 +213,7 @@ def train(d=64, lanes=4, T=256, steps=40, seed=0, device="cpu",
           resume=None, offset_frac=0.0, store="vector", eval_data=None,
           use_xl=True, gate_init=-4.0, read_drop=0.5,
           read_drop_end=None, gate_mode="scalar", lr=3e-4,
-          bf16=False, lam=0.25):
+          bf16=False, lam=0.25, keyed=None):
     """resume (A26): path to a checkpoint — model + optimizer + drive
     EMAs/records/minted/vetoes continue; step numbering continues.
     offset_frac: start each conveyor lane this far into its segment
@@ -246,8 +246,8 @@ def train(d=64, lanes=4, T=256, steps=40, seed=0, device="cpu",
         from .lm_hybrid import HybridLM
         model = HybridLM(vocab_size, d=d, max_T=T, store=store,
                          use_xl=use_xl, gate_init=gate_init,
-                         read_drop=read_drop,
-                         gate_mode=gate_mode).to(device)
+                         read_drop=read_drop, gate_mode=gate_mode,
+                         keyed=keyed).to(device)
         drive.bin_band = {0: 3, 1: 3, 2: 4, 3: 5}  # carry bands (A19)
     else:
         model = BandLM(vocab_size, d=d, talk=talk,
@@ -401,6 +401,10 @@ def main():
                     choices=["scalar", "position", "entropy"],
                     help="matrix read gate: scalar per band, or "
                          "per-position learned head (A41 candidate)")
+    ap.add_argument("--keyed", default=None, choices=["token"],
+                    help="A52 (R4): token-keyed storage — per-"
+                         "position writes keyed by the token's own "
+                         "embedding; reads query the same space")
     a = ap.parse_args()
     if a.mode == "smoke":
         model, drive, vocab, ce0, ce1 = train(d=64, lanes=4, T=256, steps=40,
@@ -416,7 +420,7 @@ def main():
               eval_data=a.eval_data, use_xl=(a.xl == "on"),
               gate_init=a.gate_init, read_drop=a.read_drop,
               read_drop_end=a.read_drop_end, gate_mode=a.gate_mode,
-              lr=a.lr, bf16=a.bf16, lam=a.lam)
+              lr=a.lr, bf16=a.bf16, lam=a.lam, keyed=a.keyed)
 
 
 if __name__ == "__main__":

@@ -82,6 +82,36 @@ class BandMatrix(nn.Module):
         r = torch.einsum("bij,btj->bti", M, q)
         return self.out(r)
 
+    def write_keyed(self, M, K, V, s, stale_ok=False):
+        """A52 (R4): token-keyed batch write. K [B, T, d] unit keys =
+        DETACHED token embeddings (the address is the token's
+        identity, not a learned projection); V [B, T, d] content
+        (wv applied here); s [B, T] per-pair write strength. One
+        (k, v) pair PER POSITION — replaces the one-gist-per-chunk
+        softmax selection that made item retrieval impossible.
+        Chunkwise-parallel delta rule: predictions against the
+        chunk-initial M (same-chunk same-token writes blend).
+        Returns (M', recon) like write()."""
+        Wv = self.wv.weight.clone() if stale_ok else self.wv.weight
+        v = nn.functional.linear(V, Wv)
+        pred = torch.einsum("bij,btj->bti", M, K)
+        upd = torch.einsum(
+            "bti,btj->bij", s.unsqueeze(-1) * (v - pred), K)
+        M = (1 - self.decay) * M + torch.sigmoid(self.beta) * upd
+        back = torch.einsum("bij,btj->bti", M, K)
+        w = s / (s.sum(dim=1, keepdim=True) + 1e-6)
+        recon = ((1 - nn.functional.cosine_similarity(back, v, dim=-1))
+                 * w).sum(dim=1).mean()
+        return M, recon
+
+    def read_keyed(self, M, q):
+        """q [B, T, d] unit queries built from use-site token
+        embeddings. No wq: write-key space and read-query space are
+        the SAME space by construction — a use of token t addresses
+        exactly the slot written at t."""
+        r = torch.einsum("bij,btj->bti", M, q)
+        return self.out(r)
+
 
 class SlowCell(nn.Module):
     """Gated delta-write with the update gate biased closed at init:
@@ -105,7 +135,7 @@ class HybridLM(nn.Module):
     def __init__(self, vocab_size, d=128, n_layers=6, n_heads=8,
                  max_T=512, talk=None, widths=None, store="vector",
                  use_xl=True, gate_init=-4.0, read_drop=0.5,
-                 gate_mode="scalar"):
+                 gate_mode="scalar", keyed=None):
         super().__init__()
         self.d = d
         self.vocab_size = vocab_size
@@ -139,6 +169,24 @@ class HybridLM(nn.Module):
             self.write_q = nn.ParameterDict(
                 {str(k): nn.Parameter(torch.randn(d) / d ** 0.5)
                  for k in self.bands})
+            # A52 (R4): token-keyed storage. Three consecutive runs
+            # (v8.0, R1, R2) put true-memory retrieval at chance,
+            # lesion-invariant, while R2 proved the DEMAND signal
+            # works. Diagnosis: addressing — learned-soup keys over
+            # one softmax gist per chunk cannot fetch one identifier
+            # among thousands. keyed="token" writes one pair per
+            # POSITION with key = the token's own (detached, unit)
+            # embedding, and reads with a query mixed from the last
+            # QR tokens' embeddings: tok_u learns which token TYPES
+            # are worth storing/asking about (identifiers vs glue),
+            # qmix a recency prior. Same space on both sides — a
+            # shared rare token bridges use site to definition site
+            # with no learned alignment needed.
+            self.keyed = keyed
+            if keyed == "token":
+                self.QR = 8
+                self.tok_u = nn.Parameter(torch.zeros(vocab_size))
+                self.qmix = nn.Parameter(torch.zeros(self.QR))
             # A30: reads gated shut at init (sigmoid(-4) ~ 0.018) —
             # v5.6 proved ungated per-position reads crowd out
             # induction formation; the model must opt in. gate_init
@@ -274,6 +322,24 @@ class HybridLM(nn.Module):
                 # storeless so induction must form)
                 text = x[:, M:]
                 r = torch.zeros_like(text)
+                q_tok = None
+                if getattr(self, "keyed", None) == "token":
+                    # A52: query = unit mix of the last QR tokens'
+                    # embeddings — the same space the write keys
+                    # live in, so no learned alignment is needed
+                    E = nn.functional.normalize(
+                        self.embed.weight, dim=-1).detach()
+                    Tt = tokens.shape[1]
+                    idx = torch.arange(Tt, device=tokens.device)
+                    offs = torch.arange(self.QR, device=tokens.device)
+                    rel = idx.unsqueeze(1) - offs.unsqueeze(0)
+                    wtok = tokens[:, rel.clamp(min=0)]   # [B, T, QR]
+                    lgt = self.qmix + self.tok_u[wtok]
+                    lgt = lgt.masked_fill(
+                        (rel < 0).unsqueeze(0), float("-inf"))
+                    mixw = torch.softmax(lgt, dim=-1)
+                    q_tok = nn.functional.normalize(torch.einsum(
+                        "btr,btrd->btd", mixw, E[wtok]), dim=-1)
                 for k in self.bands:
                     if k in self.lesioned:
                         continue
@@ -289,7 +355,12 @@ class HybridLM(nn.Module):
                             g = eg.unsqueeze(-1)     # [B, T, 1]
                     else:
                         g = torch.sigmoid(self.read_gate[str(k)])
-                    r = r + g * self.mats[str(k)].read(st["M"][k], text)
+                    if q_tok is not None:
+                        r = r + g * self.mats[str(k)].read_keyed(
+                            st["M"][k], q_tok)
+                    else:
+                        r = r + g * self.mats[str(k)].read(
+                            st["M"][k], text)
                 x = torch.cat([x[:, :M], text + r], dim=1)
         st["xl"] = new_xl if self.use_xl else None
         hidden = x[:, M:]                        # text positions
@@ -332,19 +403,40 @@ class HybridLM(nn.Module):
             # the NEXT chunk's — shared nodes would be freed twice.
             recon = []
             h_wr = hidden.detach()
-            for k in self.bands:
-                M_in = st["M"][k].detach()
-                w = torch.softmax(
-                    h_wr @ self.write_q[str(k)] / self.d ** 0.5, dim=1)
-                sel = torch.einsum("bt,btd->bd", w, h_wr)
-                _, rc = self.mats[str(k)].write(M_in, sel)
-                recon.append(rc)
-                w2 = torch.softmax(
-                    h_wr @ self.write_q[str(k)].clone() / self.d ** 0.5,
-                    dim=1)
-                sel2 = torch.einsum("bt,btd->bd", w2, h_wr)
-                st["M"][k], _ = self.mats[str(k)].write(
-                    M_in, sel2, stale_ok=True)
+            if getattr(self, "keyed", None) == "token":
+                # A52: one pair per POSITION, key = the token's own
+                # unit embedding, write strength from tok_u. The A38
+                # two-pass credit structure is preserved: the recon
+                # pass feeds THIS chunk's backward (tok_u learns
+                # write-fidelity), the stale_ok pass with cloned
+                # tok_u feeds the NEXT chunk's read-success backward.
+                E = nn.functional.normalize(
+                    self.embed.weight, dim=-1).detach()
+                Kt = E[tokens]
+                s = torch.sigmoid(self.tok_u[tokens])
+                s2 = torch.sigmoid(self.tok_u.clone()[tokens])
+                for k in self.bands:
+                    M_in = st["M"][k].detach()
+                    _, rc = self.mats[str(k)].write_keyed(
+                        M_in, Kt, h_wr, s)
+                    recon.append(rc)
+                    st["M"][k], _ = self.mats[str(k)].write_keyed(
+                        M_in, Kt, h_wr, s2, stale_ok=True)
+            else:
+                for k in self.bands:
+                    M_in = st["M"][k].detach()
+                    w = torch.softmax(
+                        h_wr @ self.write_q[str(k)] / self.d ** 0.5,
+                        dim=1)
+                    sel = torch.einsum("bt,btd->bd", w, h_wr)
+                    _, rc = self.mats[str(k)].write(M_in, sel)
+                    recon.append(rc)
+                    w2 = torch.softmax(
+                        h_wr @ self.write_q[str(k)].clone()
+                        / self.d ** 0.5, dim=1)
+                    sel2 = torch.einsum("bt,btd->bd", w2, h_wr)
+                    st["M"][k], _ = self.mats[str(k)].write(
+                        M_in, sel2, stale_ok=True)
             self._recon = torch.stack(recon).mean()
         return logits, st, ticks
 

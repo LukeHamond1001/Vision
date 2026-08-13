@@ -125,7 +125,8 @@ def main():
                     choices=["vector", "matrix"])
     ap.add_argument("--xl", default="on", choices=["on", "off"])
     ap.add_argument("--gate-mode", default="scalar", dest="gate_mode",
-                    choices=["scalar", "position"])
+                    choices=["scalar", "position", "entropy"])
+    ap.add_argument("--keyed", default=None, choices=["token"])
     ap.add_argument("--device", default="cuda"
                     if torch.cuda.is_available() else "cpu")
     a = ap.parse_args()
@@ -138,7 +139,8 @@ def main():
         from .lm_hybrid import HybridLM
         model = HybridLM(tok.get_vocab_size(), d=a.d, max_T=a.chunk,
                          store=a.store, use_xl=(a.xl == "on"),
-                         gate_mode=a.gate_mode).to(a.device)
+                         gate_mode=a.gate_mode,
+                         keyed=a.keyed).to(a.device)
     else:
         model = BandLM(tok.get_vocab_size(), d=a.d,
                        talk=a.talk).to(a.device)

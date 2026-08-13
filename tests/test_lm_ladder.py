@@ -684,6 +684,69 @@ class TestConveyorEventLookup(unittest.TestCase):
         self.assertGreater(seen, 50)  # the comparison actually bit
 
 
+class TestTokenKeyed(unittest.TestCase):
+    def test_keyed_addressing_is_exact(self):
+        # A52 (R4): the address IS the token identity — a value
+        # written under token t's embedding key comes back for a
+        # query at t and not for a query at a different token. This
+        # is the property the learned-soup keys provably lacked
+        # (TM-null x3: v8.0, R1, R2).
+        torch.manual_seed(0)
+        from iga.lm_hybrid import HybridLM
+        m = HybridLM(64, d=32, max_T=16, store="matrix",
+                     use_xl=False, gate_init=-2.0, keyed="token")
+        m.eval()
+        E = torch.nn.functional.normalize(
+            m.embed.weight, dim=-1).detach()
+        mat = m.mats["3"]
+        M0 = torch.zeros(1, 32, 32)
+        K = E[torch.tensor([[5]])]
+        V = torch.randn(1, 1, 32)
+        s = torch.ones(1, 1)
+        M1, recon = mat.write_keyed(M0, K, V, s)
+        v = torch.nn.functional.linear(V, mat.wv.weight)
+        r_hit = torch.einsum("bij,btj->bti", M1, E[torch.tensor([[5]])])
+        r_miss = torch.einsum("bij,btj->bti", M1, E[torch.tensor([[9]])])
+        cos = torch.nn.functional.cosine_similarity(r_hit, v, dim=-1)
+        self.assertGreater(float(cos), 0.99)     # exact-address recall
+        self.assertGreater(float(r_hit.norm()),
+                           3 * float(r_miss.norm()))
+        self.assertLess(float(recon), 1.0)
+
+    def test_keyed_write_strength_gates_storage(self):
+        # tok_u prices storage per token TYPE: a pair written with
+        # s=0 must leave no trace (glue tokens shouldn't consume
+        # the store's update budget)
+        torch.manual_seed(1)
+        from iga.lm_hybrid import HybridLM
+        m = HybridLM(64, d=32, max_T=16, store="matrix",
+                     use_xl=False, keyed="token")
+        E = torch.nn.functional.normalize(
+            m.embed.weight, dim=-1).detach()
+        mat = m.mats["3"]
+        M0 = torch.zeros(1, 32, 32)
+        K = E[torch.tensor([[7]])]
+        V = torch.randn(1, 1, 32)
+        M1, _ = mat.write_keyed(M0, K, V, torch.zeros(1, 1))
+        self.assertLess(float(M1.abs().max()), 1e-7)
+
+    def test_keyed_trains_end_to_end_and_ledger_exact(self):
+        # 6 CPU steps through the full trainer: exact ledger, one
+        # band tick per chunk, and the selectivity params exist,
+        # require grad, and MOVE (credit reaches tok_u through
+        # recon this chunk + read-success next chunk, A38)
+        model, drive, vocab, ce0, ce1 = train(
+            d=32, lanes=2, T=128, steps=6, device="cpu",
+            log_every=100, arch="hybrid", store="matrix",
+            use_xl=False, gate_init=-2.0, keyed="token", lr=1e-3)
+        self.assertTrue(drive.audit()["telescoping_exact"])
+        self.assertEqual(model._st["chunk"], 6)
+        self.assertTrue(model.tok_u.requires_grad)
+        self.assertTrue(model.qmix.requires_grad)
+        self.assertGreater(float(model.tok_u.abs().max()), 0.0)
+        self.assertTrue(ce1 == ce1 and ce1 < 20)
+
+
 class TestEndToEnd(unittest.TestCase):
     def test_smoke_train_audit(self):
         model, drive, vocab, ce0, ce1 = train(d=48, lanes=2, T=192, steps=12,
