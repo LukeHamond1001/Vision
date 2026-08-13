@@ -1750,6 +1750,28 @@ scale, not blocking this one. Target cost: $15–40 total.
   Third instrument correction of the campaign (contamination ->
   def-distance -> bridge ceiling).
 
+- **A52b RESCORE — R4 partially rehabilitated** (2026-08-13,
+  full-shard traversal of r4_best, 884/928 TM scored): with the
+  bridge split applied, R4's reads DID retrieve — faintly,
+  exactly where the mechanism allows. TM-bridge (n=95): full
+  0.0761/11.6% vs lesion-ALL 0.0662/10.5% = +15% rel p(ans),
+  +1.1pt top1. TM-nobridge (n=789): 0.0282 vs 0.0269 = +4.8%
+  rel, 0.0pt. The read effect is 3x (relative) / 7x (absolute)
+  larger on the mechanism-matched subset — the bridge signature.
+  Two honesty notes: (1) bridge probes are intrinsically easier
+  (lesioned bridge 0.066 >> nobridge 0.027 — def-adjacent
+  context recurring recently helps the trunk too); only the
+  within-subset full-vs-lesion delta is evidence. (2) The delta
+  is ~2 probes' worth of p(ans) mass — noise not excluded. The
+  A51-R4 verdict's "reads do nothing at TM" is AMENDED to "reads
+  retrieve at the edge of detection, strangled by the glue-locked
+  selector." Prior for r4b (which removes exactly the strangler)
+  raised. PRE-REGISTERED for the r4b autopsy: per-probe
+  full-vs-lesion deltas on TM-bridge, sign test (binomial,
+  p<0.05, median>0) = confirmed retrieval even below the A51
+  bar; full-shard TM channels become standard alongside the
+  200-chunk comparability tables.
+
 ## Status
 
 Assembled scene-free (A6), no registered runs. Weaver (`iga/lm_gen.py`),
