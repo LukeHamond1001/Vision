@@ -1571,6 +1571,24 @@ scale, not blocking this one. Target cost: $15–40 total.
   +5pt-top1 bar as A50. Prediction registered: R2 > R1 > null;
   ablation binds fine (pay not necessary). ~$6 total.
 
+- **A51-ABL VERDICT** (2026-08-13 04:10 UTC, abl CLEAN rc=0):
+  **drive pay is NOT necessary for binding — but it roughly
+  doubles it.** lam=0 at v6.1's exact config: ignition normal
+  (~30k), held-out climbing ALL RUN with no rot (cum 0.218 →
+  0.388/51% at 134k; healthy final windows 0.5-0.98), ending
+  well below the paid comparator at equal steps (v6.1 cum 0.509,
+  fresh 0.774/88%; pod panels 0.288 vs 0.580). First drive
+  ablation of the LM campaign (the A50 critique's standing
+  question): the margin channel is an ACCELERATOR/AMPLIFIER of
+  binding, not its enabler. Caveats owned: n=1 per arm (A35
+  draw variance), and the ablation was still climbing at end —
+  "slower teacher, same destination" not excluded; the claim is
+  about equal-compute level, which is the claim that matters at
+  fixed budgets. Ops note: abl script (v6.1-era) predates
+  best-ckpt piece-landing — the banked best existed on-pod but
+  was not landed (trainer-side banking rode main; script gap,
+  now moot).
+
 ## Status
 
 Assembled scene-free (A6), no registered runs. Weaver (`iga/lm_gen.py`),
