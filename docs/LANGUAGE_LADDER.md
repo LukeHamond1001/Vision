@@ -1589,6 +1589,32 @@ scale, not blocking this one. Target cost: $15–40 total.
   was not landed (trainer-side banking rode main; script gap,
   now moot).
 
+- **A51-R1 VERDICT** (2026-08-13 05:20 UTC, r1 CLEAN rc=0):
+  **A51 bar FAIL — but the READ-ROT LAW is amended, and the
+  problem is renamed.** TRUE-memory probes (corrected miner,
+  n=51 scored / 928 in shard): 0.013/2% best, 0.009/0% final —
+  chance, lesion-invariant, identical to v8.0. The live-trace
+  cross signal decomposed per the instrument correction:
+  nat-in-window 0.204 (attention) + planted floor 0.08. READS
+  STILL DO NOT RETRIEVE. What passed: STABILITY — gates OPEN
+  (0.12 init) on code, binding 0.88-0.895/96-99% WIRE-TO-WIRE,
+  final == best, zero rot, gates self-priced calmly (g3
+  0.12→0.20, g4/g5 → 0.05-0.06). Three chat-era runs died of
+  this exact configuration; on symmetric data it is harmless:
+  **the read-rot was a DATA phenomenon (instrument-asymmetric
+  demand), not an architecture flaw.** The open problem is
+  renamed from safety to RETRIEVAL: the store cannot fetch
+  specific beyond-window items — suspected addressing/capacity
+  (d/(2 ln d) learned-soup slots vs thousands of distinct
+  identifiers). R4 CANDIDATE registered: TOKEN-KEYED STORAGE —
+  write keys tied to the stored token's embedding so a read
+  query at a use site (same token identity) addresses the same
+  slot exactly; discrete addressing replaces learned soup.
+  R2 (entropy) pending ~11:30 UTC; its differentiator (crutch
+  safety) is now known not to be the binding constraint on code
+  — prediction: TM-null likewise; its value reduces to the
+  metamemory gate behavior itself.
+
 ## Status
 
 Assembled scene-free (A6), no registered runs. Weaver (`iga/lm_gen.py`),
