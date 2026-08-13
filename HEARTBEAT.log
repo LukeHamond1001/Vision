@@ -1,3 +1,4 @@
 12:51:06 boot r4-TOKEN-KEYED trainer NVIDIA RTX A4500
 12:51:18 shard found (2400004114B) — training
 13:06:23 training heartbeat: step  1750  ce 4.731  loss 4.915  holds 24480  33,258 tok/s  [fid:3=+0.955 fid:4=+0.125 fid:5=-0.085 b0=+0.030 b1=+0.017 b2=+0.042 b3=+0.030]
+13:21:29 training heartbeat: step  3750  ce 4.368  loss 4.516  holds 41152  34,715 tok/s  [fid:3=+0.962 fid:4=+0.189 fid:5=-0.060 b0=+0.031 b1=+0.021 b2=+0.027 b3=+0.019]
