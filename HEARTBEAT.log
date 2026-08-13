@@ -31,3 +31,4 @@
 00:10:16 training heartbeat: step 45750  ce 2.738  loss 2.739  holds 654368  104,169 tok/s  [fid:3=+0.985 fid:4=+0.816 fid:5=+0.064 b0=+0.664 b1=+0.080 b2=+0.005 b3=+0.005]
 00:10:30 rolling ckpt snapshot pushed
 00:25:32 training heartbeat: step 53650  ce 2.811  loss 2.813  holds 669216  108,293 tok/s  [fid:3=+0.984 fid:4=+0.834 fid:5=+0.066 b0=+0.672 b1=+0.082 b2=+0.004 b3=+0.004]
+00:40:33 training heartbeat: step 61550  ce 2.890  loss 2.891  holds 679072  111,830 tok/s  [fid:3=+0.983 fid:4=+0.851 fid:5=+0.070 b0=+0.628 b1=+0.117 b2=+0.004 b3=+0.002]
