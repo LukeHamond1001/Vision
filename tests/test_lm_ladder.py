@@ -713,6 +713,35 @@ class TestTokenKeyed(unittest.TestCase):
                            3 * float(r_miss.norm()))
         self.assertLess(float(recon), 1.0)
 
+    def test_keyed_repeated_key_cannot_overshoot(self):
+        # A52 NaN law: a token occurring n>>1 times in one chunk must
+        # CONVERGE toward its value, never overshoot — the unnormal-
+        # ized sum applied the correction n times over (whitespace:
+        # n in the hundreds), oscillated divergently, and NaN'd the
+        # first r4 pod by step ~1.5k. Repeated writes must shrink
+        # the residual monotonically and keep M bounded.
+        torch.manual_seed(2)
+        from iga.lm_hybrid import HybridLM
+        m = HybridLM(64, d=32, max_T=16, store="matrix",
+                     use_xl=False, keyed="token")
+        E = torch.nn.functional.normalize(
+            m.embed.weight, dim=-1).detach()
+        mat = m.mats["3"]
+        K = E[torch.full((1, 200), 5)]           # one token, 200 times
+        V = torch.randn(1, 1, 32).repeat(1, 200, 1)
+        s = torch.full((1, 200), 0.5)
+        v = torch.nn.functional.linear(V[:, :1], mat.wv.weight)
+        M = torch.zeros(1, 32, 32)
+        prev = float(v.norm())
+        for _ in range(6):
+            M, _ = mat.write_keyed(M, K, V, s)
+            res = float((v - torch.einsum(
+                "bij,btj->bti", M, K[:, :1])).norm())
+            self.assertLess(res, prev + 1e-4)    # never grows
+            prev = res
+        self.assertLess(float(M.norm()), 10 * float(v.norm()))
+        self.assertTrue(M.isfinite().all())
+
     def test_keyed_write_strength_gates_storage(self):
         # tok_u prices storage per token TYPE: a pair written with
         # s=0 must leave no trace (glue tokens shouldn't consume

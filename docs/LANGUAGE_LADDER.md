@@ -1675,7 +1675,18 @@ scale, not blocking this one. Target cost: $15–40 total.
   shard (zero prep; stale w-r1/w-r2 workdirs cleaned). Placement
   note: EU-RO-1 fast tiers dry ~10 min; a 2000 Ada placed first
   and was killed per doctrine; stock hunter landed the A4500 on
-  round 4.
+  round 4. POD 1 (yx8csbiu) vanished 2 min post-boot, no reason
+  line — hb pushes now retried, canary.log lands. POD 2
+  (zrhyj6zq) NaN'd by step 1550: the summed per-position delta
+  updates applied a repeated token's correction n times over
+  against the chunk-initial M (whitespace n~100s -> overshoot,
+  oscillation, geometric blowup). FIX: strength-normalized convex
+  update (upd / clamp(sum s)) — a weighted MEAN of single-pair
+  delta steps, overshoot impossible, and tok_u sharpening now
+  directly raises surviving writes' share. NEW LAW TEST: repeated
+  key (n=200) residual shrinks monotonically, M bounded, finite.
+  Suite 79/79. Throughput datum: 29.3k tok/s on A4500 (write-
+  heavy vs R1's config) -> ~11.5h, ~$2.9, above the $1.5 estimate.
 
 ## Status
 

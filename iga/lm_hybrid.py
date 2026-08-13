@@ -90,14 +90,23 @@ class BandMatrix(nn.Module):
         (k, v) pair PER POSITION — replaces the one-gist-per-chunk
         softmax selection that made item retrieval impossible.
         Chunkwise-parallel delta rule: predictions against the
-        chunk-initial M (same-chunk same-token writes blend).
+        chunk-initial M (same-chunk same-token writes blend). The
+        update is the strength-NORMALIZED convex mix of single-pair
+        delta steps — a plain sum diverged in minutes (a token with
+        n same-chunk occurrences got its correction n times over;
+        n*beta*s > 2 overshoots and oscillates; whitespace has
+        n in the hundreds -> NaN by step ~1.5k, first r4 pod). The
+        normalization also makes tok_u truly price storage: as glue
+        strengths fall, each surviving write gets a larger share.
         Returns (M', recon) like write()."""
         Wv = self.wv.weight.clone() if stale_ok else self.wv.weight
         v = nn.functional.linear(V, Wv)
         pred = torch.einsum("bij,btj->bti", M, K)
         upd = torch.einsum(
             "bti,btj->bij", s.unsqueeze(-1) * (v - pred), K)
-        M = (1 - self.decay) * M + torch.sigmoid(self.beta) * upd
+        denom = s.sum(dim=1).clamp(min=1e-3)
+        M = (1 - self.decay) * M + torch.sigmoid(self.beta) * \
+            upd / denom.unsqueeze(-1).unsqueeze(-1)
         back = torch.einsum("bij,btj->bti", M, K)
         w = s / (s.sum(dim=1, keepdim=True) + 1e-6)
         recon = ((1 - nn.functional.cosine_similarity(back, v, dim=-1))
