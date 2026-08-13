@@ -1671,6 +1671,11 @@ scale, not blocking this one. Target cost: $15–40 total.
   lesion-ALL. Registered prediction: the effect must arrive via
   bridge tokens (the instrument scores first-token onset, not
   completion), so partial credit = TM off chance without the bar.
+  LAUNCHED: pod yx8csbiu5ucrxj, A4500 $0.25/hr, EU-RO-1 volume
+  shard (zero prep; stale w-r1/w-r2 workdirs cleaned). Placement
+  note: EU-RO-1 fast tiers dry ~10 min; a 2000 Ada placed first
+  and was killed per doctrine; stock hunter landed the A4500 on
+  round 4.
 
 ## Status
 
