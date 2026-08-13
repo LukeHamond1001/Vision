@@ -1,27 +1,3 @@
-step 72200  ce 2.168  loss 2.180  holds 210352  53,375 tok/s  [fid:3=+0.994 fid:4=+0.860 fid:5=+0.045 b0=+0.800 b1=+0.334 b2=+0.003 b3=+0.001]
-step 72250  ce 2.104  loss 2.110  holds 210352  53,381 tok/s  [fid:3=+0.994 fid:4=+0.862 fid:5=+0.045 b0=+0.774 b1=+0.407 b2=+0.003 b3=+0.001]
-step 72300  ce 2.197  loss 2.204  holds 210368  53,388 tok/s  [fid:3=+0.994 fid:4=+0.861 fid:5=+0.045 b0=+0.833 b1=+0.331 b2=+0.004 b3=+0.002]
-step 72350  ce 2.135  loss 2.141  holds 210368  53,394 tok/s  [fid:3=+0.994 fid:4=+0.859 fid:5=+0.045 b0=+0.783 b1=+0.391 b2=+0.002 b3=+0.002]
-step 72400  ce 2.253  loss 2.263  holds 210368  53,401 tok/s  [fid:3=+0.994 fid:4=+0.854 fid:5=+0.045 b0=+0.740 b1=+0.352 b2=+0.003 b3=+0.001]
-step 72450  ce 2.021  loss 2.027  holds 210384  53,407 tok/s  [fid:3=+0.994 fid:4=+0.857 fid:5=+0.045 b0=+0.839 b1=+0.470 b2=+0.002 b3=+0.001]
-step 72500  ce 2.744  loss 2.751  holds 210384  53,414 tok/s  [fid:3=+0.994 fid:4=+0.854 fid:5=+0.045 b0=+0.830 b1=+0.363 b2=+0.002 b3=+0.001]
-step 72550  ce 2.070  loss 2.076  holds 210400  53,418 tok/s  [fid:3=+0.994 fid:4=+0.855 fid:5=+0.045 b0=+0.808 b1=+0.368 b2=+0.001 b3=+0.001]
-step 72600  ce 2.105  loss 2.114  holds 210400  53,424 tok/s  [fid:3=+0.994 fid:4=+0.857 fid:5=+0.045 b0=+0.822 b1=+0.364 b2=+0.002 b3=+0.001]
-step 72650  ce 2.181  loss 2.187  holds 210400  53,429 tok/s  [fid:3=+0.994 fid:4=+0.856 fid:5=+0.045 b0=+0.863 b1=+0.298 b2=+0.002 b3=+0.001]
-step 72700  ce 2.126  loss 2.132  holds 210416  53,435 tok/s  [fid:3=+0.994 fid:4=+0.861 fid:5=+0.045 b0=+0.853 b1=+0.291 b2=+0.001 b3=+0.001]
-step 72750  ce 2.335  loss 2.341  holds 210416  53,441 tok/s  [fid:3=+0.994 fid:4=+0.861 fid:5=+0.045 b0=+0.875 b1=+0.358 b2=+0.002 b3=+0.001]
-step 72800  ce 1.873  loss 1.890  holds 210432  53,448 tok/s  [fid:3=+0.994 fid:4=+0.861 fid:5=+0.045 b0=+0.823 b1=+0.325 b2=+0.003 b3=+0.001]
-step 72850  ce 2.059  loss 2.066  holds 210432  53,454 tok/s  [fid:3=+0.994 fid:4=+0.851 fid:5=+0.045 b0=+0.812 b1=+0.340 b2=+0.001 b3=+0.001]
-step 72900  ce 2.500  loss 2.507  holds 210432  53,461 tok/s  [fid:3=+0.994 fid:4=+0.853 fid:5=+0.045 b0=+0.828 b1=+0.405 b2=+0.003 b3=+0.002]
-step 72950  ce 2.306  loss 2.312  holds 210448  53,467 tok/s  [fid:3=+0.994 fid:4=+0.857 fid:5=+0.045 b0=+0.840 b1=+0.357 b2=+0.004 b3=+0.004]
-step 73000  ce 2.001  loss 2.018  holds 210448  53,474 tok/s  [fid:3=+0.994 fid:4=+0.858 fid:5=+0.045 b0=+0.867 b1=+0.347 b2=+0.002 b3=+0.003]
-step 73050  ce 2.303  loss 2.309  holds 210464  53,476 tok/s  [fid:3=+0.994 fid:4=+0.858 fid:5=+0.045 b0=+0.863 b1=+0.363 b2=+0.002 b3=+0.003]
-step 73100  ce 2.256  loss 2.263  holds 210464  53,482 tok/s  [fid:3=+0.994 fid:4=+0.857 fid:5=+0.045 b0=+0.834 b1=+0.365 b2=+0.003 b3=+0.002]
-step 73150  ce 2.531  loss 2.537  holds 210464  53,489 tok/s  [fid:3=+0.994 fid:4=+0.858 fid:5=+0.045 b0=+0.833 b1=+0.375 b2=+0.003 b3=+0.002]
-step 73200  ce 2.439  loss 2.449  holds 210480  53,495 tok/s  [fid:3=+0.994 fid:4=+0.860 fid:5=+0.045 b0=+0.814 b1=+0.351 b2=+0.002 b3=+0.001]
-step 73250  ce 2.508  loss 2.515  holds 210480  53,501 tok/s  [fid:3=+0.994 fid:4=+0.861 fid:5=+0.045 b0=+0.871 b1=+0.376 b2=+0.001 b3=+0.002]
-step 73300  ce 2.438  loss 2.445  holds 210480  53,508 tok/s  [fid:3=+0.994 fid:4=+0.859 fid:5=+0.045 b0=+0.841 b1=+0.330 b2=+0.001 b3=+0.002]
-step 73350  ce 2.146  loss 2.153  holds 210496  53,514 tok/s  [fid:3=+0.994 fid:4=+0.857 fid:5=+0.045 b0=+0.877 b1=+0.400 b2=+0.003 b3=+0.002]
 step 73400  ce 2.051  loss 2.061  holds 210496  53,521 tok/s  [fid:3=+0.994 fid:4=+0.861 fid:5=+0.045 b0=+0.864 b1=+0.353 b2=+0.001 b3=+0.002]
 step 73450  ce 2.200  loss 2.206  holds 210512  53,527 tok/s  [fid:3=+0.994 fid:4=+0.864 fid:5=+0.045 b0=+0.817 b1=+0.494 b2=+0.002 b3=+0.001]
 step 73500  ce 2.562  loss 2.569  holds 210512  53,534 tok/s  [fid:3=+0.994 fid:4=+0.863 fid:5=+0.045 b0=+0.717 b1=+0.453 b2=+0.002 b3=+0.002]
@@ -38,3 +14,47 @@ step 74000  ce 2.344  loss 2.357  holds 210576  53,592 tok/s  [fid:3=+0.994 fid:
     holdout(cum): {'cross': [0.075, 0.09, 255], 'same': [0.666, 0.73, 115], 'straddle': [0.072, 0.12, 51]}
     same(recent 7 probes): 0.450
 step 74050  ce 2.393  loss 2.399  holds 210576  53,593 tok/s  [fid:3=+0.994 fid:4=+0.844 fid:5=+0.046 b0=+0.751 b1=+0.416 b2=+0.002 b3=+0.003]
+step 74100  ce 2.202  loss 2.208  holds 210592  53,600 tok/s  [fid:3=+0.994 fid:4=+0.847 fid:5=+0.046 b0=+0.795 b1=+0.251 b2=+0.002 b3=+0.002]
+step 74150  ce 2.083  loss 2.089  holds 210592  53,606 tok/s  [fid:3=+0.994 fid:4=+0.853 fid:5=+0.046 b0=+0.863 b1=+0.361 b2=+0.003 b3=+0.002]
+step 74200  ce 2.163  loss 2.177  holds 210592  53,612 tok/s  [fid:3=+0.994 fid:4=+0.849 fid:5=+0.046 b0=+0.824 b1=+0.342 b2=+0.003 b3=+0.003]
+step 74250  ce 2.092  loss 2.098  holds 210608  53,618 tok/s  [fid:3=+0.994 fid:4=+0.853 fid:5=+0.046 b0=+0.794 b1=+0.357 b2=+0.002 b3=+0.002]
+step 74300  ce 2.257  loss 2.263  holds 210608  53,624 tok/s  [fid:3=+0.994 fid:4=+0.854 fid:5=+0.046 b0=+0.813 b1=+0.326 b2=+0.005 b3=+0.003]
+step 74350  ce 1.890  loss 1.895  holds 210624  53,631 tok/s  [fid:3=+0.994 fid:4=+0.848 fid:5=+0.047 b0=+0.810 b1=+0.302 b2=+0.002 b3=+0.003]
+step 74400  ce 2.238  loss 2.255  holds 210624  53,637 tok/s  [fid:3=+0.994 fid:4=+0.846 fid:5=+0.047 b0=+0.814 b1=+0.356 b2=+0.004 b3=+0.003]
+step 74450  ce 1.834  loss 1.839  holds 210624  53,643 tok/s  [fid:3=+0.994 fid:4=+0.850 fid:5=+0.047 b0=+0.813 b1=+0.415 b2=+0.005 b3=+0.003]
+step 74500  ce 2.212  loss 2.218  holds 210640  53,650 tok/s  [fid:3=+0.994 fid:4=+0.845 fid:5=+0.047 b0=+0.871 b1=+0.396 b2=+0.002 b3=+0.003]
+step 74550  ce 2.215  loss 2.221  holds 210640  53,651 tok/s  [fid:3=+0.994 fid:4=+0.846 fid:5=+0.047 b0=+0.829 b1=+0.322 b2=+0.003 b3=+0.002]
+step 74600  ce 2.076  loss 2.088  holds 210656  53,658 tok/s  [fid:3=+0.994 fid:4=+0.848 fid:5=+0.047 b0=+0.767 b1=+0.351 b2=+0.004 b3=+0.003]
+step 74650  ce 2.259  loss 2.265  holds 210656  53,664 tok/s  [fid:3=+0.994 fid:4=+0.847 fid:5=+0.047 b0=+0.766 b1=+0.264 b2=+0.003 b3=+0.003]
+step 74700  ce 1.938  loss 1.944  holds 210656  53,670 tok/s  [fid:3=+0.994 fid:4=+0.848 fid:5=+0.047 b0=+0.846 b1=+0.334 b2=+0.001 b3=+0.003]
+step 74750  ce 2.137  loss 2.144  holds 210672  53,676 tok/s  [fid:3=+0.994 fid:4=+0.847 fid:5=+0.047 b0=+0.767 b1=+0.436 b2=+0.002 b3=+0.003]
+step 74800  ce 2.266  loss 2.277  holds 210672  53,683 tok/s  [fid:3=+0.994 fid:4=+0.847 fid:5=+0.047 b0=+0.875 b1=+0.414 b2=+0.002 b3=+0.003]
+step 74850  ce 2.198  loss 2.204  holds 210688  53,689 tok/s  [fid:3=+0.994 fid:4=+0.844 fid:5=+0.047 b0=+0.841 b1=+0.464 b2=+0.005 b3=+0.002]
+step 74900  ce 1.946  loss 1.952  holds 210688  53,695 tok/s  [fid:3=+0.994 fid:4=+0.841 fid:5=+0.047 b0=+0.874 b1=+0.409 b2=+0.002 b3=+0.002]
+step 74950  ce 2.202  loss 2.208  holds 210688  53,701 tok/s  [fid:3=+0.994 fid:4=+0.844 fid:5=+0.047 b0=+0.855 b1=+0.438 b2=+0.003 b3=+0.002]
+step 75000  ce 2.481  loss 2.492  holds 210704  53,707 tok/s  [fid:3=+0.994 fid:4=+0.844 fid:5=+0.047 b0=+0.852 b1=+0.442 b2=+0.004 b3=+0.002]
+audit: {'holds': 210704, 'telescoping_exact': True, 'scoped': True, 'vetoes': 1215408, 'proposed': 1428384}
+panel:
+lane0 maintain fid:5          target 0.20 phi0 0.76 band 5 due 76899328
+lane1 maintain fid:5          target 0.20 phi0 0.76 band 5 due 76899328
+lane2 maintain fid:5          target 0.20 phi0 0.76 band 5 due 76899328
+lane3 maintain fid:5          target 0.20 phi0 0.76 band 5 due 76899328
+lane4 maintain fid:5          target 0.20 phi0 0.76 band 5 due 76899328
+lane5 maintain fid:5          target 0.20 phi0 0.76 band 5 due 76899328
+lane6 maintain fid:5          target 0.20 phi0 0.76 band 5 due 76899328
+lane7 maintain fid:5          target 0.20 phi0 0.76 band 5 due 76899328
+lane8 maintain fid:5          target 0.20 phi0 0.76 band 5 due 76899328
+lane9 maintain fid:5          target 0.20 phi0 0.76 band 5 due 76899328
+lane10 maintain fid:5          target 0.20 phi0 0.76 band 5 due 76899328
+lane11 maintain fid:5          target 0.20 phi0 0.76 band 5 due 76899328
+lane12 maintain fid:5          target 0.20 phi0 0.76 band 5 due 76899328
+lane13 maintain fid:5          target 0.20 phi0 0.76 band 5 due 76899328
+lane14 maintain fid:5          target 0.20 phi0 0.76 band 5 due 76899328
+lane15 maintain fid:5          target 0.20 phi0 0.76 band 5 due 76899328
+record   fid:3          0.995 (ema 0.994)
+record   fid:4          0.864 (ema 0.844)
+record   fid:5          0.047 (ema 0.047)
+record   recall:b0      0.955 (ema 0.852)
+record   recall:b1      0.563 (ema 0.442)
+record   recall:b2      0.173 (ema 0.004)
+record   recall:b3      0.114 (ema 0.002)
