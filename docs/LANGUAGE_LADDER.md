@@ -1724,6 +1724,32 @@ scale, not blocking this one. Target cost: $15–40 total.
   correctly-aimed discrete addressing retrieves. Same config
   otherwise; ~$1.7 on the cached shard.
 
+- **A52b INSTRUMENT NOTE — the bridge ceiling** (2026-08-13,
+  pre-registered BEFORE r4b tables; user question "should the
+  model be able to complete the probe if it works" prompted the
+  measurement): the TM instrument scores first-token onset, whose
+  only R4-mechanism route is a BRIDGE token — a query-window
+  token whose most recent pre-window occurrence sits within +-64
+  tokens of the definition. Measured on the 928-probe set:
+  QR=8 (current) -> only 99/928 = 10.7% of probes are solvable
+  even by a PERFECT mechanism. Coverage curve: QR=16 16.2%, 32
+  23.2%, 64 30.2%, 128 39.8%, 256 52.4% (~+7pt per doubling).
+  CONSEQUENCES, pre-registered: (1) the r4b autopsy scores TM
+  split into TM-bridge (n=99, mechanism-matched channel) vs
+  TM-nobridge (n=829, must stay chance — a lift there would mean
+  a route we don't understand). A working r4b = lift concentrated
+  in the 99; aggregate A51 bar stays the headline (goalposts
+  unmoved) but the subset is the mechanism verdict. (2) If tok_u
+  inverts and the bridge-99 lift appears without the aggregate
+  bar, the next one-variable amendment is WINDOW WIDTH (QR 8 ->
+  64/128), not a mechanism change. (3) Retroactive: aggregate TM
+  was structurally capped near chance for ANY bridge-style reader
+  in every prior run — the x4 nulls stand for their own proven
+  reasons (no item writes; selector gaming), but aggregate TM
+  alone could never have certified a working bridge mechanism.
+  Third instrument correction of the campaign (contamination ->
+  def-distance -> bridge ceiling).
+
 ## Status
 
 Assembled scene-free (A6), no registered runs. Weaver (`iga/lm_gen.py`),
