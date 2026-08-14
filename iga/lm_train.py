@@ -228,7 +228,8 @@ def train(d=64, lanes=4, T=256, steps=40, seed=0, device="cpu",
           resume=None, offset_frac=0.0, store="vector", eval_data=None,
           use_xl=True, gate_init=-4.0, read_drop=0.5,
           read_drop_end=None, gate_mode="scalar", lr=3e-4,
-          bf16=False, lam=0.25, keyed=None, lr_decay="none"):
+          bf16=False, lam=0.25, keyed=None, lr_decay="none",
+          lr_total_steps=None):
     """resume (A26): path to a checkpoint — model + optimizer + drive
     EMAs/records/minted/vetoes continue; step numbering continues.
     offset_frac: start each conveyor lane this far into its segment
@@ -305,8 +306,12 @@ def train(d=64, lanes=4, T=256, steps=40, seed=0, device="cpu",
             # A54 audit (C3): v8.0 at this width/duration peaked at
             # 10% and bled for 90% on constant lr — the lr x
             # DURATION confound. Cosine to 10% (the ledgered v8.1
-            # candidate) removes it from the scale gate.
-            frac = (step - step0) / max(steps, 1)
+            # candidate) removes it from the scale gate. The frac
+            # uses the GLOBAL step over the run's total so a resume
+            # continues the schedule instead of restarting it
+            # (A54d: a late-resume lr jump would be the bleed).
+            tot = lr_total_steps or (step0 + steps)
+            frac = min(step / max(tot, 1), 1.0)
             f = 0.1 + 0.9 * 0.5 * (1 + math.cos(math.pi * frac))
             for g in opt.param_groups:
                 g["lr"] = lr * f
@@ -438,6 +443,10 @@ def main():
                     choices=["none", "cosine"],
                     help="cosine: decay lr to 10% over the run "
                          "(A54: the lr x duration guard)")
+    ap.add_argument("--lr-total-steps", type=int, default=None,
+                    dest="lr_total_steps",
+                    help="global schedule length for lr decay; "
+                         "keeps a resume on the same curve")
     ap.add_argument("--keyed", default=None,
                     choices=["token", "logit"],
                     help="A52 (R4) token: per-position writes keyed "
@@ -461,7 +470,7 @@ def main():
               gate_init=a.gate_init, read_drop=a.read_drop,
               read_drop_end=a.read_drop_end, gate_mode=a.gate_mode,
               lr=a.lr, bf16=a.bf16, lam=a.lam, keyed=a.keyed,
-              lr_decay=a.lr_decay)
+              lr_decay=a.lr_decay, lr_total_steps=a.lr_total_steps)
 
 
 if __name__ == "__main__":

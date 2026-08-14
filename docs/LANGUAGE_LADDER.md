@@ -2012,6 +2012,25 @@ scale, not blocking this one. Target cost: $15–40 total.
   network volume reports the backend pool, not the quota — the
   quota is invisible until writes fail.
 
+- **A54d TRAINER OOM POST-MORTEM — peak memory is event-density
+  dependent** (2026-08-14 22:15 UTC): the real run OOM'd at step
+  ~800 (21.46GB + 2GB backward transient vs 23.5 usable) after
+  the quiet-data smoke PASSED at the same shapes — mix_v9's
+  planted-event density (2.78M probes; 14k holds by step 800)
+  retains additional logp graph through the drive's pay path
+  that mix_r1's 20 quiet steps never exercised. OPS LAW: smoke
+  on the REAL shard with real event density (now 60 steps on
+  mix_v9). FIX (config-only, R5 parity kept): lanes 8 -> 6,
+  steps 366k -> 488k — EXACTLY the same 5.9965B tokens
+  (488000 x 6 x 2048 = 366000 x 8 x 2048); peak ~17.6GB. Plus:
+  false-start guard (sub-5k-step stubs not resumed), resume
+  steps shrink by the resume point (one-epoch exact), cosine
+  schedule now runs on the GLOBAL step over --lr-total-steps so
+  a resume continues the curve instead of restarting lr at max.
+  Measured en route: 48.1k tok/s at 8 lanes on the 4090 -> est
+  ~36k at 6 lanes -> ~46h, ~$34 at $0.74/hr. Crash cost: ~$0.15.
+  Suite 85/85.
+
 ## Status
 
 Assembled scene-free (A6), no registered runs. Weaver (`iga/lm_gen.py`),

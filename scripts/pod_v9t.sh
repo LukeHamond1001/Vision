@@ -9,15 +9,35 @@
 set -uo pipefail
 export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
 W=/workspace/w-v9
+TOTAL_STEPS=488000
 RESUME=""
+STEPS_LEFT=$TOTAL_STEPS
 if [ -f "$W/iga-scale/v9.pt" ]; then
   # A54 audit C1: a surviving checkpoint on the volume is the most
   # valuable object in the account — never rm it; resume instead.
-  cd "$W/iga-scale"
-  git fetch -q origin main && git reset --hard -q origin/main
-  RESUME="--resume v9.pt"
-else
-  rm -rf "$W" && mkdir -p "$W" && cd "$W"
+  # A54d: false-start guard — a sub-5k-step stub (crashed launch)
+  # is not worth resuming; steps remaining shrink by the resume
+  # point so the token budget stays exactly one epoch.
+  STEP=$(cd "$W/iga-scale" && python - <<'P'
+import torch
+try:
+    print(torch.load("v9.pt", map_location="cpu",
+                     weights_only=False).get("step", 0))
+except Exception:
+    print(0)
+P
+)
+  if [ "${STEP:-0}" -ge 5000 ]; then
+    cd "$W/iga-scale"
+    git fetch -q origin main && git reset --hard -q origin/main
+    RESUME="--resume v9.pt"
+    STEPS_LEFT=$((TOTAL_STEPS - STEP))
+  else
+    rm -rf "$W"
+  fi
+fi
+if [ ! -d "$W/iga-scale" ]; then
+  mkdir -p "$W" && cd "$W"
   git clone --depth 1 https://github.com/LukeHamond1001/iga-scale.git
   cd iga-scale
 fi
@@ -61,12 +81,12 @@ if ! cuda_canary >> canary.log 2>&1; then
   sleep 120; exit 1
 fi
 
-# A54 audit H5/H2: paid smoke — the exact v9 tensor shapes have
-# never executed anywhere. 20 steps against the resident mix_r1
-# shard proves no-OOM and measures tok/s for the budget before the
-# real run commits. ~$0.10.
-python -m iga.lm_train run --data /workspace/rmix/mix_r1 --d 512 \
-  --lanes 8 --chunk 2048 --steps 20 --talk tick --arch hybrid \
+# A54 audit H5/H2 + A54d: paid smoke on the REAL shard — peak
+# memory is EVENT-DENSITY dependent (drive pays retain logp graph
+# on hold-dense chunks; the quiet mix_r1 smoke passed at shapes
+# that OOM'd on mix_v9 by step 800). 60 real steps, real events.
+python -m iga.lm_train run --data /workspace/rmix/mix_v9 --d 512 \
+  --lanes 6 --chunk 2048 --steps 60 --talk tick --arch hybrid \
   --device cuda --store matrix --xl off --lr 1e-4 --gate-init -2 \
   --keyed logit --ckpt smoke.pt > smoke.log 2>&1
 SMOKE_RC=$?
@@ -126,9 +146,10 @@ hb "shard found ($(stat -c%s /workspace/rmix/mix_v9/tokens.bin)B) — training"
     fi
   done ) &
 WATCHPID=$!
-python -m iga.lm_train run --data /workspace/rmix/mix_v9 --d 512 --lanes 8 \
-  --chunk 2048 --steps 366000 --talk tick --arch hybrid --device cuda \
-  --store matrix --xl off --lr 1e-4 --lr-decay cosine --gate-init -2 \
+python -m iga.lm_train run --data /workspace/rmix/mix_v9 --d 512 --lanes 6 \
+  --chunk 2048 --steps $STEPS_LEFT --talk tick --arch hybrid --device cuda \
+  --store matrix --xl off --lr 1e-4 --lr-decay cosine \
+  --lr-total-steps $TOTAL_STEPS --gate-init -2 \
   --keyed logit $RESUME \
   --eval-data /workspace/rmix/mix_r1_eval \
   --ckpt v9.pt > train.log 2>&1
