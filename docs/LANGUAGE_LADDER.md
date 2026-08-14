@@ -1772,6 +1772,42 @@ scale, not blocking this one. Target cost: $15–40 total.
   bar; full-shard TM channels become standard alongside the
   200-chunk comparability tables.
 
+- **A52b-R4b VERDICT** (2026-08-14 01:34 UTC pod CLEAN rc=0, 75k
+  steps, ~$1.55): **THE INVERSION WORKED; RETRIEVAL DID NOT
+  FOLLOW. Fifth bar FAIL — this one with statistical power — and
+  the selector is hereby EXONERATED.** tok_u flipped exactly as
+  designed: R4's glue TOP-40 ('the','=','.',newlines) became
+  R4b's BOTTOM-40; content/rare tokens (License-header vocab,
+  'hasattr','__','Check', content nouns) rose to the top. g3
+  gate ROSE above init for the first time in any run (0.156 vs
+  0.12 init; R4 drifted down); g4/g5 doubled off floor. The
+  selector now stores the right things. AND YET: TM-bridge
+  (n=95) full 0.0502/6.3% vs lesion 0.0465/7.4% = +8.0% rel,
+  top1 NEGATIVE (-1.1pt); nobridge +7.3% rel — the bridge
+  CONCENTRATION (R4: 15% vs 4.8%, the mechanism signature) is
+  GONE. Sign test +62/-33, p=0.0019, median +0.00003: a real
+  but microscopic, DIFFUSE read benefit — a weak prior, not
+  addressed retrieval. Absolute bridge level fell (0.050 vs
+  R4's 0.076) alongside pl-same (0.67 vs R4's 0.81): the glue
+  echo was subsidizing local prediction; repricing storage paid
+  that cost and bought no measurable retrieval. LAYER LEDGER:
+  items written (R4) ok, addresses exact (law) ok, writes stable
+  (convex) ok, demand certified (R2) ok, selector aimed (R4b)
+  ok, stability (n=4) ok — retrieval magnitude unmoved. LAST
+  UNTESTED LAYER: value/decode — whether wv(h)/out() can lift a
+  specific answer logit AT ALL, even from a perfect store (the
+  far-read credit that must shape them is the sparsest gradient
+  in the system). DECODE BENCH registered (free, local, banked
+  ckpt): plant exactly one def-site pair under the exact bridge
+  key in an otherwise-empty M, forward the real use-site chunk,
+  measure delta-logit(answer) vs empty M. Decode lifts -> the
+  fault is slot survival in real streams (capacity/decay,
+  mechanism class still alive); decode dead -> root cause of the
+  campaign found and the store class at this width is refuted
+  with a complete causal chain. Retire conversation is ON per
+  the pre-registered branch either way; bench closes the chain
+  first.
+
 ## Status
 
 Assembled scene-free (A6), no registered runs. Weaver (`iga/lm_gen.py`),
