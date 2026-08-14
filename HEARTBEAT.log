@@ -26,3 +26,4 @@
 01:29:01 training complete (rc=0)
 01:29:14 eval complete: r4b.pt
 01:29:26 eval complete: r4b.pt.best.pt
+01:29:45 ckpt piece landed: r4b_part_aa
