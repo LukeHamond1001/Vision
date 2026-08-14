@@ -7190,3 +7190,4 @@ phase: stream
   3591500 docs, 5,998,852,470 tokens, 2779998 planted + 0 natural probes, mix {'code': 4009607240, 'wiki': 694070248, 'digest': 111424062, 'chat': 543476283}
   3592000 docs, 5,999,399,466 tokens, 2780374 planted + 0 natural probes, mix {'code': 4009607240, 'wiki': 694321500, 'digest': 111424062, 'chat': 543693415}
   3592500 docs, 5,999,945,028 tokens, 2780751 planted + 0 natural probes, mix {'code': 4009607240, 'wiki': 694559684, 'digest': 111424062, 'chat': 543928139}
+wrote 6,000,000,869 tokens, 8853724 events (2780795 planted, 0 natural) mix={'code': 4009607240, 'wiki': 694586063, 'digest': 111424062, 'chat': 543947411} -> /workspace/rmix/mix_v9
