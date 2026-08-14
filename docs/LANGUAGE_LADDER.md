@@ -2029,7 +2029,7 @@ scale, not blocking this one. Target cost: $15–40 total.
   a resume continues the curve instead of restarting lr at max.
   Measured en route: 48.1k tok/s at 8 lanes on the 4090 -> est
   ~36k at 6 lanes -> ~46h, ~$34 at $0.74/hr. Crash cost: ~$0.15.
-  Suite 85/85.
+  Suite 84/84.
 
 ## Status
 
