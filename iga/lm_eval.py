@@ -150,7 +150,12 @@ def main():
     model.load_state_dict(state["model"])
     print(f"loaded {a.ckpt} (step {state.get('step','?')}), "
           f"{model.n_params():,} params")
-    full_eval(model, tok, lanes=a.lanes, n_chunks=a.chunks, data=a.data)
+    # A54e (F1): serve at the trained chunk length — full_eval's
+    # T default (512) silently served short chunks to long-T
+    # models (4x store decay per token, 4x band clocks), making
+    # pod eval_results.txt off-regime for r5t/v9t
+    full_eval(model, tok, lanes=a.lanes, n_chunks=a.chunks,
+              data=a.data, T=a.chunk)
 
 
 if __name__ == "__main__":

@@ -298,6 +298,20 @@ def train(d=64, lanes=4, T=256, steps=40, seed=0, device="cpu",
     if data and eval_data:
         from .lm_data_ultrachat import UltraConveyor as _UC
         peval = {"conv": _UC(eval_data, n_lanes=2), "agg": {}}
+        if resume:
+            # A54e (F4): the banking baseline must survive resume —
+            # with best reset to -1.0, the first pooled window after
+            # a crash re-banked best.pt unconditionally, letting a
+            # worse model overwrite the banked peak. prev_same is
+            # deliberately NOT restored: it tracks the in-process
+            # cumulative window and must restart with the fresh
+            # conveyor. Legacy ckpts (no peval_best) seed the
+            # baseline from the first pooled window instead of
+            # banking on it.
+            if state.get("peval_best") is not None:
+                peval["best"] = state["peval_best"]
+            else:
+                peval["seed_baseline"] = True
     t0 = time.time()
     ce_first = None
     trace = (ckpt + ".trace.jsonl") if ckpt else None
@@ -365,7 +379,12 @@ def train(d=64, lanes=4, T=256, steps=40, seed=0, device="cpu",
                         row["same_recent"] = round(recent, 4)
                         print(f"    same(recent {dn} probes): "
                               f"{recent:.3f}", flush=True)
-                        if ckpt and recent > peval.get("best", -1.0) \
+                        if peval.pop("seed_baseline", False):
+                            peval["best"] = max(recent,
+                                                peval.get("best", -1.0))
+                            print(f"    banking baseline seeded "
+                                  f"({recent:.3f})", flush=True)
+                        elif ckpt and recent > peval.get("best", -1.0) \
                                 and n_now >= 20:
                             peval["best"] = recent
                             atomic_save({"model": model.state_dict(),
@@ -382,6 +401,7 @@ def train(d=64, lanes=4, T=256, steps=40, seed=0, device="cpu",
         if ckpt and step % 500 == 0:
             atomic_save({"model": model.state_dict(),
                          "opt": opt.state_dict(), "step": step,
+                         "peval_best": (peval or {}).get("best"),
                          "drive": {"ema": drive.ema,
                                    "records": drive.records,
                                    "minted": sorted(drive.minted),

@@ -2031,6 +2031,59 @@ scale, not blocking this one. Target cost: $15–40 total.
   ~36k at 6 lanes -> ~46h, ~$34 at $0.74/hr. Crash cost: ~$0.15.
   Suite 84/84.
 
+- **A54e ADVERSARIAL ARCHITECTURE REVIEW during the v9 window**
+  (2026-08-15): independent fresh-eyes sweep of the logit-store
+  math, train/serve paths, and checkpoint mechanics, run while v9
+  trains. CERTIFIED CLEAN: keyed-logit wiring (write keys strictly
+  precede; read mix at t equals the write key of u=t+1 under the
+  same qmix weights — the retrieved value IS the next-token
+  identity, the completion shape, now proven by inspection);
+  version-freeze checkpointing (clones as checkpoint inputs =
+  exact recompute, no double-traversal); convex-write bounds;
+  fp32 logit-bonus numerics; dtype/shape at d=512/T=2048.
+  FIXED ON MAIN (deploys to any v9 resume via the boot's
+  reset --hard origin/main; the RUNNING pod keeps boot code):
+  (F1) lm_eval.full_eval dropped --chunk — every pod
+  eval_results.txt (r5t, v9t) served T=512 to long-T models (4x
+  store decay/clock rate) and is OFF-REGIME; no banked verdict
+  used them (all came from serve-T-correct autopsy scripts) but
+  they must not be read as evidence. (F4) best.pt banking
+  baseline reset to -1.0 on resume — first pooled window after a
+  crash re-banked unconditionally, so a worse post-crash model
+  could overwrite the banked peak; peval_best now persists in the
+  ckpt, and legacy ckpts seed the baseline from the first pooled
+  window instead of banking on it (prev_same deliberately NOT
+  restored — it tracks the in-process cumulative window; restoring
+  it would drive dn negative and kill banking). Suite 84/84.
+  REGISTERED, NOT CHANGED (R5 parity — v9 measures this class):
+  (F2, the mechanism finding) the RFF lift is norm-sensitive and
+  gamma=1.4 was calibrated on UNIT inputs, but the read/write mix
+  is a softmax mean of QR=64 unit rows — norm 1/8 at init, deep in
+  the kernel's flat region. Measured at d=512/D=2048: distinct
+  uniform-mix keys are cos 0.971 collinear (unit tokens: 0.143);
+  64 written pairs read back at 2% argmax vs 31% for unit keys.
+  The store at init is a recency accumulator; keys only decorrelate
+  when qmix/tok_u concentrate the mix to ~1 token — i.e. the
+  architecture's OWN EQUILIBRIUM is the successor/bigram cache
+  R5 banked, and the p=0.42 onset null is what this geometry
+  predicts. R6 CANDIDATE (single change, law test first, needs
+  go): normalize the mix before lift — makes broad-context
+  signatures addressable and is the first mechanistic lever on
+  onset retrieval. (F3) T=2048 HALVES per-pair write share
+  (beta*s/denom: 2.44e-4 vs R5's 4.88e-4) — KD doubling is only
+  half the scaling law; v9 autopsy must read tok_u concentration
+  before attributing any shrunken lesion effect to capacity.
+  (F5) band-5 latent h is near-invisible to cold-start evals
+  (0-1 ticks); the v9 fullshard pass ticks it ~25x — partial
+  warm; lesion deltas stay valid but under-measure the h channel.
+  (F6) drive ledger is append-only; at T=2048 horizons most holds
+  settle ~per chunk — est 2-4GB host RAM by 488k steps; backstop
+  is crash+resume (ledger not persisted; F4 fix makes that safe);
+  pruning pre-registered for v10. Minors: --gate-init is inert in
+  logit mode (alpha is the gate); talk() T=1 serving is
+  store-inert (never read generation as store evidence);
+  lm_eval --xl defaults on (manual-eval footgun).
+
 ## Status
 
 Assembled scene-free (A6), no registered runs. Weaver (`iga/lm_gen.py`),
