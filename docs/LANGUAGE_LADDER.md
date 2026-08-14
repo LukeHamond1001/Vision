@@ -1840,6 +1840,36 @@ scale, not blocking this one. Target cost: $15–40 total.
   registered as R5-LOGIT, ~$1.7, USER'S CALL vs clean retire.
   Campaign holds for the user's decision.
 
+- **A53 candidate staged + launched (R5-LOGIT: decode-free,
+  capacity-sized item store)** (2026-08-14): every term of the
+  measured failure equation answered by construction. (1) VALUES =
+  token IDENTITIES, read matched straight against the vocabulary
+  and added to the LOGITS (alpha per band, init 0, opt-in) — the
+  A52b-proven dead decode layer is REMOVED, not retrained. (2)
+  CAPACITY: stores decoupled from width, KD={512,1024,2048} per
+  band sized to load (the A52b arithmetic: load = writes/chunk x
+  pair lifetime; band 5's ~92-chunk lifetime drowned d=256 18x).
+  BUILD CATCH (law test): a LINEAR lift of d-dim keys spans a
+  d-dim subspace — RANK, not ambient dimension, sets capacity; a
+  linear projection buys nothing (64 keys in effective 32-dim
+  erased each other, cos -0.16). Fix: nonlinear RFF lift
+  cos(Px+b), gamma=1.4 (orthogonal tokens decorrelate ~0.15,
+  nearby mixes stay matched); keys detached so nondifferentiable
+  hardware is fine. (3) QR=64 context window both sides (bridge
+  ceiling 30.2%); write key = mix STRICTLY preceding (induction
+  shape), read = mix ending at current token; shared tok_u/qmix
+  (R4b-certified selector machinery); convex writes (A52 NaN
+  law), detached recon weights (A52b anti-gaming law), A38
+  two-pass credit with cloned tok_u/qmix/beta; mid-layer residual
+  read OFF in this mode. NEW LAW TESTS: store-to-logit lift
+  through the FULL forward (the test the campaign lacked until
+  the bench); sequential-write crosstalk survival at C=64/D=512;
+  e2e ledger exact + capacity-sized state shapes. Suite 83/83.
+  Verdict channels pre-registered as in A52b: TM-bridge(99 @QR=8;
+  ceiling rises with QR=64 read window) sign test + full-shard
+  channels + aggregate A51 bar; PLUS alpha finals and per-band
+  lesion of the logit bonus.
+
 ## Status
 
 Assembled scene-free (A6), no registered runs. Weaver (`iga/lm_gen.py`),

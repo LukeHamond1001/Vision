@@ -401,10 +401,13 @@ def main():
                     choices=["scalar", "position", "entropy"],
                     help="matrix read gate: scalar per band, or "
                          "per-position learned head (A41 candidate)")
-    ap.add_argument("--keyed", default=None, choices=["token"],
-                    help="A52 (R4): token-keyed storage — per-"
-                         "position writes keyed by the token's own "
-                         "embedding; reads query the same space")
+    ap.add_argument("--keyed", default=None,
+                    choices=["token", "logit"],
+                    help="A52 (R4) token: per-position writes keyed "
+                         "by the token's own embedding. A53 (R5) "
+                         "logit: decode-free capacity-sized stores — "
+                         "identity values matched straight into the "
+                         "logits")
     a = ap.parse_args()
     if a.mode == "smoke":
         model, drive, vocab, ce0, ce1 = train(d=64, lanes=4, T=256, steps=40,

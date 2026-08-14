@@ -126,7 +126,8 @@ def main():
     ap.add_argument("--xl", default="on", choices=["on", "off"])
     ap.add_argument("--gate-mode", default="scalar", dest="gate_mode",
                     choices=["scalar", "position", "entropy"])
-    ap.add_argument("--keyed", default=None, choices=["token"])
+    ap.add_argument("--keyed", default=None,
+                    choices=["token", "logit"])
     ap.add_argument("--device", default="cuda"
                     if torch.cuda.is_available() else "cpu")
     a = ap.parse_args()

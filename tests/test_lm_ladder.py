@@ -809,6 +809,85 @@ class TestTokenKeyed(unittest.TestCase):
         self.assertTrue(ce1 == ce1 and ce1 < 20)
 
 
+class TestLogitStore(unittest.TestCase):
+    def test_store_to_logit_lift_end_to_end(self):
+        # A53 law — THE test the campaign lacked until the decode
+        # bench: a stored item must lift the answer's LOGIT through
+        # the full forward, by construction. Plant (context-key ->
+        # identity of token B) and forward a sequence whose tail
+        # reproduces the context: p(B) must rise vs an empty store.
+        torch.manual_seed(4)
+        from iga.lm_hybrid import HybridLM
+        m = HybridLM(64, d=32, max_T=32, store="matrix",
+                     use_xl=False, keyed="logit")
+        m.eval()
+        with torch.no_grad():
+            for k in m.bands:
+                m.alpha[str(k)].fill_(1.0)
+        E = torch.nn.functional.normalize(
+            m.embed.weight, dim=-1).detach()
+        x = torch.randint(0, 64, (1, 32))
+        B_tok = 7
+        ctx = E[x[0, -m.QR:]].mean(0, keepdim=True)[None]  # [1,1,32]
+        with torch.no_grad():
+            st0 = m.init_state(1, "cpu")
+            l0, _, _ = m(x, st0, None)
+            st1 = m.init_state(1, "cpu")
+            for k in m.bands:
+                stn = m.stores[str(k)]
+                M2, _ = stn.write(st1["M"][k], stn.lift(ctx),
+                                  E[B_tok][None, None],
+                                  torch.ones(1, 1))
+                st1["M"][k] = M2
+            l1, _, _ = m(x, st1, None)
+        d0 = float(l1[0, -1, B_tok] - l0[0, -1, B_tok])
+        others = (l1[0, -1] - l0[0, -1]).clone()
+        others[B_tok] = 0.0
+        self.assertGreater(d0, 0.5)           # the lift is REAL
+        self.assertGreater(d0, 2 * float(others.abs().max()))
+
+    def test_capacity_many_pairs_still_retrievable(self):
+        # A52b capacity law: with C pairs well under D, a specific
+        # item must survive crosstalk (this is the arithmetic that
+        # was never checked at d=256: load >> capacity in bands 4-5)
+        torch.manual_seed(5)
+        from iga.lm_hybrid import LogitStore
+        stn = LogitStore(d=32, D=512, decay=0.0, seed=9)
+        C = 64
+        keys = torch.nn.functional.normalize(
+            torch.randn(1, C, 32), dim=-1)
+        vals = torch.nn.functional.normalize(
+            torch.randn(1, C, 32), dim=-1)
+        M = torch.zeros(1, 32, 512)
+        with torch.no_grad():
+            stn.beta.fill_(4.0)               # near-1 write rate
+            for i in range(C):                # items arrive over time
+                M, _ = stn.write(M, stn.lift(keys[:, i:i+1]),
+                                 vals[:, i:i+1], torch.ones(1, 1))
+            r = stn.read(M, stn.lift(keys[:, 3:4]))
+        cos = torch.nn.functional.cosine_similarity(
+            r[0, 0], vals[0, 3], dim=-1)
+        self.assertGreater(float(cos), 0.7)
+
+    def test_logit_mode_trains_and_ledger_exact(self):
+        # e2e: 6 CPU steps, exact ledger, ticks once, finite CE,
+        # alpha/tok_u trainable, mid-layer residual read OFF, and
+        # the per-band store shapes are the capacity-sized ones
+        from iga.lm_train import train
+        model, drive, vocab, ce0, ce1 = train(
+            d=32, lanes=2, T=128, steps=6, device="cpu",
+            log_every=100, arch="hybrid", store="matrix",
+            use_xl=False, keyed="logit", lr=1e-3)
+        self.assertTrue(drive.audit()["telescoping_exact"])
+        self.assertEqual(model._st["chunk"], 6)
+        self.assertTrue(ce1 == ce1 and ce1 < 20)
+        self.assertTrue(model.alpha["3"].requires_grad)
+        self.assertTrue(model.tok_u.requires_grad)
+        for k, D in ((3, 512), (4, 1024), (5, 2048)):
+            self.assertEqual(tuple(model._st["M"][k].shape[1:]),
+                             (32, D))
+
+
 class TestEndToEnd(unittest.TestCase):
     def test_smoke_train_audit(self):
         model, drive, vocab, ce0, ce1 = train(d=48, lanes=2, T=192, steps=12,

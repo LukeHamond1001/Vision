@@ -129,6 +129,71 @@ class BandMatrix(nn.Module):
         return self.out(r)
 
 
+class LogitStore(nn.Module):
+    """A53 (R5): decode-free item store, capacity-sized. The A52b
+    bench proved the learned value/decode path (wv in, out out) is
+    dead — far-read credit is too sparse/noisy to shape it. Here
+    NOTHING between store and prediction is learned but one scalar:
+    values are token IDENTITIES (unit embedding rows), and the read
+    result is matched straight against the vocabulary and added to
+    the LOGITS. Keys are context mixes lifted into a D-dim space by
+    a FROZEN random projection (JL: inner products preserved) — D is
+    decoupled from model width and sized per band to the measured
+    write load (the A52b capacity arithmetic: a delta-rule matrix
+    holds ~D pairs against dot-product readout; band 5's ~92-chunk
+    pair lifetime needs thousands, and d=256 drowned it)."""
+
+    def __init__(self, d, D, decay, seed):
+        super().__init__()
+        self.D = D
+        self.decay = decay
+        self.beta = nn.Parameter(torch.tensor(0.0))
+        g = torch.Generator().manual_seed(seed)
+        # NONLINEAR lift (random Fourier features). A linear
+        # projection of d-dim keys spans a d-dim subspace of R^D —
+        # rank, not ambient dimension, sets capacity, so a linear
+        # lift buys NOTHING (caught by the capacity law test: 64
+        # keys in an effective 32-dim space erased each other).
+        # cos(Px+b) images span D dims; gamma sets the kernel
+        # bandwidth so orthogonal unit tokens decorrelate to ~0.15
+        # while nearby context mixes stay matched.
+        self.register_buffer(
+            "proj", 1.4 * torch.randn(D, d, generator=g))
+        self.register_buffer(
+            "phase", 2 * 3.141592653589793
+            * torch.rand(D, generator=g))
+
+    def lift(self, x):
+        """[.., d] context mix -> unit RFF key in R^D."""
+        return nn.functional.normalize(
+            torch.cos(nn.functional.linear(x, self.proj)
+                      + self.phase), dim=-1)
+
+    def write(self, M, K, V, s, stale_ok=False):
+        """M [B, d, D], K [B, T, D] unit lifted keys, V [B, T, d]
+        unit identity values (detached), s [B, T] write strength.
+        Convex strength-normalized delta rule (A52 NaN law); recon
+        weights detached (A52b anti-gaming law)."""
+        beta = self.beta.clone() if stale_ok else self.beta
+        pred = torch.einsum("bij,btj->bti", M, K)
+        upd = torch.einsum("bti,btj->bij",
+                           s.unsqueeze(-1) * (V - pred), K)
+        denom = s.sum(dim=1).clamp(min=1e-3)
+        M = (1 - self.decay) * M + torch.sigmoid(beta) * \
+            upd / denom.unsqueeze(-1).unsqueeze(-1)
+        back = torch.einsum("bij,btj->bti", M, K)
+        w = (s / (s.sum(dim=1, keepdim=True) + 1e-6)).detach()
+        recon = ((1 - nn.functional.cosine_similarity(back, V,
+                                                      dim=-1))
+                 * w).sum(dim=1).mean()
+        return M, recon
+
+    def read(self, M, q):
+        """q [B, T, D] lifted queries -> retrieved identity vectors
+        [B, T, d], ready for the vocabulary match."""
+        return torch.einsum("bij,btj->bti", M, q)
+
+
 class SlowCell(nn.Module):
     """Gated delta-write with the update gate biased closed at init:
     h' = (1-z)*h + z*cand. At init z ~ sigmoid(gate_bias) so the
@@ -203,6 +268,27 @@ class HybridLM(nn.Module):
                 self.QR = 8
                 self.tok_u = nn.Parameter(torch.zeros(vocab_size))
                 self.qmix = nn.Parameter(torch.zeros(self.QR))
+            if keyed == "logit":
+                # A53 (R5): decode-free capacity-sized stores.
+                # QR=64: bridge ceiling 30.2% (A52b curve). KD per
+                # band from load = writes/chunk x pair lifetime
+                # (band 3 ~2 chunks, band 4 ~12, band 5 ~92).
+                # alpha init 0: the bonus is opt-in like the gates;
+                # gradient flows at 0. The mid-layer residual read
+                # (the dead decode route) is OFF in this mode.
+                self.QR = 64
+                self.KD = {3: 512, 4: 1024, 5: 2048}
+                self.tok_u = nn.Parameter(torch.zeros(vocab_size))
+                self.qmix = nn.Parameter(torch.zeros(self.QR))
+                self.stores = nn.ModuleDict(
+                    {str(k): LogitStore(
+                        d, self.KD[k],
+                        1 - 0.5 ** (1 / HYBRID_CLOCKS[k]),
+                        seed=1000 + k)
+                     for k in self.bands})
+                self.alpha = nn.ParameterDict(
+                    {str(k): nn.Parameter(torch.tensor(0.0))
+                     for k in self.bands})
             # A30: reads gated shut at init (sigmoid(-4) ~ 0.018) —
             # v5.6 proved ungated per-position reads crowd out
             # induction formation; the model must opt in. gate_init
@@ -260,8 +346,14 @@ class HybridLM(nn.Module):
               "pend": {k: None for k in self.bands},
               "chunk": 0}
         if self.store == "matrix":
-            st["M"] = {k: torch.zeros(B, self.d, self.d, device=device)
-                       for k in self.bands}
+            if getattr(self, "keyed", None) == "logit":
+                st["M"] = {k: torch.zeros(B, self.d, self.KD[k],
+                                          device=device)
+                           for k in self.bands}
+            else:
+                st["M"] = {k: torch.zeros(B, self.d, self.d,
+                                          device=device)
+                           for k in self.bands}
         st["xl"] = None            # per-layer cached hiddens (A30)
         return st
 
@@ -331,7 +423,9 @@ class HybridLM(nn.Module):
                 new_xl.append(x[:, M:].detach())
             kv = (xl[i] + self.xl_tag) if xl is not None else None
             x = b(x, mask if xl is not None else sq, kv=kv)
-            if self.store == "matrix" and i == self.mid - 1 and read_ok:
+            if self.store == "matrix" and i == self.mid - 1 \
+                    and read_ok \
+                    and getattr(self, "keyed", None) != "logit":
                 # per-position associative reads from LAST chunks'
                 # matrices, gated shut at init (A30) + read-dropout
                 # (A36: the crowding-out law — half the chunks train
@@ -381,6 +475,46 @@ class HybridLM(nn.Module):
         st["xl"] = new_xl if self.use_xl else None
         hidden = x[:, M:]                        # text positions
         logits = self.head(self.lnf(hidden))
+        lg_E = lg_qd = lg_smask = None
+        if self.store == "matrix" and \
+                getattr(self, "keyed", None) == "logit":
+            # A53 read: query = mix of the last QR tokens' embeddings
+            # (window includes the current token); the retrieved
+            # identity vectors are matched against the vocabulary and
+            # added DIRECTLY to the logits — no learned decode. Reads
+            # see the PREVIOUS chunks' M (writes happen below).
+            lg_E = nn.functional.normalize(
+                self.embed.weight, dim=-1).detach()
+            Tt = tokens.shape[1]
+            idx = torch.arange(Tt, device=tokens.device)
+            offs = torch.arange(self.QR, device=tokens.device)
+            rel = idx.unsqueeze(1) - offs.unsqueeze(0)
+            wtok = tokens[:, rel.clamp(min=0)]
+            lgt = self.qmix + self.tok_u[wtok]
+            lgt = lgt.masked_fill((rel < 0).unsqueeze(0),
+                                  float("-inf"))
+            mix = torch.softmax(lgt, dim=-1)
+            lg_qd = torch.einsum("btr,btrd->btd", mix, lg_E[wtok])
+            # write-side index tensors (context STRICTLY before each
+            # position — the induction shape; position 0 has none:
+            # masked to uniform, write strength zeroed below). The
+            # write MIXES are built in the write block, twice, for
+            # the A38 two-pass credit (uncloned/cloned params).
+            relw = idx.unsqueeze(1) - (offs + 1).unsqueeze(0)
+            wtokw = tokens[:, relw.clamp(min=0)]
+            allw = (relw < 0).all(dim=-1)
+            lg_smask = (~allw).view(1, -1).to(lg_qd.dtype)
+            if read_ok:
+                rsum = None
+                for k in self.bands:
+                    if k in self.lesioned:
+                        continue
+                    stn = self.stores[str(k)]
+                    r = self.alpha[str(k)] * stn.read(
+                        st["M"][k], stn.lift(lg_qd))
+                    rsum = r if rsum is None else rsum + r
+                if rsum is not None:
+                    logits = logits + rsum @ lg_E.t()
         # band updates: each band SELECTS from the window with its own
         # query (A24) instead of receiving the window mean
         ticks = [[] for _ in range(N_BANDS)]
@@ -419,7 +553,36 @@ class HybridLM(nn.Module):
             # the NEXT chunk's — shared nodes would be freed twice.
             recon = []
             h_wr = hidden.detach()
-            if getattr(self, "keyed", None) == "token":
+            if getattr(self, "keyed", None) == "logit":
+                # A53 writes: value = the token's own IDENTITY under
+                # its preceding-context key. Two passes (A38): recon
+                # pass with live params feeds THIS chunk's backward;
+                # store pass with cloned params feeds the NEXT
+                # chunk's read-success backward, version-safe.
+                V_id = lg_E[tokens]
+                for pass2 in (False, True):
+                    tu = self.tok_u.clone() if pass2 else self.tok_u
+                    qm = self.qmix.clone() if pass2 else self.qmix
+                    lgtw = qm + tu[wtokw]
+                    lgtw = lgtw.masked_fill(
+                        (relw < 0).unsqueeze(0), float("-inf"))
+                    lgtw = lgtw.masked_fill(allw.view(1, -1, 1), 0.0)
+                    mixw = torch.softmax(lgtw, dim=-1)
+                    k_d = torch.einsum("btr,btrd->btd", mixw,
+                                       lg_E[wtokw])
+                    sv = torch.sigmoid(tu[tokens]) * lg_smask
+                    for k in self.bands:
+                        stn = self.stores[str(k)]
+                        M_in = st["M"][k].detach()
+                        if not pass2:
+                            _, rc = stn.write(M_in, stn.lift(k_d),
+                                              V_id, sv)
+                            recon.append(rc)
+                        else:
+                            st["M"][k], _ = stn.write(
+                                M_in, stn.lift(k_d), V_id, sv,
+                                stale_ok=True)
+            elif getattr(self, "keyed", None) == "token":
                 # A52: one pair per POSITION, key = the token's own
                 # unit embedding, write strength from tok_u. The A38
                 # two-pass credit structure is preserved: the recon
