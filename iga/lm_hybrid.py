@@ -490,11 +490,23 @@ class HybridLM(nn.Module):
             offs = torch.arange(self.QR, device=tokens.device)
             rel = idx.unsqueeze(1) - offs.unsqueeze(0)
             wtok = tokens[:, rel.clamp(min=0)]
-            lgt = self.qmix + self.tok_u[wtok]
-            lgt = lgt.masked_fill((rel < 0).unsqueeze(0),
-                                  float("-inf"))
-            mix = torch.softmax(lgt, dim=-1)
-            lg_qd = torch.einsum("btr,btrd->btd", mix, lg_E[wtok])
+
+            # memory: the [B,T,QR,d] embedding gathers (4.3GB each
+            # at 16 lanes, three sites) OOM'd the first r5 pod at
+            # backward. Checkpoint the whole mix construction —
+            # exact same fp32 math, gathers recomputed in backward
+            # instead of retained; only [B,T,QR] windows persist.
+            def _mixq(qm, tu, wt, msk, zero_all):
+                lg = qm + tu[wt]
+                lg = lg.masked_fill(msk.unsqueeze(0), float("-inf"))
+                if zero_all is not None:
+                    lg = lg.masked_fill(zero_all.view(1, -1, 1), 0.0)
+                mw = torch.softmax(lg, dim=-1)
+                return torch.einsum("btr,btrd->btd", mw, lg_E[wt])
+
+            from torch.utils.checkpoint import checkpoint as _ckpt
+            lg_qd = _ckpt(_mixq, self.qmix, self.tok_u, wtok,
+                          rel < 0, None, use_reentrant=False)
             # write-side index tensors (context STRICTLY before each
             # position — the induction shape; position 0 has none:
             # masked to uniform, write strength zeroed below). The
@@ -560,16 +572,16 @@ class HybridLM(nn.Module):
                 # store pass with cloned params feeds the NEXT
                 # chunk's read-success backward, version-safe.
                 V_id = lg_E[tokens]
+                from torch.utils.checkpoint import \
+                    checkpoint as _ckpt
                 for pass2 in (False, True):
                     tu = self.tok_u.clone() if pass2 else self.tok_u
                     qm = self.qmix.clone() if pass2 else self.qmix
-                    lgtw = qm + tu[wtokw]
-                    lgtw = lgtw.masked_fill(
-                        (relw < 0).unsqueeze(0), float("-inf"))
-                    lgtw = lgtw.masked_fill(allw.view(1, -1, 1), 0.0)
-                    mixw = torch.softmax(lgtw, dim=-1)
-                    k_d = torch.einsum("btr,btrd->btd", mixw,
-                                       lg_E[wtokw])
+                    # cloned params ride as checkpoint INPUTS —
+                    # saved copies, so the backward recompute is
+                    # version-frozen exact (A38 safety preserved)
+                    k_d = _ckpt(_mixq, qm, tu, wtokw, relw < 0,
+                                allw, use_reentrant=False)
                     sv = torch.sigmoid(tu[tokens]) * lg_smask
                     for k in self.bands:
                         stn = self.stores[str(k)]

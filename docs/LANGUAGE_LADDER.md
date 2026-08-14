@@ -1868,7 +1868,13 @@ scale, not blocking this one. Target cost: $15–40 total.
   Verdict channels pre-registered as in A52b: TM-bridge(99 @QR=8;
   ceiling rises with QR=64 read window) sign test + full-shard
   channels + aggregate A51 bar; PLUS alpha finals and per-band
-  lesion of the logit bonus.
+  lesion of the logit bonus. POD 1 (hc107pet) OOM'd at first
+  backward (17.65GB): the three [B,T,QR,d] mix-construction
+  gathers (4.3GB each at 16 lanes) were retained for backward.
+  FIX: checkpoint the whole mix build (exact fp32 math, gathers
+  recomputed in backward; cloned params ride as checkpoint inputs
+  = version-frozen A38-safe). Suite 83/83. First-step datum:
+  logit path RUNS (ce 10.57 step 1, 18.5k tok/s at 16 lanes).
 
 ## Status
 
