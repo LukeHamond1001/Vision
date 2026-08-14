@@ -25,3 +25,4 @@
 01:20:23 training heartbeat: step 73000  ce 2.004  loss 2.023  holds 123088  57,561 tok/s  [fid:3=+0.994 fid:4=+0.851 fid:5=+0.038 b0=+0.866 b1=+0.337 b2=+0.002 b3=+0.004]
 01:29:01 training complete (rc=0)
 01:29:14 eval complete: r4b.pt
+01:29:26 eval complete: r4b.pt.best.pt
