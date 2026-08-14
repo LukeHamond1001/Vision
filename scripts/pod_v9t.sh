@@ -1,22 +1,34 @@
 #!/usr/bin/env bash
 # A54 v9 trainer: THE FULL-ARCHITECTURE SCALE GATE. R5's certified
 # design with only the scale axes changed: d=512, T=2048, 6B fresh
-# tokens (KD auto-doubles with T — the capacity law). lr 1e-4 per
-# the width-LR law. Waits for the v9 shard (DONE_V9), zero prep.
+# tokens (KD auto-doubles with T), lr 1e-4 COSINE-decayed to 10%
+# (A54 audit C3: v8.0 rotted on constant lr at this exact
+# width/duration). Survivability (audit C1/C2/M4/H5): resume-aware
+# boot, rolling ckpt snapshots every ~2h, NaN/stall watchdog, and a
+# paid 20-step smoke on the real card before committing.
 set -uo pipefail
 export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
 W=/workspace/w-v9
-rm -rf "$W" && mkdir -p "$W" && cd "$W"
-git clone --depth 1 https://github.com/LukeHamond1001/iga-scale.git
-cd iga-scale
+RESUME=""
+if [ -f "$W/iga-scale/v9.pt" ]; then
+  # A54 audit C1: a surviving checkpoint on the volume is the most
+  # valuable object in the account — never rm it; resume instead.
+  cd "$W/iga-scale"
+  git fetch -q origin main && git reset --hard -q origin/main
+  RESUME="--resume v9.pt"
+else
+  rm -rf "$W" && mkdir -p "$W" && cd "$W"
+  git clone --depth 1 https://github.com/LukeHamond1001/iga-scale.git
+  cd iga-scale
+fi
 PUSH="https://x-access-token:${GIT_TOKEN}@github.com/LukeHamond1001/iga-scale.git"
 git config user.email "pod@iga-scale"; git config user.name "iga-pod"
-git checkout -b results-v9
+git checkout -B results-v9
 
 hb() {
   echo "$(date -u '+%H:%M:%S') $1" >> HEARTBEAT.log
   for f in HEARTBEAT.log train_tail.log eval_results.txt \
-           v9.pt.trace.jsonl canary.log; do
+           v9.pt.trace.jsonl canary.log smoke_tail.log; do
     git add -f "$f" 2>/dev/null || true
   done
   git commit -qm "hb: $1" 2>/dev/null || true
@@ -24,7 +36,7 @@ hb() {
     { sleep 15; git push -qf "$PUSH" results-v9 2>/dev/null; } || \
     { sleep 45; git push -qf "$PUSH" results-v9 2>/dev/null; } || true
 }
-hb "boot v9-FULL-ARCH trainer $(nvidia-smi --query-gpu=name --format=csv,noheader 2>/dev/null | head -1)"
+hb "boot v9-FULL-ARCH trainer $(nvidia-smi --query-gpu=name --format=csv,noheader 2>/dev/null | head -1) resume='${RESUME}'"
 pip install -q numpy tokenizers >> /dev/null 2>&1
 
 cuda_canary() {
@@ -33,19 +45,46 @@ import torch
 assert torch.cuda.is_available(), "cuda not available"
 x = torch.zeros(8, device="cuda") + 1
 torch.cuda.synchronize()
+name = torch.cuda.get_device_name(0)
 free, total = torch.cuda.mem_get_info()
-print(f"vram free {free/2**30:.1f}/{total/2**30:.1f} GiB")
-assert free > 18 * 2**30, f"GPU DIRTY: {free/2**30:.1f} free"
-big = torch.empty(int(14e9) // 4, dtype=torch.float32, device="cuda")
+print(f"{name}: vram free {free/2**30:.1f}/{total/2**30:.1f} GiB")
+assert total > 23 * 2**30, f"CARD TOO SMALL for v9: {name}"
+assert free > 22 * 2**30, f"GPU DIRTY: {free/2**30:.1f} free"
+big = torch.empty(int(18e9) // 4, dtype=torch.float32, device="cuda")
 del big; torch.cuda.empty_cache()
-print("capacity canary ok (14GB claim)")
+print("capacity canary ok (18GB claim)")
 CANEOF
 }
 if ! cuda_canary >> canary.log 2>&1; then
-  hb "CUDA BROKEN OR DIRTY - aborting"
+  hb "CUDA BROKEN, DIRTY, OR SUB-24GB - aborting"
   runpodctl remove pod "$RUNPOD_POD_ID" || true
   sleep 120; exit 1
 fi
+
+# A54 audit H5/H2: paid smoke — the exact v9 tensor shapes have
+# never executed anywhere. 20 steps against the resident mix_r1
+# shard proves no-OOM and measures tok/s for the budget before the
+# real run commits. ~$0.10.
+python -m iga.lm_train run --data /workspace/rmix/mix_r1 --d 512 \
+  --lanes 8 --chunk 2048 --steps 20 --talk tick --arch hybrid \
+  --device cuda --store matrix --xl off --lr 1e-4 --gate-init -2 \
+  --keyed logit --ckpt smoke.pt > smoke.log 2>&1
+SMOKE_RC=$?
+tail -12 smoke.log > smoke_tail.log
+TOKS=$(grep -oE '[0-9,]+ tok/s' smoke.log | tail -1 | tr -d ' ,' | grep -oE '^[0-9]+' || echo 0)
+rm -f smoke.pt smoke.pt.tmp
+if [ "$SMOKE_RC" -ne 0 ]; then
+  hb "SMOKE FAILED rc=$SMOKE_RC (see smoke_tail) - aborting"
+  runpodctl remove pod "$RUNPOD_POD_ID" || true
+  sleep 120; exit 1
+fi
+if [ "${TOKS:-0}" -lt 25000 ]; then
+  hb "SMOKE TOO SLOW (${TOKS} tok/s < 25000) - aborting per budget"
+  runpodctl remove pod "$RUNPOD_POD_ID" || true
+  sleep 120; exit 1
+fi
+hb "smoke pass: ${TOKS} tok/s at v9 shapes"
+
 E=0
 until [ -f /workspace/rmix/DONE_V9 ]; do
   sleep 60; E=$((E+1))
@@ -54,16 +93,47 @@ until [ -f /workspace/rmix/DONE_V9 ]; do
 done
 hb "shard found ($(stat -c%s /workspace/rmix/mix_v9/tokens.bin)B) — training"
 
-( while true; do sleep 1800; tail -40 train.log > train_tail.log; \
-    hb "training heartbeat: $(tail -1 train_tail.log)"; done ) &
-HBPID=$!
+( LAST_STEP=0; BEAT=0
+  while true; do
+    sleep 1800; BEAT=$((BEAT+1))
+    tail -40 train.log > train_tail.log
+    hb "training heartbeat: $(tail -1 train_tail.log)"
+    # A54 audit M4: NaN watchdog — a diverged run must not burn
+    # 40 more zombie hours; kill and fall through to landing
+    if tail -200 train.log | grep -qE "ce (nan|inf)"; then
+      hb "NAN DETECTED - killing training, landing artifacts"
+      pkill -f "iga.lm_train" || true
+      break
+    fi
+    CUR=$(grep -oE "step +[0-9]+ " train.log | tail -1 | grep -oE "[0-9]+" || echo 0)
+    if [ "$CUR" != "0" ] && [ "$CUR" = "$LAST_STEP" ]; then
+      hb "STALL DETECTED at step $CUR - killing training"
+      pkill -f "iga.lm_train" || true
+      break
+    fi
+    LAST_STEP="$CUR"
+    # A54 audit C1: rolling snapshot every ~2h — a host death costs
+    # <=2h, not the run (atomic_save keeps v9.pt always-complete)
+    if [ $((BEAT % 4)) -eq 0 ] && [ -f v9.pt ]; then
+      ( rm -rf /workspace/w-v9/snap && mkdir -p /workspace/w-v9/snap &&
+        cp v9.pt /workspace/w-v9/snap/ && cd /workspace/w-v9/snap &&
+        split -b 25m v9.pt v9roll_ && rm v9.pt &&
+        git init -q . && git checkout -q -b results-v9-ckpt &&
+        git add . &&
+        git -c user.email=pod@iga -c user.name=pod commit -qm "rolling beat $BEAT step $CUR" &&
+        git push -qf "$PUSH" results-v9-ckpt ) >/dev/null 2>&1 \
+        && hb "rolling snapshot pushed (step $CUR)"
+    fi
+  done ) &
+WATCHPID=$!
 python -m iga.lm_train run --data /workspace/rmix/mix_v9 --d 512 --lanes 8 \
   --chunk 2048 --steps 366000 --talk tick --arch hybrid --device cuda \
-  --store matrix --xl off --lr 1e-4 --gate-init -2 --keyed logit \
+  --store matrix --xl off --lr 1e-4 --lr-decay cosine --gate-init -2 \
+  --keyed logit $RESUME \
   --eval-data /workspace/rmix/mix_r1_eval \
   --ckpt v9.pt > train.log 2>&1
 TRAIN_RC=$?
-kill $HBPID 2>/dev/null
+kill $WATCHPID 2>/dev/null
 tail -60 train.log > train_tail.log
 hb "training complete (rc=$TRAIN_RC)"
 

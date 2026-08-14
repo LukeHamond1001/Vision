@@ -15,8 +15,19 @@ Usage:  python -m iga.lm_train smoke
 """
 
 import argparse
+import math
+import os
 import time
 import torch
+
+
+def atomic_save(obj, path):
+    """A54 audit (C2): checkpoints are the crash-recovery artifact —
+    a kill mid-write must never leave a truncated file where the
+    last good one was."""
+    tmp = path + ".tmp"
+    torch.save(obj, tmp)
+    os.replace(tmp, path)
 
 from .lm_conveyor import Vocab, Conveyor, splits
 from .lm_bands import BandLM
@@ -203,7 +214,11 @@ def holdout_probe(model, pe, T, device, warm=12, score=8):
                             == dd["answer"])
                 s[2] += 1
     model.train()
-    return {k: [round(v[0] / v[2], 3), round(v[1] / v[2], 2), v[2]]
+    # A54 audit (H3): UNROUNDED means — the banking channel
+    # reconstitutes sums from these, and rounding error scales with
+    # cumulative n (±0.1-0.2 by 366k steps, incl. the >1.0
+    # overshoots seen at R2). Round at print sites only.
+    return {k: [v[0] / v[2], v[1] / v[2], v[2]]
             for k, v in sorted(pe["agg"].items()) if v[2]}
 
 
@@ -213,7 +228,7 @@ def train(d=64, lanes=4, T=256, steps=40, seed=0, device="cpu",
           resume=None, offset_frac=0.0, store="vector", eval_data=None,
           use_xl=True, gate_init=-4.0, read_drop=0.5,
           read_drop_end=None, gate_mode="scalar", lr=3e-4,
-          bf16=False, lam=0.25, keyed=None):
+          bf16=False, lam=0.25, keyed=None, lr_decay="none"):
     """resume (A26): path to a checkpoint — model + optimizer + drive
     EMAs/records/minted/vetoes continue; step numbering continues.
     offset_frac: start each conveyor lane this far into its segment
@@ -286,6 +301,15 @@ def train(d=64, lanes=4, T=256, steps=40, seed=0, device="cpu",
     ce_first = None
     trace = (ckpt + ".trace.jsonl") if ckpt else None
     for step in range(step0 + 1, step0 + steps + 1):
+        if lr_decay == "cosine":
+            # A54 audit (C3): v8.0 at this width/duration peaked at
+            # 10% and bled for 90% on constant lr — the lr x
+            # DURATION confound. Cosine to 10% (the ledgered v8.1
+            # candidate) removes it from the scale gate.
+            frac = (step - step0) / max(steps, 1)
+            f = 0.1 + 0.9 * 0.5 * (1 + math.cos(math.pi * frac))
+            for g in opt.param_groups:
+                g["lr"] = lr * f
         if read_drop_end is not None and hasattr(model, "read_drop"):
             # A39 bootstrap knob: linear read-dropout anneal — early
             # protection for induction, late oxygen for the store
@@ -312,7 +336,10 @@ def train(d=64, lanes=4, T=256, steps=40, seed=0, device="cpu",
             if peval and step % 2000 < log_every:
                 hp = holdout_probe(model, peval, T, device)
                 row["holdout"] = hp
-                print(f"    holdout(cum): {hp}", flush=True)
+                print("    holdout(cum): "
+                      + str({k: [round(v[0], 3), round(v[1], 2),
+                                 v[2]] for k, v in hp.items()}),
+                      flush=True)
                 # A42: recent-window same-chunk + best-ckpt banking.
                 # v6.2's cumulative average hid an 8k-step held-out
                 # collapse; the peak model existed only as a lucky
@@ -322,7 +349,13 @@ def train(d=64, lanes=4, T=256, steps=40, seed=0, device="cpu",
                     s_now, _, n_now = hp["same"]
                     p_sum, p_n = peval.get("prev_same", (0.0, 0))
                     dn = n_now - p_n
-                    if dn > 0:
+                    # A54 audit (H3): sample floor via ACCUMULATION —
+                    # windows pool until >=10 fresh probes, then the
+                    # pooled recent mean is evaluated and the window
+                    # resets. Tiny windows can no longer bank on
+                    # noise, and banking cadence survives sparse
+                    # probe draws (R5 saw dn of 1-7).
+                    if dn >= 10:
                         recent = (s_now * n_now - p_sum) / dn
                         row["same_recent"] = round(recent, 4)
                         print(f"    same(recent {dn} probes): "
@@ -330,25 +363,25 @@ def train(d=64, lanes=4, T=256, steps=40, seed=0, device="cpu",
                         if ckpt and recent > peval.get("best", -1.0) \
                                 and n_now >= 20:
                             peval["best"] = recent
-                            torch.save({"model": model.state_dict(),
-                                        "step": step,
-                                        "same_recent": recent},
-                                       ckpt + ".best.pt")
+                            atomic_save({"model": model.state_dict(),
+                                         "step": step,
+                                         "same_recent": recent},
+                                        ckpt + ".best.pt")
                             print(f"    best banked @ {step} "
                                   f"({recent:.3f})", flush=True)
-                    peval["prev_same"] = (s_now * n_now, n_now)
+                        peval["prev_same"] = (s_now * n_now, n_now)
             if trace:
                 import json as _json
                 with open(trace, "a") as f:
                     f.write(_json.dumps(row) + "\n")
         if ckpt and step % 500 == 0:
-            torch.save({"model": model.state_dict(),
-                        "opt": opt.state_dict(), "step": step,
-                        "drive": {"ema": drive.ema,
-                                  "records": drive.records,
-                                  "minted": sorted(drive.minted),
-                                  "holds_settled": len(drive.ledger),
-                                  "vetoes": drive.vetoes}}, ckpt)
+            atomic_save({"model": model.state_dict(),
+                         "opt": opt.state_dict(), "step": step,
+                         "drive": {"ema": drive.ema,
+                                   "records": drive.records,
+                                   "minted": sorted(drive.minted),
+                                   "holds_settled": len(drive.ledger),
+                                   "vetoes": drive.vetoes}}, ckpt)
     audit = drive.audit()
     print("audit:", audit)
     print("panel:\n" + drive.panel())
@@ -401,6 +434,10 @@ def main():
                     choices=["scalar", "position", "entropy"],
                     help="matrix read gate: scalar per band, or "
                          "per-position learned head (A41 candidate)")
+    ap.add_argument("--lr-decay", default="none", dest="lr_decay",
+                    choices=["none", "cosine"],
+                    help="cosine: decay lr to 10% over the run "
+                         "(A54: the lr x duration guard)")
     ap.add_argument("--keyed", default=None,
                     choices=["token", "logit"],
                     help="A52 (R4) token: per-position writes keyed "
@@ -423,7 +460,8 @@ def main():
               eval_data=a.eval_data, use_xl=(a.xl == "on"),
               gate_init=a.gate_init, read_drop=a.read_drop,
               read_drop_end=a.read_drop_end, gate_mode=a.gate_mode,
-              lr=a.lr, bf16=a.bf16, lam=a.lam, keyed=a.keyed)
+              lr=a.lr, bf16=a.bf16, lam=a.lam, keyed=a.keyed,
+              lr_decay=a.lr_decay)
 
 
 if __name__ == "__main__":

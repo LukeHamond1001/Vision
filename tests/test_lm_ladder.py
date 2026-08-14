@@ -869,6 +869,18 @@ class TestLogitStore(unittest.TestCase):
             r[0, 0], vals[0, 3], dim=-1)
         self.assertGreater(float(cos), 0.7)
 
+    def test_cosine_lr_decay_smoke(self):
+        # A54 (audit C3): cosine decay runs end-to-end and CE stays
+        # finite — the lr x duration guard for the 366k-step gate
+        from iga.lm_train import train
+        model, drive, vocab, ce0, ce1 = train(
+            d=32, lanes=2, T=128, steps=6, device="cpu",
+            log_every=100, arch="hybrid", store="matrix",
+            use_xl=False, keyed="logit", lr=1e-3,
+            lr_decay="cosine")
+        self.assertTrue(drive.audit()["telescoping_exact"])
+        self.assertTrue(ce1 == ce1 and ce1 < 20)
+
     def test_logit_mode_trains_and_ledger_exact(self):
         # e2e: 6 CPU steps, exact ledger, ticks once, finite CE,
         # alpha/tok_u trainable, mid-layer residual read OFF, and

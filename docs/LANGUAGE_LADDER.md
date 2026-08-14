@@ -1955,6 +1955,44 @@ scale, not blocking this one. Target cost: $15–40 total.
   DONE_V9 marker); 4090-class trainer (doctrine: width/calendar-
   critical) ~55h ~= $40; total ~$45.
 
+- **A54b ADVERSARIAL AUDIT APPLIED (pre-launch, subagent)**
+  (2026-08-14, user-directed): five substantive findings, all fixed
+  or pre-registered BEFORE any v9 number exists. FIXED IN CODE:
+  (C1) trainer boot was rm-rf'ing surviving checkpoints — now
+  resume-aware (--resume on a live v9.pt) + rolling snapshot
+  pieces to results-v9-ckpt every ~2h (host death now costs <=2h,
+  not the run); (C2) atomic checkpoint saves (tmp+rename — 732
+  in-place writes were each a corruption window); (C3) lr x
+  DURATION confound — v8.0 at this exact width/duration peaked at
+  10% and bled 90% on constant lr; v9 now runs COSINE decay 1e-4
+  -> 1e-5 (the ledgered v8.1 candidate, one forced scale-axis
+  constant); (H3) best-banking accountancy — holdout means were
+  rounded then sum-reconstituted (error ~5x at 366k, the R2-era
+  >1.0 overshoots); now unrounded with a >=10-probe ACCUMULATING
+  window floor; (M4) NaN/stall watchdog kills a diverged run and
+  lands artifacts; (H5/H2) paid 20-step smoke at exact v9 shapes
+  on the real card (abort on OOM or <25k tok/s) before the run
+  commits; canary now requires a 24GB card. Suite 84/84.
+  PRE-REGISTERED (no code yet, before unblinding): (H1)
+  TM-v9-CLEAN instrument — at T=2048 the 1024-window TM set is
+  partially attention-solvable; v9's headline TM/completion
+  channels use answer-absent-from-2048 AND def-chunk != use-chunk
+  at T=2048; r5_best rescored on the identical subset for the
+  cross-scale row. (H4) comparability rule: HEADLINE = each model
+  at its native T on the H1 out-of-window subsets; SECONDARY = v9
+  at serve-T 1024 (tooling at autopsy). (M1) gate criterion 2
+  baseline: r5_best full-vs-lesion CE on mix_r1_eval computed and
+  pinned before v9 tables exist (job running). (C1 caveat) resume
+  restores model/opt/step/drive but not conveyor cursor or
+  banking state — post-resume replays segment head; acceptable vs
+  total loss, noted for the verdict. (L4) holdout same/straddle/
+  cross bins reclassify at T=2048 — banked-best channel measures
+  a wider-window quantity than R5's; not raw-comparable.
+  DEFERRED, registered: (M2) fork/vendored-dup overlap scan
+  train-vs-eval post-hoc (tokens.bin persists on volume); (M3)
+  prep-tail token-count verification before trainer launch (cut
+  steps if shard short).
+
 ## Status
 
 Assembled scene-free (A6), no registered runs. Weaver (`iga/lm_gen.py`),

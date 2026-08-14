@@ -145,7 +145,8 @@ def main():
     else:
         model = BandLM(tok.get_vocab_size(), d=a.d,
                        talk=a.talk).to(a.device)
-    state = torch.load(a.ckpt, map_location=a.device)
+    state = torch.load(a.ckpt, map_location=a.device,
+                       weights_only=False)
     model.load_state_dict(state["model"])
     print(f"loaded {a.ckpt} (step {state.get('step','?')}), "
           f"{model.n_params():,} params")
