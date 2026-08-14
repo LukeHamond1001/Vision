@@ -1981,8 +1981,11 @@ scale, not blocking this one. Target cost: $15–40 total.
   cross-scale row. (H4) comparability rule: HEADLINE = each model
   at its native T on the H1 out-of-window subsets; SECONDARY = v9
   at serve-T 1024 (tooling at autopsy). (M1) gate criterion 2
-  baseline: r5_best full-vs-lesion CE on mix_r1_eval computed and
-  pinned before v9 tables exist (job running). (C1 caveat) resume
+  baseline PINNED (computed 2026-08-14, 400 chunks, blind to v9):
+  r5_best full CE 2.6605 vs lesion-ALL 2.7644 -> store advantage
+  +0.1039 CE = +3.76% relative. Criterion 2 bar: v9 full-vs-
+  lesion relative CE advantage >= 3.76% x 0.75 (allowing scale
+  noise) = >= 2.8% rel. (C1 caveat) resume
   restores model/opt/step/drive but not conveyor cursor or
   banking state — post-resume replays segment head; acceptable vs
   total loss, noted for the verdict. (L4) holdout same/straddle/
