@@ -1996,6 +1996,22 @@ scale, not blocking this one. Target cost: $15–40 total.
   prep-tail token-count verification before trainer launch (cut
   steps if shard short).
 
+- **A54c PREP POST-MORTEM — volume quota, not host death**
+  (2026-08-14 19:31 UTC, user question "did pod storage get too
+  full" prompted the arithmetic): prep pod 1 died silently at
+  4.69B/6B tokens because the workdir (sources ~26GB) lived ON
+  the 40GB network volume alongside mix_r1 (2.5GB) and the
+  growing mix_v9 tokens.bin (9.4GB at death ~= 37.6GB total ->
+  quota). ENOSPC also killed the heartbeat writes — hence no
+  PREP FAILED line (the silent-death signature now has TWO known
+  causes: host death and full-volume). Pod 2 was killed 10 min
+  in before rebuilding into the same wall. FIX: workdir moved to
+  the pod's 60GB container disk; only the finished shard writes
+  to the volume (~15GB of 40 final). OPS LAW: source/working
+  files on container disk, OUTPUTS on the volume; df on a
+  network volume reports the backend pool, not the quota — the
+  quota is invisible until writes fail.
+
 ## Status
 
 Assembled scene-free (A6), no registered runs. Weaver (`iga/lm_gen.py`),

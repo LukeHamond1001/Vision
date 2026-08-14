@@ -5,8 +5,14 @@
 # held-out instrument). REUSES mix_r1's tokenizer: same token ids =
 # the 928-probe/completion instruments compare across scales.
 set -uo pipefail
-W=/workspace/w-v9prep
-rm -rf "$W" /workspace/w-r5 /workspace/w-r4b && mkdir -p "$W" && cd "$W"
+# A54c (pod 1 post-mortem): the workdir MUST live on the pod's own
+# container disk, NOT the network volume — sources (~26GB) + the
+# finished shard (12.3GB) + mix_r1 (2.5GB) exceed the 40GB volume
+# quota, and a full volume kills the heartbeat path too (the
+# silent death). Only the OUTPUT shard belongs on the volume.
+W=/root/w-v9prep
+rm -rf "$W" /workspace/w-v9prep /workspace/w-r5 /workspace/w-r4b \
+  /workspace/rmix/mix_v9 && mkdir -p "$W" && cd "$W"
 git clone --depth 1 https://github.com/LukeHamond1001/iga-scale.git
 cd iga-scale
 PUSH="https://x-access-token:${GIT_TOKEN}@github.com/LukeHamond1001/iga-scale.git"
