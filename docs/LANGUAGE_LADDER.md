@@ -1907,6 +1907,30 @@ scale, not blocking this one. Target cost: $15–40 total.
   qmix (band 5 wide-mix for onset bridges, band 3 bigram) vs
   accepting completion-memory as this store's organ.
 
+- **A53 COMPLETION CHANNEL RESULT** (2026-08-14, 1,822 positions,
+  460 multi-token TM identifiers, r5 vs r4b, full vs lesion-ALL):
+  **real, modest, and NOT R5-specific.** r5_best 0.379/49.8% vs
+  lesioned 0.353/47.4% = +7.4% rel, +2.4pt top1. r4b_best
+  0.352/46.3% vs 0.326/43.4% = +8.0% rel, +2.9pt. The store's
+  completion contribution is the largest lesion effect of the
+  campaign but similar in BOTH mechanisms; absolute completion is
+  TRUNK-DOMINATED (~47% lesioned — morphology + in-window
+  regularity carry most of it). R5's absolute edge (+3.5pt top1)
+  splits between a better co-trained trunk and the store delta.
+  CUMULATIVE HONEST PICTURE after six runs + three instruments:
+  the store's certified value = DENSE language-modeling gain
+  (CE 1.815 record, binding 0.938/97% record) + consistent
+  +2-3pt lesion-sensitive item effects at every range it can
+  reach; the strong claim (large specific beyond-window recall)
+  has never exceeded a few points on any channel. RECOMMENDATION
+  SHIFTED: bank R5 as the certified store design — it earns its
+  place on CE alone; declare item-ONSET out of scope for this
+  store class (honest, 6x evidence); per-band qmix night remains
+  REGISTERED but optional; next dollars belong to the campaign's
+  actual goals (scale gate with the R5 store integrated, or the
+  agent track) rather than a seventh mechanism night. R-campaign
+  total ~$18.
+
 ## Status
 
 Assembled scene-free (A6), no registered runs. Weaver (`iga/lm_gen.py`),
