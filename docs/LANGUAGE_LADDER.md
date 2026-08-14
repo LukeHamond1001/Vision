@@ -1876,6 +1876,37 @@ scale, not blocking this one. Target cost: $15–40 total.
   = version-frozen A38-safe). Suite 83/83. First-step datum:
   logit path RUNS (ce 10.57 step 1, 18.5k tok/s at 16 lanes).
 
+- **A53-R5 VERDICT** (2026-08-14 11:21 UTC pod CLEAN rc=0, 75k
+  steps, $2.10): **THE STORE IS ON — first live, paying memory
+  organ of the campaign — but it self-organized into a SUCCESSOR
+  CACHE, and the pre-registered onset bar FAILS (sixth): sign
+  test +49/-46 p=0.42, null.** Organs: alpha OPENED 0 -> 3.77/
+  3.51/3.25 (all bands, model's own pricing; prior runs 0.02-
+  0.16); qmix COLLAPSED to [1.0, 0...] — query = current token,
+  write key = preceding token: a longitudinal BIGRAM/successor
+  store. tok_u top = continuation fragments ('en','ers','ing').
+  The 64-token bridge strategy was abandoned by gradient — the
+  crowding-out law operating INSIDE the mechanism: successor
+  payoff is dense, bridge payoff sparse, shared qmix picked
+  dense. RESULTS: CE 1.815 RECORD (R4b 2.1-2.4 same config);
+  pl-same 0.938/97% top1 RECORD at d=256 (R1 0.89; v7.2 0.979
+  at d=384), lesion costs -0.028 of it; broadest lesion-
+  sensitive read contributions ever (pl-same +0.028, nat-inwin
+  +0.009, strad +0.007). TM onset: chance, diffuse, bridge==
+  nobridge (the cache cannot do onset: its query is the current
+  token; the answer's stem is absent by the probe's definition).
+  READING: the architecture's first working beyond-attention
+  memory is ITEM-COMPLETION memory (after any stem arrives,
+  its continuation returns, chained multi-token, across tens of
+  thousands of tokens) — the capability the CE/binding records
+  imply and NO current instrument scores. PRE-REGISTERED next
+  instrument (built now, $0, existing artifacts): TM-COMPLETION
+  channel — sub-tokens 2+ of true-memory identifiers (token-run
+  common prefix def-site vs use-site), full vs lesion-ALL, r5
+  vs r4b baseline. Open design question for the user: per-band
+  qmix (band 5 wide-mix for onset bridges, band 3 bigram) vs
+  accepting completion-memory as this store's organ.
+
 ## Status
 
 Assembled scene-free (A6), no registered runs. Weaver (`iga/lm_gen.py`),
