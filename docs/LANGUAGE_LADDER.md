@@ -1808,6 +1808,38 @@ scale, not blocking this one. Target cost: $15–40 total.
   the pre-registered branch either way; bench closes the chain
   first.
 
+- **A52b DECODE BENCH — ROOT CAUSE FOUND, CHAIN COMPLETE**
+  (2026-08-14 ~04:30 UTC, 99 oracle cases, both ckpts): plant the
+  PERFECT pair (real def-site hidden under the exact bridge key,
+  survival guaranteed, selector perfect) in an otherwise-empty
+  store; forward the real use-site window; measure delta
+  p(answer) vs empty store. r4b_best: mean **-0.011** (NEGATIVE),
+  median -0.000015, frac>0 0.39, answer rank WORSENS 113->169 —
+  a perfect store actively hurts. r4_best: +0.0017 mean, rank
+  flat — decodes nothing. Isolated retrieval-shaped wins exist
+  ('find' via 'offset' rank 8->3; ' setUp' via 'TestCase') but
+  the central tendency is destructive. **THE VALUE/DECODE LAYER
+  IS DEAD IN BOTH SELECTOR REGIMES**: wv/out never learned
+  "stored def context -> lift the identifier logit" because the
+  only gradient that could teach it — far-read credit — is the
+  sparsest signal in the system (one write-op of cross-boundary
+  graph, ~10% bridgeable probes, drowned by the dense local-LM
+  gradient that prefers the residual unperturbed). Retroactively
+  explains R4b's pl-same drop (open-gated undecodable injections
+  = noise) and the diffuse micro-benefit (weak regularizer, not
+  retrieval). LAYER LEDGER FINAL: written ok / addressed ok /
+  stable ok / demanded ok / aimed ok / DECODED dead. **The
+  BandMatrix store as a beyond-window retrieval organ at d=256
+  is refuted with a complete causal chain — retire is now
+  evidence-based.** What survives certified: core+bands binding,
+  drive (2x), metamemory gate, width-LR/curriculum/stability
+  laws, split-prep infra. ONE decode-free mechanism exists that
+  structurally cannot have this failure (value = next-token
+  IDENTITY, read added directly to LOGITS — no wv, no out, no
+  residual injection; the dead layer is REMOVED not retrained):
+  registered as R5-LOGIT, ~$1.7, USER'S CALL vs clean retire.
+  Campaign holds for the user's decision.
+
 ## Status
 
 Assembled scene-free (A6), no registered runs. Weaver (`iga/lm_gen.py`),
