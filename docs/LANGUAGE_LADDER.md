@@ -1931,6 +1931,30 @@ scale, not blocking this one. Target cost: $15–40 total.
   agent track) rather than a seventh mechanism night. R-campaign
   total ~$18.
 
+- **A54 staged (v9: THE FULL-ARCHITECTURE SCALE GATE)**
+  (2026-08-14, user go): R5's certified design with ONLY the scale
+  axes changed — d=512, T=2048, 6B fresh tokens, lr 1e-4 (width-LR
+  law) — plus the one change T forces: KD now scales with max_T
+  (T=1024 reproduces R5 bit-identically; T=2048 -> KD {1024, 2048,
+  4096}; suite 83/83). Fresh sources: code shards 52-301 (20GB
+  cap), wiki 2-11, chat train_1-3; digest csn train (cross-run
+  reuse per R-series precedent). TOKENIZER REUSED from mix_r1 —
+  same token ids, so the 928-probe TM set, bridge subset, and
+  1,895-position completion channel compare DIRECTLY across
+  scales; mix_r1_eval stays the held-out instrument (sources
+  disjoint from v9 train). Self-controlled: the lesion instrument
+  on the 61M model itself is the store's contribution at scale —
+  no twin (A50 precedent). GATE, pre-registered: (1) wire-to-wire
+  stability; (2) full-vs-lesion CE advantage at >= debug-scale
+  relative size; (3) completion-channel lesion effect reproduced
+  (store contribution, n=2 across scales); (4) clean banked-best
+  table. PASS -> v10 justified by trend. FAIL -> ceiling learned
+  at 20% of v10's price with instruments to say why. Also the
+  honest replication run for R5's n=1 CE record (A35 lottery
+  law). Split-prep: CPU pod builds mix_v9 (~$3, overnight,
+  DONE_V9 marker); 4090-class trainer (doctrine: width/calendar-
+  critical) ~55h ~= $40; total ~$45.
+
 ## Status
 
 Assembled scene-free (A6), no registered runs. Weaver (`iga/lm_gen.py`),

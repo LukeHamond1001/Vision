@@ -277,7 +277,13 @@ class HybridLM(nn.Module):
                 # gradient flows at 0. The mid-layer residual read
                 # (the dead decode route) is OFF in this mode.
                 self.QR = 64
-                self.KD = {3: 512, 4: 1024, 5: 2048}
+                # A54 (v9): capacity tracks chunk length — write load
+                # per band = T x selectivity x pair lifetime, so KD
+                # scales with max_T (T=1024 reproduces R5 exactly;
+                # T=2048 doubles every band's store).
+                kd_base = max(1, max_T // 1024)
+                self.KD = {3: 512 * kd_base, 4: 1024 * kd_base,
+                           5: 2048 * kd_base}
                 self.tok_u = nn.Parameter(torch.zeros(vocab_size))
                 self.qmix = nn.Parameter(torch.zeros(self.QR))
                 self.stores = nn.ModuleDict(
