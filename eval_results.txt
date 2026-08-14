@@ -17,3 +17,23 @@ loaded r5.pt (step 75000), 23,814,988 params
 
 == talk (one agent turn, greedy) ==
 not_to___________________________
+===== EVAL r5.pt.best.pt =====
+/workspace/w-r5/iga-scale/iga/lm_eval.py:148: FutureWarning: You are using `torch.load` with `weights_only=False` (the current default value), which uses the default pickle module implicitly. It is possible to construct malicious pickle data which will execute arbitrary code during unpickling (See https://github.com/pytorch/pytorch/blob/main/SECURITY.md#untrusted-models for more details). In a future release, the default value for `weights_only` will be flipped to `True`. This limits the functions that could be executed during unpickling. Arbitrary objects will no longer be allowed to be loaded via this mode unless they are explicitly allowlisted by the user via `torch.serialization.add_safe_globals`. We recommend you start setting `weights_only=True` for any use case where you don't have full control of the loaded file. Please open an issue on GitHub for any issues related to this experimental feature.
+  state = torch.load(a.ckpt, map_location=a.device)
+loaded r5.pt.best.pt (step 64000), 23,814,988 params
+
+== recall at distance (full model) ==
+  gap          0-256  p(ans) 0.636  top1 0.67  n=21
+  gap       256-2048  p(ans) 0.170  top1 0.17  n=18
+  gap     2048-16384  p(ans) 0.074  top1 0.06  n=32
+  gap 16384-1000000000  p(ans) 0.067  top1 0.00  n=1
+
+== recall at distance (bands 4-6 lesioned) ==
+  gap          0-256  p(ans) 0.476  top1 0.57  n=21
+  gap       256-2048  p(ans) 0.058  top1 0.06  n=18
+  gap     2048-16384  p(ans) 0.066  top1 0.09  n=32
+  gap 16384-1000000000  p(ans) 0.065  top1 0.00  n=1
+
+== talk (one agent turn, greedy) ==
+not_id_id = '?'")
+    if not in the first, and the first, and the first, and the the the the the
