@@ -1982,7 +1982,7 @@ scale, not blocking this one. Target cost: $15–40 total.
   at its native T on the H1 out-of-window subsets; SECONDARY = v9
   at serve-T 1024 (tooling at autopsy). (M1) gate criterion 2
   baseline PINNED (computed 2026-08-14, 400 chunks, blind to v9):
-  r5_best full CE 2.6605 vs lesion-ALL 2.7644 -> store advantage
+  r5_best full CE 2.6570 vs lesion-ALL 2.7609 -> store advantage
   +0.1039 CE = +3.76% relative. Criterion 2 bar: v9 full-vs-
   lesion relative CE advantage >= 3.76% x 0.75 (allowing scale
   noise) = >= 2.8% rel. (C1 caveat) resume
