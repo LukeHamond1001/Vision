@@ -9,3 +9,4 @@
 04:24:57 training heartbeat:     same(recent 5 probes): 0.012
 04:40:06 training heartbeat: step 11850  ce 3.496  loss 3.540  holds 165200  26,930 tok/s  [fid:3=+0.975 fid:4=+0.204 fid:5=+0.022 b0=+0.024 b1=+0.048 b2=+0.032 b3=+0.049]
 04:55:12 training heartbeat: step 13800  ce 3.011  loss 3.091  holds 182512  27,831 tok/s  [fid:3=+0.977 fid:4=+0.226 fid:5=+0.018 b0=+0.030 b1=+0.053 b2=+0.046 b3=+0.037]
+05:10:17 training heartbeat: step 15750  ce 3.208  loss 3.253  holds 198352  28,625 tok/s  [fid:3=+0.984 fid:4=+0.242 fid:5=+0.017 b0=+0.050 b1=+0.025 b2=+0.053 b3=+0.047]
