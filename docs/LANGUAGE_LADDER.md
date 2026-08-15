@@ -2243,6 +2243,21 @@ scale, not blocking this one. Target cost: $15–40 total.
   R8). If R7 fails cost criteria: v9.1 reverts to 0.5 dropout +
   tighter kill rule, content-gate moves up the queue.
 
+- **A54i v9 SNAPSHOT ROWS (free extraction, closes v9's record)**
+  (2026-08-15 20:49 UTC; 240k snapshot, T=2048 native, committed
+  instrument): CE full-vs-lesion +4.08% rel — CLEARS v9's
+  original criterion-2 bar (+2.80%) at 49% training on the OLD
+  geometry; completion +3.83pt top1 (0.2467 vs 0.2084; r5 ref
+  +2.04) — criterion 3 would have passed. Absolute levels low
+  (the atrophied trunk); the store's MARGINAL contribution at
+  scale is large and clean. VERDICT COMPLETION FOR A54: the
+  scale gate's store question is answered YES posthumously — the
+  trunk-eats-store fear is dead with data; the only scale enemy
+  is the A54g crowding disease. v9.1's risk profile improves
+  accordingly: norm_mix (certified stronger store) + dose 0.75
+  (pending R7 cost check) + bleed-curve kill rule covers the one
+  known threat.
+
 ## Status
 
 Assembled scene-free (A6), no registered runs. Weaver (`iga/lm_gen.py`),
