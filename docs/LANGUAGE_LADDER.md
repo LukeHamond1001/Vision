@@ -2148,9 +2148,15 @@ scale, not blocking this one. Target cost: $15–40 total.
   stops being paid for induction, and the circuit decays. This is
   v5.6's crowding-out returned through a side door: A30 gates and
   A34 read-dropout protect the RESIDUAL read path, which is OFF
-  in logit mode — the logit bonus has no gate and no dropout
-  (A54e F7 "gate-init is a no-op in logit mode" was not cosmetic;
-  it was the missing protection). Survivable at r5 scale/duration
+  in logit mode. CORRECTION (A56 staging, 2026-08-15): the bonus
+  DOES inherit the global read-dropout — the logit block sits
+  inside read_ok (lm_hybrid 428/540), so v9 atrophied THROUGH
+  50% dropout; what the logit path lacks is the per-band gate
+  (F7 stands) and a sufficient dose. The A34 medicine exists but
+  the v5.8 dose failed at 488k-step duration — consistent with
+  exposed-chunk gradients actively pruning the redundant trunk
+  circuit rather than merely not reinforcing it. Survivable at
+  r5 scale/duration
   (alpha 3.2-3.8, pl-same 0.938); fatal to the trunk at 488k
   steps and alpha 4.6. Two independent instruments agree (train-
   loop holdout + local table); instrument-artifact unlikely (the
@@ -2217,6 +2223,25 @@ scale, not blocking this one. Target cost: $15–40 total.
   new R6 baseline; the cheap run certifies the protection's COST
   — the benefit is only observable at v9.1's duration, so v9.1
   carries the holdout instrument as the benefit proof).
+
+- **A56 R7 STAGED + LAUNCHED (user go)** (2026-08-15 ~20:00
+  UTC): design revised at staging — the bonus already trains
+  under the global read-dropout 0.5 (see A54g correction), so R7
+  = R6's exact config with ONE variable: --read-drop 0.5 -> 0.75
+  (dose escalation of existing machinery, zero new code, suite
+  unchanged 87/87). WHAT THE CHEAP RUN CAN AND CANNOT PROVE: at
+  75k steps the disease does not manifest (r6 trunk healthy to
+  end), so R7 certifies the protection's COST only. CRITERIA
+  (pinned blind): full-vs-lesion CE advantage >= +5.0% rel (half
+  of R6's +10.51 — the dose must not kneecap the store);
+  completion >= +2.0pt (half of R6's +4.07); full CE within 2%
+  of R6's 2.5035; trunk same-chunk >= 0.75 at end (sanity, not
+  benefit). BENEFIT PROOF deferred to v9.1 by design: v9.1 runs
+  the winning dose with the holdout bleed curve as live
+  telemetry and the A54h precedent as the kill rule (bleed onset
+  by ~100k steps -> kill, ~$8, escalate to content-gating as
+  R8). If R7 fails cost criteria: v9.1 reverts to 0.5 dropout +
+  tighter kill rule, content-gate moves up the queue.
 
 ## Status
 
