@@ -2084,6 +2084,22 @@ scale, not blocking this one. Target cost: $15–40 total.
   store-inert (never read generation as store evidence);
   lm_eval --xl defaults on (manual-eval footgun).
 
+- **A54f CROSS-SCALE REFERENCE ROWS PINNED BLIND** (2026-08-15
+  00:38 UTC, v9 at step ~29k of 488k — no v9 table exists):
+  r5_best rescored on the committed TM-v9-clean instrument
+  (n=461, hash fc639269079e) at its native serve-T 1024, via
+  scripts/autopsy_v9.py. ONSET: full p=0.0361 top1=0.0629 vs
+  lesionALL p=0.0323 top1=0.0629 — identical top1, sign test
+  +203/-258 p=0.9955: the onset null reproduces exactly on the
+  stricter instrument (geometry-predicted, A54e F2). COMPLETION
+  (criterion-3 reference): full p=0.3968 top1=0.5078 vs lesionALL
+  p=0.3774 top1=0.4874, n=835 — the store's completion effect is
+  +2.04pt top1 / +1.94pt p on the clean subset (was +2.4-2.9pt on
+  the older, looser subset). One of 836 constructed completion
+  positions falls in the T=1024 serving's unserved tail sliver;
+  both arms score the identical 835 (paired comparison intact).
+  v9's criterion 3 reads against these rows.
+
 ## Status
 
 Assembled scene-free (A6), no registered runs. Weaver (`iga/lm_gen.py`),
