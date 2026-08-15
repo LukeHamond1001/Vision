@@ -216,12 +216,16 @@ class HybridLM(nn.Module):
     def __init__(self, vocab_size, d=128, n_layers=6, n_heads=8,
                  max_T=512, talk=None, widths=None, store="vector",
                  use_xl=True, gate_init=-4.0, read_drop=0.5,
-                 gate_mode="scalar", keyed=None):
+                 gate_mode="scalar", keyed=None, norm_mix=False):
         super().__init__()
         self.d = d
         self.vocab_size = vocab_size
         self.max_T = max_T
         self.store = store
+        # A55 (R6 candidate): unit-normalize the read/write key mix
+        # before the RFF lift. Default OFF — R5/v9 parity exact; no
+        # parameters added, so checkpoints load across both settings.
+        self.norm_mix = bool(norm_mix)
         self.use_xl = use_xl   # A36: benched in v6.0 — real one-boundary
                                # reach (A33) but unresolved held-out cost
                                # and large run-variance; revisit at scale
@@ -508,7 +512,18 @@ class HybridLM(nn.Module):
                 if zero_all is not None:
                     lg = lg.masked_fill(zero_all.view(1, -1, 1), 0.0)
                 mw = torch.softmax(lg, dim=-1)
-                return torch.einsum("btr,btrd->btd", mw, lg_E[wt])
+                mix = torch.einsum("btr,btrd->btd", mw, lg_E[wt])
+                if self.norm_mix:
+                    # A55 (R6 candidate, from A54e F2): the raw mix
+                    # is a softmax MEAN of unit rows — norm
+                    # ~1/sqrt(support), deep in the RFF kernel's
+                    # flat region, so distinct contexts collide
+                    # (cos 0.97 measured at v9 shapes). The lift's
+                    # gamma was calibrated for UNIT inputs; unit-
+                    # normalizing the mix restores that design point
+                    # and makes broad-context keys addressable.
+                    mix = nn.functional.normalize(mix, dim=-1)
+                return mix
 
             from torch.utils.checkpoint import checkpoint as _ckpt
             lg_qd = _ckpt(_mixq, self.qmix, self.tok_u, wtok,

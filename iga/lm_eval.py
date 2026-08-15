@@ -128,6 +128,7 @@ def main():
                     choices=["scalar", "position", "entropy"])
     ap.add_argument("--keyed", default=None,
                     choices=["token", "logit"])
+    ap.add_argument("--norm-mix", action="store_true")
     ap.add_argument("--device", default="cuda"
                     if torch.cuda.is_available() else "cpu")
     a = ap.parse_args()
@@ -141,7 +142,8 @@ def main():
         model = HybridLM(tok.get_vocab_size(), d=a.d, max_T=a.chunk,
                          store=a.store, use_xl=(a.xl == "on"),
                          gate_mode=a.gate_mode,
-                         keyed=a.keyed).to(a.device)
+                         keyed=a.keyed,
+                         norm_mix=a.norm_mix).to(a.device)
     else:
         model = BandLM(tok.get_vocab_size(), d=a.d,
                        talk=a.talk).to(a.device)

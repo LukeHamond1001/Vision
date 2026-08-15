@@ -911,5 +911,96 @@ class TestEndToEnd(unittest.TestCase):
         self.assertGreater(audit["holds"], 0)
 
 
+class TestNormMix(unittest.TestCase):
+    """A55 laws (R6 candidate, from the A54e F2 geometry finding).
+    The defect: production keys are softmax MEANS of QR unit rows
+    (norm ~ 1/sqrt(support)), but the RFF lift's gamma was
+    calibrated for unit inputs — low-norm inputs land in the
+    kernel's flat region and distinct contexts collide. The fix:
+    unit-normalize the mix before lift. These tests pin BOTH the
+    defect (raw mixes collide) and the fix (normalized separate),
+    so R6 cannot launch on a lift that doesn't discriminate —
+    the same trap the A53 law test set for the linear lift."""
+
+    def _mixes(self, n, d, support=64, seed=11):
+        g = torch.Generator().manual_seed(seed)
+        E = torch.nn.functional.normalize(
+            torch.randn(4 * support, d, generator=g), dim=-1)
+        out = []
+        for i in range(n):
+            idx = torch.randperm(E.shape[0], generator=g)[:support]
+            out.append(E[idx].mean(0))
+        return torch.stack(out)                      # [n, d] low-norm
+
+    def test_raw_mixes_collide_normalized_separate(self):
+        from iga.lm_hybrid import LogitStore
+        st = LogitStore(256, 512, 0.1, seed=1003)
+        x = self._mixes(96, 256)
+        self.assertLess(float(x.norm(dim=-1).mean()), 0.3)
+        for inp, lo, hi in ((x, 0.7, None),
+                            (torch.nn.functional.normalize(x, dim=-1),
+                             None, 0.35)):
+            K = st.lift(inp[None])[0]                # [96, D]
+            C = K @ K.t()
+            off = C[~torch.eye(96, dtype=torch.bool)]
+            if lo is not None:
+                self.assertGreater(float(off.mean()), lo)
+            if hi is not None:
+                self.assertLess(float(off.abs().mean()), hi)
+
+    def test_normalized_keys_retrieve_raw_do_not(self):
+        from iga.lm_hybrid import LogitStore
+        st = LogitStore(256, 512, 0.1, seed=1004)
+        g = torch.Generator().manual_seed(12)
+        n = 48
+        V = torch.nn.functional.normalize(
+            torch.randn(n, 256, generator=g), dim=-1)
+        x = self._mixes(n, 256, seed=13)
+        hits = {}
+        for name, inp in (("raw", x),
+                          ("norm", torch.nn.functional.normalize(
+                              x, dim=-1))):
+            K = st.lift(inp[None])                   # [1, n, D]
+            M, _ = st.write(torch.zeros(1, 256, 512),
+                            K, V[None], torch.ones(1, n))
+            r = torch.einsum("bij,btj->bti", M, K)[0]
+            hits[name] = float((torch.argmax(r @ V.t(), dim=-1) ==
+                                torch.arange(n)).float().mean())
+        self.assertLess(hits["raw"], 0.25)
+        self.assertGreater(hits["norm"], 0.6)
+
+    def test_norm_mix_flag_end_to_end(self):
+        from iga.lm_hybrid import HybridLM
+        torch.manual_seed(7)
+        m0 = HybridLM(64, d=32, max_T=32, store="matrix",
+                      use_xl=False, keyed="logit")
+        m1 = HybridLM(64, d=32, max_T=32, store="matrix",
+                      use_xl=False, keyed="logit", norm_mix=True)
+        # no parameters added: checkpoints portable both directions
+        self.assertEqual(set(m0.state_dict().keys()),
+                         set(m1.state_dict().keys()))
+        m1.load_state_dict(m0.state_dict())
+        with torch.no_grad():
+            for k in m0.bands:
+                m0.alpha[str(k)].fill_(1.0)
+                m1.alpha[str(k)].fill_(1.0)
+        x = torch.randint(0, 64, (1, 32))
+        outs = []
+        for m in (m0, m1):
+            st = m.init_state(1, "cpu")
+            l1, st, _ = m(x, st, None)
+            l2, st, _ = m(x, st, None)
+            outs.append(l2)
+        # the flag is live: same weights, different key geometry
+        diff = (outs[0] - outs[1]).abs().max().detach()
+        self.assertGreater(float(diff), 1e-6)
+        # trainable: backward through the normalized path is finite
+        loss = outs[1].square().mean()
+        loss.backward()
+        gm = m1.stores["3"].beta.grad
+        self.assertIsNotNone(gm)
+        self.assertTrue(bool(torch.isfinite(gm)))
+
+
 if __name__ == "__main__":
     unittest.main()
