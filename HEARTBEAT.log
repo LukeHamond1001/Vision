@@ -1,3 +1,4 @@
 19:26:46 boot r7-DROP075 trainer NVIDIA RTX A4500
 19:26:54 shard found (2400004114B) — training
 19:41:56 training heartbeat: step  1400  ce 5.628  loss 5.838  holds 22576  26,666 tok/s  [fid:3=+0.949 fid:4=+0.102 fid:5=-0.089 b0=+0.016 b1=+0.013 b2=+0.023 b3=+0.008]
+19:56:57 training heartbeat: step  3050  ce 4.870  loss 4.785  holds 36848  28,394 tok/s  [fid:3=+0.956 fid:4=+0.176 fid:5=-0.067 b0=+0.079 b1=+0.063 b2=+0.060 b3=+0.031]
