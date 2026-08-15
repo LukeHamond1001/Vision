@@ -2100,6 +2100,31 @@ scale, not blocking this one. Target cost: $15–40 total.
   both arms score the identical 835 (paired comparison intact).
   v9's criterion 3 reads against these rows.
 
+- **A55b R6 PRE-REGISTERED, staged awaiting go** (2026-08-15):
+  pod_r6t.sh = R5's exact config, ONE variable (--norm-mix);
+  workdir on container disk, network volume read-only (v9 is live
+  on it). Est ~$4 / ~12h on a cheap card; can run during or after
+  the v9 window. CRITERIA (pinned before launch): PRIMARY — onset
+  on TM-v9-clean (identical committed instrument, hash
+  fc639269079e, scored by scripts/autopsy_v9.py --norm-mix at
+  native serve-T 1024) moves OFF the null: sign test one-sided
+  p<0.05 with positive median AND top1 full>lesion (r5 reference:
+  exact null, top1 0.0629 both arms, p=0.9955). Any real positive
+  onset effect = the associative channel exists; magnitude is not
+  the bar at this scale. SECONDARY — completion effect not
+  destroyed: >= +1.0pt top1 (half the r5 reference +2.04pt).
+  ORGAN READ — qmix: does the mix escape the [1,0,...] collapse
+  (the equilibrium F2 predicts is escapable once broad keys
+  discriminate)? GUARD — full CE within 2% of r5_best's 2.6570
+  (the fix must not tax the LM). Laws already pinned at staging:
+  raw mixes collide (cos>0.7), normalized separate (<0.35),
+  normalized keys retrieve 48 superposed pairs at >60% argmax
+  where raw mixes manage <25%, flag live e2e with finite grads
+  (suite 87/87). If R6 passes primary: v10 scales the R6 class;
+  if it fails: the onset gap is deeper than key geometry — v10
+  scales R5's class on v9's verdict and the associative channel
+  moves to the consolidation/approval track.
+
 ## Status
 
 Assembled scene-free (A6), no registered runs. Weaver (`iga/lm_gen.py`),
