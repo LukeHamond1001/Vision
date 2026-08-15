@@ -2125,6 +2125,45 @@ scale, not blocking this one. Target cost: $15–40 total.
   scales R5's class on v9's verdict and the associative channel
   moves to the consolidation/approval track.
 
+- **A54g MID-RUN FINDING at v9 step 240k — the ungated logit
+  bonus crowds out induction at scale** (2026-08-15 ~16:00 UTC,
+  run at 49%, continuing): held-out same-chunk recall peaked
+  0.9676 at step ~38k (best.pt banked there — A42 worked), bled
+  from ~78k, floor (~0.001-0.06 recent windows) by 170k, while
+  train CE fell monotonically to 1.365 — the v8.0 signature; the
+  cosine schedule barely bites before halfway (lr ~90% of max
+  through the bleed). SNAPSHOT ORGANS (step 240,500, via the
+  rolling-ckpt channel): alpha 4.57/3.07/1.64 — RECORD store
+  engagement (r5: 3.2-3.8); betas saturated 1.0; qmix collapsed
+  to pure current token = F2's successor-cache equilibrium
+  CONFIRMED AT d=512 (the scale-invariance prediction, free).
+  MINI-LESION on the snapshot (40 chunks, T=2048): pl-same
+  p=0.001 top1 0/34 in BOTH arms — lesion does NOT recover ->
+  the trunk's induction circuit is genuinely atrophied, not
+  suppressed at read time. (Store still causally live where it
+  can act: pl-strad p 0.035 full vs 0.011 lesioned, 3x.)
+  MECHANISM: pl-same is induction-only by construction (writes
+  apply at chunk boundaries — the store cannot serve within-chunk
+  recall), so the cache covers cross-chunk repeats, the trunk
+  stops being paid for induction, and the circuit decays. This is
+  v5.6's crowding-out returned through a side door: A30 gates and
+  A34 read-dropout protect the RESIDUAL read path, which is OFF
+  in logit mode — the logit bonus has no gate and no dropout
+  (A54e F7 "gate-init is a no-op in logit mode" was not cosmetic;
+  it was the missing protection). Survivable at r5 scale/duration
+  (alpha 3.2-3.8, pl-same 0.938); fatal to the trunk at 488k
+  steps and alpha 4.6. Two independent instruments agree (train-
+  loop holdout + local table); instrument-artifact unlikely (the
+  coherent lesion-sensitive straddle effect rules out event
+  misalignment). REGISTERED R7 CLASS: bonus-protection — read-
+  dropout on the logit bonus (A34's trick applied to the logit
+  route) and/or a content gate on the bonus; composes with R6's
+  norm_mix whichever way R6 lands. v9 RUNS TO COMPLETION per
+  pre-registration: criteria 2/3 (lesion CE, completion) remain
+  scoreable and now measure the cache's contribution on an
+  atrophied trunk; criterion 4's clean table comes from banked-
+  best; the full atrophy curve is itself a deliverable.
+
 ## Status
 
 Assembled scene-free (A6), no registered runs. Weaver (`iga/lm_gen.py`),
