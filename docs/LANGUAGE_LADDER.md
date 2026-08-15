@@ -2184,6 +2184,40 @@ scale, not blocking this one. Target cost: $15–40 total.
   R7 bonus-protection certified cheap (~$4, r5 scale) ->
   v9.1 = certified recipe at scale (~$26, fundable in balance).
 
+- **A55c R6 VERDICT — norm_mix certified as a class UPGRADE;
+  onset primary FAILS with the most informative null of the
+  campaign** (2026-08-15 ~19:30 UTC; run $2.40, rc=0, trunk
+  healthy to end 0.81; verdict artifact = fully-trained final per
+  the blind pre-commitment). THE UPGRADE (kept for v9.1): full CE
+  2.5035 vs r5's 2.6570 — 5.8% BETTER LM at identical config;
+  full-vs-lesion CE advantage +10.51% rel (r5: +3.76% — near
+  tripled); completion +4.07pt top1 (0.5042 vs 0.4635; r5 ref
+  +2.04pt — doubled); secondary and CE guard pass decisively.
+  Cleaner keys = stronger cache = better LM; the fix pays for
+  itself before onset is even considered. THE NULL (primary):
+  final onset top1 IDENTICAL 0.0434 both arms, sign +178/-282
+  p=1.0000 — but the 30k-step banked best showed the first
+  positive onset lean in seven designs (+245/-214 p=0.0807,
+  top1 +0.44pt, qmix spread tail 0.933/0.022, balanced alphas
+  1.7) which the final ABANDONED (qmix re-collapsed 0.993, alpha
+  4.32/4.00/3.76). READING: gradient descent FOUND the
+  associative channel mid-training and then defunded it — the
+  geometry fix made the channel possible (30k transient = proof
+  of existence), and the LM objective then paid the cache more
+  (the F2-layer analysis's incentive prediction, now observed as
+  a training trajectory). The binding constraint is the PAYER,
+  not the mechanism. Onset moves to the consolidation/approval
+  track per the pre-registered failure branch — now with a
+  proven-existent channel to pay for, and a concrete new lever:
+  the 30k-class state is recoverable by checkpoint choice or by
+  paying for retrieval during training. ALSO: alpha reached 4.32
+  at 75k steps under norm_mix (vs r5's 3.2-3.8) — the better
+  cache gets louder FASTER, raising R7 urgency for any long run.
+  NEXT: R7 = R6 config + bonus read-dropout (one variable vs the
+  new R6 baseline; the cheap run certifies the protection's COST
+  — the benefit is only observable at v9.1's duration, so v9.1
+  carries the holdout instrument as the benefit proof).
+
 ## Status
 
 Assembled scene-free (A6), no registered runs. Weaver (`iga/lm_gen.py`),
