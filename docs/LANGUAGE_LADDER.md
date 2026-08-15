@@ -2164,6 +2164,26 @@ scale, not blocking this one. Target cost: $15–40 total.
   atrophied trunk; criterion 4's clean table comes from banked-
   best; the full atrophy curve is itself a deliverable.
 
+- **A54h v9 STOPPED at step ~250k (51%) on changed evidence**
+  (2026-08-15 15:5x UTC, user-approved): A54g superseded the
+  run's gate function — v10 will not run the unprotected recipe
+  regardless of v9's final tables, so the remaining ~17h/$13
+  would buy tables on a model already known unfit as a substrate.
+  The A54g reversal of the earlier continue calls is the ledger's
+  record of WHY: before the atrophy finding, v9's criteria gated
+  v10; after it, R7+v9.1's do. Artifacts safe: v9.pt (~250k) and
+  v9.pt.best.pt (banked at the 0.9676 peak, step ~38k) persist on
+  the network volume in w-v9 (retrieve with any pod later); the
+  240k rolling snapshot is local. Extraction continuing free:
+  CE + completion full-vs-lesion on the 240k snapshot running
+  locally overnight (the completion-at-scale datum, ~90% of
+  end-of-run fidelity). Wire-to-wire stability: 250k steps, zero
+  crashes, zero NaN at lanes 6 — the A54d config is operationally
+  certified even though the recipe is not. Spend: ~$13 of $26.
+  SEQUENCE FORWARD (user-ratified): R6 verdict (imminent) ->
+  R7 bonus-protection certified cheap (~$4, r5 scale) ->
+  v9.1 = certified recipe at scale (~$26, fundable in balance).
+
 ## Status
 
 Assembled scene-free (A6), no registered runs. Weaver (`iga/lm_gen.py`),
