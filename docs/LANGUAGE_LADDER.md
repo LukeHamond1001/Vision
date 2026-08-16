@@ -2381,6 +2381,23 @@ scale, not blocking this one. Target cost: $15–40 total.
   gradient; the production head is freed. lambda stays 0.2.
   Fallback if R8b still taxes: lambda sweep at 0.05.
 
+- **A58c R8b STAGED + LAUNCHED (covered by the r8 go, amended
+  iteration)** (2026-08-16 ~20:45 UTC): separate aux head, one
+  variable vs R8; laws re-pinned (suite 90/90): aux pays BLOCKS
+  and provably not the production head (head grad None under
+  pure aux backward), armed-exactly-when, production-path parity
+  with aux_head present. CRITERIA (pinned, revised with the
+  see-saw rationale BEFORE the run): full CE within 2% of r6's
+  2.5035 (the tax must vanish — the row R8 failed); completion
+  >= +2.0pt (the irreducible niche); benefit signal lesioned CE
+  < 2.7977; trunk sanity >= 0.75. The CE-advantage bar is
+  DROPPED as see-saw-confounded (A58b: marginal advantage partly
+  measured trunk disease) — reported, interpreted jointly with
+  trunk health, no bar. If R8b passes: v9.2 = R6 recipe + aux
+  head at scale, kill rule armed, and criterion 2 of the v9.2
+  gate is REPLACED by completion + trunk-health joint reads for
+  the same reason.
+
 ## Status
 
 Assembled scene-free (A6), no registered runs. Weaver (`iga/lm_gen.py`),

@@ -120,16 +120,19 @@ def process_chunk(model, drive, conveyor, T, device, opt=None,
     ce = torch.nn.functional.cross_entropy(
         logits.float().reshape(-1, model.vocab_size), y.reshape(-1))
     losses = [ce]
-    # A58 (R8): pay-the-trunk — aux CE on the pre-bonus logits so
-    # the trunk's own head keeps earning gradient on store-covered
-    # chunks (only set when the bonus was actually applied)
-    aux = getattr(model, "_pre_logits", None)
-    if aux is not None and getattr(model, "aux_trunk", 0.0) > 0:
+    # A58b (R8b): pay-the-trunk — aux CE through the SEPARATE aux
+    # head on the final hidden, so trunk blocks keep earning
+    # gradient on store-covered chunks while the production head
+    # stays uncompromised (only set when the bonus actually fired)
+    aux_h = getattr(model, "_aux_hidden", None)
+    if aux_h is not None and getattr(model, "aux_trunk", 0.0) > 0:
+        aux_lg = model.aux_head(model.lnf(aux_h))
         losses.append(model.aux_trunk *
                       torch.nn.functional.cross_entropy(
-                          aux.float().reshape(-1, model.vocab_size),
+                          aux_lg.float().reshape(-1,
+                                                 model.vocab_size),
                           y.reshape(-1)))
-        model._pre_logits = None
+        model._aux_hidden = None
     fid_terms = []
     for k in range(1, len(ticks)):
         for _, fid in ticks[k]:

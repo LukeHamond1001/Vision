@@ -259,6 +259,10 @@ def main():
     ap.add_argument("--norm-mix", action="store_true",
                     help="A55: score an R6-class (normalized-mix) "
                          "checkpoint; subset and scoring identical")
+    ap.add_argument("--aux-trunk", type=float, default=0.0,
+                    help="A58b: construct with the aux head so "
+                         "R8b-class checkpoints load (inference "
+                         "path never uses it)")
     ap.add_argument("--label", default="")
     a = ap.parse_args()
     assert a.serve_T <= a.max_T
@@ -273,7 +277,8 @@ def main():
     ck = torch.load(a.ckpt, map_location="cpu", weights_only=False)
     m = HybridLM(tok.get_vocab_size(), d=a.d, max_T=a.max_T,
                  store="matrix", use_xl=False, gate_init=-2.0,
-                 keyed="logit", norm_mix=a.norm_mix)
+                 keyed="logit", norm_mix=a.norm_mix,
+                 aux_trunk=a.aux_trunk)
     m.load_state_dict(ck["model"])
     m.eval()
     name = a.label or os.path.basename(a.ckpt)

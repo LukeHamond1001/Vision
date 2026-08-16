@@ -1021,53 +1021,58 @@ class TestAuxTrunk(unittest.TestCase):
         return m
 
     def _two_chunks(self, m):
-        x = torch.randint(0, 64, (1, 32))
+        g = torch.Generator().manual_seed(123)
+        x = torch.randint(0, 64, (1, 32), generator=g)
         st = m.init_state(1, "cpu")
         l1, st, _ = m(x, st, None)
         l2, st, _ = m(x, st, None)
         return l2
 
-    def test_pre_logits_kept_only_when_armed(self):
+    def test_aux_hidden_kept_only_when_armed(self):
         m = self._model(0.2)
         m.train()
         m.read_drop = 0.0                 # bonus always applied
         self._two_chunks(m)
-        self.assertIsNotNone(m._pre_logits)
+        self.assertIsNotNone(m._aux_hidden)
         m.eval()                          # never at eval
         self._two_chunks(m)
-        self.assertIsNone(m._pre_logits)
+        self.assertIsNone(m._aux_hidden)
         m0 = self._model(0.0)             # never when aux off
         m0.train()
         m0.read_drop = 0.0
         self._two_chunks(m0)
-        self.assertIsNone(m0._pre_logits)
+        self.assertIsNone(m0._aux_hidden)
+        self.assertFalse(hasattr(m0, "aux_head"))
 
-    def test_aux_term_changes_trunk_gradient(self):
+    def test_aux_pays_blocks_not_production_head(self):
+        # R8b law — the whole point: trunk BLOCKS get the aux
+        # gradient, the PRODUCTION head gets none of it
         y = torch.randint(0, 64, (1, 32))
-        grads = []
-        for aux in (0.0, 1.0):
-            m = self._model(aux)
-            m.train()
-            m.read_drop = 0.0
-            l2 = self._two_chunks(m)
-            loss = torch.nn.functional.cross_entropy(
-                l2.reshape(-1, 64), y.reshape(-1))
-            pre = m._pre_logits
-            if pre is not None and m.aux_trunk > 0:
-                loss = loss + m.aux_trunk * \
-                    torch.nn.functional.cross_entropy(
-                        pre.reshape(-1, 64), y.reshape(-1))
-            m.zero_grad()
-            loss.backward()
-            grads.append(m.head.weight.grad.clone())
-            self.assertTrue(bool(torch.isfinite(loss.detach())))
-        self.assertGreater(float((grads[0] - grads[1]).abs().max()),
-                           1e-8)
+        m = self._model(1.0)
+        m.train()
+        m.read_drop = 0.0
+        l2 = self._two_chunks(m)
+        aux_lg = m.aux_head(m.lnf(m._aux_hidden))
+        aux_loss = torch.nn.functional.cross_entropy(
+            aux_lg.reshape(-1, 64), y.reshape(-1))
+        m.zero_grad()
+        aux_loss.backward(retain_graph=True)
+        self.assertIsNone(m.head.weight.grad)     # head untouched
+        blk = next(m.blocks[0].parameters())
+        self.assertIsNotNone(blk.grad)            # blocks paid
+        self.assertGreater(float(blk.grad.abs().max()), 0)
+        self.assertTrue(bool(torch.isfinite(aux_loss.detach())))
 
     def test_aux_off_is_parity(self):
+        # same shared weights -> identical production forward (the
+        # aux head exists but is structurally outside the path);
+        # load m0's weights into m1 because creating aux_head
+        # consumes RNG draws and shifts every later init
+        m0 = self._model(0.0)
+        m1 = self._model(0.3)
+        m1.load_state_dict(m0.state_dict(), strict=False)
         outs = []
-        for aux in (0.0, 0.3):
-            m = self._model(aux)
+        for m in (m0, m1):
             m.eval()
             outs.append(self._two_chunks(m).detach())
         self.assertLess(float((outs[0] - outs[1]).abs().max()), 1e-6)
