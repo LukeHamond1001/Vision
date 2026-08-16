@@ -2288,6 +2288,26 @@ scale, not blocking this one. Target cost: $15–40 total.
   iteration. Executor: the local watcher reads the landed trace
   each heartbeat and kills via API (A54h precedent).
 
+- **A57b LAUNCH-DAY OPS POST-MORTEM (three pods, ~$1.10, zero
+  data lost)** (2026-08-16): pods 1-2 died to raw-CDN 404s (a
+  freshly-pushed script path can 404 on the pod's edge while
+  serving on yours) — OPS LAW: never boot from raw; the container
+  clones the repo and runs the script from the clone. Pod 3 was
+  HEALTHY (booted 25s, smoke 50,256 tok/s) but heartbeated to
+  results-v9: the BSD-sed \b word-boundary silently no-ops, and
+  the branch refs survived generation unfixed — it was killed on
+  a wrong lemon-host diagnosis, and its force-pushes clobbered
+  the v9 archive branch (restored from the local reflog,
+  2ab8d2d; the volume copy was never at risk). OPS LAWS: grep
+  generated scripts for EVERY original token before commit, not
+  the ones you remember fixing; SSH-refused is not dead —
+  a custom dockerStartCmd replaces the entrypoint so sshd never
+  runs; a silent branch is only evidence if the script's push
+  target is verified first. Pod 4 (s8snom86ps9625) booted the
+  verified script: smoke 48,095 tok/s at v9 shapes WITH norm_mix
+  (~4% throughput cost vs v9's 50.2k — negligible), training
+  from 06:35:42 UTC, ~34.6h to tables.
+
 ## Status
 
 Assembled scene-free (A6), no registered runs. Weaver (`iga/lm_gen.py`),
