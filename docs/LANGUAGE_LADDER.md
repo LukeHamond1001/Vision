@@ -2258,6 +2258,36 @@ scale, not blocking this one. Target cost: $15–40 total.
   (pending R7 cost check) + bleed-curve kill rule covers the one
   known threat.
 
+- **A56b R7 VERDICT — dose escalation REFUTED as trunk
+  protection; cost bars pass, sanity bar grazes under; v9.1
+  takes the pre-registered failure branch** (2026-08-16 05:32
+  UTC; run $2.20, rc=0, verdict artifact = final per the blind
+  rule). SCORECARD: CE advantage +24.76% rel (bar +5) PASS but
+  denominator-inflated — lesioned CE 3.3580 vs r6's 2.7977, the
+  weak-trunk tell; completion +10.54pt (0.509 vs 0.4036; bar +2,
+  r6 +4.07) PASS — store labor more than doubled again; full CE
+  2.5266 = +0.92% vs r6 (bar 2%) PASS — the dose taxes the full
+  model almost nothing; trunk same-chunk at end 0.74 (bar 0.75)
+  FAIL by a graze, and r6's 0.81 at the same duration makes it a
+  real signal, not noise. READING: 75% dropout HALVED alpha
+  (2.21/2.09/2.00 vs 4.32/4.00/3.76) — volume moderation works —
+  but the division of labor shifted FURTHER storeward (store's
+  absolute CE load 0.83 nats vs r6's 0.29; the trunk trained
+  blind 3-in-4 and still came out weaker standalone). Exposure
+  scarcity makes the model value the store MORE per exposure; LM
+  loss funds the cheaper predictor first, always — the same
+  payer economics as R5/R6, now demonstrated on a third axis.
+  Onset: p=0.61 null (expected; not a criterion). CONSEQUENCE
+  (pre-registered): v9.1 = R6's exact certified recipe (0.5
+  dropout) at scale + TIGHT KILL RULE; R8 content-gate moves up
+  the queue as the real protection candidate. KILL RULE for
+  v9.1, pinned now: if the pooled same(recent) holdout falls
+  below HALF its banked peak for 3 consecutive banking windows
+  after step 60k, the run is killed and landed (v9 trace: rule
+  fires ~80-90k, ~$8-10 spend) and R8 becomes the next
+  iteration. Executor: the local watcher reads the landed trace
+  each heartbeat and kills via API (A54h precedent).
+
 ## Status
 
 Assembled scene-free (A6), no registered runs. Weaver (`iga/lm_gen.py`),
