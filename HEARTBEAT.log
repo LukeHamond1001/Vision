@@ -3,3 +3,4 @@
 06:35:42 shard found (12000001738B) — training
 07:05:45 training heartbeat: step  6900  ce 4.289  loss 4.333  holds 89346  48,854 tok/s  [fid:3=+0.984 fid:4=+0.137 fid:5=-0.048 b0=+0.002 b1=+0.002 b2=+0.003 b3=+0.001]
 07:35:49 training heartbeat: step 14050  ce 2.582  loss 2.624  holds 178362  48,923 tok/s  [fid:3=+0.995 fid:4=+0.199 fid:5=-0.077 b0=+0.002 b1=+0.003 b2=+0.002 b3=+0.001]
+08:05:53 training heartbeat: step 21300  ce 2.416  loss 2.458  holds 266046  49,058 tok/s  [fid:3=+0.996 fid:4=+0.601 fid:5=-0.029 b0=+0.797 b1=+0.591 b2=+0.006 b3=+0.003]
