@@ -18,3 +18,4 @@
 18:55:48 training complete (rc=0)
 18:55:54 eval complete: r8.pt
 18:56:00 eval complete: r8.pt.best.pt
+18:56:07 ckpt piece landed: r8_part_aa
