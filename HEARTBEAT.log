@@ -1,2 +1,3 @@
 06:33:38 boot v91-R6-RECIPE trainer NVIDIA GeForce RTX 4090 resume=''
 06:35:38 smoke pass: 48095 tok/s at v9 shapes
+06:35:42 shard found (12000001738B) — training
