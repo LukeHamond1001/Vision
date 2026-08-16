@@ -117,8 +117,11 @@ if [ "$SMOKE_RC" -ne 0 ]; then
   runpodctl remove pod "$RUNPOD_POD_ID" || true
   sleep 120; exit 1
 fi
-if [ "${TOKS:-0}" -lt 25000 ]; then
-  hb "SMOKE TOO SLOW (${TOKS} tok/s < 25000) - aborting per budget"
+# floor is a BUDGET guard, not science: 25k was calibrated for
+# 4090 pricing; A5000-class at ~$0.25/hr holds economics to
+# ~15k (69h ~ $18). Lowered when the 4090 pool went lemon.
+if [ "${TOKS:-0}" -lt 15000 ]; then
+  hb "SMOKE TOO SLOW (${TOKS} tok/s < 15000) - aborting per budget"
   runpodctl remove pod "$RUNPOD_POD_ID" || true
   sleep 120; exit 1
 fi
