@@ -2353,6 +2353,34 @@ scale, not blocking this one. Target cost: $15–40 total.
   still v9.2's at duration (same kill rule). Hunter boots via
   repo clone (A57b law), cheap-card ladder.
 
+- **A58b R8 VERDICT — the aux REACHES THE ORGAN (first of four
+  protections to do so) but lambda=0.2 through the shared head
+  over-taxes the system; THE SEE-SAW is the deep finding**
+  (2026-08-16 20:15 UTC; run $3.30 on a 4090 after the A4500 OOM
+  taught the 24GB floor; verdict artifact = final). SCORECARD:
+  trunk sanity 0.75 PASS; benefit signal PASS — lesioned CE
+  2.7498 vs r6's 2.7977, the paid trunk is 1.7% stronger
+  standalone (the anti-starvation gradient demonstrably works);
+  full CE 2.7300 vs r6's 2.5035 (+9.0%) FAIL; CE advantage
+  +0.72% (bar +5) FAIL; completion +1.19pt (bar +2) FAIL —
+  positive, reduced to a third of r6's. Onset null (p=0.887,
+  expected). THE SEE-SAW: across r6/r7/r8 the store's marginal
+  value tracks trunk WEAKNESS inversely — r6 weak-trunk/+10.5%,
+  r7 weaker-trunk/+24.8% (inflated), r8 strong-trunk/+0.7%.
+  Marginal advantage partly MEASURED the disease; any honest
+  scale gate must read completion (the store's irreducible
+  niche) and trunk health TOGETHER, not CE advantage alone.
+  DIAGNOSIS of the tax: the aux and main CE share ONE head — the
+  head compromises between logits-good-alone and logits-good-
+  with-bonus, dragging the production path (full CE worse than
+  r6 at IDENTICAL alpha 4.34/4.00/3.76 is the head-compromise
+  signature, not an alpha/integration change). R8b REGISTERED
+  (one variable vs R8): SEPARATE AUX HEAD — aux CE reads its own
+  Linear(d,V) probe off the final hidden state; trunk BLOCKS
+  (where induction lives) still earn the full anti-starvation
+  gradient; the production head is freed. lambda stays 0.2.
+  Fallback if R8b still taxes: lambda sweep at 0.05.
+
 ## Status
 
 Assembled scene-free (A6), no registered runs. Weaver (`iga/lm_gen.py`),
