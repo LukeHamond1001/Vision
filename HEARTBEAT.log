@@ -37,3 +37,4 @@
 04:05:17 training complete (rc=0)
 04:05:29 eval complete: r7.pt
 04:05:40 eval complete: r7.pt.best.pt
+04:05:47 ckpt piece landed: r7_part_aa
