@@ -2308,6 +2308,35 @@ scale, not blocking this one. Target cost: $15–40 total.
   (~4% throughput cost vs v9's 50.2k — negligible), training
   from 06:35:42 UTC, ~34.6h to tables.
 
+- **A57c v9.1 KILLED BY THE PRE-REGISTERED RULE at step 96k —
+  the bleed is RECIPE-INDEPENDENT and VOLUME-INDEPENDENT; R8 is
+  the pay-the-trunk auxiliary loss** (2026-08-16 13:36 UTC; spend
+  $5.2 of a projected $25.6 — the rule saved ~$20). Wire: healthy
+  boot, 48-49k tok/s, holdout peak 0.970 at ~step 40k (HIGHER
+  than v9's 0.9676 — norm_mix's trunk was healthier at peak),
+  bleed onset ~80-90k (v9: ~78k), executor fired on 3 windows
+  under half-peak at 96k, exactly as pinned. THE DECISIVE DATA:
+  (1) norm_mix did not move the bleed onset — key geometry is
+  exonerated; (2) the 88k snapshot reads alpha 2.28/1.82/1.55 —
+  HALF of v9's 4.57 and r6's 4.32 — so bonus VOLUME is
+  exonerated too (the disease ran at modest alpha); with R7's
+  dose exoneration, all three suspects (geometry, volume,
+  exposure fraction) are cleared. The mechanism stands alone:
+  GRADIENT STARVATION — whatever the store covers, the trunk
+  stops being paid for, at any volume, any dose, any geometry.
+  R8 REGISTERED (mechanism-targeted, one variable): auxiliary
+  trunk CE — total loss = CE(full logits) + lambda*CE(pre-bonus
+  logits), lambda=0.2; the trunk is paid UNCONDITIONALLY on
+  every position regardless of store coverage; the store keeps
+  its certified freedom (no cap, no gate, no dose change).
+  Nearly free compute (pre-bonus logits already materialized).
+  Fallback if R8 fails: per-position gate + read price (L1 on
+  gate openness). Artifacts: 88k rolling snapshot local +
+  results-v91-ckpt; v91.pt (~96k) on the volume in w-v91.
+  BUDGET FORK for the user: balance $22.47; R8 certify ~$3 then
+  v9.2 on 4090 ~$26 needs ~$9 top-up, OR v9.2 on A5000-class
+  ~$18/69h fits without top-up.
+
 ## Status
 
 Assembled scene-free (A6), no registered runs. Weaver (`iga/lm_gen.py`),
