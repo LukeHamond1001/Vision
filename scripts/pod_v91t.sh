@@ -5,13 +5,6 @@
 # Protection = the PRE-REGISTERED KILL RULE (A56b): local
 # watcher reads the landed trace; same(recent) < half banked
 # peak for 3 windows after 60k -> killed and landed.
-# A54 v9 trainer: THE FULL-ARCHITECTURE SCALE GATE. R5's certified
-# design with only the scale axes changed: d=512, T=2048, 6B fresh
-# tokens (KD auto-doubles with T), lr 1e-4 COSINE-decayed to 10%
-# (A54 audit C3: v8.0 rotted on constant lr at this exact
-# width/duration). Survivability (audit C1/C2/M4/H5): resume-aware
-# boot, rolling ckpt snapshots every ~2h, NaN/stall watchdog, and a
-# paid 20-step smoke on the real card before committing.
 set -uo pipefail
 export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
 W=/workspace/w-v91
@@ -49,7 +42,7 @@ if [ ! -d "$W/iga-scale" ]; then
 fi
 PUSH="https://x-access-token:${GIT_TOKEN}@github.com/LukeHamond1001/iga-scale.git"
 git config user.email "pod@iga-scale"; git config user.name "iga-pod"
-git checkout -B results-v9
+git checkout -B results-v91
 
 hb() {
   echo "$(date -u '+%H:%M:%S') $1" >> HEARTBEAT.log
@@ -58,9 +51,9 @@ hb() {
     git add -f "$f" 2>/dev/null || true
   done
   git commit -qm "hb: $1" 2>/dev/null || true
-  git push -qf "$PUSH" results-v9 2>/dev/null || \
-    { sleep 15; git push -qf "$PUSH" results-v9 2>/dev/null; } || \
-    { sleep 45; git push -qf "$PUSH" results-v9 2>/dev/null; } || true
+  git push -qf "$PUSH" results-v91 2>/dev/null || \
+    { sleep 15; git push -qf "$PUSH" results-v91 2>/dev/null; } || \
+    { sleep 45; git push -qf "$PUSH" results-v91 2>/dev/null; } || true
 }
 hb "boot v91-R6-RECIPE trainer $(nvidia-smi --query-gpu=name --format=csv,noheader 2>/dev/null | head -1) resume='${RESUME}'"
 # land v9's banked-best (healthy-trunk 38k model, graft candidate)
@@ -200,8 +193,8 @@ if [ -f v91.pt ]; then
     git add -f "$f" && git commit -qm "ckpt piece: $f"
     PUSHED=0
     for i in 1 2 3 4; do
-      if git push -f "$PUSH" results-v9 && \
-         [ "$(git ls-remote "$PUSH" results-v9 | cut -f1)" = "$(git rev-parse HEAD)" ]; then
+      if git push -f "$PUSH" results-v91 && \
+         [ "$(git ls-remote "$PUSH" results-v91 | cut -f1)" = "$(git rev-parse HEAD)" ]; then
         PUSHED=1; break
       fi
       sleep 20
@@ -212,7 +205,7 @@ if [ -f v91.pt ]; then
 fi
 git add -f train.log v91.pt.trace.jsonl 2>/dev/null || true
 git commit -qm "logs" 2>/dev/null || true
-git push -qf "$PUSH" results-v9 2>/dev/null || true
+git push -qf "$PUSH" results-v91 2>/dev/null || true
 if [ "$CKPT_OK" != "1" ] && [ -f v91.pt ]; then git reset --mixed "$BASE_SHA"; fi
 hb "phase complete (train rc=$TRAIN_RC, ckpt_ok=$CKPT_OK)"
 runpodctl remove pod "$RUNPOD_POD_ID" || runpodctl stop pod "$RUNPOD_POD_ID" || true
