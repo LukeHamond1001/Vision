@@ -14,7 +14,7 @@
 # paid 20-step smoke on the real card before committing.
 set -uo pipefail
 export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
-W=/workspace/w-v9
+W=/workspace/w-v91
 TOTAL_STEPS=488000
 RESUME=""
 STEPS_LEFT=$TOTAL_STEPS
@@ -154,8 +154,8 @@ hb "shard found ($(stat -c%s /workspace/rmix/mix_v9/tokens.bin)B) — training"
     # A54 audit C1: rolling snapshot every ~2h — a host death costs
     # <=2h, not the run (atomic_save keeps v91.pt always-complete)
     if [ $((BEAT % 4)) -eq 0 ] && [ -f v91.pt ]; then
-      ( rm -rf /workspace/w-v9/snap && mkdir -p /workspace/w-v9/snap &&
-        cp v91.pt /workspace/w-v9/snap/ && cd /workspace/w-v9/snap &&
+      ( rm -rf /workspace/w-v91/snap && mkdir -p /workspace/w-v91/snap &&
+        cp v91.pt /workspace/w-v91/snap/ && cd /workspace/w-v91/snap &&
         split -b 25m v91.pt v91roll_ && rm v91.pt &&
         git init -q . && git checkout -q -b results-v91-ckpt &&
         git add . &&
