@@ -2337,6 +2337,22 @@ scale, not blocking this one. Target cost: $15–40 total.
   v9.2 on 4090 ~$26 needs ~$9 top-up, OR v9.2 on A5000-class
   ~$18/69h fits without top-up.
 
+- **A58 R8 STAGED + LAUNCHED (user go)** (2026-08-16): pay-the-
+  trunk auxiliary loss — total = CE(full) + 0.2*CE(pre-bonus
+  logits), applied only on training chunks where the bonus fired
+  (blind chunks already pay the trunk in full). R6's exact config,
+  ONE variable (--aux-trunk 0.2). Laws pinned (suite 90/90):
+  pre-bonus logits kept exactly when armed (training AND bonus
+  AND aux>0), the aux term is live in the trunk-head gradient,
+  aux off is bit-parity. CRITERIA (pinned blind): cost rows as
+  R7's — full CE within 2% of R6's 2.5035, CE advantage >= +5%
+  rel, completion >= +2.0pt, trunk same-chunk >= 0.75 at end;
+  BENEFIT SIGNAL row (new, the mechanism visible at 75k):
+  lesioned CE < r6's 2.7977 — an aux-paid trunk should beat
+  r6's trunk-alone even before any bleed exists. Benefit PROOF
+  still v9.2's at duration (same kill rule). Hunter boots via
+  repo clone (A57b law), cheap-card ladder.
+
 ## Status
 
 Assembled scene-free (A6), no registered runs. Weaver (`iga/lm_gen.py`),

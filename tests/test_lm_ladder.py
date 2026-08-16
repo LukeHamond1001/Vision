@@ -1002,5 +1002,76 @@ class TestNormMix(unittest.TestCase):
         self.assertTrue(bool(torch.isfinite(gm)))
 
 
+class TestAuxTrunk(unittest.TestCase):
+    """A58 laws (R8): the pay-the-trunk auxiliary loss. A57c
+    exonerated geometry, volume, and dose — the bleed is gradient
+    starvation. These pin the plumbing: the pre-bonus logits are
+    kept exactly when (training AND bonus applied AND aux on), the
+    aux term is live in the gradient, and aux off is bit-parity."""
+
+    def _model(self, aux):
+        from iga.lm_hybrid import HybridLM
+        torch.manual_seed(9)
+        m = HybridLM(64, d=32, max_T=32, store="matrix",
+                     use_xl=False, keyed="logit", norm_mix=True,
+                     aux_trunk=aux)
+        with torch.no_grad():
+            for k in m.bands:
+                m.alpha[str(k)].fill_(1.0)
+        return m
+
+    def _two_chunks(self, m):
+        x = torch.randint(0, 64, (1, 32))
+        st = m.init_state(1, "cpu")
+        l1, st, _ = m(x, st, None)
+        l2, st, _ = m(x, st, None)
+        return l2
+
+    def test_pre_logits_kept_only_when_armed(self):
+        m = self._model(0.2)
+        m.train()
+        m.read_drop = 0.0                 # bonus always applied
+        self._two_chunks(m)
+        self.assertIsNotNone(m._pre_logits)
+        m.eval()                          # never at eval
+        self._two_chunks(m)
+        self.assertIsNone(m._pre_logits)
+        m0 = self._model(0.0)             # never when aux off
+        m0.train()
+        m0.read_drop = 0.0
+        self._two_chunks(m0)
+        self.assertIsNone(m0._pre_logits)
+
+    def test_aux_term_changes_trunk_gradient(self):
+        y = torch.randint(0, 64, (1, 32))
+        grads = []
+        for aux in (0.0, 1.0):
+            m = self._model(aux)
+            m.train()
+            m.read_drop = 0.0
+            l2 = self._two_chunks(m)
+            loss = torch.nn.functional.cross_entropy(
+                l2.reshape(-1, 64), y.reshape(-1))
+            pre = m._pre_logits
+            if pre is not None and m.aux_trunk > 0:
+                loss = loss + m.aux_trunk * \
+                    torch.nn.functional.cross_entropy(
+                        pre.reshape(-1, 64), y.reshape(-1))
+            m.zero_grad()
+            loss.backward()
+            grads.append(m.head.weight.grad.clone())
+            self.assertTrue(bool(torch.isfinite(loss.detach())))
+        self.assertGreater(float((grads[0] - grads[1]).abs().max()),
+                           1e-8)
+
+    def test_aux_off_is_parity(self):
+        outs = []
+        for aux in (0.0, 0.3):
+            m = self._model(aux)
+            m.eval()
+            outs.append(self._two_chunks(m).detach())
+        self.assertLess(float((outs[0] - outs[1]).abs().max()), 1e-6)
+
+
 if __name__ == "__main__":
     unittest.main()

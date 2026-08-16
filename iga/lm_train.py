@@ -120,6 +120,16 @@ def process_chunk(model, drive, conveyor, T, device, opt=None,
     ce = torch.nn.functional.cross_entropy(
         logits.float().reshape(-1, model.vocab_size), y.reshape(-1))
     losses = [ce]
+    # A58 (R8): pay-the-trunk — aux CE on the pre-bonus logits so
+    # the trunk's own head keeps earning gradient on store-covered
+    # chunks (only set when the bonus was actually applied)
+    aux = getattr(model, "_pre_logits", None)
+    if aux is not None and getattr(model, "aux_trunk", 0.0) > 0:
+        losses.append(model.aux_trunk *
+                      torch.nn.functional.cross_entropy(
+                          aux.float().reshape(-1, model.vocab_size),
+                          y.reshape(-1)))
+        model._pre_logits = None
     fid_terms = []
     for k in range(1, len(ticks)):
         for _, fid in ticks[k]:
@@ -229,7 +239,7 @@ def train(d=64, lanes=4, T=256, steps=40, seed=0, device="cpu",
           use_xl=True, gate_init=-4.0, read_drop=0.5,
           read_drop_end=None, gate_mode="scalar", lr=3e-4,
           bf16=False, lam=0.25, keyed=None, lr_decay="none",
-          lr_total_steps=None, norm_mix=False):
+          lr_total_steps=None, norm_mix=False, aux_trunk=0.0):
     """resume (A26): path to a checkpoint — model + optimizer + drive
     EMAs/records/minted/vetoes continue; step numbering continues.
     offset_frac: start each conveyor lane this far into its segment
@@ -261,7 +271,7 @@ def train(d=64, lanes=4, T=256, steps=40, seed=0, device="cpu",
     elif arch == "hybrid":
         from .lm_hybrid import HybridLM
         model = HybridLM(vocab_size, d=d, max_T=T, store=store,
-                         norm_mix=norm_mix,
+                         norm_mix=norm_mix, aux_trunk=aux_trunk,
                          use_xl=use_xl, gate_init=gate_init,
                          read_drop=read_drop, gate_mode=gate_mode,
                          keyed=keyed).to(device)
@@ -472,6 +482,9 @@ def main():
                     help="A55 (R6): unit-normalize key mixes before "
                          "the RFF lift (fixes the flat-kernel key "
                          "collision, A54e F2)")
+    ap.add_argument("--aux-trunk", type=float, default=0.0,
+                    help="A58 (R8): pay-the-trunk aux CE weight on "
+                         "pre-bonus logits (anti-starvation)")
     ap.add_argument("--keyed", default=None,
                     choices=["token", "logit"],
                     help="A52 (R4) token: per-position writes keyed "
@@ -496,7 +509,7 @@ def main():
               read_drop_end=a.read_drop_end, gate_mode=a.gate_mode,
               lr=a.lr, bf16=a.bf16, lam=a.lam, keyed=a.keyed,
               lr_decay=a.lr_decay, lr_total_steps=a.lr_total_steps,
-              norm_mix=a.norm_mix)
+              norm_mix=a.norm_mix, aux_trunk=a.aux_trunk)
 
 
 if __name__ == "__main__":

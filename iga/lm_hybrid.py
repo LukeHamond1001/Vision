@@ -216,7 +216,8 @@ class HybridLM(nn.Module):
     def __init__(self, vocab_size, d=128, n_layers=6, n_heads=8,
                  max_T=512, talk=None, widths=None, store="vector",
                  use_xl=True, gate_init=-4.0, read_drop=0.5,
-                 gate_mode="scalar", keyed=None, norm_mix=False):
+                 gate_mode="scalar", keyed=None, norm_mix=False,
+                 aux_trunk=0.0):
         super().__init__()
         self.d = d
         self.vocab_size = vocab_size
@@ -226,6 +227,15 @@ class HybridLM(nn.Module):
         # before the RFF lift. Default OFF — R5/v9 parity exact; no
         # parameters added, so checkpoints load across both settings.
         self.norm_mix = bool(norm_mix)
+        # A58 (R8): pay-the-trunk auxiliary loss weight. When >0 and
+        # the logit bonus is applied on a training chunk, forward
+        # keeps the PRE-bonus logits so the trainer can add
+        # aux_trunk * CE(pre-bonus) — the trunk earns gradient on
+        # every position no matter how much the store covers
+        # (A57c: geometry, volume, and dose all exonerated; the
+        # bleed is gradient starvation, so feed the gradient).
+        self.aux_trunk = float(aux_trunk)
+        self._pre_logits = None
         self.use_xl = use_xl   # A36: benched in v6.0 — real one-boundary
                                # reach (A33) but unresolved held-out cost
                                # and large run-variance; revisit at scale
@@ -537,6 +547,7 @@ class HybridLM(nn.Module):
             wtokw = tokens[:, relw.clamp(min=0)]
             allw = (relw < 0).all(dim=-1)
             lg_smask = (~allw).view(1, -1).to(lg_qd.dtype)
+            self._pre_logits = None
             if read_ok:
                 rsum = None
                 for k in self.bands:
@@ -547,6 +558,8 @@ class HybridLM(nn.Module):
                         st["M"][k], stn.lift(lg_qd))
                     rsum = r if rsum is None else rsum + r
                 if rsum is not None:
+                    if self.aux_trunk > 0 and self.training:
+                        self._pre_logits = logits
                     logits = logits + rsum @ lg_E.t()
         # band updates: each band SELECTS from the window with its own
         # query (A24) instead of receiving the window mean
