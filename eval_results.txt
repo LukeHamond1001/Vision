@@ -1,0 +1,24 @@
+===== EVAL r8b.pt =====
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/root/w-r8b/iga-scale/iga/lm_eval.py", line 164, in <module>
+    main()
+  File "/root/w-r8b/iga-scale/iga/lm_eval.py", line 152, in main
+    model.load_state_dict(state["model"])
+  File "/usr/local/lib/python3.11/dist-packages/torch/nn/modules/module.py", line 2215, in load_state_dict
+    raise RuntimeError('Error(s) in loading state_dict for {}:\n\t{}'.format(
+RuntimeError: Error(s) in loading state_dict for HybridLM:
+	Unexpected key(s) in state_dict: "aux_head.weight", "aux_head.bias". 
+===== EVAL r8b.pt.best.pt =====
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/root/w-r8b/iga-scale/iga/lm_eval.py", line 164, in <module>
+    main()
+  File "/root/w-r8b/iga-scale/iga/lm_eval.py", line 152, in main
+    model.load_state_dict(state["model"])
+  File "/usr/local/lib/python3.11/dist-packages/torch/nn/modules/module.py", line 2215, in load_state_dict
+    raise RuntimeError('Error(s) in loading state_dict for {}:\n\t{}'.format(
+RuntimeError: Error(s) in loading state_dict for HybridLM:
+	Unexpected key(s) in state_dict: "aux_head.weight", "aux_head.bias". 
