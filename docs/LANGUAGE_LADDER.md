@@ -2398,6 +2398,33 @@ scale, not blocking this one. Target cost: $15–40 total.
   gate is REPLACED by completion + trunk-health joint reads for
   the same reason.
 
+- **A58d R8b VERDICT — head decoupling works (tax 9.0%->2.50%,
+  trunk benefit 1.7%->5.9%, trunk 0.83 record, full completion
+  capability preserved) but BOTH remaining bars graze-miss;
+  R8c = lambda trim, launched** (2026-08-17 01:35 UTC; $3.10).
+  SCORECARD (strict): benefit signal PASS wide — lesioned CE
+  2.6334 vs r6's 2.7977, the paid trunk is 5.9% stronger
+  standalone and within 5% of r6's FULL model; trunk sanity
+  PASS at 0.83 (family record, store fully engaged at alpha
+  4.36/4.02/3.79); full CE 2.5662 = +2.50% vs r6 (bar 2%) FAIL
+  by 0.5pt — the residual tax is the aux gradient pulling BLOCK
+  representations (the head-level compromise is gone; a weaker
+  representation-level one remains, scaling with lambda);
+  completion +1.92pt top1 (bar +2.0) FAIL by 0.08pt = <1 probe
+  at n=835 (p-delta +2.38pt; full-arm completion 0.5054 matches
+  r6's 0.5042 exactly — capability intact, attribution at the
+  bar's edge). Onset null p=0.645 (expected). advantage +2.55%
+  (see-saw row, no bar, consistent). READING: the mechanism is
+  right and the dose is a half-notch high; both misses are
+  lambda-linear while both passes have margin to give. R8c
+  REGISTERED + LAUNCHED (amended iteration under the r8 go,
+  zero code): --aux-trunk 0.1, same criteria; prediction —
+  CE tax ~1.2% (passes), completion ~+2.5pt (passes), trunk
+  benefit ~3-4% (still 2x r8's shared-head), trunk >= 0.78.
+  If R8c flips both rows: v9.2 = R6 recipe + aux head 0.1,
+  fully certified. If it trades rows instead: decision with
+  data, v9.2 lane discussion in the morning either way.
+
 ## Status
 
 Assembled scene-free (A6), no registered runs. Weaver (`iga/lm_gen.py`),
