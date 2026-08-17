@@ -2544,6 +2544,48 @@ scale, not blocking this one. Target cost: $15–40 total.
   scale vs A54i +3.83pt read JOINTLY with trunk health,
   wire-to-wire, clean banked table), close verdict.
 
+- **A60c v9.3 KILLED BY THE RULE at step 114k — trunk CURED
+  (family-record CE 1.434 at death), store STARVED: the pay
+  economy's second disease, opposite sign** (2026-08-17
+  ~19:06 UTC): fire per spec — same(recent) 0.431@104k /
+  0.334@110k / 0.365@114k, three consecutive banked windows
+  under half-peak 0.4825; executor killed the pod (run cost
+  ~$6.1, saved ~$19.5 of a run that could no longer pass the
+  completion gate). THE DECOUPLING IS THE FINDING: every
+  parent died with trunk and store collapsing TOGETHER;
+  v9.3's trunk set the family record (CE 1.434 @114.35k,
+  organs b0 0.93 / fid:4 0.94, 48.1k tok/s) WHILE the store
+  died — the two pathologies are distinct and both live in
+  the drive pay economy: ~13 holds/step taxes the trunk to
+  death (A59b/A60b); 1 hold/sweep starves the store's payer
+  and LM pressure erodes the channel (the r6 payer problem,
+  now demonstrated at scale). A60b CORRECTION (honesty): the
+  "cap-starves-drive risk REFUTED" line was premature —
+  refuted at onset, manifested late. Collapse shape: periodic
+  ~8k prodrome dips (0.43@88k, 0.18@96k, 0.43@104k) with
+  recoveries, last healthy read 0.676@100k, sustained
+  collapse from 104k. Mechanism candidates VERIFIED IN CODE
+  (lm_drive.py sweep/_propose), conviction pending
+  drive-state dump: (1) lane-0 slot priority — sweep()
+  offers the global cap slot to lane 0 first, every sweep;
+  (2) fid:5 maintain cannibalization — fid:5 chronic 0.083
+  under the 0.15 floor re-proposes a maintain at every
+  settle, maintains inject ZERO gradient (fid settle path
+  has no losses.append), yet outrank b0 frontiers in the
+  carry-sort (carry 0.083 > ema(fid:2)=0.0, band 2 absent);
+  (3) recall level saturation — records ~0.96 push frontier
+  targets past 1.0, levels_paid exhausts recall candidates,
+  the mint stream drifts to zero-gradient maintains. Corpse
+  secured: rolling snapshot step 114,350 on results-v93-ckpt
+  (beat 16, 19:03:46) + full trace. NEXT (autonomous, ~free):
+  autopsy the 114,350 ckpt — blind subset, completion,
+  organs, lesion, drive-state mint-by-lane/channel dump — to
+  convict ONE mechanism; then v9.4 = the one convicted fix
+  (fair-slot rotation / maintain-exempt cap / cap 2). LAUNCH
+  REQUIRES USER GO. Balance ~$24; full v9.4 ~$25-27 is tight
+  but fits; its store kill-zone read (~120k, ~$9) fits
+  comfortably either way.
+
 ## Status
 
 Assembled scene-free (A6), no registered runs. Weaver (`iga/lm_gen.py`),
