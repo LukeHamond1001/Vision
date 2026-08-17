@@ -1,3 +1,4 @@
 10:53:43 boot v93-HOLDCAP trainer NVIDIA GeForce RTX 4090 resume=''
 10:54:57 smoke pass: 48339 tok/s at v9 shapes
 10:55:00 shard found (12000001738B) — training
+11:25:03 training heartbeat: step  6800  ce 3.485  loss 4.292  holds 6799  47,807 tok/s  [fid:3=+0.991 fid:4=+0.147 fid:5=+0.001 b0=+0.003 b1=+0.001 b2=+0.001 b3=+0.002]
