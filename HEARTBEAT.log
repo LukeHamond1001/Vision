@@ -1,3 +1,4 @@
 01:32:08 boot r8c-AUX01 trainer NVIDIA GeForce RTX 4090
 01:32:16 shard found (2400004114B) — training
 01:47:17 training heartbeat: step  3350  ce 4.339  loss 4.834  holds 30672  62,691 tok/s  [fid:3=+0.953 fid:4=+0.020 fid:5=-0.029 b0=+0.002 b1=+0.003 b2=+0.002 b3=+0.001]
+02:02:18 training heartbeat: step  8450  ce 3.803  loss 3.846  holds 36576  77,987 tok/s  [fid:3=+0.978 fid:4=+0.142 fid:5=-0.045 b0=+0.002 b1=+0.002 b2=+0.002 b3=+0.003]
