@@ -2641,6 +2641,42 @@ scale, not blocking this one. Target cost: $15–40 total.
   fresh 488k restart (~$26) does NOT fit — resume is also
   the only budget-feasible path.
 
+- **A60e v9.4 STAGED — resume at full coverage; kill rule
+  rebuilt on the defect's own signature (user directive:
+  "don't let it happen again")** (2026-08-17 ~21:30 UTC,
+  pre-registered before launch): script pod_v94t.sh = v9.3's
+  + (a) corpse seed — boot fetches results-v93-ckpt, cats
+  v93roll_* into v94.pt, VERIFIES step >= 114,000 else
+  aborts; volume-resume guard unchanged for relaunches;
+  (b) --hold-cap REMOVED; (c) --lam 0.02 (trainer flag
+  exists, lm_train:474 -> Drive ctor). TOTAL_STEPS 488k
+  unchanged; cosine continues from the resume step;
+  STEPS_LEFT = 488k - seed step (~373.7k, ~26h, ~$20 vs
+  ~$24 balance). Token-verified: v93 references ONLY in the
+  seed block + header; bash -n clean. AMENDED KILL RULE
+  (pre-run amendment; replaces A60d's pooled-holdout rule —
+  pooled holdout ALSO drifts by pool-growth dilution, the
+  same confound class that fired the false alarm): metric =
+  NEW-COHORT implied hit-rate, (n1*hit1 - n0*hit0)/(n1-n0)
+  across holdout evals merged to dn>=15; KILL iff 4
+  consecutive reads < 0.45, reads armed only past step
+  130k (backtest on v9.3's trace: fresh-run warmup cohorts
+  sit <0.45 and must not fire). BACKTEST REFINEMENT of
+  A60d's coarse cohort figures: fine-grained reads show
+  healthy-era new-write quality 0.83-1.00 (30-70k),
+  degrading to 0.47-0.58 (90-114k) and plateauing — the
+  coarse 0.74/0.59/0.44 partition overstated the terminal
+  slope; the leak is real (~40% new-write degradation) but
+  had stabilized. On v9.3 the new rule correctly never
+  fires (consec-low 0 at death). RECOVERY SIGNAL (the
+  fix's live confirmation): post-resume cohort reads
+  >= 0.8 within ~20k steps = full-coverage funding
+  restored; 0.5-0.6 = coverage was not the (whole) cause.
+  Trunk guard (investigate-only): no new trace-CE low over
+  trailing 40k. SILENT/NAN/ENDGAME handling unchanged.
+  Executor main-guarded (import-safe), pod id re-read at
+  fire time. Hunter: 4090 first, A5000 after 4 dry rounds.
+
 ## Status
 
 Assembled scene-free (A6), no registered runs. Weaver (`iga/lm_gen.py`),
