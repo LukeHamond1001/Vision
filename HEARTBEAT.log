@@ -2,3 +2,4 @@
 01:48:25 smoke pass: 47526 tok/s at v9 shapes
 01:48:29 shard found (12000001738B) — training
 02:18:31 training heartbeat: step  6450  ce 4.277  loss 4.344  holds 83490  46,981 tok/s  [fid:3=+0.974 fid:4=+0.145 fid:5=+0.003 b0=+0.003 b1=+0.001 b2=+0.004 b3=+0.003]
+02:48:34 training heartbeat: step 13350  ce 2.557  loss 2.599  holds 168198  47,079 tok/s  [fid:3=+0.995 fid:4=+0.190 fid:5=+0.023 b0=+0.021 b1=+0.021 b2=+0.002 b3=+0.003]
