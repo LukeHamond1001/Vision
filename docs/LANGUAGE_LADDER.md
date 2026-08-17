@@ -2677,6 +2677,22 @@ scale, not blocking this one. Target cost: $15–40 total.
   Executor main-guarded (import-safe), pod id re-read at
   fire time. Hunter: 4090 first, A5000 after 4 dry rounds.
 
+- **A60f RECOVERY SIGNAL CONFIRMED — coverage was the store's
+  disease; both cures now live in one run** (2026-08-17 21:05
+  UTC, step 127,400): the pre-registered confirmation (A60e:
+  post-resume cohort >= 0.8 within ~20k steps) fired at the
+  FIRST TWO READS: cohort 0.833 @120k, 1.000 @126k — new-write
+  quality back at ceiling from ~0.5 under the cap, at full
+  ~12.2 holds/step coverage. Resume-shock CE transient resolved
+  same window (heartbeat 2.566 -> 1.960; recent-3k trace mean
+  1.804). fid:4 rebuilding 0.795 -> 0.864. THE PAIR OF
+  MECHANISMS IS NOW CLOSED: trunk disease = pay-gradient
+  VOLUME (cured at lam-equivalent ~0.25/step-units, A60b);
+  store disease = payment COVERAGE (cured at full coverage,
+  this entry) — lam 0.02 x 13 holds/step satisfies both
+  constraints simultaneously. Remaining to the close: ~360k
+  quiet steps, endgame tables, revised gate.
+
 ## Status
 
 Assembled scene-free (A6), no registered runs. Weaver (`iga/lm_gen.py`),
