@@ -2425,6 +2425,25 @@ scale, not blocking this one. Target cost: $15–40 total.
   fully certified. If it trades rows instead: decision with
   data, v9.2 lane discussion in the morning either way.
 
+- **A59 v9.2 LAUNCHED (user go + top-up; balance $41.35)**
+  (2026-08-17 ~02:0x UTC): THE CLOSING SCALE RUN — R8b's recipe
+  (norm_mix + aux-head lambda 0.2, THE MEASURED DOSE: the only
+  protection that flipped the starvation force's sign — r8b's
+  trunk finished 5.9% stronger standalone than the no-aux
+  baseline at equal duration, family-record 0.83 holdout) on
+  v9's certified ops config (d=512 T=2048 lanes 6, 488k steps,
+  cosine, real-shard smoke, rolling snapshots). Launch-now over
+  wait-for-R8c per the measured-armor argument (lambda 0.1's
+  protection is a prediction; 0.2's is data); R8c CONTINUES as
+  the dose-response cross-check, landing mid-flight, informing
+  production lambda for v10/buildout regardless. GATE (A58c
+  revision): wire-to-wire; completion effect at scale (A54i
+  reference +3.83pt) read JOINTLY with trunk health; kill rule
+  re-armed (half-peak x3 windows after 60k); clean banked table.
+  Forecast pinned pre-launch: trunk survival ~70%, full gate
+  ~60-70%, downside ~$10 + R9. lm_eval gained --aux-trunk so
+  aux checkpoints load at eval.
+
 ## Status
 
 Assembled scene-free (A6), no registered runs. Weaver (`iga/lm_gen.py`),

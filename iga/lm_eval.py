@@ -129,6 +129,9 @@ def main():
     ap.add_argument("--keyed", default=None,
                     choices=["token", "logit"])
     ap.add_argument("--norm-mix", action="store_true")
+    ap.add_argument("--aux-trunk", type=float, default=0.0,
+                    help="A58b: construct with the aux head so "
+                         "aux-trained checkpoints load")
     ap.add_argument("--device", default="cuda"
                     if torch.cuda.is_available() else "cpu")
     a = ap.parse_args()
@@ -143,7 +146,8 @@ def main():
                          store=a.store, use_xl=(a.xl == "on"),
                          gate_mode=a.gate_mode,
                          keyed=a.keyed,
-                         norm_mix=a.norm_mix).to(a.device)
+                         norm_mix=a.norm_mix,
+                         aux_trunk=a.aux_trunk).to(a.device)
     else:
         model = BandLM(tok.get_vocab_size(), d=a.d,
                        talk=a.talk).to(a.device)
