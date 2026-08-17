@@ -2510,6 +2510,40 @@ scale, not blocking this one. Target cost: $15–40 total.
   r-tier retained for mechanism/capability reads where its
   record is unblemished. Budget: ~$30 covers this run fully.
 
+- **A60b v9.3 CROSSED THE KILL ZONE — density CONVICTED,
+  the cap is the cure** (2026-08-17 18:03 UTC, step 100,200):
+  the zone (70-96k) that killed all three parents was crossed
+  with the kill rule never once armed — pooled same(recent)
+  never touched the 0.483 half-peak line, consec-below pinned
+  at 0 every window. THE CONVICTION (three controls, one
+  variable): v9 old-geometry bled ~70-90k; v9.1 norm_mix
+  killed at 96k; v9.2 norm_mix+aux killed at 88k; v9.3 =
+  v9.2's exact recipe + --hold-cap 1 crossed with the trunk
+  setting family records INSIDE the zone: CE 1.835 (78k) ->
+  1.813 (85.5k) -> 1.522 (93k; prior family best anywhere was
+  v9.2's 2.013 at 92k mid-bleed) -> 1.944 (100k, weave
+  bounce). Mechanism now complete: gradient starvation (A57c)
+  was caused by drive event density — ~13 pay-path gradient
+  injections/step (lm_drive ~190) taxed the trunk from step 0
+  (v9.3 hit CE 2.08 by 21k; v9.2 needed ~90k) and bled it in
+  the zone. Cap binding exactly all run: holds = steps-1 at
+  every heartbeat. A60's registered risk (cap starves the
+  drive) REFUTED: same_recent peaked 0.965 by 26k, record
+  pace; b0 0.88-0.96, b1 0.61-0.73, fid:4 0.92 wire-to-wire
+  so far; 48.0k tok/s steady. HONEST RESIDUAL: zone-adjacent
+  same_recent oscillation exists even at safe density (dips
+  0.655@74k, 0.624@78k, 0.596@92k, each with full recovery
+  between — 0.914@86k), categorically unlike parent bleeds
+  (monotone collapse through half-peak in ~3-4 windows); watch
+  the back half, executor stays armed to endgame. CORRECTED
+  projection: TOTAL_STEPS=488k at ~234 steps/min -> training
+  complete ~21:40 UTC Aug 18 (A60's ~13:00 was wrong), eval +
+  tables after; run cost ~$26-27 total, inside the ~$30
+  balance. Next: endgame autopsy (autopsy_v9.py --norm-mix
+  --aux-trunk 0.2 on best ckpt), revised gate (completion at
+  scale vs A54i +3.83pt read JOINTLY with trunk health,
+  wire-to-wire, clean banked table), close verdict.
+
 ## Status
 
 Assembled scene-free (A6), no registered runs. Weaver (`iga/lm_gen.py`),
