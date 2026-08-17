@@ -11,3 +11,4 @@
 03:47:28 training heartbeat: step 42650  ce 2.352  loss 2.630  holds 61984  86,434 tok/s  [fid:3=+0.991 fid:4=+0.786 fid:5=+0.038 b0=+0.876 b1=+0.396 b2=+0.007 b3=+0.003]
 04:02:30 training heartbeat: step 47800  ce 2.110  loss 2.373  holds 62624  87,109 tok/s  [fid:3=+0.989 fid:4=+0.792 fid:5=+0.034 b0=+0.831 b1=+0.480 b2=+0.006 b3=+0.005]
 04:17:31 training heartbeat: step 52900  ce 2.472  loss 2.510  holds 63264  87,638 tok/s  [fid:3=+0.990 fid:4=+0.807 fid:5=+0.031 b0=+0.889 b1=+0.396 b2=+0.002 b3=+0.001]
+04:32:33 training heartbeat:     holdout(cum): {'cross': [0.087, 0.11, 219], 'same': [0.776, 0.83, 89], 'straddle': [0.066, 0.02, 42]}
