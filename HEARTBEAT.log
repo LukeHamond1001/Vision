@@ -16,3 +16,4 @@
 05:02:35 training heartbeat: step 68200  ce 2.120  loss 2.381  holds 65168  88,690 tok/s  [fid:3=+0.989 fid:4=+0.808 fid:5=+0.029 b0=+0.880 b1=+0.471 b2=+0.002 b3=+0.001]
 05:17:37 training heartbeat: step 73250  ce 2.505  loss 2.796  holds 65808  88,940 tok/s  [fid:3=+0.991 fid:4=+0.826 fid:5=+0.030 b0=+0.879 b1=+0.368 b2=+0.002 b3=+0.002]
 05:22:41 training complete (rc=0)
+05:22:54 ckpt piece landed: r8c_part_aa
