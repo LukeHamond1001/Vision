@@ -1,2 +1,3 @@
 01:46:13 boot v92-AUXHEAD trainer NVIDIA GeForce RTX 4090 resume=''
 01:48:25 smoke pass: 47526 tok/s at v9 shapes
+01:48:29 shard found (12000001738B) — training
