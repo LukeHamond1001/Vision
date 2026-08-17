@@ -2444,6 +2444,49 @@ scale, not blocking this one. Target cost: $15–40 total.
   ~60-70%, downside ~$10 + R9. lm_eval gained --aux-trunk so
   aux checkpoints load at eval.
 
+- **A59b v9.2 KILLED BY THE RULE at step 88k — and the failure
+  pattern CONVICTS A NEW SUSPECT: onset is invariant to every
+  store-side intervention, pointing at the DRIVE at v-scale event
+  density** (2026-08-17 ~09:00 UTC auto-kill; spend $5.4; balance
+  $33.57). WIRE: healthiest scale start ever (recent 0.905 at
+  27k, band 5 engaged 0.07+ — a scale first), peak 0.968, then
+  recent windows 0.899(70k) -> 0.175(74k) -> 0.404 -> 0.334 —
+  3 consecutive under half-peak -> executor fired at 88k,
+  exactly as pinned. THE DECISIVE PATTERN: bleed onset is
+  ~70-90k steps in ALL THREE v-runs — v9 (old geometry, no aux),
+  v9.1 (norm_mix, no aux), v9.2 (norm_mix + aux 0.2 whose
+  r-scale sign-flip was real) — while NO r-run has EVER bled at
+  the same step counts (r8b trunk 0.83, r8c 0.87 at 75k). Every
+  read-side knob is now exonerated AT SCALE: geometry (v9.1),
+  volume (alpha 2.28 mid-bleed), dose (r7), gradient payment
+  (v9.2 — the aux that provably strengthens the trunk at r-scale
+  did not move onset by a single beat). A cause that no
+  store-side intervention modulates is unlikely to live on the
+  store side. WHAT DIFFERS v-config vs r-config: d, T, lanes,
+  and — the standout — EVENT DENSITY: mix_v9 mints ~13
+  holds/step (1.1M by 88k) vs mix_r1's ~0.85/step (63k by 75k),
+  a 15x difference; the drive's pay path retains logp graphs and
+  injects gradient into the trunk on every settled hold (A54d
+  already proved this pathway dominates peak memory). DRIVE-
+  DENSITY HYPOTHESIS: the bleed is drive-gradient crowding of LM
+  circuits at 15x hold density — consistent with onset
+  invariance (store knobs don't touch it), with r-scale immunity
+  (low density), with the store-lesion non-recovery (A54g: the
+  damage isn't store-suppression), and retroactively with v8.0's
+  'lr rot' (same shard-density family; cosine never fixed it
+  because lr was never the cause). R9 REGISTERED + LAUNCHED (the
+  $3 discriminator, autonomous debug-tier): r8c's EXACT healthy
+  config (d=256, T=1024, lanes 16, norm_mix, aux 0.1) with ONE
+  variable — the shard swapped to mix_v9 (same tokenizer; the
+  conveyor serves any T; density rides the shard). If same-chunk
+  bleeds ~70-90k at r-scale -> drive convicted for $3, fix class
+  = drive-side (lam reduction / hold-rate cap / detached pay
+  path), r-certifiable BEFORE the next scale dollar. If it
+  doesn't -> the pathogen is d=512/T=2048 dynamics themselves,
+  different fix class. Artifacts: 84k mid-bleed snapshot on
+  results-v92-ckpt; v92.pt ~91.5k + best (0.968-era) on the
+  volume in w-v92.
+
 ## Status
 
 Assembled scene-free (A6), no registered runs. Weaver (`iga/lm_gen.py`),
