@@ -1,0 +1,12 @@
+step     1  ce 10.550  loss 12.715  holds    0  25,299 tok/s  [b0=+0.000 b1=+0.000]
+step    50  ce 7.565  loss 7.696  holds   48  48,339 tok/s  [fid:3=+0.100 fid:4=-0.000 b0=+0.000 b1=+0.000 b2=+0.000 b3=+0.000]
+audit: {'holds': 58, 'telescoping_exact': True, 'scoped': True, 'vetoes': 702, 'proposed': 2383}
+panel:
+lane0 maintain fid:5          target 0.20 phi0 1.00 band 5 due 133120
+lane0 maintain fid:3          target 0.20 phi0 0.47 band 3 due 124928
+record   fid:3          0.107 (ema 0.107)
+record   fid:4          0.000 (ema -0.000)
+record   recall:b0      0.000 (ema 0.000)
+record   recall:b1      0.000 (ema 0.000)
+record   recall:b2      0.000 (ema 0.000)
+record   recall:b3      0.000 (ema 0.000)
