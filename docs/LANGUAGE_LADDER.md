@@ -2586,6 +2586,61 @@ scale, not blocking this one. Target cost: $15–40 total.
   but fits; its store kill-zone read (~120k, ~$9) fits
   comfortably either way.
 
+- **A60d FORENSICS OVERTURNS A60c's MECHANISM — the kill
+  metric was confounded; the store was starving slowly, not
+  collapsing; the trunk-cure verdict is unchanged**
+  (2026-08-17 ~20:40 UTC; corpse + trace analysis, no pod
+  spend): (1) UNITS: drive.step_t advances in TOKENS
+  (lm_train:169 `step_t += T`), sweep() once per chunk —
+  horizons are token-denominated. b0 holds live 512 tokens
+  (a quarter-chunk): organic churn ~13/step, matching
+  v9.2's measured 12.9/step exactly. --hold-cap 1 therefore
+  cut PAYMENT COVERAGE to ~1/13 of probe-time (1 mint/step
+  vs ~13 due/step), not merely gradient volume. (2) THE
+  SHARP same_recent DIPS WERE AN ARTIFACT: recent-12 probe
+  composition. bin_weights ∝ progress-EMA decays to its
+  1e-4 floor as b0/b1 plateau → weaver drifts toward
+  uniform gaps → the recent-12 pool fills with b2/b3 probes
+  (recall ~0.003) → pooled read ~0.42 with no store damage.
+  Live organ emas through the "collapse" and at death: b0
+  0.93-0.95, b1 0.68-0.80 and RISING in the final rows. The
+  rule fired per spec on a confounded metric. (3) THE REAL
+  LEAK (holdout stream — fixed data, unconfounded): same-
+  channel hit-rate peaked 0.745@80k → 0.716@114k; cohort
+  decomposition across n growth (303→372→444→497) implies
+  NEW-probe cohort scores 0.74 (64-80k) → 0.59 (80-96k) →
+  0.44 (96-114k): new writes progressively underfunded as
+  the single mint slot spread across late-arriving b3/b2/
+  fid:5 registers (131k-token horizons = slot squatters)
+  after ~18k. A slow leak, ~10x slower than the parents'
+  collapses. Carry bug noted for later: b0's band is 2
+  (absent) → carry 0.0 → b0 sorts LAST in _propose.
+  (4) VERDICTS: trunk cure STANDS (A60b intact). Store at
+  death: capable (organs at records) but leaking on new
+  writes. The kill: correct per pre-registration, premature
+  in hindsight — LAW: composition-sensitive pooled metrics
+  must never gate kills; holdout channels can. (5) NEXT =
+  v9.4 RESUME (REQUIRES USER GO): resume the 114,350 corpse
+  (record trunk kept; drive economy re-proposes fresh —
+  holds are not checkpointed, lm_train:251), config = cap
+  REMOVED + lam 0.25→0.02. One-variable form: pay-gradient
+  VOLUME pinned at the proven-trunk-safe dose (13 × 0.02 ≈
+  1 × 0.25 per step) while restoring FULL v9.2-style
+  coverage — v9.2's exact store economy, whose capability
+  is proven (A54i +3.83pt), at 1/12.5 the per-hold
+  pressure. Risks flagged honestly: per-hold pressure 12.5x
+  weaker (A24 L3 raised lam 0.1→0.25 when pay pressure lost
+  to CE at r-scale — watch the in-window margin); resumed
+  store carries 34k steps of thin-coverage writes (0.716 vs
+  0.745 peak; expect re-funding at full coverage). NEW KILL
+  RULE (pre-registered for v9.4): holdout same hit-rate
+  declining 4 consecutive evals AND -5pt cumulative below
+  the 0.716 resume baseline → kill. Trunk guard: no new
+  heartbeat-CE low for 40k steps → investigate. Cost:
+  ~$19.5 for the remaining 374k steps vs ~$24 balance; a
+  fresh 488k restart (~$26) does NOT fit — resume is also
+  the only budget-feasible path.
+
 ## Status
 
 Assembled scene-free (A6), no registered runs. Weaver (`iga/lm_gen.py`),
