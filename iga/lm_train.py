@@ -242,7 +242,8 @@ def train(d=64, lanes=4, T=256, steps=40, seed=0, device="cpu",
           use_xl=True, gate_init=-4.0, read_drop=0.5,
           read_drop_end=None, gate_mode="scalar", lr=3e-4,
           bf16=False, lam=0.25, keyed=None, lr_decay="none",
-          lr_total_steps=None, norm_mix=False, aux_trunk=0.0):
+          lr_total_steps=None, norm_mix=False, aux_trunk=0.0,
+          hold_cap=None):
     """resume (A26): path to a checkpoint — model + optimizer + drive
     EMAs/records/minted/vetoes continue; step numbering continues.
     offset_frac: start each conveyor lane this far into its segment
@@ -254,6 +255,7 @@ def train(d=64, lanes=4, T=256, steps=40, seed=0, device="cpu",
         torch.set_float32_matmul_precision("high")  # TF32 (A12)
     torch.manual_seed(seed)  # reproducible init (A14)
     drive = Drive(n_lanes=lanes, lam=lam, seed=seed, constants=constants,
+                  hold_cap=hold_cap,
                   imagination_absent=(arch == "transformer"),
                   absent_bands={1, 2} if arch == "hybrid" else ())
     if data:  # prepared real-data shard (A8): UltraChat conveyor
@@ -467,6 +469,8 @@ def main():
                     help="linear anneal target for read-dropout (A39)")
     ap.add_argument("--lr", type=float, default=3e-4)
     ap.add_argument("--bf16", action="store_true")
+    ap.add_argument("--hold-cap", type=int, default=None,
+                    help="A60: max new drive holds per sweep (density throttle; None=uncapped)")
     ap.add_argument("--lam", type=float, default=0.25,
                     help="drive pay weight (A51 ablation: 0)")
     ap.add_argument("--gate-mode", default="scalar", dest="gate_mode",
@@ -512,7 +516,8 @@ def main():
               read_drop_end=a.read_drop_end, gate_mode=a.gate_mode,
               lr=a.lr, bf16=a.bf16, lam=a.lam, keyed=a.keyed,
               lr_decay=a.lr_decay, lr_total_steps=a.lr_total_steps,
-              norm_mix=a.norm_mix, aux_trunk=a.aux_trunk)
+              norm_mix=a.norm_mix, aux_trunk=a.aux_trunk,
+              hold_cap=a.hold_cap)
 
 
 if __name__ == "__main__":

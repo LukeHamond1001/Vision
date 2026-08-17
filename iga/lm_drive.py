@@ -48,7 +48,8 @@ def horizon(band):
 
 class Drive:
     def __init__(self, n_lanes, lam=0.25, seed=0, constants=None,
-                 imagination_absent=False, absent_bands=()):
+                 imagination_absent=False, absent_bands=(),
+                 hold_cap=None):
         """constants: dict (or path to results/lm_constants.json) from
         iga.lm_calibrate — horizons and fid floors become data-set;
         absent, the scaffold defaults apply (debug only).
@@ -75,6 +76,14 @@ class Drive:
                             for k, v in c.get("fid_floor", {}).items()}
         self.n_lanes = n_lanes
         self.lam = lam
+        # A60 (v9.3): global cap on NEW holds per sweep. The A59b
+        # onset-invariance analysis convicted event DENSITY: v-shards
+        # mint ~13 holds/step vs r-shards' ~0.85, and every settled
+        # hold's pay term injects retained-logp gradient into the
+        # trunk (line ~190). The cap throttles the mint->settle->
+        # re-propose loop to the measured-safe r-scale rate without
+        # amputating any drive function. None = uncapped (parity).
+        self.hold_cap = hold_cap
         self.rng = random.Random(seed)
         self.ema = {}
         self.records = {}
@@ -170,6 +179,7 @@ class Drive:
 
     # ---------- the sweep: settle due holds, then propose ----------
     def sweep(self, losses):
+        self._minted_this_sweep = 0
         for lane in range(self.n_lanes):
             keep = []
             for h in self.holds[lane]:
@@ -197,7 +207,12 @@ class Drive:
                 else:
                     self._settle(h, h["phi0"], 0.0)   # expiry: exactly zero
             self.holds[lane] = keep
-            self.holds[lane] += self._propose(lane)
+            new = self._propose(lane)
+            if self.hold_cap is not None:
+                take = max(0, self.hold_cap - self._minted_this_sweep)
+                new = new[:take]
+                self._minted_this_sweep += len(new)
+            self.holds[lane] += new
         for key, val in self.ema.items():
             if val > self.records.get(key, 0.0):
                 self.records[key] = val

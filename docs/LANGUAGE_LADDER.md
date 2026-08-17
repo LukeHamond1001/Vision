@@ -2487,6 +2487,29 @@ scale, not blocking this one. Target cost: $15–40 total.
   results-v92-ckpt; v92.pt ~91.5k + best (0.968-era) on the
   volume in w-v92.
 
+- **A60 v9.3 LAUNCHED — the density fix, practice-like-we-play
+  (user-directed: R9 killed in favor of testing in the real
+  arena)** (2026-08-17 ~11:30 UTC): v9.2's exact recipe + ONE
+  variable, --hold-cap 1 — a global cap on new drive holds per
+  sweep, throttling the mint->settle->re-propose loop (and its
+  pay-path gradient injection, lm_drive ~190) from ~13/step to
+  the measured-safe r-scale rate ~0.85-1/step. No drive function
+  amputated: minting, settlement, recall training, vetoes all
+  live, at r-density. Cap laws pinned (cap respected across
+  lanes per sweep; None = parity; suite 90/90). THE RUN IS THE
+  EXPERIMENT AND THE PRODUCT: kill zone ~70-90k is the verdict
+  instrument (~$8, ~7h to cross); if the trunk sails past 96k
+  where all three parents died, density is convicted AND fixed
+  in one motion, and the run continues to tables (~13:00 UTC
+  Aug 18) as the architecture's closing run. Kill rule re-armed
+  (half-peak x3 after 60k). STRATEGY NOTE (A59b addendum,
+  user-ratified): r-certification is no longer a prerequisite
+  for scale protection candidates — the disease lives at scale
+  (or at density, which R9 would have discriminated; the $8
+  in-arena test supersedes it). Free tier (law tests) retained;
+  r-tier retained for mechanism/capability reads where its
+  record is unblemished. Budget: ~$30 covers this run fully.
+
 ## Status
 
 Assembled scene-free (A6), no registered runs. Weaver (`iga/lm_gen.py`),
