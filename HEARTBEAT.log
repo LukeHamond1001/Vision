@@ -39,3 +39,4 @@
 10:20:45 rolling snapshot pushed (step 310550)
 10:50:48 training heartbeat:     same(recent 10 probes): 0.900
 11:20:51 training heartbeat: step 324950  ce 1.870  loss 2.284  holds 2563458  47,003 tok/s  [fid:3=+0.987 fid:4=+0.666 fid:5=+0.018 b0=+0.913 b1=+0.768 b2=+0.000 b3=+0.001]
+11:50:54 training heartbeat: step 331850  ce 1.883  loss 1.922  holds 2646900  47,007 tok/s  [fid:3=+0.991 fid:4=+0.683 fid:5=+0.017 b0=+0.928 b1=+0.641 b2=+0.000 b3=+0.001]
