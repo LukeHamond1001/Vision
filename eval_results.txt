@@ -1,0 +1,18 @@
+===== EVAL v94.pt =====
+loaded v94.pt (step 488000), 78,267,980 params
+
+== recall at distance (full model) ==
+  gap          0-256  p(ans) 0.865  top1 0.87  n=79
+  gap       256-2048  p(ans) 0.449  top1 0.49  n=78
+  gap     2048-16384  p(ans) 0.121  top1 0.18  n=130
+  gap 16384-1000000000  p(ans) 0.080  top1 0.18  n=11
+
+== recall at distance (bands 4-6 lesioned) ==
+  gap          0-256  p(ans) 0.865  top1 0.87  n=79
+  gap       256-2048  p(ans) 0.449  top1 0.47  n=78
+  gap     2048-16384  p(ans) 0.121  top1 0.18  n=130
+  gap 16384-1000000000  p(ans) 0.080  top1 0.18  n=11
+
+== talk (one agent turn, greedy) ==
+thanks .<eot_human>i.
+																							
