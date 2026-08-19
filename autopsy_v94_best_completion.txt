@@ -1,0 +1,8 @@
+TM-v9-clean 461  completion ids 202 (836 positions)  hash fc639269079e
+== v94.pt.best.pt step 266000 serve-T 2048
+ALPHA: {'3': 4.8311, '4': 3.4473, '5': 2.7308}
+betas: {'3': 1.0, '4': 1.0, '5': 1.0}
+qmix softmax: [0.999, 0.001, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+tok_u: mean -0.3422 std 1.0182 min -8.727 max 4.041
+tok_u TOP-40: ' Software', ' agreed', ' General', ' Here', ' been', ' useful', ' example', ' FITNESS', ' don', ' provide', ' WITHOUT', ' IS', ' KIND', ' Aff', 'Foreign', 'POSE', '((', '?', '().', ' OTHER', ' AI', ' ANY', 'century', ' than', 'IS', 'AR', ' up', ' own', 'Comp', 'AT', ' disclaim', '(_', 'orm', 'aram', '########', 'Imp', 'ur', 'AN', ' Ad', 'nt'
+tok_u BOT-40: '.', ' quiet', ' early', ' kept', '_', ' busy', ' little', '', ' good', ' .', ' day', ' town', 'what', ' market', ' way', ' None', ' lamp', ' road', ' a', 'i', 'self', ' job', ' try', ' copper', ' len', ' golden', ' distributed', ' weather', ' such', ' return', ' """', ' pale', ' WARRANTIES', 'ira', 'References', 'the', ' many', ' coin', '#', ' also'
