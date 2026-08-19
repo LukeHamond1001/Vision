@@ -107,6 +107,12 @@ class ServeSession:
         self.m.pop_recon()
         return logits[0, -1].float()
 
+    def flush(self):
+        """Public short-commit of the pending window (A66-R2: the
+        store cannot engage inside an uncommitted window; a session
+        that wants in-session store memory commits its passes)."""
+        self._flush()
+
     # ---------- the conversation ----------
     def user(self, text):
         self._append(self.tok.encode(text).ids + [self.eot_h])

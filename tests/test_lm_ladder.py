@@ -1509,6 +1509,31 @@ class TestServeLaws(unittest.TestCase):
         self.assertGreaterEqual(out["blocks"], 1)
         self.assertTrue(out["audit"]["only_paid"])
 
+    def test_replay_twice_distills_where_single_pass_cannot(self):
+        # A66-R2: a sub-chunk span replayed once reads an empty
+        # store (KL = float noise ~1e-9, under the floor); replayed
+        # twice, the teacher reads its own pass-one writes and the
+        # KL carries real signal (>=1e-4 measured), so the step
+        # lands. Floor 1e-6 sits between noise and signal.
+        import torch as t
+        from iga.lm_sleep import Sleeper
+        for twice, expect_steps in ((False, 0), (True, 1)):
+            sl = Sleeper(arm="B", every=0, block_chunks=2, seed=0,
+                         min_step_loss=1e-6, replay_twice=twice)
+            s, m = self._session(sleeper=sl)
+            t.manual_seed(11)
+            s._append(t.randint(3, 60, (100,)).tolist())
+            s.press(2)
+            out = s.sleep_now(blocks=1, span_w=40)   # span < one chunk
+            self.assertEqual(out["blocks"], 1)
+            self.assertTrue(out["audit"]["only_paid"])
+            if expect_steps:
+                self.assertGreaterEqual(
+                    out["audit"]["steps_taken"], 1, "twice: no step")
+            else:
+                self.assertEqual(out["audit"]["steps_taken"], 0,
+                                 "single pass stepped on empty store")
+
     def test_min_step_loss_gates_noise_updates(self):
         # A65: no disagreement, no update — with the floor above any
         # possible loss, blocks replay and record but the model must

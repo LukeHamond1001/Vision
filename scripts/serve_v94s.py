@@ -61,7 +61,7 @@ def main():
     s = ServeSession(
         m, tok, T=a.T, device="cpu",
         sleeper=Sleeper(arm="B", every=0, block_chunks=2, seed=1,
-                        min_step_loss=1e-4),
+                        min_step_loss=1e-4, replay_twice=True),
         temperature=0.0 if a.greedy else a.temp, top_k=a.top_k,
         max_reply=a.max_reply, log_path=log, seed=a.seed)
     print(f"session log -> {log}\nready. /quit to save+exit.",

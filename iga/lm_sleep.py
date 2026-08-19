@@ -102,7 +102,7 @@ class SleepTap:
 
 class Sleeper:
     def __init__(self, arm="B", every=0, block_chunks=4, seed=0,
-                 min_step_loss=0.0):
+                 min_step_loss=0.0, replay_twice=False):
         """every: one sleep block per this many wake steps (0 = never
         fire — the dose-0 parity arm). block_chunks: chunks per block;
         dose sleep:wake = block_chunks/every (A62 ladder {0, 1:16,
@@ -120,6 +120,14 @@ class Sleeper:
         # behavior with no wake loss to re-anchor). 0.0 = training
         # path bit-exact.
         self.min_step_loss = float(min_step_loss)
+        # A66-R2: serve-mode replay presents the span TWICE — the
+        # teacher writes on pass one and reads its own memory on
+        # pass two, so pass two's KL carries exactly the store's
+        # content (a single sub-chunk replay reads an empty store
+        # and distills nothing — the A66-R1 structural null). The
+        # write pass self-skips under the no-disagreement floor.
+        # False = training path bit-exact.
+        self.replay_twice = bool(replay_twice)
         self.rng = random.Random(seed)
         self.buffers = None
         self.start = 0           # absolute stream pos of buffers[*][0]
@@ -234,11 +242,17 @@ class Sleeper:
         model.eval()
         st = model.init_state(1, device)
         losses = []
-        try:
+        if self.replay_twice:
+            parts = [(0, toks), (0, toks)]
+        else:
+            parts = []
             for off in range(0, len(toks) - 1, self.T):
                 xs = toks[off: off + self.T + 1]
                 if len(xs) < MIN_REPLAY and off > 0:
                     break        # trailing sliver: not worth a step
+                parts.append((off, xs))
+        try:
+            for off, xs in parts:
                 x = torch.tensor([xs[:-1]], dtype=torch.long,
                                  device=device)
                 y = torch.tensor([xs[1:]], dtype=torch.long,

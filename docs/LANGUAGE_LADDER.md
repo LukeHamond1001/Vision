@@ -3167,6 +3167,34 @@ scale, not blocking this one. Target cost: $15–40 total.
   curriculum — the instrument and laws remain certified either
   way. All local, $0. Verdict = A66-R.
 
+- **A66-R ROUND 1 — gate FAIL as a perfect negative control;
+  the replay mechanism's structural bug found; R2 amended**
+  (2026-08-19). RESULT: steps_taken 0/54 — every block's KL sat
+  below the floor, sleep lawfully did NOTHING, and act 3b came
+  back BIT-IDENTICAL to the virgin baseline (pos/none/neg
+  .0790/.0647/.0683 in both) — the instrument carries zero
+  contamination, proven by its own null. ROOT CAUSE, structural:
+  span_w=64 makes every replay a SINGLE chunk, and reads see
+  the PREVIOUS chunk's store — a one-chunk teacher reads an
+  empty store, so teacher == student and KL == 0 exactly. A
+  second conviction beneath it: the whole 1,456-token session
+  sat inside ONE uncommitted 2048-window, so the store never
+  engaged in-session either (act 3a measured pure attention;
+  its odd class inversion is n=6 noise plus the four UNTRAINED
+  press embeddings sitting in-context — ledgered limitation:
+  presses are stream-visible but semantically dark until wake
+  exposure trains them). R2 AMENDMENTS, both mechanism-true:
+  (1) REPLAY-TWICE — ARM B at serve presents the span twice;
+  the teacher writes on pass one and READS ITS OWN MEMORY on
+  pass two, so the KL on pass two carries exactly the store's
+  content; the no-disagreement floor already skips the write
+  pass (training path default-off, bit-exact). Law test: the
+  same rig steps with replay_twice and cannot step without it.
+  (2) PASSES COMMIT — the session flushes after each teaching
+  pass (short-commit), so the store participates in-session;
+  act 3a becomes a store measurement as designed. Same fact
+  set, same gate, same predictions. Rerun local, $0.
+
 ## Status
 
 **(2026-08-19, post-v9.4)** The substrate campaign is complete:

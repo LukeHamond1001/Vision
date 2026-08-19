@@ -136,7 +136,7 @@ def main():
                  aux_trunk=0.2, use_xl=False, gate_init=-2.0)
     m.load_state_dict(st["model"])
     sl = Sleeper(arm="B", every=0, block_chunks=2, seed=1,
-                 min_step_loss=1e-4)
+                 min_step_loss=1e-4, replay_twice=True)
     s = ServeSession(m, tok, T=2048, device="cpu", sleeper=sl,
                      temperature=0.0, max_reply=12,
                      log_path=os.path.join(out, "demo_session.jsonl"),
@@ -159,6 +159,7 @@ def main():
                 s.press(2)
             elif f["cls"] == "neg":
                 s.press(-1)
+        s.flush()   # A66-R2: passes commit — the store engages
         print(f"ACT 2 pass {p+1}/{PASSES} done "
               f"(pos {s.pos}, {time.time()-t0:.0f}s)", flush=True)
 
