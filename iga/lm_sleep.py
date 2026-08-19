@@ -129,6 +129,7 @@ class Sleeper:
         self.spans = []
         self.replayed = []       # L1 provenance, one row per chunk
         self.stats = []          # one row per block
+        self.steps_taken = 0     # chunks that cleared the floor
 
     # ---------- wiring (lm_train touches only these) ----------
     def tap(self, conveyor):
@@ -272,6 +273,7 @@ class Sleeper:
                         torch.nn.utils.clip_grad_norm_(
                             model.parameters(), 1.0)
                         opt.step()
+                        self.steps_taken += 1
                 st = model.detach_state(st)
                 losses.append(float(loss.detach()))
                 self.replayed.append(
@@ -305,4 +307,5 @@ class Sleeper:
                         and r["hi"] <= r["t1"]
                         for r in self.replayed)
         return {"replayed": len(self.replayed),
-                "blocks": len(self.stats), "only_paid": only_paid}
+                "blocks": len(self.stats), "only_paid": only_paid,
+                "steps_taken": self.steps_taken}

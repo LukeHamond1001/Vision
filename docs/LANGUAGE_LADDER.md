@@ -3130,6 +3130,43 @@ scale, not blocking this one. Target cost: $15–40 total.
   --dir <surgery outdir>. NEXT SESSION: pre-register the
   three-act probe set + predicted ordering, then the demo.
 
+- **A66 THE THREE-ACT DEMO — pre-registered before the session**
+  (2026-08-19; scripted execution of the ratified protocol on
+  v94sp; the live human session runs the same script by hand
+  afterward). PROBE SET: 18 facts in the trained weave register
+  ("by the way NAME kept a COLOR OBJ in the ROOM ."), distinct
+  (name, obj) pairs, seeded rng; classes 6 REWARDED (+2 after
+  each teaching) / 6 UNREWARDED (silence) / 6 NEGATIVE (-1
+  after each teaching). CURRICULUM: 3 passes, each a shuffled
+  round over all 18 (the A64-R2 repetition lesson), one
+  ordering constraint for span hygiene: no negative-class item
+  immediately follows a rewarded one (a -1's void window,
+  span_w=64 ~ the exchange, must not clip a fresh rewarded
+  span). Teaching exchange = user sentence -> greedy model
+  reply -> press per class. PROBES ARE SCORE-ONLY: p(first
+  color subtoken) read at the answer slot of "what color of
+  OBJ was NAME kept ? <eot_human> the OBJ was" on a state
+  copy — never appended, zero extra exposure, zero press
+  contamination. ACT 1 baseline: all 18 scored blind on the
+  virgin substrate (expect chance). ACT 2: the curriculum.
+  ACT 3 three timescales: (a) in-session — all 18 scored with
+  the session state live (the STORE's evidence: prediction all
+  classes >> chance, class-flat); (b) sleep (ARM B, spans from
+  presses at span_w=64, 54 blocks, min_step_loss 1e-4) then
+  WIPE, all 18 rescored from fresh state (the TRUNK's
+  evidence); (c) ordering. THE GATE: post-wipe rewarded >
+  unrewarded, one-sided Mann-Whitney p < 0.05. MEASURED NOT
+  GATED: negative vs unrewarded (void semantics predict
+  negative ~= unrewarded at serve: both simply unreplayed);
+  baseline flatness; span survival audit (18 positive presses
+  minus voids); sleep step/skip counts under the
+  no-disagreement floor; post-wipe vs baseline for unrewarded
+  (any nonselective drift). Honest stakes, stated now: if
+  post-sleep rewarded recall does not rise above the others,
+  the demo result is null and Phase 3 iterates on dose/
+  curriculum — the instrument and laws remain certified either
+  way. All local, $0. Verdict = A66-R.
+
 ## Status
 
 **(2026-08-19, post-v9.4)** The substrate campaign is complete:
