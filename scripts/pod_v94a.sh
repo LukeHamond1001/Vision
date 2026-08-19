@@ -23,9 +23,9 @@ hb() {
 }
 hb "autopsy v4 alive (pre-volume) $(nvidia-smi --query-gpu=name --format=csv,noheader 2>/dev/null | head -1)"
 WD=/workspace/w-v94/iga-scale
-for i in 1 2 3 4 5 6 7 8 9; do [ -d "$WD" ] && break; sleep 20; done
+for i in $(seq 1 18); do [ -d "$WD" ] && break; sleep 20; done
 if [ ! -d "$WD" ]; then
-  hb "VOLUME/WORKDIR MISSING after 3min - aborting"
+  hb "VOLUME/WORKDIR MISSING after 6min - aborting"
   runpodctl remove pod "$RUNPOD_POD_ID" || true
   sleep 120; exit 1
 fi
