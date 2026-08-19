@@ -155,7 +155,12 @@ class Drive:
                 if h["key"] == key:
                     h["w"] = 0.0
             self.neg_count[key] = self.neg_count.get(key, 0) + 1
-            if self.neg_count[key] >= 2:
+            # A64-R2 (B3'): threshold 3 and reset-on-fire — at 2 with
+            # a compounding count, interleaved items' negatives read
+            # as repeated channel disapproval and the round-1 run
+            # spent most of its life vetoed (31.8k skips)
+            if self.neg_count[key] >= 3:
+                self.neg_count[key] = 0
                 if key.startswith("recall:b"):
                     band = self.bin_band[int(key[-1])]
                 else:

@@ -31,7 +31,10 @@ from iga.lm_conveyor import Vocab
 D, LANES, T = 64, 4, 128
 SEED = 0
 ALPHA_SEED = 2.0
-BUTTON_CFG = {"pos": 0.3, "neg": 0.2, "pos_v": 2, "neg_v": 1}
+# A64-R2: sparse presses (ratified) + multi-ask curriculum — the
+# round-1 chance floor convicted single-exposure teaching
+BUTTON_CFG = {"pos": 0.15, "neg": 0.10, "pos_v": 2, "neg_v": 1,
+              "asks": 3, "press_p": 0.25}
 
 
 def seeded_init(path):
@@ -126,7 +129,13 @@ def main():
             resume=init, log_every=400, buttons=buttons,
             prophet=prophet, sleep=sl,
             ckpt=os.path.join(out, f"par_{name}.pt"))
-        items = [i for i in buttons["log"] if i["correct"]]
+        # R2: multi-ask logs one row per ask; roster reuse can rebind
+        # a freed (name, obj) to a new color — keep the LAST entry
+        seen = {}
+        for i in buttons["log"]:
+            if i["correct"]:
+                seen[(i["name"], i["obj"], i["lane"])] = i
+        items = list(seen.values())
         rows = item_recall(m, items, vocab)
         grp = {c: [r["p"] for r in rows if r["cls"] == c]
                for c in ("pos", "none", "neg")}

@@ -1129,11 +1129,14 @@ class TestButtonLaws(unittest.TestCase):
         self.assertEqual(e["pay"], 0.0)
         self.assertTrue(d.audit()["voided_zero"])
 
-    def test_B3_two_negatives_veto_positive_resets(self):
+    def test_B3_repeated_negatives_veto_reset_on_fire(self):
         d = self._drive_with_open_hold()
         d.button(0, -1)
         d.button(0, -1)
+        self.assertNotIn("recall:b0", d.veto_until)  # R2: 2 is not
+        d.button(0, -1)                              # repeated enough
         self.assertIn("recall:b0", d.veto_until)
+        self.assertEqual(d.neg_count["recall:b0"], 0)  # reset on fire
         v0 = d.vetoes
         d.step_t += 1
         d.sweep(losses=[])
@@ -1144,9 +1147,15 @@ class TestButtonLaws(unittest.TestCase):
         d.step_t += 1
         d.sweep(losses=[])                 # veto lapsed: proposes again
         self.assertTrue(any(h["key"] == "recall:b0" for h in d.holds[0]))
+        d.probe(0, torch.tensor(0.4), gap=100)
+        d.button(0, -1)                    # one negative post-lapse
+        self.assertLessEqual(d.veto_until.get("recall:b0", 0),
+                             d.step_t)     # does NOT re-veto
         d2 = self._drive_with_open_hold()
         d2.button(0, -1)
+        d2.button(0, -1)
         d2.button(0, 1)                    # positive resets the count
+        d2.button(0, -1)
         d2.button(0, -1)
         self.assertNotIn("recall:b0", d2.veto_until)
 

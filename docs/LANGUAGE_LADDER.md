@@ -2975,6 +2975,37 @@ scale, not blocking this one. Target cost: $15–40 total.
   without; replay mass concentrated on rewarded spans
   (provenance audit). Costs: all local, $0. Verdict = A64-R.
 
+- **A64-R ROUND 1 — retention NULL at the chance floor; three
+  mechanisms convicted; R2 amended and pre-registered**
+  (2026-08-19; 2 arms x 4000 steps local, $0). RESULT: every
+  class in both arms reads ~0.082-0.083 = 1/12 = CHANCE
+  (p(pos>none) 0.23 sleep / 0.42 nosleep); replay coverage
+  shows the RIGHT ordering (pos .482 > none .447 > neg .433)
+  but weakly; laws held (telescoping exact, voided_zero true).
+  CONVICTIONS: (1) B3 veto OVER-FIRES — 31.8k proposal skips
+  vs 4.6k proposals: channel-level consecutive-negative
+  counting conflates interleaved items (a -1 on item X then
+  item Y reads as repeated disapproval of the CHANNEL), and
+  neg_count stays >=2 after a fire so the next single negative
+  re-vetoes; the recall economy ran throttled, cutting the
+  press->w->pay->replay chain at its first link. AMENDED (B3'):
+  threshold 2 -> 3 consecutive, count resets when the veto
+  fires. (2) presses 23.3k in 4k steps (~5.8/step) — the
+  OPPOSITE of the ratified "sparse presses"; also starved the
+  prophet of no-press baselines (n_zero = 0, sep vacuous).
+  AMENDED: class probs .15/.10/.75, episode presses fire with
+  press_p = 0.25. (3) EXPOSURE FLOOR — a single-exposure item
+  fact does not enter the trunk at all (that is the STORE's
+  job by architecture; the trunk needs repetition +
+  consolidation volume). AMENDED: multi-ask curriculum — each
+  item re-asked asks=3 times at growing gaps, press per class
+  on each ask; spaced repetition with press-weighted replay
+  between asks is the ratified "teach it stuff casually...
+  till it learns" made operational. Readout and prediction
+  UNCHANGED (rewarded > unrewarded one-sided p < 0.05 in the
+  sleep arm, stronger than nosleep; negative <= unrewarded).
+  R2 = same two arms, 5000 steps, local, $0.
+
 ## Status
 
 **(2026-08-19, post-v9.4)** The substrate campaign is complete:

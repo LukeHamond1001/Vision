@@ -133,6 +133,8 @@ class Weaver:
                 else "none")
         self.pending.append({"name": name, "obj": obj, "col": col,
                              "plant": plant_pos, "cls": cls,
+                             "asks_left": (self.buttons or {}).get(
+                                 "asks", 1) if self.buttons else 1,
                              "due": plant_pos + GAP_TARGETS[bin_i]})
         h = self._human(words)
         a = self._agent(["noted", "."])
@@ -193,9 +195,12 @@ class Weaver:
         evs = [(2, "probe", {"answer": col, "plant": start})] if succeed else []
         a2 = self._agent(["it", "was", col if succeed else self.rng.choice(
             [c for c in COLORS if c != col]), "."], evs)
-        if self.buttons:               # A64: competence press
-            return [h, a, h2, a2, self._press(
-                1 if succeed else -self.buttons.get("neg_v", 1))]
+        if self.buttons:               # A64: competence press —
+            # sparse per R2 (press_p), silence otherwise
+            v = 1 if succeed else -self.buttons.get("neg_v", 1)
+            if self.rng.random() < self.buttons.get("press_p", 1.0):
+                return [h, a, h2, a2, self._press(v)]
+            return [h, a, h2, a2]
         if succeed:
             fb = self._human(["thanks", ".", "good", "job", "."],
                              [(0, "earned", {"ok": True})])
@@ -212,11 +217,14 @@ class Weaver:
     def turns(self):
         """Yield (tokens, events) for one exchange; advances self.n."""
         due = [f for f in self.pending if self.n >= f["due"]]
+        again = False
         if due:
             fact = due[0]
             self.pending.remove(fact)
-            # pair frees on ask — the roster can never exhaust
-            self.used.discard((fact["name"], fact["obj"]))
+            again = bool(self.buttons) and fact.get("asks_left", 1) > 1
+            if not again:
+                # pair frees on final ask — the roster never exhausts
+                self.used.discard((fact["name"], fact["obj"]))
             batch = self._ask(fact)
         else:
             r = self.rng.random()
@@ -239,4 +247,15 @@ class Weaver:
                     fixed.append((rel, kind, d))
             out.append((toks, fixed))
             self.n += len(toks)
+        if again:
+            # A64-R2: multi-ask curriculum — the item re-pends at a
+            # fresh gap ("teach it casually... till it learns");
+            # spaced re-asks give the trunk the repetition a single
+            # exposure structurally lacks (round-1 chance floor)
+            weights = self.bias_fn() if getattr(self, "bias_fn", None) \
+                else [4, 3, 2, 1]
+            bin_i = self.rng.choices(range(4), weights=weights)[0]
+            self.pending.append({**fact,
+                                 "asks_left": fact["asks_left"] - 1,
+                                 "due": self.n + GAP_TARGETS[bin_i]})
         return out
