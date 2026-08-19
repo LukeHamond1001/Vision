@@ -35,6 +35,12 @@ N_NEW = 8               # day-2 lesson: fewer items beat more
 ASK_DELAY = (3, 6)      # exchanges between teach and first ask
 SLEEP_EVERY = 16
 SLEEP_BLOCKS = 12
+# day-3 lesson (the superstition loop): pressing judged ANSWERS let
+# a stereotyped reply collect the only +2s, and sleep consolidated
+# the stereotype exclusively. "teach" mode presses the TEACHING
+# exchanges (the A66-proven contingency, diverse spans) and scores
+# answers silently; "answer" mode is the mature-pupil contingency.
+PRESS_ON = "teach"
 
 
 def chatter(rng):
@@ -117,10 +123,11 @@ def main():
     def ask(f, stage):
         r = say(f"what color of {f['obj']} was {f['name']} kept ?")
         verdict = judge(r, f)
-        if verdict == "correct":
-            s.press(2)
-        elif verdict == "wrong":
-            s.press(-1)
+        if PRESS_ON == "answer":
+            if verdict == "correct":
+                s.press(2)
+            elif verdict == "wrong":
+                s.press(-1)
         diary.append({"kind": "ask", "stage": stage,
                       "item": f"{f['name']}/{f['obj']}",
                       "want": f["col"], "reply": r,
@@ -150,6 +157,8 @@ def main():
                 say(f"remember . {p['f']['name']} kept a "
                     f"{p['f']['col']} {p['f']['obj']} in the "
                     f"{p['f']['room']} .")
+                if PRESS_ON == "teach":
+                    s.press(2)
                 pending.append({"f": p["f"], "round": p["round"] + 1,
                                 "at": exchanges
                                 + rng.randint(*ASK_DELAY)})
@@ -157,6 +166,8 @@ def main():
             f = queue.pop()
             say(f"by the way {f['name']} kept a {f['col']} "
                 f"{f['obj']} in the {f['room']} .")
+            if PRESS_ON == "teach":
+                s.press(2)
             pending.append({"f": f, "round": 1,
                             "at": exchanges + rng.randint(*ASK_DELAY)})
         else:
