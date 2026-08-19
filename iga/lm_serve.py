@@ -176,14 +176,14 @@ class ServeSession:
         if sl.arm == "C":
             # A68: correction pairs first — consumed presses leave
             # the CE-span economy entirely (no wide span, no void).
-            # Utterances stop at turn boundaries AND press tokens,
-            # so a press token is never a target.
-            marks = tuple(self.press_id.values())
+            # Targets are whole turns (model turn for the negative,
+            # human turn for the positive); press tokens bound every
+            # scan and are never targets.
             skip = sl.harvest_pairs(
                 self.drive, gap=pair_gap, ctx_w=pair_ctx,
-                u_cap=pair_ucap,
-                stop_wrong=(self.eot_h,) + marks,
-                stop_right=(self.eot_m,) + marks)
+                u_cap=pair_ucap, eot_h=self.eot_h,
+                eot_m=self.eot_m,
+                marks=tuple(self.press_id.values()))
         n = sl.harvest_presses(self.drive, span_w, void_w=void_w,
                                skip=skip)
         npairs = len(sl.pairs) if sl.arm == "C" else 0

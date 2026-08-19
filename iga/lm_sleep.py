@@ -234,35 +234,48 @@ class Sleeper:
         return len(self.spans)
 
     # ---------- ARM C: correction pairs (A68) ----------
-    def _utt(self, lane, t, stops, u_cap):
-        """[t0, t) — the utterance ending at press position t:
-        back to (exclusive) the latest stop token, capped at u_cap
-        tokens. Press position t holds the press token itself,
-        which is never a target."""
-        lo_lim = max(self.start, t - u_cap)
+    def _turn(self, lane, t, end_tok, open_toks, u_cap):
+        """[t0, t1) — the last turn ENDING with end_tok before press
+        position t (the A68-R2 fix: a press follows the model's ack,
+        so the token touching the press is the wrong scope; the
+        target is a whole TURN, parsed by boundaries). The turn ends
+        at the nearest end_tok within u_cap back of t and opens
+        after the nearest earlier boundary in open_toks (the other
+        side's eot and every press token — press marks are never
+        targets), length-capped at u_cap. Returns None if no end_tok
+        lies within reach."""
         buf = self.buffers[lane]
+        lo_lim = max(self.start, t - u_cap)
+        e = None
         for k in range(t - 1, lo_lim - 1, -1):
-            if buf[k - self.start] in stops:
-                return k + 1
-        return lo_lim
+            if buf[k - self.start] == end_tok:
+                e = k
+                break
+        if e is None:
+            return None
+        h = max(self.start, e - u_cap) - 1
+        for k in range(e - 1, max(self.start, e - u_cap) - 1, -1):
+            if buf[k - self.start] in open_toks:
+                h = k
+                break
+        t0, t1 = h + 1, e + 1
+        return (t0, t1) if t1 - t0 >= 2 else None
 
-    def harvest_pairs(self, drive, gap=192, ctx_w=128, u_cap=32,
-                      stop_wrong=(), stop_right=()):
+    def harvest_pairs(self, drive, gap=192, ctx_w=128, u_cap=48,
+                      eot_h=None, eot_m=None, marks=()):
         """A68 — mint correction pairs from the press ledger. A
         negative press at tw pairs with the NEXT positive press at
-        tr on the same lane within gap tokens: the utterance the
-        negative landed on is WRONG, the caregiver turn the positive
-        landed on is RIGHT. Target ranges are utterance-scoped at
-        harvest time via stop tokens (turn boundaries and press
-        tokens), so the rival's tokens are never targets outside
-        their own utterance — the A67-P8 stem-poisoning law is the
-        design constraint. Returns the set of consumed press
-        indices for harvest_presses(skip=...)."""
-        def as_set(s):
-            if s is None:
-                return set()
-            return {s} if isinstance(s, int) else set(s)
-        sw, sr = as_set(stop_wrong), as_set(stop_right)
+        tr on the same lane within gap tokens. Targets are whole
+        turns: the negative suppresses the last MODEL turn before
+        it (the wrong utterance, eot_m included), the positive
+        lifts the last HUMAN turn before it (the caregiver's
+        correction, eot_h included) — the model's "noted ." ack
+        between correction and press is never a target, and press
+        tokens bound every scan (A67-P8: the rival's tokens are
+        never targets outside their own utterance). Returns the
+        set of consumed press indices for
+        harvest_presses(skip=...)."""
+        marks = set(marks)
         self.pairs = []
         used = set()
         if self.buffers is None:
@@ -282,12 +295,15 @@ class Sleeper:
                     if not (self.start < tw <= self.end
                             and self.start < tr <= self.end):
                         break
-                    w0 = self._utt(p["lane"], tw, sw, u_cap)
-                    r0 = self._utt(q["lane"], tr, sr, u_cap)
-                    if tw - w0 >= 1 and tr - r0 >= 1:
+                    w = self._turn(p["lane"], tw, eot_m,
+                                   {eot_h} | marks, u_cap)
+                    r = self._turn(q["lane"], tr, eot_h,
+                                   {eot_m} | marks, u_cap)
+                    if w is not None and r is not None:
                         self.pairs.append(
                             {"lane": p["lane"], "tw": tw, "tr": tr,
-                             "w0": w0, "r0": r0,
+                             "w0": w[0], "w1": w[1],
+                             "r0": r[0], "r1": r[1],
                              "pay": float(abs(p["v"]) + q["v"]),
                              "ctx_w": ctx_w,
                              "iw": -(i + 1), "ir": -(j + 1)})
@@ -308,7 +324,7 @@ class Sleeper:
             self.pairs, weights=[p["pay"] for p in self.pairs])[0]
         device = next(model.parameters()).device
         sides = []
-        for t0, t1 in ((pr["w0"], pr["tw"]), (pr["r0"], pr["tr"])):
+        for t0, t1 in ((pr["w0"], pr["w1"]), (pr["r0"], pr["r1"])):
             lo = max(self.start, t0 - pr["ctx_w"])
             toks = self.buffers[pr["lane"]][lo - self.start:
                                             t1 - self.start]

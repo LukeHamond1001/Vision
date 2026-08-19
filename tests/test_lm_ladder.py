@@ -1642,26 +1642,30 @@ class TestArmCLaws(unittest.TestCase):
                             device="cpu", sleeper=sl, seed=0), sl
 
     def _pair_stream(self, s):
-        """A correction episode laid out by hand: context, a wrong
-        utterance closed by eot_h upstream, -1 on it; then the
-        caregiver's correction closed by eot_m upstream, +2 on it.
-        Returns (wrong_targets, right_targets) absolute ranges."""
+        """A correction episode in the REAL room layout (the A68-R2
+        bug's shape): question eot_h, WRONG model turn eot_m, -1;
+        then the caregiver's correction eot_h, the model's "noted"
+        ack eot_m, +2. The ack sits between correction and press —
+        turn parsing must step over it. Returns the expected
+        (wrong_turn, right_turn) absolute target ranges."""
         import torch as t
         t.manual_seed(11)
         s._append(t.randint(3, 60, (91,)).tolist())   # [0, 91)
         s._append([self.EOT_H])                       # 91
         s._append([7] * 8)                            # wrong: [92,100)
-        s.drive.step_t = 100
+        s._append([self.EOT_M])                       # 100
+        s.drive.step_t = 101
         s.drive.button(0, -1)
-        s._append([62])                               # <-1> at 100
-        s._append(t.randint(3, 60, (20,)).tolist())   # filler
-        s._append([self.EOT_M])                       # 121
-        s._append([9] * 8)                            # right: [122,130)
-        s.drive.step_t = 130
+        s._append([62])                               # <-1> at 101
+        s._append([9] * 8)                            # right: [102,110)
+        s._append([self.EOT_H])                       # 110
+        s._append([11] * 3)                           # ack: [111,114)
+        s._append([self.EOT_M])                       # 114
+        s.drive.step_t = 115
         s.drive.button(0, 2)
-        s._append([61])                               # <+2> at 130
+        s._append([61])                               # <+2> at 115
         s._flush()
-        return (92, 100), (122, 130)
+        return (92, 101), (102, 111)
 
     def test_C1_no_negatives_bit_identical_to_arm_A(self):
         import torch as t
@@ -1688,12 +1692,12 @@ class TestArmCLaws(unittest.TestCase):
         (w0, w1), (r0, r1) = self._pair_stream(s)
         used = sl.harvest_pairs(
             s.drive, gap=192, ctx_w=16, u_cap=32,
-            stop_wrong=(self.EOT_H, 60, 61, 62, 63),
-            stop_right=(self.EOT_M, 60, 61, 62, 63))
+            eot_h=self.EOT_H, eot_m=self.EOT_M,
+            marks=(60, 61, 62, 63))
         self.assertEqual(len(sl.pairs), 1)
         pr = sl.pairs[0]
-        self.assertEqual((pr["w0"], pr["tw"]), (w0, w1))
-        self.assertEqual((pr["r0"], pr["tr"]), (r0, r1))
+        self.assertEqual((pr["w0"], pr["w1"]), (w0, w1))
+        self.assertEqual((pr["r0"], pr["r1"]), (r0, r1))
         self.assertEqual(used, {0, 1})
         self.assertEqual(pr["pay"], 3.0)   # |-1| + 2
         # gap law: a lone negative with no positive in reach
@@ -1701,7 +1705,8 @@ class TestArmCLaws(unittest.TestCase):
         s.drive.button(0, -1)
         used2 = sl.harvest_pairs(
             s.drive, gap=192, ctx_w=16, u_cap=32,
-            stop_wrong=self.EOT_H, stop_right=self.EOT_M)
+            eot_h=self.EOT_H, eot_m=self.EOT_M,
+            marks=(60, 61, 62, 63))
         self.assertEqual(len(sl.pairs), 1)      # still just the one
         self.assertNotIn(2, used2)
 
@@ -1712,8 +1717,9 @@ class TestArmCLaws(unittest.TestCase):
         s.drive.presses.insert(
             0, {"lane": 0, "t": 60, "v": 2})
         used = sl.harvest_pairs(s.drive, gap=192, ctx_w=16,
-                                u_cap=32, stop_wrong=self.EOT_H,
-                                stop_right=self.EOT_M)
+                                u_cap=32, eot_h=self.EOT_H,
+                                eot_m=self.EOT_M,
+                                marks=(60, 61, 62, 63))
         self.assertEqual(used, {1, 2})   # indices after the insert
         n_skip = sl.harvest_presses(s.drive, span_w=64, void_w=64,
                                     skip=used)
@@ -1724,14 +1730,15 @@ class TestArmCLaws(unittest.TestCase):
         # paired +2 mints a wide span — both wrong under ARM C
         n_raw = sl.harvest_presses(s.drive, span_w=64, void_w=64)
         self.assertEqual(n_raw, 1)
-        self.assertEqual(sl.spans[0]["t1"], 131)   # the paired +2
+        self.assertEqual(sl.spans[0]["t1"], 116)   # the paired +2
 
     def test_C4_direction_wrong_falls_right_rises(self):
         import torch as t
         s, sl = self._session("C")
         (w0, w1), (r0, r1) = self._pair_stream(s)
         sl.harvest_pairs(s.drive, gap=192, ctx_w=16, u_cap=32,
-                         stop_wrong=self.EOT_H, stop_right=self.EOT_M)
+                         eot_h=self.EOT_H, eot_m=self.EOT_M,
+                         marks=(60, 61, 62, 63))
         self.assertEqual(len(sl.pairs), 1)
 
         def mean_lp(t0, t1, ctx_w=16):
@@ -1762,14 +1769,15 @@ class TestArmCLaws(unittest.TestCase):
                         "suppressed utterance did not fall")
         self.assertGreater(after_r, before_r,
                            "corrected utterance did not rise")
-        self.assertEqual(rows[0]["targets"], (8, 8))
+        self.assertEqual(rows[0]["targets"], (9, 9))
 
     def test_C5_margin_mastery_floor(self):
         import torch as t
         s, sl = self._session("C")
         self._pair_stream(s)
         sl.harvest_pairs(s.drive, gap=192, ctx_w=16, u_cap=32,
-                         stop_wrong=self.EOT_H, stop_right=self.EOT_M)
+                         eot_h=self.EOT_H, eot_m=self.EOT_M,
+                         marks=(60, 61, 62, 63))
         sl.min_step_loss = 1e9
         pre = {k: p.clone() for k, p in s.m.named_parameters()}
         opt = t.optim.AdamW(s.m.parameters(), lr=1e-2)
