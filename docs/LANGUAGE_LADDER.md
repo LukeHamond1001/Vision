@@ -3391,6 +3391,36 @@ scale, not blocking this one. Target cost: $15–40 total.
   replay-injection joins the pad-flush and noise-KL wounds: all
   three hurt the life through plumbing, none through learning.
 
+- **A67-P4 DAYS 4-5 — THE ECONOMY MATURES: from winner-take-all
+  to whole-biography spaced repetition** (2026-08-19; hand-
+  raised, live room; $0). DAY 4 (consolidation, no new fact):
+  lamp two +2s -> 0.0007->0.0061 (8.7x); drum ONE +1 ->
+  0.0085->0.1452 (17x on its third spaced touch — smallest
+  press of the day, biggest move of the life); coin rested and
+  held (.9493). TWO facts moved through one sleep. DAY 5 (new
+  fact, finn's black jar +2/+2; lamp +1; drum ZERO presses):
+  jar seeded .0015 without monopolizing; drum .1452->.2151
+  (1.48x on NO same-day touch — its old paid spans keep earning
+  every night); lamp .0061->.0086; coin held .9429. VERDICT:
+  the one-fact-per-sleep "capacity law" was a THIN-POOL
+  ARTIFACT of the early economy; at ~20 live spans, sleep is
+  pay-weighted spaced repetition over the whole biography —
+  the designed behavior, now observed. Speech: day-5 greeting
+  escaped the candle ritual for the first time (template is
+  question-triggered now, not a general opener); day-4 hit an
+  <eot_human> boundary break at exchange 8 (closed on the law;
+  presses reach backward only, so the break never entered a
+  paid span). TWO SMALL INCIDENTS, TWO LAWS: (a) a `cd` left
+  the shell in data/life and a RELATIVE script path crashed the
+  day-5 launch before the life was ever opened (harmless; use
+  absolute paths in room launches, always); (b) the caregiver's
+  readiness poll matched the PREVIOUS session's "0|ready" in
+  the un-truncated outbox — a second face of the stale-mailbox
+  hazard: the caregiver now pre-truncates the outbox in the
+  same command that launches the room, so a stale ready line
+  cannot exist. Life: 1,483 tokens, 20 presses, 20 live spans,
+  three-deep backup rotation.
+
 ## Status
 
 **(2026-08-19, post-v9.4)** The substrate campaign is complete:
