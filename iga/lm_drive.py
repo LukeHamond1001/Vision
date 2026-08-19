@@ -131,7 +131,7 @@ class Drive:
         old = self.ema.get(key, v)
         self.ema[key] = (1 - EMA) * old + EMA * v
 
-    def button(self, lane, v):
+    def button(self, lane, v, at=None):
         """A64: the graded-press primary reinforcer. labels select,
         the world pays — a press NEVER pays or injects gradient.
         +v mints the channel it followed and sets w=v on the holds
@@ -141,10 +141,17 @@ class Drive:
         holds void to w=0 (settle at exactly zero) and two
         consecutive negatives veto the channel for one band-horizon;
         a positive press resets the count. A press with no preceding
-        probe on the lane is an economic no-op, ledgered."""
+        probe on the lane is an economic no-op, ledgered.
+        at (A69): exact token position for the press RECORD only —
+        the trainer dispatches events before advancing step_t, so
+        chunk-relative presses would all stamp the chunk start and
+        break arm C's turn-scoped pair targets. Every economic
+        effect (mint/void/veto) still runs on step_t; at=None is
+        bit-exact prior behavior."""
         key = self.last_key[lane]
         self.presses.append({"lane": lane, "v": int(v),
-                             "t": self.step_t, "key": key})
+                             "t": self.step_t if at is None else int(at),
+                             "key": key})
         if key is None:
             return
         if v > 0:

@@ -123,6 +123,10 @@ class Sleeper:
         assert arm in ("A", "B", "C")
         self.arm = arm
         self.pairs = []          # ARM C working set (rebuilt each harvest)
+        # A69: training-loop arm C — boundary ids for turn-scoped pair
+        # targets ({"eot_h", "eot_m", "marks"}); None degrades arm C
+        # to arm A in maybe_sleep (serve passes ids per-call instead).
+        self.pair_tokens = None
         self.every = every
         self.block_chunks = block_chunks
         # A65: no disagreement, no update — a chunk whose loss sits
@@ -325,7 +329,10 @@ class Sleeper:
         device = next(model.parameters()).device
         sides = []
         for t0, t1 in ((pr["w0"], pr["w1"]), (pr["r0"], pr["r1"])):
-            lo = max(self.start, t0 - pr["ctx_w"])
+            # window never exceeds the observed chunk width (a debug
+            # model's max_T) — context yields before targets do
+            lo = max(self.start, t0 - pr["ctx_w"],
+                     t1 - (self.T or (t1 - self.start)))
             toks = self.buffers[pr["lane"]][lo - self.start:
                                             t1 - self.start]
             a = max(0, t0 - lo - 1)
@@ -399,6 +406,21 @@ class Sleeper:
                 or self.buffers is None:
             return None
         self.harvest(drive)
+        if self.arm == "C" and self.pair_tokens:
+            # A69: correction pairs ride the training night too. The
+            # ledger spans stay untouched (wake CE already trains on
+            # every token; the pair adds the contrastive signal CE
+            # cannot express). Arms A/B never reach this branch and
+            # draw no extra RNG — L2 parity holds.
+            pt = self.pair_tokens
+            self.harvest_pairs(drive, eot_h=pt["eot_h"],
+                               eot_m=pt["eot_m"],
+                               marks=pt.get("marks", ()))
+            if self.pairs:
+                wp = sum(p["pay"] for p in self.pairs)
+                ws = sum(s["pay"] for s in self.spans)
+                if not ws or self.rng.random() < wp / (wp + ws):
+                    return self._pair_block(model, opt, step)
         if not self.spans:
             return None
         return self._block(model, opt, step)

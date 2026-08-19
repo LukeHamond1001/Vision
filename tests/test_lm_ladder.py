@@ -1803,5 +1803,81 @@ class TestArmCLaws(unittest.TestCase):
             self.assertGreater(r["pay"], 0)
 
 
+class TestLifeLaws(unittest.TestCase):
+    """A69 — biography mode. B1 life=None is structurally inert
+    (existing suite is the parity proof); B2 days open and close in
+    lexicon words and cross=False never carries a fact across a
+    boundary; B3 correction episodes emit the exact ARM C pair
+    grammar; B4 pairs form and harvest through the real training
+    stack with true token positions."""
+
+    def _weaver(self, life, buttons=None, seed=5):
+        import random as r
+        from iga.lm_gen import Weaver
+        return Weaver(r.Random(seed), buttons=buttons, life=life)
+
+    def _run(self, w, n_turns):
+        toks, probes = [], []
+        for _ in range(n_turns):
+            for t, evs in w.turns():
+                toks += t
+                probes += [d for _, k, d in evs if k == "probe"]
+        return toks, probes
+
+    def test_B2_days_turn_over_and_control_never_crosses(self):
+        w = self._weaver({"sess": (4, 6), "cross": False})
+        toks, probes = self._run(w, 400)
+        s = " ".join(toks)
+        self.assertIn("that day was done . <eot_human>", s)
+        self.assertIn("one morning later . <eot_human>", s)
+        self.assertGreater(w.session_i, 10)
+        for d in probes:      # short bins + scheduling overshoot only
+            self.assertLessEqual(d["gap"], 1000)
+        # biography arm: the long bin exists and fires
+        wb = self._weaver({"sess": (4, 6), "cross": True,
+                           "long_gap": 1500, "long_w": 8})
+        _, probes_b = self._run(wb, 600)
+        self.assertTrue(any(d["gap"] >= 1400 for d in probes_b),
+                        "no cross-session ask ever came due")
+
+    def test_B3_correction_pair_grammar(self):
+        w = self._weaver({"sess": (30, 40), "cross": True,
+                          "long_gap": 400, "correct_rate": 0.0},
+                         buttons={"pos": .5, "neg": .0,
+                                  "pos_v": 2, "neg_v": 1})
+        toks, _ = self._run(w, 400)
+        self.assertIn("<-1>", toks)
+        i = toks.index("<-1>")
+        tail = toks[i:i + 16]
+        self.assertEqual(tail[1], "<eot_human>")   # press is a turn
+        self.assertEqual(tail[2:5], ["not", "right", "."])
+        self.assertIn("<+2>", tail)                # the pair closes
+        j = i + tail.index("<+2>")
+        self.assertEqual(toks[j - 1], "<eot_human>")
+
+    def test_B4_pairs_form_through_training(self):
+        from iga.lm_sleep import Sleeper
+        sl = Sleeper(arm="C", every=4, block_chunks=1, seed=0)
+        model, drive, vocab, _, _ = train(
+            d=32, lanes=2, T=64, steps=24, device="cpu",
+            arch="hybrid", store="matrix", keyed="logit",
+            norm_mix=True, aux_trunk=0.2, log_every=100,
+            sleep=sl,
+            buttons={"pos": .6, "neg": .0, "pos_v": 2, "neg_v": 1},
+            life={"sess": (6, 10), "cross": True, "long_gap": 400,
+                  "correct_rate": 0.0})
+        self.assertIsNotNone(sl.pair_tokens)
+        used = sl.harvest_pairs(drive, eot_h=sl.pair_tokens["eot_h"],
+                                eot_m=sl.pair_tokens["eot_m"],
+                                marks=sl.pair_tokens["marks"])
+        self.assertGreaterEqual(len(sl.pairs), 1)
+        self.assertTrue(sl.audit()["only_paid"])
+        # true token positions: every pair's wrong turn must END
+        # right where its press sits (the answer's eot_m at tw-1,
+        # targets exclusive-end tw), not at a chunk boundary
+        for pr in sl.pairs:
+            self.assertEqual(pr["w1"], pr["tw"])
+
+
 if __name__ == "__main__":
     unittest.main()

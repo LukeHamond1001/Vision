@@ -3607,6 +3607,43 @@ scale, not blocking this one. Target cost: $15–40 total.
   asymmetric beta: lift right harder than wrong suppresses).
   Life: 2,535 tokens, 39 presses, 33 spans + 3 pairs.
 
+- **A69 BIOGRAPHY PRETRAINING, PHASE A CORE — the flash gets a
+  life-shape** (2026-08-19; user direction: "pretend each
+  conversation came after the other... pretraining like human
+  brain being flashed with whole life"; laws green 79/79). THE
+  V10 THESIS: the bands ran throughout v9.4 pretraining but the
+  corpus at 16k/131k-token horizons was shuffled-adjacency noise
+  — used but untaught; and a hand-raised life at ~180 tok/day
+  can never tick band 5. Fix the CONTENT of the flash, not the
+  mechanism. BUILT: (1) Weaver life mode — the stream becomes
+  one biography: sessions ("days") opened/closed with in-lexicon
+  rituals ("one morning later ." / "that day was done ."), facts
+  RECURRING across days via a 5th band-5-reach gap bin
+  (long_gap, default 100k), correction episodes in the exact
+  ARM C pair grammar (wrong turn -> <-v> -> "not right . the OBJ
+  was COL ." -> <+v> — negation without naming the rival, per
+  A67-P8), pend-cap config; life=None structurally inert. (2)
+  The ablation CONTROL (cross=False): same day structure, same
+  ask density (within-session bins only), pending flushed at day
+  close — recurrence across boundaries is the ONLY difference.
+  (3) ARM C in the training loop: maybe_sleep harvests pairs
+  (pair_tokens ids set by train()) and lotteries pair blocks vs
+  ledger-span blocks by pay; arms A/B draw no extra RNG (L2
+  parity intact); ledger spans intentionally keep replaying
+  (wake CE trains on all tokens anyway — the pair adds what CE
+  cannot express). (4) Drive.button(at=) — presses now stamp
+  their TRUE token position (trainer dispatches events before
+  step_t advances; chunk-start stamps would have broken turn
+  scoping); economic effects unchanged, at=None bit-exact. (5)
+  Pair windows clamp to observed chunk width (debug models).
+  LAWS: TestLifeLaws B2 (days turn over; control never carries
+  a fact across a boundary), B3 (correction grammar exact), B4
+  (pairs form through the real training stack with true
+  positions + only-paid audit). NEXT (A3/A4): gap-binned recall
+  instrument, the bio-vs-control debug ablation, and the 500M
+  probe/heartbeat pack — run protocol per user: heavy probes,
+  live heartbeat watch, kill-on-disease, fix, relaunch.
+
 ## Status
 
 **(2026-08-19, post-v9.4)** The substrate campaign is complete:

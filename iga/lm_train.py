@@ -167,7 +167,9 @@ def process_chunk(model, drive, conveyor, T, device, opt=None,
             elif kind == "earned":
                 drive.earned(lane, d["ok"])
             elif kind == "button":
-                drive.button(lane, d["v"])   # A64 primary reinforcer
+                # A64 primary reinforcer; at= stamps the press's true
+                # token position (step_t is still chunk-start here)
+                drive.button(lane, d["v"], at=drive.step_t + p)
     drive.step_t += T
     drive.sweep(losses)
     loss = torch.stack([(l if l.dim() == 0 else l.mean()).float()
@@ -245,7 +247,8 @@ def train(d=64, lanes=4, T=256, steps=40, seed=0, device="cpu",
           read_drop_end=None, gate_mode="scalar", lr=3e-4,
           bf16=False, lam=0.25, keyed=None, lr_decay="none",
           lr_total_steps=None, norm_mix=False, aux_trunk=0.0,
-          hold_cap=None, sleep=None, buttons=None, prophet=None):
+          hold_cap=None, sleep=None, buttons=None, prophet=None,
+          life=None):
     """resume (A26): path to a checkpoint — model + optimizer + drive
     EMAs/records/minted/vetoes continue; step numbering continues.
     sleep (A62): a lm_sleep.Sleeper — wake/sleep alternation; the
@@ -279,9 +282,23 @@ def train(d=64, lanes=4, T=256, steps=40, seed=0, device="cpu",
         vocab = Vocab()
         vocab_size = len(vocab)
         conveyor = Conveyor(vocab, n_lanes=lanes, seed=splits(seed)["train"],
-                            bias_fn=drive.bin_weights, buttons=buttons)
+                            bias_fn=drive.bin_weights, buttons=buttons,
+                            life=life)
     if sleep is not None:
         conveyor = sleep.tap(conveyor)   # A62: record wake tokens
+        if sleep.arm == "C":
+            # A69: arm C in the training loop needs the boundary ids
+            # to turn-scope pair targets; a tokenizer without press
+            # tokens degrades arm C to arm A (pair_tokens stays None).
+            tid = (vocab.token_to_id if hasattr(vocab, "token_to_id")
+                   else lambda s: vocab.idx.get(s))
+            ids = {"eot_h": tid("<eot_human>"),
+                   "eot_m": tid("<eot_model>"),
+                   "marks": tuple(tid(s) for s in
+                                  ("<+1>", "<+2>", "<-1>", "<-2>"))}
+            if ids["eot_h"] is not None and ids["eot_m"] is not None \
+                    and all(m is not None for m in ids["marks"]):
+                sleep.pair_tokens = ids
     if arch == "transformer":
         from .lm_transformer import TransformerLM
         model = TransformerLM(vocab_size, d=d, max_T=T).to(device)

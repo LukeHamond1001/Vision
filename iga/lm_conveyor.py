@@ -35,9 +35,10 @@ class Vocab:
 
 
 class Lane:
-    def __init__(self, vocab, rng, bias_fn=None, buttons=None):
+    def __init__(self, vocab, rng, bias_fn=None, buttons=None,
+                 life=None):
         self.vocab = vocab
-        self.weaver = lm_gen.Weaver(rng, buttons=buttons)
+        self.weaver = lm_gen.Weaver(rng, buttons=buttons, life=life)
         if bias_fn is not None:
             self.weaver.bias_fn = bias_fn
         self.buf = []
@@ -69,11 +70,11 @@ class Lane:
 
 class Conveyor:
     def __init__(self, vocab, n_lanes=4, seed=0, bias_fn=None,
-                 buttons=None):
+                 buttons=None, life=None):
         self.vocab = vocab
         base = random.Random(seed)
         self.lanes = [Lane(vocab, random.Random(base.randrange(2**31)),
-                           bias_fn, buttons=buttons)
+                           bias_fn, buttons=buttons, life=life)
                       for _ in range(n_lanes)]
         for i, lane in enumerate(self.lanes):
             lane.weaver.lane_id = i   # A64: item provenance for audits

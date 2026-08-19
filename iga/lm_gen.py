@@ -71,7 +71,7 @@ class Weaver:
     """Stateful endless-dialogue generator for one lane."""
 
     def __init__(self, rng, correct_rate=1.0, success_rate=1.0,
-                 buttons=None):
+                 buttons=None, life=None):
         # A7: v0 data is all-good — every depicted answer correct, every
         # task succeeds, every exchange thanked. The failure branches
         # below stay in code (rates < 1.0) for real-data rounds, where
@@ -84,14 +84,31 @@ class Weaver:
         # emitted in this mode — the press IS the primary. Items land
         # in item_log (and buttons["log"] when provided) for the
         # store-wiped retention readout.
+        # A69 life (biography mode): the stream becomes ONE LIFE — a
+        # sequence of sessions ("days") with in-lexicon open/close
+        # rituals, facts that RECUR across sessions at band-timescale
+        # gaps, and (with buttons) correction episodes in the exact
+        # ARM C pair grammar: wrong answer -> <-v> -> "not right . the
+        # OBJ was COL ." -> <+v>. Keys: sess=(lo,hi) exchanges/day,
+        # cross=True (facts recur across days; False = pending flushed
+        # at day close — the ablation control), long_gap (5th gap bin,
+        # band-5 reach), long_w (its plant weight), pend_cap,
+        # correct_rate (override). life=None touches nothing.
         self.rng = rng
         self.correct_rate = correct_rate
         self.success_rate = success_rate
         self.buttons = buttons
+        self.life = life
         self.item_log = []
         self.n = 0                    # tokens emitted so far (lane-local)
         self.pending = []             # facts planted, not yet asked
         self.used = set()
+        self.session_i = 0
+        self.sess_left = None
+        if life:
+            if "correct_rate" in life:
+                self.correct_rate = life["correct_rate"]
+            self.sess_left = rng.randint(*life.get("sess", (20, 60)))
 
     def _human(self, words, events=None):
         toks = words + ["<eot_human>"]
@@ -110,21 +127,51 @@ class Weaver:
         tok = f"<{'+' if v > 0 else '-'}{abs(v)}>"
         return self._human([tok], [(0, "button", {"v": int(v)})])
 
+    def _bins(self):
+        """Gap-bin targets and weights. life+cross adds the 5th
+        band-5-reach bin the drive's 4-bin bias never sees; the
+        ablation control (cross=False) keeps only within-session
+        bins so it matches the biography arm's ASK DENSITY while
+        never carrying a fact across a day boundary."""
+        w = list(self.bias_fn() if getattr(self, "bias_fn", None)
+                 else [4, 3, 2, 1])
+        t = list(GAP_TARGETS)
+        if self.life:
+            if self.life.get("cross", True):
+                t.append(self.life.get("long_gap", 100_000))
+                w.append(self.life.get("long_w", 2))
+            else:
+                t, w = t[:2], w[:2]
+        return t, w
+
+    def _day_close(self):
+        h = self._human(["that", "day", "was", "done", "."])
+        a = self._agent(["noted", "."])
+        return [h, a]
+
+    def _day_open(self):
+        h = self._human(["one", "morning", "later", "."])
+        a = self._agent(["good", "morning", "."])
+        return [h, a]
+
     def _plant(self):
+        cap = (self.life or {}).get("pend_cap", 12)
         for _ in range(200):  # bounded; roster self-frees on ask
             name, obj = self.rng.choice(NAMES), self.rng.choice(OBJECTS)
             if (name, obj) not in self.used:
                 break
         else:
             return self._chatter()
+        if len(self.pending) >= cap:
+            return self._chatter()
         self.used.add((name, obj))
         col = self.rng.choice(COLORS)
         words = ["by", "the", "way", name, "kept", "a", col, obj, "in",
                  "the", self.rng.choice(ROOMS), "."]
         plant_pos = self.n + 6        # the color token
-        weights = self.bias_fn() if getattr(self, "bias_fn", None) \
-            else [4, 3, 2, 1]         # scheduler: the drive shapes the belt
-        bin_i = self.rng.choices(range(4), weights=weights)[0]
+        targets, weights = self._bins()
+        bin_i = self.rng.choices(range(len(targets)),
+                                 weights=weights)[0]
         cls = None
         if self.buttons:              # A64: class assigned at plant time
             r = self.rng.random()
@@ -135,7 +182,7 @@ class Weaver:
                              "plant": plant_pos, "cls": cls,
                              "asks_left": (self.buttons or {}).get(
                                  "asks", 1) if self.buttons else 1,
-                             "due": plant_pos + GAP_TARGETS[bin_i]})
+                             "due": plant_pos + targets[bin_i]})
         h = self._human(words)
         a = self._agent(["noted", "."])
         return [h, a]
@@ -166,6 +213,19 @@ class Weaver:
             self.item_log.append(item)
             if isinstance(self.buttons.get("log"), list):
                 self.buttons["log"].append(item)
+            if not correct and self.life:
+                # A69: the correction episode — the exact ARM C pair
+                # grammar (wrong model turn, <-v>, caregiver's
+                # correction turn, <+v>). "not right" negates WITHOUT
+                # naming the rival (A67-P8 stem-poisoning law); the
+                # true fact is restated in full.
+                corr = self._human(["not", "right", ".", "the",
+                                    fact["obj"], "was", fact["col"],
+                                    "."])
+                return [h, a,
+                        self._press(-self.buttons.get("neg_v", 1)),
+                        corr,
+                        self._press(self.buttons.get("pos_v", 2))]
             if not correct or fact["cls"] == "neg":
                 return [h, a, self._press(-self.buttons.get("neg_v", 1))]
             if fact["cls"] == "pos":
@@ -216,24 +276,43 @@ class Weaver:
 
     def turns(self):
         """Yield (tokens, events) for one exchange; advances self.n."""
-        due = [f for f in self.pending if self.n >= f["due"]]
         again = False
-        if due:
-            fact = due[0]
-            self.pending.remove(fact)
-            again = bool(self.buttons) and fact.get("asks_left", 1) > 1
-            if not again:
-                # pair frees on final ask — the roster never exhausts
-                self.used.discard((fact["name"], fact["obj"]))
-            batch = self._ask(fact)
+        if self.life and self.sess_left is not None \
+                and self.sess_left <= 0:
+            # A69: the day turns over — close ritual, open ritual.
+            # In the ablation control (cross=False) pending facts die
+            # with the day: nothing is ever asked across a boundary.
+            batch = self._day_close() + self._day_open()
+            self.session_i += 1
+            self.sess_left = self.rng.randint(
+                *self.life.get("sess", (20, 60)))
+            if not self.life.get("cross", True):
+                for f in self.pending:
+                    self.used.discard((f["name"], f["obj"]))
+                self.pending = []
         else:
-            r = self.rng.random()
-            if r < 0.25 and len(self.pending) < 12:
-                batch = self._plant()
-            elif r < 0.35:
-                batch = self._episode()
+            if self.life and self.sess_left is not None:
+                self.sess_left -= 1
+            due = [f for f in self.pending if self.n >= f["due"]]
+            if due:
+                fact = due[0]
+                self.pending.remove(fact)
+                again = bool(self.buttons) \
+                    and fact.get("asks_left", 1) > 1
+                if not again:
+                    # pair frees on final ask — the roster never
+                    # exhausts
+                    self.used.discard((fact["name"], fact["obj"]))
+                batch = self._ask(fact)
             else:
-                batch = self._chatter()
+                r = self.rng.random()
+                if r < 0.25 and len(self.pending) < \
+                        (self.life or {}).get("pend_cap", 12):
+                    batch = self._plant()
+                elif r < 0.35:
+                    batch = self._episode()
+                else:
+                    batch = self._chatter()
         out = []
         for toks, evs in batch:
             fixed = []
@@ -252,10 +331,10 @@ class Weaver:
             # fresh gap ("teach it casually... till it learns");
             # spaced re-asks give the trunk the repetition a single
             # exposure structurally lacks (round-1 chance floor)
-            weights = self.bias_fn() if getattr(self, "bias_fn", None) \
-                else [4, 3, 2, 1]
-            bin_i = self.rng.choices(range(4), weights=weights)[0]
+            targets, weights = self._bins()
+            bin_i = self.rng.choices(range(len(targets)),
+                                     weights=weights)[0]
             self.pending.append({**fact,
                                  "asks_left": fact["asks_left"] - 1,
-                                 "due": self.n + GAP_TARGETS[bin_i]})
+                                 "due": self.n + targets[bin_i]})
         return out
