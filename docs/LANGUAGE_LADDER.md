@@ -3441,6 +3441,30 @@ scale, not blocking this one. Target cost: $15–40 total.
   dominance, day-7 speech may mint a violet-drum template
   (the candle-golden story again, but of a TRUE belief).
 
+- **A67-P6 DAY 7 — THE INCUMBENT: the "template" is the life's
+  strongest belief, and speech is a competition it is winning**
+  (2026-08-19; seedling-rescue day). Rescues confirmed the
+  regime law in reverse: one wake touch each and lamp
+  .0028->.0098, jar .0009->.0039 — erosion reverses on contact.
+  Drum grew .3542->.4311 unaided. THE DISCOVERY: probing the
+  template's own stem — p(golden | "the candle was") = 0.9620,
+  as strong as nedra's coin. The candle-golden ritual is not a
+  decoupled motor habit; it is a FALSE BELIEF planted at ~0.96
+  by the infancy superstition era, and the mouth speaks the
+  strongest belief. This re-frames knowing-saying dissociation:
+  new true facts have not captured speech because none has yet
+  EXCEEDED the incumbent (drum .43 < candle-golden .96). And
+  since negative presses VOID spans rather than unlearn weights
+  (by design — settle-to-zero, no negative-CE), the
+  architecture admits exactly one road to honest speech:
+  COMPETITION. Falsifiable prediction banked: drum compounds
+  1.2-1.65x/night; when it passes ~.96, speech flips to "the
+  drum was violet ." Also: the morning ritual RETURNED after
+  the nap day — pure sleep re-strengthens old habits along with
+  old facts; and arlen's TRUE blue-candle fact (.0009) competes
+  on the incumbent's own stem — likely unrescuable until the
+  incumbent falls. Life: 1,645 tokens, 23 presses, 23 spans.
+
 ## Status
 
 **(2026-08-19, post-v9.4)** The substrate campaign is complete:
