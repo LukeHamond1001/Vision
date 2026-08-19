@@ -3,3 +3,4 @@
 13:11:05 smoke pass: 69128 tok/s - starting 30k application
 13:26:08 beat: step 270500  ce 1.646  loss 2.018  holds 54690  64,407 tok/s | sleep blocks 567
 13:41:11 beat: step 275300  ce 1.581  loss 1.939  holds 112740  64,722 tok/s | sleep blocks 1157
+13:43:44 rolling snapshot pushed (step 275300)
