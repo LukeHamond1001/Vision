@@ -1,12 +1,13 @@
 #!/usr/bin/env bash
-# A61 v9.4 endgame autopsy, v4: visibility build. v3 ran healthy
-# but mute-by-design — heartbeats only at per-checkpoint completion,
-# and a CPU-only battery (autopsy_v9.py has no device code) takes
-# 150+ min/ckpt. v4 adds a PROGRESS BEAT: every 5 min the partial
-# output file (modes print flush=True as they finish) is pushed, so
-# progress is line-visible while the battery runs. Own lightweight
-# branch (results-v94-autopsy2); volume data-only; pathspec-split
-# adds (A61 ops law).
+# A61 v9.4 endgame autopsy, v5: THE RIGHT SHARD. v1-v4 passed
+# --shard mix_v9 (the TRAINING shard, 0 nat probes by design) — the
+# TM-v9-clean subset, completion channel, and every pinned baseline
+# row (r5 CE 2.6570, 461/202/836, hash fc639269079e) live on
+# mix_r1_eval, the HELD-OUT shard (mine_ids=True, EVAL only). The
+# "empty subset / damaged events" scare was this wrong flag; the
+# volume was never corrupted. v4's keepers: 5-min progress beats,
+# lightweight results-v94-autopsy2 branch, pathspec-split adds,
+# volume data-only.
 set -uo pipefail
 PUSH="https://x-access-token:${GIT_TOKEN}@github.com/LukeHamond1001/iga-scale.git"
 cd /tmp/boot
@@ -35,7 +36,7 @@ BEATPID=$!
 for CK in v94.pt.best.pt v94.pt; do
   if [ ! -f "$WD/$CK" ]; then hb "MISSING $WD/$CK"; continue; fi
   python scripts/autopsy_v9.py --ckpt "$WD/$CK" \
-    --shard /workspace/rmix/mix_v9 \
+    --shard /workspace/rmix/mix_r1_eval \
     --d 512 --max-T 2048 --serve-T 2048 --norm-mix --aux-trunk 0.2 \
     --label "$CK" > "autopsy_v94_${CK%.pt}.txt" 2>&1
   hb "autopsy complete: $CK (rc=$?)"
