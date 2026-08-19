@@ -1,0 +1,2 @@
+    sleep@4 armB lane0 [279,408) of span[64,448] pay 0.400  chunks 2  loss 0.0002
+SLEEP SMOKE PASS {'step': 4, 'arm': 'B', 'lane': 0, 'span': (64, 448), 'window': (279, 408), 'pay': 0.4, 'chunks': 2, 'loss': 0.0002}
