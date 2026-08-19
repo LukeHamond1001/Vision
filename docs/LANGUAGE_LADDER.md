@@ -3465,6 +3465,43 @@ scale, not blocking this one. Target cost: $15–40 total.
   on the incumbent's own stem — likely unrescuable until the
   incumbent falls. Life: 1,645 tokens, 23 presses, 23 spans.
 
+- **A67-P7 THE RACE (days 8-11) — nap compounding self-limits;
+  counter-evidence moves what naps cannot** (2026-08-19). Race
+  protocol: nap nights (sleep-only) to let the drum's replay
+  compounding chase the incumbent. NIGHT RESULTS (in-context):
+  .4311 -> .5576 -> [.5061 confounded] -> .5111 — the compounding
+  BENT: 1.65x -> 1.29x -> ~1.01x. VERDICT: replay is self-
+  limiting near span mastery (losses fall under the 1e-4 floor
+  and stop stepping) — sleep can polish what was paid, never
+  push a belief past its spans' ceiling. The nap-flip prediction
+  of A67-P6 is FALSIFIED as stated. INSTRUMENT: day-9 showed
+  probes are context-sensitive (a babble greeting in the pending
+  tail dipped every reading ~5-9%); probe0 (weights-only: fresh
+  init_state, no pending) added to the room and canonical from
+  day 11 — baseline landed within ~2% of the in-context series,
+  validating the history except day 9. SPEECH: the "broken
+  template" days were ARC DORMANCY — color questions drew the
+  praise register while the QA circuit slept; re-teaching the
+  question FORM ("what color of drum ? the drum was violet .")
+  re-woke the arc and the INCUMBENT answered. Statements let
+  the new fact through ("it is a new drum . the drum was
+  violet" — first drum speech, day 11, its own utterance paid);
+  the answer slot still belongs to the strongest belief. DAY-11
+  RESULT (probe0, same-day same-instrument): one contrast
+  correction ("no . not the candle . the drum was violet ." +2)
+  and the incumbent fell .9788 -> .8736 — ITS FIRST DECLINE —
+  while drum rose to .5350; gap .46 -> .34 in a day. LAW: the
+  architecture has no unlearning (negatives void, never erase),
+  but PAID LINGUISTIC CONTRAST is functional unlearning —
+  replaying "no . not X . Y ." in answer context redistributes
+  the incumbent's own probability mass. Counter-evidence, not
+  loss-sign, is the medium. A verbatim-stable collapse ritual
+  (praise register -> <eot_human> -> import babble -> day-1
+  rope quote, thrice identical under temp 0.6) marks the
+  between-attractors mouth; the saved pending tail carries it
+  across days — flush candidate. Life: 2,006 tokens, 27
+  presses, 27 spans.
+
 ## Status
 
 **(2026-08-19, post-v9.4)** The substrate campaign is complete:

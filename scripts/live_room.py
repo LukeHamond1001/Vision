@@ -3,8 +3,9 @@ can sit with the life turn by turn: read what it says, think, and
 answer sentence by sentence. Commands arrive on <life>.inbox as
 "seq|cmd|payload" lines; results append to <life>.outbox as
 "seq|kind|text". Commands: say, press, sleep, probe (a silent
-belief read — the parent glancing at the child's face), state,
-save, quit.
+belief read — the parent glancing at the child's face), probe0
+(the weights-only read: fresh state, no pending — for day-to-day
+comparisons), state, save, quit.
 
 Usage: python3 scripts/live_room.py <surgery_dir> <life_path>
 """
@@ -62,7 +63,10 @@ def main():
             f.write(f"{n}|{kind}|{str(text).replace(chr(10), ' ')}\n")
 
     @torch.no_grad()
-    def belief(name, obj, col):
+    def belief(name, obj, col, bare=False):
+        # bare=True is the weights-only read: fresh band state, no
+        # pending tail — immune to whatever today's conversation
+        # left in context (the day-9 confound).
         stem = f"the {obj} was"
         full = tok.encode(f"{stem} {col} .").ids
         pre = tok.encode(stem).ids
@@ -70,9 +74,13 @@ def main():
         ids = tok.encode(
             f"what color of {obj} was {name} kept ?").ids \
             + [s.eot_h] + pre
-        ctx = s.pending[-(s.T - len(ids)):] if s.pending else []
+        if bare:
+            ctx, st = [], s.m.init_state(1, "cpu")
+        else:
+            ctx = s.pending[-(s.T - len(ids)):] if s.pending else []
+            st = state_copy(s.st)
         x = torch.tensor([ctx + ids], dtype=torch.long)
-        lg, _, _ = s.m(x, state_copy(s.st), None)
+        lg, _, _ = s.m(x, st, None)
         s.m.pop_write_cost()
         s.m.pop_recon()
         return float(torch.softmax(lg[0, -1].float(), -1)[ans])
@@ -102,6 +110,10 @@ def main():
                 elif cmd == "probe":
                     nm, ob, co = payload.split()
                     out(n, "belief", f"{belief(nm, ob, co):.4f}")
+                elif cmd == "probe0":
+                    nm, ob, co = payload.split()
+                    out(n, "belief0",
+                        f"{belief(nm, ob, co, bare=True):.4f}")
                 elif cmd == "state":
                     out(n, "state", json.dumps(s.panel()))
                 elif cmd == "save":
