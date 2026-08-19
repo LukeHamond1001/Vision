@@ -1,0 +1,1055 @@
+=== control ===
+resumed /private/tmp/claude-501/-Users-lukehamond-Projects-project/d1f549c3-d351-4a55-a201-ed9e78e9ade1/scratchpad/ab62/ab_init.pt at step 0 (ema keys: [])
+step     1  ce 5.108  loss 5.147  holds    0  9,997 tok/s  [b0=+0.005]
+step   200  ce 1.993  loss 2.099  holds   84  11,205 tok/s  [fid:3=+0.534 fid:4=-0.085 fid:5=+0.240 b0=+0.012 b1=+0.007 b2=+0.009 b3=+0.013]
+step   400  ce 1.531  loss 1.621  holds  188  11,279 tok/s  [fid:3=+0.802 fid:4=-0.024 fid:5=+0.234 b0=+0.026 b1=+0.016 b2=+0.016 b3=+0.017]
+step   600  ce 1.396  loss 1.480  holds  288  11,211 tok/s  [fid:3=+0.848 fid:4=+0.069 fid:5=+0.228 b0=+0.035 b1=+0.027 b2=+0.024 b3=+0.026]
+step   800  ce 1.220  loss 1.584  holds  388  11,190 tok/s  [fid:3=+0.874 fid:4=+0.152 fid:5=+0.223 b0=+0.036 b1=+0.032 b2=+0.033 b3=+0.033]
+step  1000  ce 1.012  loss 1.086  holds  488  11,157 tok/s  [fid:3=+0.885 fid:4=+0.213 fid:5=+0.216 b0=+0.041 b1=+0.036 b2=+0.037 b3=+0.037]
+step  1200  ce 1.209  loss 1.289  holds  596  11,087 tok/s  [fid:3=+0.886 fid:4=+0.243 fid:5=+0.208 b0=+0.045 b1=+0.040 b2=+0.040 b3=+0.039]
+step  1400  ce 1.078  loss 1.387  holds  704  10,985 tok/s  [fid:3=+0.893 fid:4=+0.260 fid:5=+0.199 b0=+0.046 b1=+0.041 b2=+0.045 b3=+0.042]
+step  1600  ce 1.271  loss 1.368  holds  812  10,912 tok/s  [fid:3=+0.906 fid:4=+0.263 fid:5=+0.188 b0=+0.053 b1=+0.045 b2=+0.048 b3=+0.045]
+step  1800  ce 0.802  loss 1.053  holds  920  10,845 tok/s  [fid:3=+0.919 fid:4=+0.262 fid:5=+0.180 b0=+0.060 b1=+0.050 b2=+0.048 b3=+0.048]
+step  2000  ce 0.887  loss 0.963  holds 1024  10,789 tok/s  [fid:3=+0.923 fid:4=+0.260 fid:5=+0.173 b0=+0.065 b1=+0.055 b2=+0.048 b3=+0.052]
+step  2200  ce 1.070  loss 1.371  holds 1132  10,709 tok/s  [fid:3=+0.918 fid:4=+0.258 fid:5=+0.166 b0=+0.066 b1=+0.054 b2=+0.054 b3=+0.057]
+step  2400  ce 0.795  loss 0.871  holds 1240  10,651 tok/s  [fid:3=+0.928 fid:4=+0.258 fid:5=+0.159 b0=+0.067 b1=+0.054 b2=+0.065 b3=+0.061]
+step  2600  ce 1.047  loss 1.343  holds 1348  10,580 tok/s  [fid:3=+0.932 fid:4=+0.257 fid:5=+0.152 b0=+0.068 b1=+0.058 b2=+0.065 b3=+0.064]
+step  2800  ce 0.856  loss 1.106  holds 1452  10,542 tok/s  [fid:3=+0.940 fid:4=+0.258 fid:5=+0.146 b0=+0.068 b1=+0.065 b2=+0.065 b3=+0.069]
+step  3000  ce 0.784  loss 1.016  holds 1560  10,493 tok/s  [fid:3=+0.952 fid:4=+0.259 fid:5=+0.139 b0=+0.074 b1=+0.070 b2=+0.068 b3=+0.067]
+/Users/lukehamond/Projects/project/scripts/ab_sleep_debug.py:110: UserWarning: Converting a tensor with requires_grad=True to a scalar may lead to unexpected behavior.
+Consider using tensor.detach() first. (Triggered internally at /Users/runner/work/pytorch/pytorch/torch/csrc/autograd/generated/python_variable_methods.cpp:839.)
+  "alphas": {k: round(float(a), 3)
+audit: {'holds': 1560, 'telescoping_exact': True, 'scoped': True, 'vetoes': 2580, 'proposed': 9824}
+panel:
+lane0 frontier recall:b3      target 0.11 phi0 0.47 band 5 due 426112
+lane0 frontier recall:b2      target 0.12 phi0 0.42 band 4 due 393344
+lane0 frontier recall:b1      target 0.12 phi0 0.43 band 3 due 384768
+lane0 frontier recall:b0      target 0.13 phi0 0.45 band 3 due 385152
+lane1 frontier recall:b3      target 0.11 phi0 0.47 band 5 due 426112
+lane1 frontier recall:b2      target 0.12 phi0 0.42 band 4 due 393344
+lane1 frontier recall:b1      target 0.12 phi0 0.43 band 3 due 384768
+lane1 frontier recall:b0      target 0.13 phi0 0.45 band 3 due 385152
+lane2 frontier recall:b3      target 0.11 phi0 0.47 band 5 due 426112
+lane2 frontier recall:b2      target 0.12 phi0 0.42 band 4 due 393344
+lane2 frontier recall:b1      target 0.12 phi0 0.43 band 3 due 384768
+lane2 frontier recall:b0      target 0.13 phi0 0.45 band 3 due 385152
+lane3 frontier recall:b3      target 0.11 phi0 0.47 band 5 due 426112
+lane3 frontier recall:b2      target 0.12 phi0 0.42 band 4 due 393344
+lane3 frontier recall:b1      target 0.12 phi0 0.43 band 3 due 384768
+lane3 frontier recall:b0      target 0.13 phi0 0.45 band 3 due 385152
+record   fid:3          0.954 (ema 0.952)
+record   fid:4          0.264 (ema 0.259)
+record   fid:5          0.241 (ema 0.139)
+record   recall:b0      0.082 (ema 0.074)
+record   recall:b1      0.070 (ema 0.070)
+record   recall:b2      0.071 (ema 0.068)
+record   recall:b3      0.069 (ema 0.067)
+{
+ "control": {
+  "readout": {
+   "full": {
+    "ce": 1.3976,
+    "probe": 0.0645,
+    "n_probes": 105
+   },
+   "wiped": {
+    "ce": 1.3967,
+    "probe": 0.0644,
+    "n_probes": 105
+   }
+  },
+  "alphas": {
+   "3": 1.901,
+   "4": 1.929,
+   "5": 2.063
+  },
+  "ledger": 1560
+ }
+}
+=== armA ===
+resumed /private/tmp/claude-501/-Users-lukehamond-Projects-project/d1f549c3-d351-4a55-a201-ed9e78e9ade1/scratchpad/ab62/ab_init.pt at step 0 (ema keys: [])
+step     1  ce 5.108  loss 5.147  holds    0  15,649 tok/s  [b0=+0.005]
+    sleep@40 armA lane0 [3911,4168) of span[2176,4224] pay 0.066  chunks 2  loss 3.4849
+    sleep@48 armA lane3 [2305,2562) of span[2176,4224] pay 0.066  chunks 2  loss 3.2669
+    sleep@56 armA lane3 [3190,3447) of span[2176,4224] pay 0.066  chunks 2  loss 2.8888
+    sleep@64 armA lane2 [5191,5448) of span[4224,6272] pay 0.173  chunks 2  loss 2.8382
+    sleep@72 armA lane1 [7887,8144) of span[6272,8320] pay 0.207  chunks 2  loss 2.6316
+    sleep@80 armA lane0 [5223,5480) of span[4224,6272] pay 0.173  chunks 2  loss 2.4414
+    sleep@88 armA lane1 [3887,4144) of span[2176,4224] pay 0.066  chunks 2  loss 2.3652
+    sleep@96 armA lane0 [7516,7773) of span[6272,8320] pay 0.207  chunks 2  loss 2.4561
+    sleep@104 armA lane0 [10244,10501) of span[10240,12288] pay 0.124  chunks 2  loss 2.1503
+    sleep@112 armA lane3 [8865,9122) of span[8320,10368] pay 0.219  chunks 2  loss 2.0088
+    sleep@120 armA lane2 [10836,11093) of span[10368,12416] pay 0.215  chunks 2  loss 2.3165
+    sleep@128 armA lane0 [10577,10834) of span[10368,12416] pay 0.215  chunks 2  loss 2.1594
+    sleep@136 armA lane2 [12478,12735) of span[12416,14464] pay 0.254  chunks 2  loss 1.8566
+    sleep@144 armA lane1 [3506,3763) of span[2176,4224] pay 0.066  chunks 2  loss 1.8368
+    sleep@152 armA lane0 [11148,11405) of span[10368,12416] pay 0.215  chunks 2  loss 1.9882
+    sleep@160 armA lane1 [13152,13409) of span[12288,14336] pay 0.057  chunks 2  loss 1.8304
+    sleep@168 armA lane0 [13496,13753) of span[12416,14464] pay 0.254  chunks 2  loss 1.7419
+    sleep@176 armA lane1 [7168,7425) of span[6272,8320] pay 0.207  chunks 2  loss 1.7003
+    sleep@184 armA lane3 [19564,19821) of span[18432,20480] pay 0.125  chunks 2  loss 1.6218
+    sleep@192 armA lane1 [6744,7001) of span[6272,8320] pay 0.207  chunks 2  loss 1.8168
+    sleep@200 armA lane0 [13974,14231) of span[12416,14464] pay 0.254  chunks 2  loss 1.8727
+step   200  ce 1.755  loss 1.862  holds   84  11,088 tok/s  [fid:3=+0.502 fid:4=-0.085 fid:5=+0.235 b0=+0.015 b1=+0.009 b2=+0.009 b3=+0.011]
+    sleep@208 armA lane0 [10961,11218) of span[10368,12416] pay 0.215  chunks 2  loss 1.7534
+    sleep@216 armA lane2 [25428,25685) of span[24576,26624] pay 0.262  chunks 2  loss 1.7850
+    sleep@224 armA lane1 [25715,25972) of span[24576,26624] pay 0.205  chunks 2  loss 1.6389
+    sleep@232 armA lane0 [26828,27085) of span[26624,28672] pay 0.117  chunks 2  loss 1.6102
+    sleep@240 armA lane2 [7754,8011) of span[6272,8320] pay 0.207  chunks 2  loss 1.6644
+    sleep@248 armA lane1 [24951,25208) of span[24704,26752] pay 0.081  chunks 2  loss 1.7240
+    sleep@256 armA lane2 [24005,24262) of span[22528,24576] pay 0.131  chunks 2  loss 1.8997
+    sleep@264 armA lane2 [24717,24974) of span[16512,32896] pay 0.078  chunks 2  loss 1.5966
+    sleep@272 armA lane1 [31712,31969) of span[30848,32896] pay 0.033  chunks 2  loss 1.7640
+    sleep@280 armA lane2 [13788,14045) of span[12416,14464] pay 0.254  chunks 2  loss 1.5142
+    sleep@288 armA lane3 [6853,7110) of span[6272,8320] pay 0.207  chunks 2  loss 1.4985
+    sleep@296 armA lane3 [19454,19711) of span[18432,20480] pay 0.125  chunks 2  loss 1.5080
+    sleep@304 armA lane1 [24790,25047) of span[16512,32896] pay 0.078  chunks 2  loss 1.5278
+    sleep@312 armA lane1 [14035,14292) of span[12288,14336] pay 0.057  chunks 2  loss 1.5541
+    sleep@320 armA lane0 [4721,4978) of span[4224,6272] pay 0.173  chunks 2  loss 1.4541
+    sleep@328 armA lane2 [27451,27708) of span[26624,28672] pay 0.197  chunks 2  loss 1.3696
+    sleep@336 armA lane2 [12770,13027) of span[12416,14464] pay 0.254  chunks 2  loss 1.5667
+    sleep@344 armA lane0 [13855,14112) of span[12416,14464] pay 0.254  chunks 2  loss 1.6899
+    sleep@352 armA lane1 [34279,34536) of span[32768,34816] pay 0.032  chunks 2  loss 1.4020
+    sleep@360 armA lane0 [13314,13571) of span[12416,14464] pay 0.254  chunks 2  loss 1.3494
+    sleep@368 armA lane2 [26845,27102) of span[26624,28672] pay 0.197  chunks 2  loss 1.4018
+    sleep@376 armA lane3 [33834,34091) of span[32768,34816] pay 0.234  chunks 2  loss 1.4036
+    sleep@384 armA lane1 [37622,37879) of span[36864,38912] pay 0.143  chunks 2  loss 1.4675
+    sleep@392 armA lane3 [18492,18749) of span[18432,20480] pay 0.125  chunks 2  loss 1.3975
+    sleep@400 armA lane0 [19063,19320) of span[18432,20480] pay 0.075  chunks 2  loss 1.4608
+step   400  ce 1.573  loss 1.642  holds  188  10,911 tok/s  [fid:3=+0.769 fid:4=-0.019 fid:5=+0.230 b0=+0.027 b1=+0.019 b2=+0.018 b3=+0.016]
+    sleep@408 armA lane3 [32620,32877) of span[16512,32896] pay 0.078  chunks 2  loss 1.4202
+    sleep@416 armA lane0 [27936,28193) of span[26752,28800] pay 0.030  chunks 2  loss 1.4341
+    sleep@424 armA lane0 [14812,15069) of span[14464,16512] pay 0.026  chunks 2  loss 1.3807
+    sleep@432 armA lane1 [8784,9041) of span[8320,10368] pay 0.219  chunks 2  loss 1.3368
+    sleep@440 armA lane0 [52906,53163) of span[51328,53376] pay 0.057  chunks 2  loss 1.3470
+    sleep@448 armA lane3 [10081,10338) of span[8320,10368] pay 0.219  chunks 2  loss 1.4740
+    sleep@456 armA lane1 [27452,27709) of span[26624,28672] pay 0.291  chunks 2  loss 1.5678
+    sleep@464 armA lane1 [26439,26696) of span[24704,26752] pay 0.081  chunks 2  loss 1.4896
+    sleep@472 armA lane3 [29612,29869) of span[28672,30720] pay 0.200  chunks 2  loss 1.5795
+    sleep@480 armA lane3 [52550,52807) of span[51200,53248] pay 0.106  chunks 2  loss 1.3605
+    sleep@488 armA lane2 [28117,28374) of span[26624,28672] pay 0.197  chunks 2  loss 1.4230
+    sleep@496 armA lane1 [3780,4037) of span[2176,4224] pay 0.066  chunks 2  loss 1.3080
+    sleep@504 armA lane3 [52716,52973) of span[51200,53248] pay 0.106  chunks 2  loss 1.2810
+    sleep@512 armA lane3 [27016,27273) of span[26752,28800] pay 0.015  chunks 2  loss 1.4180
+    sleep@520 armA lane3 [29821,30078) of span[28672,30720] pay 0.200  chunks 2  loss 1.2219
+    sleep@528 armA lane0 [10482,10739) of span[10368,12416] pay 0.215  chunks 2  loss 1.3865
+    sleep@536 armA lane1 [27370,27627) of span[26624,28672] pay 0.291  chunks 2  loss 1.4526
+    sleep@544 armA lane2 [33305,33562) of span[32896,34944] pay 0.092  chunks 2  loss 1.3939
+    sleep@552 armA lane0 [64334,64591) of span[63488,65536] pay 0.255  chunks 2  loss 1.2254
+    sleep@560 armA lane2 [27354,27611) of span[26624,28672] pay 0.197  chunks 2  loss 1.2460
+    sleep@568 armA lane2 [24579,24836) of span[24576,26624] pay 0.262  chunks 2  loss 1.2491
+    sleep@576 armA lane3 [32124,32381) of span[30848,32896] pay 0.056  chunks 2  loss 1.3414
+    sleep@584 armA lane3 [51878,52135) of span[51200,53248] pay 0.106  chunks 2  loss 1.3819
+    sleep@592 armA lane1 [26681,26938) of span[26624,28672] pay 0.291  chunks 2  loss 1.3171
+    sleep@600 armA lane2 [56597,56854) of span[55296,57344] pay 0.317  chunks 2  loss 1.2601
+step   600  ce 1.283  loss 1.367  holds  288  10,737 tok/s  [fid:3=+0.822 fid:4=+0.081 fid:5=+0.226 b0=+0.034 b1=+0.026 b2=+0.023 b3=+0.025]
+    sleep@608 armA lane0 [11436,11693) of span[10240,12288] pay 0.124  chunks 2  loss 1.3000
+    sleep@616 armA lane0 [10427,10684) of span[10240,12288] pay 0.124  chunks 2  loss 1.2750
+    sleep@624 armA lane2 [56928,57185) of span[55296,57344] pay 0.317  chunks 2  loss 1.2403
+    sleep@632 armA lane1 [61962,62219) of span[61440,63488] pay 0.283  chunks 2  loss 1.2621
+    sleep@640 armA lane1 [5602,5859) of span[4224,6272] pay 0.173  chunks 2  loss 1.2240
+    sleep@648 armA lane0 [8049,8306) of span[6272,8320] pay 0.207  chunks 2  loss 1.3295
+    sleep@656 armA lane0 [4253,4510) of span[4224,6272] pay 0.173  chunks 2  loss 1.2014
+    sleep@664 armA lane2 [55871,56128) of span[55296,57344] pay 0.317  chunks 2  loss 1.3343
+    sleep@672 armA lane1 [12640,12897) of span[12416,14464] pay 0.254  chunks 2  loss 1.3876
+    sleep@680 armA lane0 [61818,62075) of span[61440,63488] pay 0.196  chunks 2  loss 1.3437
+    sleep@688 armA lane2 [22670,22927) of span[22528,24576] pay 0.131  chunks 2  loss 1.2799
+    sleep@696 armA lane0 [10890,11147) of span[10368,12416] pay 0.215  chunks 2  loss 1.3468
+    sleep@704 armA lane0 [35288,35545) of span[34944,36992] pay 0.064  chunks 2  loss 1.5115
+    sleep@712 armA lane1 [50607,50864) of span[49280,51328] pay 0.034  chunks 2  loss 1.2727
+    sleep@720 armA lane2 [56227,56484) of span[55296,57344] pay 0.317  chunks 2  loss 1.2914
+    sleep@728 armA lane2 [56312,56569) of span[55296,57344] pay 0.317  chunks 2  loss 1.1720
+    sleep@736 armA lane3 [32816,33073) of span[32768,34816] pay 0.234  chunks 2  loss 1.1767
+    sleep@744 armA lane0 [21183,21440) of span[20480,22528] pay 0.055  chunks 2  loss 1.2313
+    sleep@752 armA lane0 [29185,29442) of span[28800,30848] pay 0.029  chunks 2  loss 1.1140
+    sleep@760 armA lane3 [12935,13192) of span[12416,14464] pay 0.254  chunks 2  loss 1.2527
+    sleep@768 armA lane2 [87188,87445) of span[86144,88192] pay 0.030  chunks 2  loss 1.1154
+    sleep@776 armA lane1 [97496,97753) of span[96256,98304] pay 0.206  chunks 2  loss 1.3565
+    sleep@784 armA lane1 [32810,33067) of span[32768,34816] pay 0.032  chunks 2  loss 1.2822
+    sleep@792 armA lane2 [13229,13486) of span[12416,14464] pay 0.254  chunks 2  loss 1.1903
+    sleep@800 armA lane0 [11712,11969) of span[10240,12288] pay 0.124  chunks 2  loss 1.3116
+step   800  ce 1.156  loss 1.503  holds  388  10,670 tok/s  [fid:3=+0.855 fid:4=+0.170 fid:5=+0.221 b0=+0.043 b1=+0.033 b2=+0.032 b3=+0.032]
+    sleep@808 armA lane1 [97168,97425) of span[96256,98304] pay 0.206  chunks 2  loss 1.3130
+    sleep@816 armA lane2 [62956,63213) of span[61568,63616] pay 0.062  chunks 2  loss 1.0722
+    sleep@824 armA lane3 [34472,34729) of span[32768,34816] pay 0.234  chunks 2  loss 1.3152
+    sleep@832 armA lane2 [13707,13964) of span[12416,14464] pay 0.254  chunks 2  loss 1.1933
+    sleep@840 armA lane1 [82977,83234) of span[81920,83968] pay 0.223  chunks 2  loss 1.1233
+    sleep@848 armA lane1 [37936,38193) of span[36864,38912] pay 0.143  chunks 2  loss 1.2707
+    sleep@856 armA lane0 [62248,62505) of span[61440,63488] pay 0.196  chunks 2  loss 1.2231
+    sleep@864 armA lane2 [63213,63470) of span[61568,63616] pay 0.062  chunks 2  loss 1.2507
+    sleep@872 armA lane2 [25996,26253) of span[24704,26752] pay 0.055  chunks 2  loss 1.2150
+    sleep@880 armA lane1 [36326,36583) of span[34816,36864] pay 0.077  chunks 2  loss 1.2295
+    sleep@888 armA lane2 [25010,25267) of span[24576,26624] pay 0.262  chunks 2  loss 1.4651
+    sleep@896 armA lane1 [96883,97140) of span[96256,98304] pay 0.206  chunks 2  loss 1.2316
+    sleep@904 armA lane2 [6428,6685) of span[6272,8320] pay 0.207  chunks 2  loss 1.3332
+    sleep@912 armA lane1 [25314,25571) of span[24704,26752] pay 0.081  chunks 2  loss 1.4231
+    sleep@920 armA lane0 [80724,80981) of span[79872,81920] pay 0.133  chunks 2  loss 1.3623
+    sleep@928 armA lane2 [51595,51852) of span[51328,53376] pay 0.101  chunks 2  loss 1.1898
+    sleep@936 armA lane2 [3917,4174) of span[2176,4224] pay 0.066  chunks 2  loss 1.2247
+    sleep@944 armA lane3 [5902,6159) of span[4224,6272] pay 0.173  chunks 2  loss 1.4957
+    sleep@952 armA lane0 [15631,15888) of span[14464,16512] pay 0.026  chunks 2  loss 1.1792
+    sleep@960 armA lane0 [44831,45088) of span[43136,45184] pay 0.050  chunks 2  loss 1.1280
+    sleep@968 armA lane2 [106173,106430) of span[104576,106624] pay 0.099  chunks 2  loss 1.0361
+    sleep@976 armA lane3 [82962,83219) of span[81920,83968] pay 0.153  chunks 2  loss 1.1023
+    sleep@984 armA lane3 [4634,4891) of span[4224,6272] pay 0.173  chunks 2  loss 1.1267
+    sleep@992 armA lane3 [19883,20140) of span[16512,32896] pay 0.078  chunks 2  loss 1.3696
+    sleep@1000 armA lane1 [62326,62583) of span[61440,63488] pay 0.283  chunks 2  loss 1.0253
+step  1000  ce 1.011  loss 1.088  holds  488  10,617 tok/s  [fid:3=+0.867 fid:4=+0.233 fid:5=+0.215 b0=+0.042 b1=+0.039 b2=+0.038 b3=+0.039]
+    sleep@1008 armA lane2 [62576,62833) of span[61568,63616] pay 0.062  chunks 2  loss 1.0631
+    sleep@1016 armA lane2 [9683,9940) of span[8320,10368] pay 0.219  chunks 2  loss 1.1677
+    sleep@1024 armA lane3 [37896,38153) of span[36864,38912] pay 0.055  chunks 2  loss 1.1073
+    sleep@1032 armA lane2 [62234,62491) of span[61568,63616] pay 0.062  chunks 2  loss 1.1198
+    sleep@1040 armA lane3 [88887,89144) of span[88064,90112] pay 0.190  chunks 2  loss 1.4370
+    sleep@1048 armA lane1 [2499,2756) of span[128,131200] pay 1.000  chunks 2  loss 1.3822
+    sleep@1056 armA lane2 [14172,14429) of span[12416,14464] pay 0.254  chunks 2  loss 1.0484
+    sleep@1064 armA lane1 [38017,38274) of span[36864,38912] pay 0.143  chunks 2  loss 1.0451
+    sleep@1072 armA lane0 [119606,119863) of span[118912,120960] pay 0.052  chunks 2  loss 1.1540
+    sleep@1080 armA lane2 [51873,52130) of span[51328,53376] pay 0.101  chunks 2  loss 0.9465
+    sleep@1088 armA lane3 [100147,100404) of span[98432,100480] pay 0.049  chunks 2  loss 1.0469
+    sleep@1096 armA lane2 [46177,46434) of span[45056,47104] pay 0.183  chunks 2  loss 0.9671
+    sleep@1104 armA lane2 [40627,40884) of span[38912,40960] pay 0.101  chunks 2  loss 1.0334
+    sleep@1112 armA lane1 [103392,103649) of span[102400,104448] pay 0.298  chunks 2  loss 1.1744
+    sleep@1120 armA lane2 [119874,120131) of span[118784,120832] pay 0.276  chunks 2  loss 1.0856
+    sleep@1128 armA lane0 [28109,28366) of span[26624,28672] pay 0.117  chunks 2  loss 1.0397
+    sleep@1136 armA lane2 [6544,6801) of span[6272,8320] pay 0.207  chunks 2  loss 1.3184
+    sleep@1144 armA lane1 [21582,21839) of span[20480,22528] pay 0.051  chunks 2  loss 1.0352
+    sleep@1152 armA lane0 [28178,28435) of span[26624,28672] pay 0.117  chunks 2  loss 1.0502
+    sleep@1160 armA lane2 [46092,46349) of span[45056,47104] pay 0.183  chunks 2  loss 0.8329
+    sleep@1168 armA lane0 [58488,58745) of span[128,131200] pay 1.000  chunks 2  loss 0.9941
+    sleep@1176 armA lane1 [51433,51690) of span[51200,53248] pay 0.393  chunks 2  loss 0.9842
+    sleep@1184 armA lane2 [42864,43121) of span[41088,43136] pay 0.048  chunks 2  loss 0.8926
+    sleep@1192 armA lane3 [134716,134973) of span[133120,135168] pay 0.148  chunks 2  loss 0.9689
+    sleep@1200 armA lane0 [145736,145993) of span[131200,147584] pay 0.044  chunks 2  loss 1.0797
+step  1200  ce 1.143  loss 1.220  holds  596  10,524 tok/s  [fid:3=+0.874 fid:4=+0.265 fid:5=+0.208 b0=+0.041 b1=+0.041 b2=+0.041 b3=+0.041]
+    sleep@1208 armA lane3 [87331,87588) of span[86144,88192] pay 0.026  chunks 2  loss 1.0153
+    sleep@1216 armA lane1 [96469,96726) of span[96256,98304] pay 0.206  chunks 2  loss 0.8745
+    sleep@1224 armA lane2 [58176,58433) of span[57344,59392] pay 0.160  chunks 2  loss 1.1075
+    sleep@1232 armA lane1 [28397,28654) of span[26624,28672] pay 0.291  chunks 2  loss 1.0499
+    sleep@1240 armA lane2 [154029,154286) of span[153728,155776] pay 0.024  chunks 2  loss 0.9191
+    sleep@1248 armA lane2 [65162,65419) of span[128,131200] pay 1.000  chunks 2  loss 0.9627
+    sleep@1256 armA lane3 [33971,34228) of span[32768,34816] pay 0.234  chunks 2  loss 1.0462
+    sleep@1264 armA lane1 [72078,72335) of span[128,131200] pay 1.000  chunks 2  loss 1.0192
+    sleep@1272 armA lane3 [29798,30055) of span[28672,30720] pay 0.200  chunks 2  loss 0.8640
+    sleep@1280 armA lane1 [49447,49704) of span[49280,51328] pay 0.034  chunks 2  loss 1.0781
+    sleep@1288 armA lane1 [80723,80980) of span[32896,163968] pay 0.410  chunks 2  loss 0.8395
+    sleep@1296 armA lane0 [158851,159108) of span[157696,159744] pay 0.234  chunks 2  loss 1.1217
+    sleep@1304 armA lane1 [110826,111083) of span[110592,112640] pay 0.098  chunks 2  loss 0.8373
+    sleep@1312 armA lane0 [98871,99128) of span[98304,100352] pay 0.131  chunks 2  loss 1.0210
+    sleep@1320 armA lane2 [41053,41310) of span[40960,43008] pay 0.338  chunks 2  loss 1.0650
+    sleep@1328 armA lane1 [131402,131659) of span[131200,147584] pay 0.156  chunks 2  loss 0.8640
+    sleep@1336 armA lane2 [125085,125342) of span[125056,127104] pay 0.049  chunks 2  loss 0.9503
+    sleep@1344 armA lane0 [41195,41452) of span[40960,43008] pay 0.289  chunks 2  loss 1.0288
+    sleep@1352 armA lane3 [151121,151378) of span[149504,151552] pay 0.307  chunks 2  loss 0.9591
+    sleep@1360 armA lane1 [39402,39659) of span[38912,40960] pay 0.261  chunks 2  loss 1.1338
+    sleep@1368 armA lane3 [138545,138802) of span[137344,139392] pay 0.017  chunks 2  loss 0.8081
+    sleep@1376 armA lane1 [102636,102893) of span[102400,104448] pay 0.298  chunks 2  loss 0.9463
+    sleep@1384 armA lane0 [107890,108147) of span[106496,108544] pay 0.056  chunks 2  loss 0.7448
+    sleep@1392 armA lane3 [75379,75636) of span[73856,75904] pay 0.067  chunks 2  loss 0.9206
+    sleep@1400 armA lane3 [160763,161020) of span[159872,161920] pay 0.054  chunks 2  loss 0.8719
+step  1400  ce 1.118  loss 1.433  holds  704  10,423 tok/s  [fid:3=+0.873 fid:4=+0.276 fid:5=+0.200 b0=+0.049 b1=+0.045 b2=+0.046 b3=+0.043]
+    sleep@1408 armA lane3 [90541,90798) of span[32896,163968] pay 0.408  chunks 2  loss 1.1170
+    sleep@1416 armA lane0 [158807,159064) of span[157696,159744] pay 0.234  chunks 2  loss 0.9904
+    sleep@1424 armA lane2 [164442,164699) of span[163840,165888] pay 0.435  chunks 2  loss 1.0701
+    sleep@1432 armA lane0 [106554,106811) of span[128,131200] pay 1.000  chunks 2  loss 0.8722
+    sleep@1440 armA lane0 [96681,96938) of span[96256,98304] pay 0.192  chunks 2  loss 1.0171
+    sleep@1448 armA lane2 [51273,51530) of span[128,131200] pay 1.000  chunks 2  loss 0.8162
+    sleep@1456 armA lane1 [52811,53068) of span[51200,53248] pay 0.393  chunks 2  loss 0.9252
+    sleep@1464 armA lane2 [182877,183134) of span[182272,184320] pay 0.056  chunks 2  loss 0.9010
+    sleep@1472 armA lane3 [150159,150416) of span[149504,151552] pay 0.307  chunks 2  loss 1.2162
+    sleep@1480 armA lane0 [121473,121730) of span[120832,122880] pay 0.436  chunks 2  loss 0.8489
+    sleep@1488 armA lane0 [116867,117124) of span[116736,118784] pay 0.088  chunks 2  loss 0.9457
+    sleep@1496 armA lane2 [177487,177744) of span[176256,178304] pay 0.056  chunks 2  loss 0.9702
+    sleep@1504 armA lane0 [188644,188901) of span[188416,190464] pay 0.206  chunks 2  loss 1.0131
+    sleep@1512 armA lane0 [97863,98120) of span[96256,98304] pay 0.192  chunks 2  loss 1.0441
+    sleep@1520 armA lane3 [126456,126713) of span[128,131200] pay 1.000  chunks 2  loss 1.0412
+    sleep@1528 armA lane3 [175040,175297) of span[174080,176128] pay 0.364  chunks 2  loss 1.1376
+    sleep@1536 armA lane3 [146066,146323) of span[145536,147584] pay 0.070  chunks 2  loss 0.7315
+    sleep@1544 armA lane3 [88489,88746) of span[88064,90112] pay 0.190  chunks 2  loss 0.9426
+    sleep@1552 armA lane0 [109048,109305) of span[108544,110592] pay 0.133  chunks 2  loss 1.0486
+    sleep@1560 armA lane2 [120463,120720) of span[118784,120832] pay 0.276  chunks 2  loss 0.9290
+    sleep@1568 armA lane2 [105990,106247) of span[104448,106496] pay 0.432  chunks 2  loss 0.7175
+    sleep@1576 armA lane0 [106882,107139) of span[128,131200] pay 1.000  chunks 2  loss 0.7407
+    sleep@1584 armA lane1 [191263,191520) of span[190464,192512] pay 0.442  chunks 2  loss 0.9357
+    sleep@1592 armA lane2 [181024,181281) of span[180352,196736] pay 0.119  chunks 2  loss 0.8969
+    sleep@1600 armA lane0 [121480,121737) of span[120832,122880] pay 0.436  chunks 2  loss 0.7850
+step  1600  ce 1.270  loss 1.368  holds  812  10,337 tok/s  [fid:3=+0.901 fid:4=+0.281 fid:5=+0.189 b0=+0.049 b1=+0.048 b2=+0.046 b3=+0.047]
+    sleep@1608 armA lane1 [171169,171426) of span[169984,172032] pay 0.288  chunks 2  loss 0.8220
+    sleep@1616 armA lane0 [189036,189293) of span[188416,190464] pay 0.206  chunks 2  loss 0.8486
+    sleep@1624 armA lane1 [110798,111055) of span[110592,112640] pay 0.098  chunks 2  loss 0.7457
+    sleep@1632 armA lane2 [134433,134690) of span[133248,135296] pay 0.014  chunks 2  loss 0.8782
+    sleep@1640 armA lane1 [178492,178749) of span[178304,180352] pay 0.031  chunks 2  loss 1.0088
+    sleep@1648 armA lane3 [112809,113066) of span[112768,114816] pay 0.005  chunks 2  loss 0.8979
+    sleep@1656 armA lane3 [181046,181303) of span[180224,182272] pay 0.127  chunks 2  loss 1.2080
+    sleep@1664 armA lane1 [89192,89449) of span[88064,90112] pay 0.092  chunks 2  loss 1.0428
+    sleep@1672 armA lane1 [191957,192214) of span[190464,192512] pay 0.442  chunks 2  loss 0.8245
+    sleep@1680 armA lane3 [89365,89622) of span[88064,90112] pay 0.190  chunks 2  loss 0.8410
+    sleep@1688 armA lane3 [79361,79618) of span[77824,79872] pay 0.248  chunks 2  loss 1.0862
+    sleep@1696 armA lane2 [181362,181619) of span[180352,182400] pay 0.019  chunks 2  loss 0.7814
+    sleep@1704 armA lane3 [88952,89209) of span[128,131200] pay 1.000  chunks 2  loss 1.1375
+    sleep@1712 armA lane3 [95928,96185) of span[94336,96384] pay 0.064  chunks 2  loss 0.8010
+    sleep@1720 armA lane3 [184477,184734) of span[184320,186368] pay 0.317  chunks 2  loss 0.9200
+    sleep@1728 armA lane0 [146898,147155) of span[145536,147584] pay 0.040  chunks 2  loss 0.7397
+    sleep@1736 armA lane3 [106165,106422) of span[104576,106624] pay 0.045  chunks 2  loss 0.6336
+    sleep@1744 armA lane2 [104737,104994) of span[104448,106496] pay 0.432  chunks 2  loss 0.9027
+    sleep@1752 armA lane1 [191118,191375) of span[190464,192512] pay 0.442  chunks 2  loss 0.9305
+    sleep@1760 armA lane0 [119724,119981) of span[128,131200] pay 1.000  chunks 2  loss 0.7597
+    sleep@1768 armA lane1 [191824,192081) of span[190592,192640] pay 0.038  chunks 2  loss 0.8807
+    sleep@1776 armA lane0 [101612,101869) of span[128,131200] pay 1.000  chunks 2  loss 0.8323
+    sleep@1784 armA lane0 [110023,110280) of span[108544,110592] pay 0.133  chunks 2  loss 0.8367
+    sleep@1792 armA lane3 [94855,95112) of span[94208,96256] pay 0.279  chunks 2  loss 0.9319
+    sleep@1800 armA lane2 [197884,198141) of span[196608,198656] pay 0.150  chunks 2  loss 0.7719
+step  1800  ce 0.867  loss 1.129  holds  920  10,265 tok/s  [fid:3=+0.907 fid:4=+0.280 fid:5=+0.181 b0=+0.065 b1=+0.053 b2=+0.049 b3=+0.051]
+    sleep@1808 armA lane2 [193772,194029) of span[192640,194688] pay 0.019  chunks 2  loss 0.8773
+    sleep@1816 armA lane0 [204408,204665) of span[202880,204928] pay 0.056  chunks 2  loss 0.9870
+    sleep@1824 armA lane0 [229796,230053) of span[229376,231424] pay 0.118  chunks 2  loss 0.8311
+    sleep@1832 armA lane0 [119798,120055) of span[118912,120960] pay 0.052  chunks 2  loss 0.7399
+    sleep@1840 armA lane1 [102620,102877) of span[32896,163968] pay 0.410  chunks 2  loss 0.8123
+    sleep@1848 armA lane3 [185687,185944) of span[184320,186368] pay 0.317  chunks 2  loss 0.7288
+    sleep@1856 armA lane0 [123790,124047) of span[128,131200] pay 1.000  chunks 2  loss 0.9047
+    sleep@1864 armA lane0 [109458,109715) of span[108544,110592] pay 0.133  chunks 2  loss 0.8031
+    sleep@1872 armA lane3 [203876,204133) of span[202752,204800] pay 0.067  chunks 2  loss 0.6570
+    sleep@1880 armA lane1 [115774,116031) of span[128,131200] pay 1.000  chunks 2  loss 0.8508
+    sleep@1888 armA lane3 [209824,210081) of span[208896,210944] pay 0.190  chunks 2  loss 0.7414
+    sleep@1896 armA lane1 [103770,104027) of span[102400,104448] pay 0.298  chunks 2  loss 0.9310
+    sleep@1904 armA lane2 [130018,130275) of span[129024,131072] pay 0.168  chunks 2  loss 0.6807
+    sleep@1912 armA lane0 [107819,108076) of span[106496,108544] pay 0.056  chunks 2  loss 0.7137
+    sleep@1920 armA lane1 [230544,230801) of span[229376,231424] pay 0.033  chunks 2  loss 0.8375
+    sleep@1928 armA lane1 [112008,112265) of span[110592,112640] pay 0.098  chunks 2  loss 1.0631
+    sleep@1936 armA lane2 [133465,133722) of span[131200,147584] pay 0.068  chunks 2  loss 0.8684
+    sleep@1944 armA lane1 [166237,166494) of span[163968,180352] pay 0.090  chunks 2  loss 0.7246
+    sleep@1952 armA lane2 [119665,119922) of span[128,131200] pay 1.000  chunks 2  loss 0.7857
+    sleep@1960 armA lane1 [158517,158774) of span[157696,159744] pay 0.045  chunks 2  loss 0.9396
+    sleep@1968 armA lane1 [115564,115821) of span[128,131200] pay 1.000  chunks 2  loss 0.6646
+    sleep@1976 armA lane2 [113909,114166) of span[128,131200] pay 1.000  chunks 2  loss 0.7902
+    sleep@1984 armA lane1 [119885,120142) of span[128,131200] pay 1.000  chunks 2  loss 0.7993
+    sleep@1992 armA lane3 [169392,169649) of span[168064,170112] pay 0.035  chunks 2  loss 1.0060
+    sleep@2000 armA lane3 [244742,244999) of span[229504,245888] pay 0.212  chunks 2  loss 0.6207
+step  2000  ce 0.801  loss 0.876  holds 1024  10,200 tok/s  [fid:3=+0.920 fid:4=+0.274 fid:5=+0.173 b0=+0.061 b1=+0.055 b2=+0.056 b3=+0.056]
+    sleep@2008 armA lane1 [200281,200538) of span[198784,200832] pay 0.059  chunks 2  loss 0.7953
+    sleep@2016 armA lane3 [123911,124168) of span[128,131200] pay 1.000  chunks 2  loss 0.8966
+    sleep@2024 armA lane2 [170964,171221) of span[169984,172032] pay 0.071  chunks 2  loss 0.9694
+    sleep@2032 armA lane3 [251315,251572) of span[249856,251904] pay 0.484  chunks 2  loss 0.7477
+    sleep@2040 armA lane3 [158582,158839) of span[32896,163968] pay 0.408  chunks 2  loss 0.6433
+    sleep@2048 armA lane1 [194131,194388) of span[192640,194688] pay 0.120  chunks 2  loss 0.7653
+    sleep@2056 armA lane2 [250419,250676) of span[249856,251904] pay 0.061  chunks 2  loss 0.7521
+    sleep@2064 armA lane0 [249483,249740) of span[245888,262272] pay 0.061  chunks 2  loss 0.8543
+    sleep@2072 armA lane0 [126538,126795) of span[128,131200] pay 1.000  chunks 2  loss 0.9531
+    sleep@2080 armA lane2 [228649,228906) of span[227328,229376] pay 0.227  chunks 2  loss 0.9591
+    sleep@2088 armA lane3 [246214,246471) of span[245888,247936] pay 0.059  chunks 2  loss 0.7649
+    sleep@2096 armA lane0 [187990,188247) of span[186368,188416] pay 0.144  chunks 2  loss 0.6946
+    sleep@2104 armA lane2 [248446,248703) of span[247808,249856] pay 0.050  chunks 2  loss 0.8155
+    sleep@2112 armA lane0 [140888,141145) of span[32896,163968] pay 0.393  chunks 2  loss 0.9837
+    sleep@2120 armA lane2 [248697,248954) of span[247936,249984] pay 0.043  chunks 2  loss 0.7736
+    sleep@2128 armA lane1 [156099,156356) of span[32896,163968] pay 0.410  chunks 2  loss 0.7960
+    sleep@2136 armA lane3 [236865,237122) of span[235648,237696] pay 0.119  chunks 2  loss 1.0232
+    sleep@2144 armA lane3 [155900,156157) of span[155648,157696] pay 0.061  chunks 2  loss 0.8211
+    sleep@2152 armA lane0 [261617,261874) of span[245888,262272] pay 0.061  chunks 2  loss 1.1572
+    sleep@2160 armA lane3 [205572,205829) of span[204800,206848] pay 0.286  chunks 2  loss 0.8089
+    sleep@2168 armA lane2 [146451,146708) of span[32896,163968] pay 0.416  chunks 2  loss 0.5366
+    sleep@2176 armA lane1 [191630,191887) of span[190464,192512] pay 0.442  chunks 2  loss 0.8536
+    sleep@2184 armA lane2 [243394,243651) of span[241792,243840] pay 0.040  chunks 2  loss 0.8445
+    sleep@2192 armA lane0 [151027,151284) of span[149632,151680] pay 0.093  chunks 2  loss 0.7489
+    sleep@2200 armA lane1 [191768,192025) of span[190464,192512] pay 0.442  chunks 2  loss 0.7761
+step  2200  ce 1.106  loss 1.413  holds 1132  10,110 tok/s  [fid:3=+0.919 fid:4=+0.269 fid:5=+0.166 b0=+0.069 b1=+0.057 b2=+0.062 b3=+0.065]
+    sleep@2208 armA lane0 [187422,187679) of span[186368,188416] pay 0.144  chunks 2  loss 0.7970
+    sleep@2216 armA lane3 [254804,255061) of span[245888,262272] pay 0.260  chunks 2  loss 0.8872
+    sleep@2224 armA lane2 [245843,246100) of span[245760,247808] pay 0.251  chunks 2  loss 0.9408
+    sleep@2232 armA lane2 [209209,209466) of span[209024,211072] pay 0.050  chunks 2  loss 1.0333
+    sleep@2240 armA lane1 [256184,256441) of span[245888,262272] pay 0.109  chunks 2  loss 0.8659
+    sleep@2248 armA lane1 [160553,160810) of span[32896,163968] pay 0.410  chunks 2  loss 0.7021
+    sleep@2256 armA lane1 [277991,278248) of span[262272,278656] pay 0.229  chunks 2  loss 0.8214
+    sleep@2264 armA lane0 [286260,286517) of span[284672,286720] pay 0.368  chunks 2  loss 0.6432
+    sleep@2272 armA lane3 [239047,239304) of span[237696,239744] pay 0.042  chunks 2  loss 0.6825
+    sleep@2280 armA lane2 [247975,248232) of span[247808,249856] pay 0.050  chunks 2  loss 0.8287
+    sleep@2288 armA lane3 [209389,209646) of span[208896,210944] pay 0.190  chunks 2  loss 0.8077
+    sleep@2296 armA lane3 [289551,289808) of span[288768,290816] pay 0.312  chunks 2  loss 0.9730
+    sleep@2304 armA lane3 [285558,285815) of span[284672,286720] pay 0.327  chunks 2  loss 0.6566
+    sleep@2312 armA lane0 [207514,207771) of span[206848,208896] pay 0.105  chunks 2  loss 0.6933
+    sleep@2320 armA lane2 [212346,212603) of span[211072,213120] pay 0.083  chunks 2  loss 0.6116
+    sleep@2328 armA lane1 [289202,289459) of span[288768,290816] pay 0.457  chunks 2  loss 0.7246
+    sleep@2336 armA lane1 [167246,167503) of span[166016,168064] pay 0.046  chunks 2  loss 0.9464
+    sleep@2344 armA lane2 [235889,236146) of span[235648,237696] pay 0.046  chunks 2  loss 0.7675
+    sleep@2352 armA lane2 [254520,254777) of span[253952,256000] pay 0.209  chunks 2  loss 1.0741
+    sleep@2360 armA lane0 [189951,190208) of span[188416,190464] pay 0.206  chunks 2  loss 0.6158
+    sleep@2368 armA lane2 [242180,242437) of span[241792,243840] pay 0.040  chunks 2  loss 0.8463
+    sleep@2376 armA lane1 [238991,239248) of span[229504,245888] pay 0.048  chunks 2  loss 0.6340
+    sleep@2384 armA lane1 [171269,171526) of span[169984,172032] pay 0.288  chunks 2  loss 0.6529
+    sleep@2392 armA lane0 [299632,299889) of span[299136,301184] pay 0.038  chunks 2  loss 0.7473
+    sleep@2400 armA lane1 [289191,289448) of span[288768,290816] pay 0.457  chunks 2  loss 0.7073
+step  2400  ce 0.846  loss 0.923  holds 1240  10,038 tok/s  [fid:3=+0.930 fid:4=+0.266 fid:5=+0.159 b0=+0.072 b1=+0.063 b2=+0.064 b3=+0.063]
+    sleep@2408 armA lane1 [190767,191024) of span[190464,192512] pay 0.442  chunks 2  loss 1.0453
+    sleep@2416 armA lane3 [250415,250672) of span[249856,251904] pay 0.484  chunks 2  loss 0.8928
+    sleep@2424 armA lane2 [212623,212880) of span[211072,213120] pay 0.083  chunks 2  loss 0.7313
+    sleep@2432 armA lane2 [208247,208504) of span[206848,208896] pay 0.246  chunks 2  loss 0.6811
+    sleep@2440 armA lane1 [243427,243684) of span[241664,243712] pay 0.143  chunks 2  loss 0.7330
+    sleep@2448 armA lane2 [291288,291545) of span[290944,292992] pay 0.056  chunks 2  loss 0.5238
+    sleep@2456 armA lane1 [257005,257262) of span[256000,258048] pay 0.176  chunks 2  loss 0.8639
+    sleep@2464 armA lane1 [241913,242170) of span[241664,243712] pay 0.143  chunks 2  loss 0.8047
+    sleep@2472 armA lane1 [289936,290193) of span[288768,290816] pay 0.457  chunks 2  loss 0.6016
+    sleep@2480 armA lane0 [303523,303780) of span[303104,305152] pay 0.078  chunks 2  loss 0.6937
+    sleep@2488 armA lane0 [221405,221662) of span[221184,223232] pay 0.308  chunks 2  loss 0.7461
+    sleep@2496 armA lane3 [305201,305458) of span[305152,307200] pay 0.086  chunks 2  loss 0.6125
+    sleep@2504 armA lane2 [198138,198395) of span[196608,198656] pay 0.150  chunks 2  loss 0.7957
+    sleep@2512 armA lane3 [184927,185184) of span[184320,186368] pay 0.317  chunks 2  loss 0.8026
+    sleep@2520 armA lane0 [318998,319255) of span[317440,319488] pay 0.120  chunks 2  loss 0.6094
+    sleep@2528 armA lane3 [290097,290354) of span[288768,290816] pay 0.312  chunks 2  loss 1.0958
+    sleep@2536 armA lane1 [203904,204161) of span[202880,204928] pay 0.083  chunks 2  loss 0.7483
+    sleep@2544 armA lane2 [247409,247666) of span[245760,247808] pay 0.251  chunks 2  loss 0.6029
+    sleep@2552 armA lane1 [236550,236807) of span[235520,237568] pay 0.240  chunks 2  loss 0.8726
+    sleep@2560 armA lane1 [290321,290578) of span[288768,290816] pay 0.457  chunks 2  loss 0.8417
+    sleep@2568 armA lane1 [270465,270722) of span[270464,272512] pay 0.117  chunks 2  loss 0.7359
+    sleep@2576 armA lane2 [208318,208575) of span[206848,208896] pay 0.246  chunks 2  loss 0.5907
+    sleep@2584 armA lane3 [250881,251138) of span[245888,262272] pay 0.260  chunks 2  loss 0.7937
+    sleep@2592 armA lane1 [267832,268089) of span[262272,278656] pay 0.229  chunks 2  loss 0.5396
+    sleep@2600 armA lane3 [304503,304760) of span[303104,305152] pay 0.297  chunks 2  loss 0.8545
+step  2600  ce 1.260  loss 1.596  holds 1348  9,963 tok/s  [fid:3=+0.934 fid:4=+0.260 fid:5=+0.152 b0=+0.067 b1=+0.070 b2=+0.066 b3=+0.064]
+    sleep@2608 armA lane3 [278759,279016) of span[278528,280576] pay 0.182  chunks 2  loss 0.8221
+    sleep@2616 armA lane3 [289541,289798) of span[288768,290816] pay 0.312  chunks 2  loss 0.9472
+    sleep@2624 armA lane2 [255092,255349) of span[253952,256000] pay 0.209  chunks 2  loss 0.8558
+    sleep@2632 armA lane2 [197916,198173) of span[196608,198656] pay 0.150  chunks 2  loss 0.6700
+    sleep@2640 armA lane1 [292423,292680) of span[290944,292992] pay 0.126  chunks 2  loss 0.8018
+    sleep@2648 armA lane1 [321186,321443) of span[319488,321536] pay 0.235  chunks 2  loss 0.6640
+    sleep@2656 armA lane3 [303511,303768) of span[303104,305152] pay 0.297  chunks 2  loss 0.9472
+    sleep@2664 armA lane2 [334897,335154) of span[333952,336000] pay 0.099  chunks 2  loss 0.8212
+    sleep@2672 armA lane3 [289826,290083) of span[288768,290816] pay 0.312  chunks 2  loss 1.0622
+    sleep@2680 armA lane2 [265717,265974) of span[264192,266240] pay 0.234  chunks 2  loss 0.7401
+    sleep@2688 armA lane1 [303729,303986) of span[303104,305152] pay 0.114  chunks 2  loss 0.7987
+    sleep@2696 armA lane3 [304024,304281) of span[303104,305152] pay 0.297  chunks 2  loss 0.9355
+    sleep@2704 armA lane1 [287355,287612) of span[278656,295040] pay 0.147  chunks 2  loss 0.6194
+    sleep@2712 armA lane3 [240821,241078) of span[239744,241792] pay 0.040  chunks 2  loss 0.5008
+    sleep@2720 armA lane3 [209693,209950) of span[208896,210944] pay 0.190  chunks 2  loss 0.7380
+    sleep@2728 armA lane0 [263037,263294) of span[163968,295040] pay 0.194  chunks 2  loss 0.6866
+    sleep@2736 armA lane3 [263545,263802) of span[262272,264320] pay 0.096  chunks 2  loss 0.8702
+    sleep@2744 armA lane2 [220847,221104) of span[163968,295040] pay 0.213  chunks 2  loss 0.7957
+    sleep@2752 armA lane2 [288375,288632) of span[286848,288896] pay 0.035  chunks 2  loss 0.6983
+    sleep@2760 armA lane1 [255280,255537) of span[253952,256000] pay 0.056  chunks 2  loss 0.6156
+    sleep@2768 armA lane2 [262186,262443) of span[262144,264192] pay 0.082  chunks 2  loss 0.8715
+    sleep@2776 armA lane3 [279816,280073) of span[278528,280576] pay 0.182  chunks 2  loss 0.7529
+    sleep@2784 armA lane3 [242264,242521) of span[229504,245888] pay 0.212  chunks 2  loss 0.7945
+    sleep@2792 armA lane3 [351810,352067) of span[350208,352256] pay 0.039  chunks 2  loss 0.5434
+    sleep@2800 armA lane3 [248806,249063) of span[245888,262272] pay 0.260  chunks 2  loss 0.8672
+step  2800  ce 0.791  loss 1.031  holds 1452  9,914 tok/s  [fid:3=+0.942 fid:4=+0.257 fid:5=+0.146 b0=+0.072 b1=+0.071 b2=+0.068 b3=+0.067]
+    sleep@2808 armA lane2 [324782,325039) of span[311424,327808] pay 0.144  chunks 2  loss 0.7603
+    sleep@2816 armA lane0 [327700,327957) of span[327680,329728] pay 0.227  chunks 2  loss 0.8273
+    sleep@2824 armA lane1 [266606,266863) of span[262272,278656] pay 0.229  chunks 2  loss 0.7406
+    sleep@2832 armA lane3 [334794,335051) of span[333952,336000] pay 0.028  chunks 2  loss 0.7650
+    sleep@2840 armA lane3 [349274,349531) of span[348160,350208] pay 0.210  chunks 2  loss 1.0004
+    sleep@2848 armA lane3 [271410,271667) of span[270464,272512] pay 0.138  chunks 2  loss 0.7812
+    sleep@2856 armA lane3 [343136,343393) of span[342144,344192] pay 0.070  chunks 2  loss 0.5739
+    sleep@2864 armA lane3 [250901,251158) of span[249856,251904] pay 0.484  chunks 2  loss 0.7160
+    sleep@2872 armA lane1 [236565,236822) of span[235520,237568] pay 0.240  chunks 2  loss 0.8127
+    sleep@2880 armA lane3 [239180,239437) of span[229504,245888] pay 0.212  chunks 2  loss 0.7472
+    sleep@2888 armA lane3 [289623,289880) of span[288896,290944] pay 0.065  chunks 2  loss 0.9170
+    sleep@2896 armA lane1 [244618,244875) of span[243712,245760] pay 0.116  chunks 2  loss 0.9806
+    sleep@2904 armA lane0 [236686,236943) of span[235648,237696] pay 0.047  chunks 2  loss 0.8459
+    sleep@2912 armA lane0 [328011,328268) of span[327680,329728] pay 0.227  chunks 2  loss 0.8830
+    sleep@2920 armA lane0 [326583,326840) of span[325760,327808] pay 0.107  chunks 2  loss 0.9341
+    sleep@2928 armA lane3 [318132,318389) of span[317568,319616] pay 0.098  chunks 2  loss 0.8285
+    sleep@2936 armA lane3 [315819,316076) of span[315392,317440] pay 0.100  chunks 2  loss 0.8340
+    sleep@2944 armA lane2 [307685,307942) of span[307200,309248] pay 0.222  chunks 2  loss 0.8069
+    sleep@2952 armA lane2 [354855,355112) of span[354304,356352] pay 0.056  chunks 2  loss 0.6265
+    sleep@2960 armA lane3 [247319,247576) of span[245888,247936] pay 0.059  chunks 2  loss 0.6186
+    sleep@2968 armA lane2 [353327,353584) of span[352256,354304] pay 0.437  chunks 2  loss 0.9043
+    sleep@2976 armA lane0 [328638,328895) of span[327680,329728] pay 0.227  chunks 2  loss 0.8676
+    sleep@2984 armA lane2 [310756,311013) of span[309248,311296] pay 0.407  chunks 2  loss 0.5119
+    sleep@2992 armA lane2 [248416,248673) of span[247808,249856] pay 0.050  chunks 2  loss 0.7721
+    sleep@3000 armA lane3 [333237,333494) of span[331776,333824] pay 0.080  chunks 2  loss 0.7785
+step  3000  ce 0.859  loss 1.115  holds 1560  9,859 tok/s  [fid:3=+0.952 fid:4=+0.257 fid:5=+0.140 b0=+0.080 b1=+0.076 b2=+0.069 b3=+0.072]
+audit: {'holds': 1560, 'telescoping_exact': True, 'scoped': True, 'vetoes': 2500, 'proposed': 9960}
+panel:
+lane0 frontier recall:b3      target 0.12 phi0 0.44 band 5 due 426112
+lane0 frontier recall:b2      target 0.12 phi0 0.42 band 4 due 393344
+lane0 frontier recall:b1      target 0.13 phi0 0.40 band 3 due 385024
+lane0 frontier recall:b0      target 0.13 phi0 0.43 band 3 due 385152
+lane1 frontier recall:b3      target 0.12 phi0 0.44 band 5 due 426112
+lane1 frontier recall:b2      target 0.12 phi0 0.42 band 4 due 393344
+lane1 frontier recall:b1      target 0.13 phi0 0.40 band 3 due 385024
+lane1 frontier recall:b0      target 0.13 phi0 0.43 band 3 due 385152
+lane2 frontier recall:b3      target 0.12 phi0 0.44 band 5 due 426112
+lane2 frontier recall:b2      target 0.12 phi0 0.42 band 4 due 393344
+lane2 frontier recall:b1      target 0.13 phi0 0.40 band 3 due 385024
+lane2 frontier recall:b0      target 0.13 phi0 0.43 band 3 due 385152
+lane3 frontier recall:b3      target 0.12 phi0 0.44 band 5 due 426112
+lane3 frontier recall:b2      target 0.12 phi0 0.42 band 4 due 393344
+lane3 frontier recall:b1      target 0.13 phi0 0.40 band 3 due 385024
+lane3 frontier recall:b0      target 0.13 phi0 0.43 band 3 due 385152
+record   fid:3          0.955 (ema 0.952)
+record   fid:4          0.282 (ema 0.257)
+record   fid:5          0.236 (ema 0.140)
+record   recall:b0      0.082 (ema 0.080)
+record   recall:b1      0.077 (ema 0.076)
+record   recall:b2      0.071 (ema 0.069)
+record   recall:b3      0.072 (ema 0.072)
+{
+ "armA": {
+  "readout": {
+   "full": {
+    "ce": 1.6103,
+    "probe": 0.0664,
+    "n_probes": 105
+   },
+   "wiped": {
+    "ce": 1.6143,
+    "probe": 0.0665,
+    "n_probes": 105
+   }
+  },
+  "alphas": {
+   "3": 1.88,
+   "4": 1.9,
+   "5": 2.026
+  },
+  "ledger": 1560,
+  "sleep": {
+   "replayed": 742,
+   "blocks": 371,
+   "only_paid": true
+  },
+  "sleep_blocks": [
+   {
+    "step": 2984,
+    "arm": "A",
+    "lane": 2,
+    "span": [
+     309248,
+     311296
+    ],
+    "window": [
+     310756,
+     311013
+    ],
+    "pay": 0.4072,
+    "chunks": 2,
+    "loss": 0.5119
+   },
+   {
+    "step": 2992,
+    "arm": "A",
+    "lane": 2,
+    "span": [
+     247808,
+     249856
+    ],
+    "window": [
+     248416,
+     248673
+    ],
+    "pay": 0.0497,
+    "chunks": 2,
+    "loss": 0.7721
+   },
+   {
+    "step": 3000,
+    "arm": "A",
+    "lane": 3,
+    "span": [
+     331776,
+     333824
+    ],
+    "window": [
+     333237,
+     333494
+    ],
+    "pay": 0.0798,
+    "chunks": 2,
+    "loss": 0.7785
+   }
+  ]
+ }
+}
+=== armB ===
+resumed /private/tmp/claude-501/-Users-lukehamond-Projects-project/d1f549c3-d351-4a55-a201-ed9e78e9ade1/scratchpad/ab62/ab_init.pt at step 0 (ema keys: [])
+step     1  ce 5.108  loss 5.147  holds    0  15,095 tok/s  [b0=+0.005]
+    sleep@40 armB lane0 [3911,4168) of span[2176,4224] pay 0.066  chunks 2  loss 0.0023
+    sleep@48 armB lane3 [2305,2562) of span[2176,4224] pay 0.066  chunks 2  loss 0.0018
+    sleep@56 armB lane3 [3190,3447) of span[2176,4224] pay 0.066  chunks 2  loss 0.0021
+    sleep@64 armB lane2 [5191,5448) of span[4224,6272] pay 0.177  chunks 2  loss 0.0032
+    sleep@72 armB lane1 [7887,8144) of span[6272,8320] pay 0.243  chunks 2  loss 0.0036
+    sleep@80 armB lane0 [5223,5480) of span[4224,6272] pay 0.177  chunks 2  loss 0.0031
+    sleep@88 armB lane1 [3887,4144) of span[2176,4224] pay 0.066  chunks 2  loss 0.0027
+    sleep@96 armB lane1 [7516,7773) of span[6272,8320] pay 0.243  chunks 2  loss 0.0020
+    sleep@104 armB lane0 [10372,10629) of span[10368,12416] pay 0.266  chunks 2  loss 0.0031
+    sleep@112 armB lane3 [8865,9122) of span[8320,10368] pay 0.257  chunks 2  loss 0.0028
+    sleep@120 armB lane0 [10452,10709) of span[9984,12032] pay 0.093  chunks 2  loss 0.0028
+    sleep@128 armB lane1 [8529,8786) of span[8320,10368] pay 0.257  chunks 2  loss 0.0017
+    sleep@136 armB lane2 [10430,10687) of span[10368,12416] pay 0.266  chunks 2  loss 0.0014
+    sleep@144 armB lane1 [3506,3763) of span[2176,4224] pay 0.066  chunks 2  loss 0.0021
+    sleep@152 armB lane1 [9100,9357) of span[8320,10368] pay 0.257  chunks 2  loss 0.0015
+    sleep@160 armB lane0 [11232,11489) of span[10368,12416] pay 0.266  chunks 2  loss 0.0008
+    sleep@168 armB lane0 [11448,11705) of span[10368,12416] pay 0.266  chunks 2  loss 0.0014
+    sleep@176 armB lane0 [7168,7425) of span[6272,8320] pay 0.243  chunks 2  loss 0.0008
+    sleep@184 armB lane2 [17644,17901) of span[16512,18560] pay 0.038  chunks 2  loss 0.0009
+    sleep@192 armB lane0 [6744,7001) of span[6272,8320] pay 0.243  chunks 2  loss 0.0013
+    sleep@200 armB lane0 [11926,12183) of span[10368,12416] pay 0.266  chunks 2  loss 0.0007
+step   200  ce 1.950  loss 2.054  holds   84  10,702 tok/s  [fid:3=+0.554 fid:4=-0.083 fid:5=+0.237 b0=+0.013 b1=+0.007 b2=+0.010 b3=+0.014]
+    sleep@208 armB lane3 [8913,9170) of span[8320,10368] pay 0.257  chunks 2  loss 0.0020
+    sleep@216 armB lane2 [25172,25429) of span[24320,26368] pay 0.378  chunks 2  loss 0.0006
+    sleep@224 armB lane2 [25459,25716) of span[24320,26368] pay 0.378  chunks 2  loss 0.0020
+    sleep@232 armB lane1 [26572,26829) of span[26368,28416] pay 0.153  chunks 2  loss 0.0043
+    sleep@240 armB lane1 [7754,8011) of span[6272,8320] pay 0.243  chunks 2  loss 0.0023
+    sleep@248 armB lane0 [24951,25208) of span[24704,26752] pay 0.080  chunks 2  loss 0.0016
+    sleep@256 armB lane2 [25797,26054) of span[24320,26368] pay 0.378  chunks 2  loss 0.0009
+    sleep@264 armB lane2 [24717,24974) of span[16512,32896] pay 0.087  chunks 2  loss 0.0018
+    sleep@272 armB lane3 [23427,23684) of span[16512,32896] pay 0.087  chunks 2  loss 0.0013
+    sleep@280 armB lane1 [17884,18141) of span[16512,18560] pay 0.036  chunks 2  loss 0.0007
+    sleep@288 armB lane2 [6853,7110) of span[6272,8320] pay 0.243  chunks 2  loss 0.0016
+    sleep@296 armB lane1 [25342,25599) of span[24320,26368] pay 0.425  chunks 2  loss 0.0027
+    sleep@304 armB lane1 [31498,31755) of span[30464,32512] pay 0.354  chunks 2  loss 0.0009
+    sleep@312 armB lane1 [12115,12372) of span[10368,12416] pay 0.266  chunks 2  loss 0.0014
+    sleep@320 armB lane0 [4721,4978) of span[4224,6272] pay 0.177  chunks 2  loss 0.0016
+    sleep@328 armB lane3 [27195,27452) of span[26368,28416] pay 0.155  chunks 2  loss 0.0008
+    sleep@336 armB lane2 [10722,10979) of span[10368,12416] pay 0.266  chunks 2  loss 0.0006
+    sleep@344 armB lane1 [11807,12064) of span[10368,12416] pay 0.266  chunks 2  loss 0.0007
+    sleep@352 armB lane1 [31975,32232) of span[30464,32512] pay 0.354  chunks 2  loss 0.0005
+    sleep@360 armB lane1 [11266,11523) of span[10368,12416] pay 0.266  chunks 2  loss 0.0017
+    sleep@368 armB lane2 [26589,26846) of span[26368,28416] pay 0.127  chunks 2  loss 0.0008
+    sleep@376 armB lane1 [25047,25304) of span[16512,32896] pay 0.087  chunks 2  loss 0.0014
+    sleep@384 armB lane2 [33654,33911) of span[32896,34944] pay 0.043  chunks 2  loss 0.0004
+    sleep@392 armB lane1 [24380,24637) of span[24320,26368] pay 0.425  chunks 2  loss 0.0010
+    sleep@400 armB lane1 [24951,25208) of span[24320,26368] pay 0.425  chunks 2  loss 0.0006
+step   400  ce 1.510  loss 1.599  holds  188  10,540 tok/s  [fid:3=+0.810 fid:4=-0.017 fid:5=+0.231 b0=+0.028 b1=+0.018 b2=+0.017 b3=+0.018]
+    sleep@408 armB lane0 [33771,34028) of span[32512,34560] pay 0.109  chunks 2  loss 0.0007
+    sleep@416 armB lane0 [31270,31527) of span[30464,32512] pay 0.095  chunks 2  loss 0.0009
+    sleep@424 armB lane1 [19274,19531) of span[16512,32896] pay 0.087  chunks 2  loss 0.0008
+    sleep@432 armB lane3 [24729,24986) of span[24704,26752] pay 0.038  chunks 2  loss 0.0009
+    sleep@440 armB lane0 [45905,46162) of span[44800,46848] pay 0.243  chunks 2  loss 0.0009
+    sleep@448 armB lane0 [52066,52323) of span[50944,52992] pay 0.191  chunks 2  loss 0.0018
+    sleep@456 armB lane3 [9372,9629) of span[8320,10368] pay 0.257  chunks 2  loss 0.0012
+    sleep@464 armB lane0 [19911,20168) of span[18176,20224] pay 0.057  chunks 2  loss 0.0020
+    sleep@472 armB lane3 [31404,31661) of span[30464,32512] pay 0.101  chunks 2  loss 0.0004
+    sleep@480 armB lane3 [54342,54599) of span[52992,55040] pay 0.175  chunks 2  loss 0.0007
+    sleep@488 armB lane1 [31957,32214) of span[30464,32512] pay 0.354  chunks 2  loss 0.0005
+    sleep@496 armB lane1 [3780,4037) of span[2176,4224] pay 0.066  chunks 2  loss 0.0007
+    sleep@504 armB lane0 [52460,52717) of span[50944,52992] pay 0.191  chunks 2  loss 0.0005
+    sleep@512 armB lane3 [29064,29321) of span[28800,30848] pay 0.027  chunks 2  loss 0.0009
+    sleep@520 armB lane0 [31613,31870) of span[30464,32512] pay 0.095  chunks 2  loss 0.0027
+    sleep@528 armB lane3 [8434,8691) of span[8320,10368] pay 0.257  chunks 2  loss 0.0007
+    sleep@536 armB lane3 [27114,27371) of span[26368,28416] pay 0.155  chunks 2  loss 0.0009
+    sleep@544 armB lane2 [19786,20043) of span[16512,32896] pay 0.087  chunks 2  loss 0.0010
+    sleep@552 armB lane1 [59982,60239) of span[59136,61184] pay 0.091  chunks 2  loss 0.0008
+    sleep@560 armB lane0 [27482,27739) of span[26752,28800] pay 0.036  chunks 2  loss 0.0007
+    sleep@568 armB lane2 [24323,24580) of span[24320,26368] pay 0.378  chunks 2  loss 0.0014
+    sleep@576 armB lane3 [31740,31997) of span[30464,32512] pay 0.101  chunks 2  loss 0.0013
+    sleep@584 armB lane3 [49574,49831) of span[48896,50944] pay 0.321  chunks 2  loss 0.0002
+    sleep@592 armB lane2 [26809,27066) of span[26752,28800] pay 0.024  chunks 2  loss 0.0010
+    sleep@600 armB lane0 [54293,54550) of span[52992,55040] pay 0.063  chunks 2  loss 0.0002
+step   600  ce 1.409  loss 1.493  holds  288  10,376 tok/s  [fid:3=+0.853 fid:4=+0.078 fid:5=+0.226 b0=+0.034 b1=+0.025 b2=+0.027 b3=+0.027]
+    sleep@608 armB lane3 [9516,9773) of span[8320,10368] pay 0.257  chunks 2  loss 0.0005
+    sleep@616 armB lane3 [8507,8764) of span[8320,10368] pay 0.257  chunks 2  loss 0.0005
+    sleep@624 armB lane1 [58720,58977) of span[57088,59136] pay 0.228  chunks 2  loss 0.0007
+    sleep@632 armB lane2 [71946,72203) of span[71424,73472] pay 0.153  chunks 2  loss 0.0017
+    sleep@640 armB lane1 [5602,5859) of span[4224,6272] pay 0.177  chunks 2  loss 0.0011
+    sleep@648 armB lane0 [8049,8306) of span[6272,8320] pay 0.243  chunks 2  loss 0.0008
+    sleep@656 armB lane0 [4253,4510) of span[4224,6272] pay 0.177  chunks 2  loss 0.0003
+    sleep@664 armB lane1 [55615,55872) of span[55040,57088] pay 0.189  chunks 2  loss 0.0005
+    sleep@672 armB lane0 [14688,14945) of span[14464,16512] pay 0.026  chunks 2  loss 0.0004
+    sleep@680 armB lane3 [61562,61819) of span[61184,63232] pay 0.157  chunks 2  loss 0.0009
+    sleep@688 armB lane2 [24462,24719) of span[24320,26368] pay 0.378  chunks 2  loss 0.0008
+    sleep@696 armB lane3 [8842,9099) of span[8320,10368] pay 0.257  chunks 2  loss 0.0011
+    sleep@704 armB lane0 [41048,41305) of span[40704,42752] pay 0.112  chunks 2  loss 0.0001
+    sleep@712 armB lane3 [50223,50480) of span[48896,50944] pay 0.321  chunks 2  loss 0.0009
+    sleep@720 armB lane0 [55971,56228) of span[55040,57088] pay 0.284  chunks 2  loss 0.0008
+    sleep@728 armB lane0 [56056,56313) of span[55040,57088] pay 0.284  chunks 2  loss 0.0013
+    sleep@736 armB lane1 [32560,32817) of span[32512,34560] pay 0.368  chunks 2  loss 0.0004
+    sleep@744 armB lane2 [25023,25280) of span[24320,26368] pay 0.378  chunks 2  loss 0.0009
+    sleep@752 armB lane1 [30849,31106) of span[30464,32512] pay 0.354  chunks 2  loss 0.0003
+    sleep@760 armB lane2 [19079,19336) of span[18560,20608] pay 0.040  chunks 2  loss 0.0004
+    sleep@768 armB lane1 [80660,80917) of span[79616,81664] pay 0.185  chunks 2  loss 0.0010
+    sleep@776 armB lane1 [97240,97497) of span[96000,98048] pay 0.238  chunks 2  loss 0.0019
+    sleep@784 armB lane3 [30890,31147) of span[30848,32896] pay 0.018  chunks 2  loss 0.0011
+    sleep@792 armB lane3 [16941,17198) of span[16128,18176] pay 0.090  chunks 2  loss 0.0002
+    sleep@800 armB lane3 [9792,10049) of span[8320,10368] pay 0.257  chunks 2  loss 0.0005
+step   800  ce 1.042  loss 1.371  holds  388  10,290 tok/s  [fid:3=+0.869 fid:4=+0.162 fid:5=+0.221 b0=+0.042 b1=+0.036 b2=+0.034 b3=+0.033]
+    sleep@808 armB lane3 [98960,99217) of span[98048,100096] pay 0.071  chunks 2  loss 0.0010
+    sleep@816 armB lane0 [67052,67309) of span[65664,67712] pay 0.034  chunks 2  loss 0.0011
+    sleep@824 armB lane1 [34216,34473) of span[32512,34560] pay 0.368  chunks 2  loss 0.0003
+    sleep@832 armB lane3 [17419,17676) of span[16128,18176] pay 0.090  chunks 2  loss 0.0007
+    sleep@840 armB lane2 [78625,78882) of span[77568,79616] pay 0.232  chunks 2  loss 0.0017
+    sleep@848 armB lane0 [40112,40369) of span[39040,41088] pay 0.023  chunks 2  loss 0.0022
+    sleep@856 armB lane1 [57896,58153) of span[57088,59136] pay 0.228  chunks 2  loss 0.0010
+    sleep@864 armB lane3 [62829,63086) of span[61184,63232] pay 0.157  chunks 2  loss 0.0004
+    sleep@872 armB lane1 [27660,27917) of span[26368,28416] pay 0.153  chunks 2  loss 0.0021
+    sleep@880 armB lane1 [36454,36711) of span[34944,36992] pay 0.070  chunks 2  loss 0.0005
+    sleep@888 armB lane2 [25138,25395) of span[24704,26752] pay 0.035  chunks 2  loss 0.0003
+    sleep@896 armB lane0 [96627,96884) of span[96000,98048] pay 0.242  chunks 2  loss 0.0009
+    sleep@904 armB lane2 [6428,6685) of span[6272,8320] pay 0.243  chunks 2  loss 0.0005
+    sleep@912 armB lane2 [26978,27235) of span[26368,28416] pay 0.127  chunks 2  loss 0.0004
+    sleep@920 armB lane2 [78420,78677) of span[77568,79616] pay 0.232  chunks 2  loss 0.0010
+    sleep@928 armB lane3 [51211,51468) of span[50944,52992] pay 0.152  chunks 2  loss 0.0010
+    sleep@936 armB lane2 [3917,4174) of span[2176,4224] pay 0.066  chunks 2  loss 0.0008
+    sleep@944 armB lane3 [5902,6159) of span[4224,6272] pay 0.177  chunks 2  loss 0.0013
+    sleep@952 armB lane2 [19727,19984) of span[18560,20608] pay 0.040  chunks 2  loss 0.0014
+    sleep@960 armB lane1 [46495,46752) of span[44800,46848] pay 0.226  chunks 2  loss 0.0005
+    sleep@968 armB lane0 [99645,99902) of span[98048,100096] pay 0.092  chunks 2  loss 0.0008
+    sleep@976 armB lane1 [76562,76819) of span[75520,77568] pay 0.088  chunks 2  loss 0.0018
+    sleep@984 armB lane3 [4634,4891) of span[4224,6272] pay 0.177  chunks 2  loss 0.0013
+    sleep@992 armB lane1 [30885,31142) of span[30464,32512] pay 0.354  chunks 2  loss 0.0005
+    sleep@1000 armB lane0 [55926,56183) of span[55040,57088] pay 0.284  chunks 2  loss 0.0011
+step  1000  ce 1.077  loss 1.154  holds  488  10,232 tok/s  [fid:3=+0.892 fid:4=+0.219 fid:5=+0.214 b0=+0.042 b1=+0.040 b2=+0.040 b3=+0.037]
+    sleep@1008 armB lane1 [58096,58353) of span[57088,59136] pay 0.228  chunks 2  loss 0.0005
+    sleep@1016 armB lane1 [9683,9940) of span[8320,10368] pay 0.257  chunks 2  loss 0.0006
+    sleep@1024 armB lane2 [33928,34185) of span[32896,34944] pay 0.043  chunks 2  loss 0.0011
+    sleep@1032 armB lane1 [57754,58011) of span[57088,59136] pay 0.228  chunks 2  loss 0.0004
+    sleep@1040 armB lane3 [78391,78648) of span[77568,79616] pay 0.315  chunks 2  loss 0.0003
+    sleep@1048 armB lane1 [2499,2756) of span[128,131200] pay 1.000  chunks 2  loss 0.0013
+    sleep@1056 armB lane3 [12124,12381) of span[10368,12416] pay 0.266  chunks 2  loss 0.0007
+    sleep@1064 armB lane2 [34049,34306) of span[32896,34944] pay 0.043  chunks 2  loss 0.0008
+    sleep@1072 armB lane1 [115126,115383) of span[114432,116480] pay 0.496  chunks 2  loss 0.0014
+    sleep@1080 armB lane3 [49825,50082) of span[49280,51328] pay 0.152  chunks 2  loss 0.0010
+    sleep@1088 armB lane0 [97715,97972) of span[96000,98048] pay 0.242  chunks 2  loss 0.0004
+    sleep@1096 armB lane0 [47969,48226) of span[46848,48896] pay 0.216  chunks 2  loss 0.0017
+    sleep@1104 armB lane3 [42419,42676) of span[40704,42752] pay 0.194  chunks 2  loss 0.0014
+    sleep@1112 armB lane1 [97376,97633) of span[96384,98432] pay 0.035  chunks 2  loss 0.0008
+    sleep@1120 armB lane1 [115522,115779) of span[114432,116480] pay 0.496  chunks 2  loss 0.0010
+    sleep@1128 armB lane2 [27853,28110) of span[26368,28416] pay 0.127  chunks 2  loss 0.0011
+    sleep@1136 armB lane1 [6544,6801) of span[6272,8320] pay 0.243  chunks 2  loss 0.0009
+    sleep@1144 armB lane1 [25422,25679) of span[24320,26368] pay 0.425  chunks 2  loss 0.0016
+    sleep@1152 armB lane1 [27922,28179) of span[26368,28416] pay 0.153  chunks 2  loss 0.0019
+    sleep@1160 armB lane0 [48268,48525) of span[47232,49280] pay 0.038  chunks 2  loss 0.0005
+    sleep@1168 armB lane1 [58488,58745) of span[128,131200] pay 1.000  chunks 2  loss 0.0011
+    sleep@1176 armB lane3 [49129,49386) of span[48896,50944] pay 0.321  chunks 2  loss 0.0006
+    sleep@1184 armB lane2 [49008,49265) of span[47232,49280] pay 0.027  chunks 2  loss 0.0006
+    sleep@1192 armB lane1 [136892,137149) of span[135296,137344] pay 0.046  chunks 2  loss 0.0003
+    sleep@1200 armB lane0 [140393,140650) of span[139392,141440] pay 0.048  chunks 2  loss 0.0003
+step  1200  ce 1.101  loss 1.178  holds  596  10,148 tok/s  [fid:3=+0.893 fid:4=+0.249 fid:5=+0.207 b0=+0.044 b1=+0.043 b2=+0.041 b3=+0.041]
+    sleep@1208 armB lane1 [31592,31849) of span[30464,32512] pay 0.354  chunks 2  loss 0.0004
+    sleep@1216 armB lane0 [58422,58679) of span[128,131200] pay 1.000  chunks 2  loss 0.0007
+    sleep@1224 armB lane1 [24469,24726) of span[24320,26368] pay 0.425  chunks 2  loss 0.0006
+    sleep@1232 armB lane3 [62798,63055) of span[61184,63232] pay 0.157  chunks 2  loss 0.0005
+    sleep@1240 armB lane2 [31104,31361) of span[30848,32896] pay 0.036  chunks 2  loss 0.0002
+    sleep@1248 armB lane0 [56299,56556) of span[55040,57088] pay 0.284  chunks 2  loss 0.0006
+    sleep@1256 armB lane1 [97158,97415) of span[96384,98432] pay 0.035  chunks 2  loss 0.0019
+    sleep@1264 armB lane2 [27494,27751) of span[26368,28416] pay 0.127  chunks 2  loss 0.0007
+    sleep@1272 armB lane0 [47015,47272) of span[46848,48896] pay 0.216  chunks 2  loss 0.0008
+    sleep@1280 armB lane3 [147947,148204) of span[147200,149248] pay 0.361  chunks 2  loss 0.0012
+    sleep@1288 armB lane3 [148355,148612) of span[147200,149248] pay 0.361  chunks 2  loss 0.0007
+    sleep@1296 armB lane0 [100330,100587) of span[100096,102144] pay 0.335  chunks 2  loss 0.0012
+    sleep@1304 armB lane0 [90807,91064) of span[90240,92288] pay 0.062  chunks 2  loss 0.0006
+    sleep@1312 armB lane2 [41181,41438) of span[41088,43136] pay 0.036  chunks 2  loss 0.0005
+    sleep@1320 armB lane0 [139417,139674) of span[139392,141440] pay 0.048  chunks 2  loss 0.0008
+    sleep@1328 armB lane0 [126749,127006) of span[126720,128768] pay 0.147  chunks 2  loss 0.0005
+    sleep@1336 armB lane3 [40939,41196) of span[40704,42752] pay 0.194  chunks 2  loss 0.0007
+    sleep@1344 armB lane3 [148817,149074) of span[147200,149248] pay 0.361  chunks 2  loss 0.0006
+    sleep@1352 armB lane0 [41194,41451) of span[40704,42752] pay 0.112  chunks 2  loss 0.0013
+    sleep@1360 armB lane3 [138545,138802) of span[137344,139392] pay 0.015  chunks 2  loss 0.0004
+    sleep@1368 armB lane2 [96236,96493) of span[96000,98048] pay 0.105  chunks 2  loss 0.0002
+    sleep@1376 armB lane0 [101490,101747) of span[100096,102144] pay 0.335  chunks 2  loss 0.0026
+    sleep@1384 armB lane1 [74995,75252) of span[73472,75520] pay 0.256  chunks 2  loss 0.0003
+    sleep@1392 armB lane3 [160379,160636) of span[159488,161536] pay 0.424  chunks 2  loss 0.0008
+    sleep@1400 armB lane3 [89517,89774) of span[32896,163968] pay 0.355  chunks 2  loss 0.0008
+step  1400  ce 1.212  loss 1.548  holds  704  10,046 tok/s  [fid:3=+0.894 fid:4=+0.261 fid:5=+0.199 b0=+0.052 b1=+0.047 b2=+0.046 b3=+0.044]
+    sleep@1408 armB lane2 [148695,148952) of span[147584,149632] pay 0.050  chunks 2  loss 0.0003
+    sleep@1416 armB lane1 [164186,164443) of span[163584,165632] pay 0.223  chunks 2  loss 0.0011
+    sleep@1424 armB lane0 [105530,105787) of span[128,131200] pay 1.000  chunks 2  loss 0.0007
+    sleep@1432 armB lane1 [80425,80682) of span[80000,82048] pay 0.019  chunks 2  loss 0.0002
+    sleep@1440 armB lane2 [50249,50506) of span[128,131200] pay 1.000  chunks 2  loss 0.0006
+    sleep@1448 armB lane0 [48459,48716) of span[46848,48896] pay 0.216  chunks 2  loss 0.0004
+    sleep@1456 armB lane0 [168810,169067) of span[163968,180352] pay 0.111  chunks 2  loss 0.0008
+    sleep@1464 armB lane2 [135951,136208) of span[135296,137344] pay 0.093  chunks 2  loss 0.0005
+    sleep@1472 armB lane1 [113409,113666) of span[112768,114816] pay 0.042  chunks 2  loss 0.0005
+    sleep@1480 armB lane3 [100227,100484) of span[100096,102144] pay 0.166  chunks 2  loss 0.0004
+    sleep@1488 armB lane1 [170959,171216) of span[169728,171776] pay 0.163  chunks 2  loss 0.0017
+    sleep@1496 armB lane0 [178532,178789) of span[178304,180352] pay 0.030  chunks 2  loss 0.0012
+    sleep@1504 armB lane1 [91463,91720) of span[89856,91904] pay 0.035  chunks 2  loss 0.0009
+    sleep@1512 armB lane3 [125432,125689) of span[128,131200] pay 1.000  chunks 2  loss 0.0009
+    sleep@1520 armB lane3 [155266,155523) of span[147584,163968] pay 0.068  chunks 2  loss 0.0003
+    sleep@1528 armB lane2 [135442,135699) of span[134912,136960] pay 0.207  chunks 2  loss 0.0003
+    sleep@1536 armB lane1 [80041,80298) of span[79616,81664] pay 0.185  chunks 2  loss 0.0001
+    sleep@1544 armB lane0 [100600,100857) of span[100096,102144] pay 0.335  chunks 2  loss 0.0010
+    sleep@1552 armB lane1 [114447,114704) of span[112768,114816] pay 0.042  chunks 2  loss 0.0004
+    sleep@1560 armB lane3 [99974,100231) of span[98432,100480] pay 0.069  chunks 2  loss 0.0004
+    sleep@1568 armB lane0 [105858,106115) of span[128,131200] pay 1.000  chunks 2  loss 0.0007
+    sleep@1576 armB lane2 [185247,185504) of span[184448,186496] pay 0.055  chunks 2  loss 0.0011
+    sleep@1584 armB lane0 [181024,181281) of span[180352,196736] pay 0.107  chunks 2  loss 0.0003
+    sleep@1592 armB lane1 [110984,111241) of span[110336,112384] pay 0.201  chunks 2  loss 0.0006
+    sleep@1600 armB lane2 [141427,141684) of span[32896,163968] pay 0.383  chunks 2  loss 0.0005
+step  1600  ce 1.269  loss 1.366  holds  812  9,962 tok/s  [fid:3=+0.910 fid:4=+0.266 fid:5=+0.188 b0=+0.052 b1=+0.047 b2=+0.051 b3=+0.047]
+    sleep@1608 armB lane0 [176492,176749) of span[175872,177920] pay 0.041  chunks 2  loss 0.0005
+    sleep@1616 armB lane2 [98638,98895) of span[98432,100480] pay 0.095  chunks 2  loss 0.0004
+    sleep@1624 armB lane3 [106552,106809) of span[128,131200] pay 1.000  chunks 2  loss 0.0006
+    sleep@1632 armB lane0 [167868,168125) of span[167680,169728] pay 0.088  chunks 2  loss 0.0001
+    sleep@1640 armB lane0 [100137,100394) of span[100096,102144] pay 0.335  chunks 2  loss 0.0004
+    sleep@1648 armB lane3 [170550,170807) of span[169728,171776] pay 0.423  chunks 2  loss 0.0005
+    sleep@1656 armB lane2 [77032,77289) of span[75904,77952] pay 0.046  chunks 2  loss 0.0004
+    sleep@1664 armB lane3 [190037,190294) of span[188544,190592] pay 0.032  chunks 2  loss 0.0021
+    sleep@1672 armB lane3 [78869,79126) of span[77568,79616] pay 0.315  chunks 2  loss 0.0007
+    sleep@1680 armB lane1 [76511,76768) of span[75520,77568] pay 0.088  chunks 2  loss 0.0009
+    sleep@1688 armB lane3 [86904,87161) of span[128,131200] pay 1.000  chunks 2  loss 0.0004
+    sleep@1696 armB lane3 [91832,92089) of span[90240,92288] pay 0.114  chunks 2  loss 0.0014
+    sleep@1704 armB lane1 [178077,178334) of span[177920,179968] pay 0.161  chunks 2  loss 0.0012
+    sleep@1712 armB lane3 [136658,136915) of span[135296,137344] pay 0.058  chunks 2  loss 0.0016
+    sleep@1720 armB lane0 [111925,112182) of span[110336,112384] pay 0.161  chunks 2  loss 0.0004
+    sleep@1728 armB lane1 [106529,106786) of span[106240,108288] pay 0.129  chunks 2  loss 0.0005
+    sleep@1736 armB lane0 [185591,185848) of span[180352,196736] pay 0.107  chunks 2  loss 0.0001
+    sleep@1744 armB lane1 [130454,130711) of span[128,131200] pay 1.000  chunks 2  loss 0.0017
+    sleep@1752 armB lane2 [148432,148689) of span[147200,149248] pay 0.233  chunks 2  loss 0.0002
+    sleep@1760 armB lane0 [99564,99821) of span[128,131200] pay 1.000  chunks 2  loss 0.0008
+    sleep@1768 armB lane1 [107719,107976) of span[106240,108288] pay 0.129  chunks 2  loss 0.0003
+    sleep@1776 armB lane2 [90887,91144) of span[90240,92288] pay 0.073  chunks 2  loss 0.0005
+    sleep@1784 armB lane2 [200060,200317) of span[198784,200832] pay 0.085  chunks 2  loss 0.0009
+    sleep@1792 armB lane1 [195214,195471) of span[180352,196736] pay 0.061  chunks 2  loss 0.0005
+    sleep@1800 armB lane0 [118062,118319) of span[32896,163968] pay 0.362  chunks 2  loss 0.0004
+step  1800  ce 0.932  loss 1.204  holds  920  9,876 tok/s  [fid:3=+0.924 fid:4=+0.265 fid:5=+0.180 b0=+0.058 b1=+0.051 b2=+0.053 b3=+0.052]
+    sleep@1808 armB lane1 [119414,119671) of span[118528,120576] pay 0.024  chunks 2  loss 0.0006
+    sleep@1816 armB lane3 [159587,159844) of span[159488,161536] pay 0.424  chunks 2  loss 0.0006
+    sleep@1824 armB lane1 [179287,179544) of span[177920,179968] pay 0.161  chunks 2  loss 0.0013
+    sleep@1832 armB lane0 [99453,99710) of span[128,131200] pay 1.000  chunks 2  loss 0.0002
+    sleep@1840 armB lane2 [175122,175379) of span[174208,176256] pay 0.083  chunks 2  loss 0.0001
+    sleep@1848 armB lane3 [207716,207973) of span[206592,208640] pay 0.446  chunks 2  loss 0.0002
+    sleep@1856 armB lane1 [112702,112959) of span[128,131200] pay 1.000  chunks 2  loss 0.0003
+    sleep@1864 armB lane2 [211616,211873) of span[210688,212736] pay 0.167  chunks 2  loss 0.0012
+    sleep@1872 armB lane3 [100352,100480) of span[98432,100480] pay 0.069  chunks 1  loss 0.0000
+    sleep@1880 armB lane3 [209375,209632) of span[209024,211072] pay 0.058  chunks 2  loss 0.0002
+    sleep@1888 armB lane2 [103199,103456) of span[128,131200] pay 1.000  chunks 2  loss 0.0006
+    sleep@1896 armB lane1 [209493,209750) of span[208640,210688] pay 0.202  chunks 2  loss 0.0002
+    sleep@1904 armB lane3 [237350,237607) of span[237312,239360] pay 0.174  chunks 2  loss 0.0004
+    sleep@1912 armB lane1 [115158,115415) of span[114432,116480] pay 0.496  chunks 2  loss 0.0008
+    sleep@1920 armB lane3 [170943,171200) of span[169728,171776] pay 0.423  chunks 2  loss 0.0005
+    sleep@1928 armB lane0 [116010,116267) of span[128,131200] pay 1.000  chunks 2  loss 0.0005
+    sleep@1936 armB lane3 [234040,234297) of span[229504,245888] pay 0.039  chunks 2  loss 0.0006
+    sleep@1944 armB lane2 [156213,156470) of span[155392,157440] pay 0.055  chunks 2  loss 0.0002
+    sleep@1952 armB lane1 [113516,113773) of span[128,131200] pay 1.000  chunks 2  loss 0.0006
+    sleep@1960 armB lane2 [111861,112118) of span[128,131200] pay 1.000  chunks 2  loss 0.0006
+    sleep@1968 armB lane2 [123035,123292) of span[128,131200] pay 1.000  chunks 2  loss 0.0003
+    sleep@1976 armB lane1 [164912,165169) of span[163584,165632] pay 0.223  chunks 2  loss 0.0002
+    sleep@1984 armB lane3 [242813,243070) of span[241408,243456] pay 0.398  chunks 2  loss 0.0006
+    sleep@1992 armB lane1 [184050,184307) of span[180352,196736] pay 0.061  chunks 2  loss 0.0004
+    sleep@2000 armB lane3 [124847,125104) of span[128,131200] pay 1.000  chunks 2  loss 0.0007
+step  2000  ce 0.709  loss 0.785  holds 1024  9,820 tok/s  [fid:3=+0.929 fid:4=+0.265 fid:5=+0.173 b0=+0.065 b1=+0.052 b2=+0.052 b3=+0.053]
+    sleep@2008 armB lane1 [209100,209357) of span[208640,210688] pay 0.202  chunks 2  loss 0.0003
+    sleep@2016 armB lane2 [211378,211635) of span[210688,212736] pay 0.167  chunks 2  loss 0.0004
+    sleep@2024 armB lane1 [185939,186196) of span[184448,186496] pay 0.023  chunks 2  loss 0.0003
+    sleep@2032 armB lane2 [246451,246708) of span[245888,247936] pay 0.170  chunks 2  loss 0.0002
+    sleep@2040 armB lane3 [254145,254402) of span[253696,255744] pay 0.162  chunks 2  loss 0.0005
+    sleep@2048 armB lane0 [123466,123723) of span[128,131200] pay 1.000  chunks 2  loss 0.0005
+    sleep@2056 armB lane0 [228777,229034) of span[227456,229504] pay 0.033  chunks 2  loss 0.0003
+    sleep@2064 armB lane2 [245830,246087) of span[245504,247552] pay 0.149  chunks 2  loss 0.0006
+    sleep@2072 armB lane0 [176951,177208) of span[163968,180352] pay 0.111  chunks 2  loss 0.0002
+    sleep@2080 armB lane0 [246526,246783) of span[245888,247936] pay 0.109  chunks 2  loss 0.0002
+    sleep@2088 armB lane1 [154341,154598) of span[153728,155776] pay 0.064  chunks 2  loss 0.0003
+    sleep@2096 armB lane0 [246649,246906) of span[245888,247936] pay 0.109  chunks 2  loss 0.0008
+    sleep@2104 armB lane3 [130766,131023) of span[128,131200] pay 1.000  chunks 2  loss 0.0003
+    sleep@2112 armB lane3 [222861,223118) of span[213120,229504] pay 0.119  chunks 2  loss 0.0005
+    sleep@2120 armB lane3 [147452,147709) of span[147200,149248] pay 0.361  chunks 2  loss 0.0002
+    sleep@2128 armB lane1 [258844,259101) of span[257792,259840] pay 0.122  chunks 2  loss 0.0010
+    sleep@2136 armB lane1 [213097,213354) of span[212736,214784] pay 0.098  chunks 2  loss 0.0001
+    sleep@2144 armB lane0 [154575,154832) of span[147584,163968] pay 0.151  chunks 2  loss 0.0001
+    sleep@2152 armB lane3 [154853,155110) of span[32896,163968] pay 0.355  chunks 2  loss 0.0012
+    sleep@2160 armB lane1 [243394,243651) of span[241792,243840] pay 0.046  chunks 2  loss 0.0007
+    sleep@2168 armB lane3 [148595,148852) of span[147200,149248] pay 0.361  chunks 2  loss 0.0002
+    sleep@2176 armB lane1 [200088,200345) of span[198784,200832] pay 0.102  chunks 2  loss 0.0003
+    sleep@2184 armB lane1 [195358,195615) of span[194304,196352] pay 0.075  chunks 2  loss 0.0002
+    sleep@2192 armB lane1 [267098,267355) of span[265984,268032] pay 0.139  chunks 2  loss 0.0004
+    sleep@2200 armB lane2 [253779,254036) of span[253696,255744] pay 0.385  chunks 2  loss 0.0005
+step  2200  ce 1.123  loss 1.431  holds 1132  9,738 tok/s  [fid:3=+0.927 fid:4=+0.262 fid:5=+0.165 b0=+0.057 b1=+0.057 b2=+0.061 b3=+0.057]
+    sleep@2208 armB lane1 [221113,221370) of span[220928,222976] pay 0.087  chunks 2  loss 0.0005
+    sleep@2216 armB lane3 [265607,265864) of span[264320,266368] pay 0.102  chunks 2  loss 0.0003
+    sleep@2224 armB lane0 [148151,148408) of span[32896,163968] pay 0.362  chunks 2  loss 0.0005
+    sleep@2232 armB lane3 [276892,277149) of span[276608,278656] pay 0.131  chunks 2  loss 0.0006
+    sleep@2240 armB lane0 [279535,279792) of span[278272,280320] pay 0.413  chunks 2  loss 0.0005
+    sleep@2248 armB lane3 [271431,271688) of span[270080,272128] pay 0.210  chunks 2  loss 0.0002
+    sleep@2256 armB lane2 [251815,252072) of span[251648,253696] pay 0.139  chunks 2  loss 0.0015
+    sleep@2264 armB lane1 [213229,213486) of span[212736,214784] pay 0.098  chunks 2  loss 0.0017
+    sleep@2272 armB lane0 [289295,289552) of span[288512,290560] pay 0.474  chunks 2  loss 0.0003
+    sleep@2280 armB lane2 [281206,281463) of span[280320,282368] pay 0.128  chunks 2  loss 0.0003
+    sleep@2288 armB lane2 [211354,211611) of span[210688,212736] pay 0.167  chunks 2  loss 0.0004
+    sleep@2296 armB lane0 [218490,218747) of span[217216,219264] pay 0.123  chunks 2  loss 0.0005
+    sleep@2304 armB lane0 [278706,278963) of span[278272,280320] pay 0.413  chunks 2  loss 0.0004
+    sleep@2312 armB lane1 [164814,165071) of span[163584,165632] pay 0.223  chunks 2  loss 0.0002
+    sleep@2320 armB lane1 [243697,243954) of span[243456,245504] pay 0.160  chunks 2  loss 0.0003
+    sleep@2328 armB lane2 [250437,250694) of span[245888,262272] pay 0.161  chunks 2  loss 0.0010
+    sleep@2336 armB lane0 [192633,192890) of span[180352,196736] pay 0.107  chunks 2  loss 0.0004
+    sleep@2344 armB lane2 [246276,246533) of span[245888,247936] pay 0.170  chunks 2  loss 0.0002
+    sleep@2352 armB lane0 [246689,246946) of span[245504,247552] pay 0.121  chunks 2  loss 0.0005
+    sleep@2360 armB lane0 [163458,163715) of span[147584,163968] pay 0.151  chunks 2  loss 0.0002
+    sleep@2368 armB lane3 [295152,295409) of span[294656,296704] pay 0.461  chunks 2  loss 0.0012
+    sleep@2376 armB lane0 [285223,285480) of span[284800,286848] pay 0.076  chunks 2  loss 0.0002
+    sleep@2384 armB lane0 [200751,201008) of span[200448,202496] pay 0.143  chunks 2  loss 0.0004
+    sleep@2392 armB lane3 [254255,254512) of span[253696,255744] pay 0.162  chunks 2  loss 0.0002
+    sleep@2400 armB lane2 [220815,221072) of span[219264,221312] pay 0.041  chunks 2  loss 0.0001
+step  2400  ce 0.681  loss 0.756  holds 1240  9,669 tok/s  [fid:3=+0.938 fid:4=+0.260 fid:5=+0.158 b0=+0.066 b1=+0.060 b2=+0.062 b3=+0.058]
+    sleep@2408 armB lane2 [212087,212344) of span[210688,212736] pay 0.167  chunks 2  loss 0.0005
+    sleep@2416 armB lane0 [247651,247908) of span[245888,247936] pay 0.109  chunks 2  loss 0.0021
+    sleep@2424 armB lane1 [288856,289113) of span[288512,290560] pay 0.330  chunks 2  loss 0.0005
+    sleep@2432 armB lane3 [253929,254186) of span[245888,262272] pay 0.100  chunks 2  loss 0.0006
+    sleep@2440 armB lane0 [246137,246394) of span[245888,247936] pay 0.109  chunks 2  loss 0.0004
+    sleep@2448 armB lane0 [289680,289937) of span[288512,290560] pay 0.474  chunks 2  loss 0.0003
+    sleep@2456 armB lane3 [295075,295332) of span[294656,296704] pay 0.461  chunks 2  loss 0.0008
+    sleep@2464 armB lane1 [225629,225886) of span[225408,227456] pay 0.036  chunks 2  loss 0.0003
+    sleep@2472 armB lane3 [302897,303154) of span[302848,304896] pay 0.134  chunks 2  loss 0.0002
+    sleep@2480 armB lane2 [206458,206715) of span[204928,206976] pay 0.048  chunks 2  loss 0.0006
+    sleep@2488 armB lane0 [179503,179760) of span[163968,180352] pay 0.111  chunks 2  loss 0.0002
+    sleep@2496 armB lane3 [308886,309143) of span[307328,309376] pay 0.060  chunks 2  loss 0.0001
+    sleep@2504 armB lane0 [289841,290098) of span[288512,290560] pay 0.474  chunks 2  loss 0.0002
+    sleep@2512 armB lane2 [209664,209921) of span[208640,210688] pay 0.285  chunks 2  loss 0.0005
+    sleep@2520 armB lane1 [247537,247794) of span[245888,247936] pay 0.102  chunks 2  loss 0.0008
+    sleep@2528 armB lane3 [238342,238599) of span[237312,239360] pay 0.174  chunks 2  loss 0.0003
+    sleep@2536 armB lane0 [279825,280082) of span[278272,280320] pay 0.413  chunks 2  loss 0.0004
+    sleep@2544 armB lane0 [268417,268674) of span[268416,270464] pay 0.086  chunks 2  loss 0.0003
+    sleep@2552 armB lane2 [210110,210367) of span[208640,210688] pay 0.285  chunks 2  loss 0.0006
+    sleep@2560 armB lane2 [258416,258673) of span[257792,259840] pay 0.025  chunks 2  loss 0.0004
+    sleep@2568 armB lane1 [272823,273080) of span[272128,274176] pay 0.370  chunks 2  loss 0.0009
+    sleep@2576 armB lane3 [296055,296312) of span[294656,296704] pay 0.461  chunks 2  loss 0.0007
+    sleep@2584 armB lane0 [276455,276712) of span[276224,278272] pay 0.310  chunks 2  loss 0.0006
+    sleep@2592 armB lane0 [281093,281350) of span[280320,282368] pay 0.083  chunks 2  loss 0.0003
+    sleep@2600 armB lane2 [254836,255093) of span[253696,255744] pay 0.385  chunks 2  loss 0.0005
+step  2600  ce 1.615  loss 2.013  holds 1348  9,083 tok/s  [fid:3=+0.942 fid:4=+0.257 fid:5=+0.151 b0=+0.068 b1=+0.060 b2=+0.060 b3=+0.065]
+    sleep@2608 armB lane2 [194560,194688) of span[192640,194688] pay 0.095  chunks 1  loss 0.0000
+    sleep@2616 armB lane3 [242633,242890) of span[241408,243456] pay 0.398  chunks 2  loss 0.0007
+    sleep@2624 armB lane1 [293413,293670) of span[163968,295040] pay 0.150  chunks 2  loss 0.0002
+    sleep@2632 armB lane1 [307990,308247) of span[306944,308992] pay 0.405  chunks 2  loss 0.0002
+    sleep@2640 armB lane2 [230449,230706) of span[229504,231552] pay 0.014  chunks 2  loss 0.0002
+    sleep@2648 armB lane0 [281378,281635) of span[280320,282368] pay 0.083  chunks 2  loss 0.0001
+    sleep@2656 armB lane3 [258088,258345) of span[245888,262272] pay 0.100  chunks 2  loss 0.0003
+    sleep@2664 armB lane3 [293617,293874) of span[292992,295040] pay 0.031  chunks 2  loss 0.0004
+    sleep@2672 armB lane3 [261654,261911) of span[163968,295040] pay 0.162  chunks 2  loss 0.0001
+    sleep@2680 armB lane0 [289599,289856) of span[288512,290560] pay 0.474  chunks 2  loss 0.0002
+    sleep@2688 armB lane3 [234293,234550) of span[233216,235264] pay 0.274  chunks 2  loss 0.0007
+    sleep@2696 armB lane2 [206222,206479) of span[204544,206592] pay 0.121  chunks 2  loss 0.0004
+    sleep@2704 armB lane0 [289341,289598) of span[288512,290560] pay 0.474  chunks 2  loss 0.0001
+    sleep@2712 armB lane0 [257017,257274) of span[255744,257792] pay 0.329  chunks 2  loss 0.0003
+    sleep@2720 armB lane1 [290014,290271) of span[288512,290560] pay 0.330  chunks 2  loss 0.0006
+    sleep@2728 armB lane3 [304765,305022) of span[303232,305280] pay 0.058  chunks 2  loss 0.0002
+    sleep@2736 armB lane2 [220407,220664) of span[218880,220928] pay 0.133  chunks 2  loss 0.0002
+    sleep@2744 armB lane2 [255024,255281) of span[253696,255744] pay 0.385  chunks 2  loss 0.0004
+    sleep@2752 armB lane2 [246228,246485) of span[245888,262272] pay 0.161  chunks 2  loss 0.0003
+    sleep@2760 armB lane0 [277896,278153) of span[276608,278656] pay 0.161  chunks 2  loss 0.0002
+    sleep@2768 armB lane2 [245051,245308) of span[243456,245504] pay 0.023  chunks 2  loss 0.0002
+    sleep@2776 armB lane2 [347458,347715) of span[345856,347904] pay 0.222  chunks 2  loss 0.0002
+    sleep@2784 armB lane1 [260588,260845) of span[260224,262272] pay 0.027  chunks 2  loss 0.0010
+    sleep@2792 armB lane2 [324782,325039) of span[311424,327808] pay 0.029  chunks 2  loss 0.0004
+    sleep@2800 armB lane1 [327828,328085) of span[327808,329856] pay 0.031  chunks 2  loss 0.0004
+step  2800  ce 0.758  loss 0.989  holds 1452  8,773 tok/s  [fid:3=+0.946 fid:4=+0.256 fid:5=+0.143 b0=+0.073 b1=+0.067 b2=+0.062 b3=+0.062]
+    sleep@2808 armB lane1 [274717,274974) of span[274176,276224] pay 0.199  chunks 2  loss 0.0007
+    sleep@2816 armB lane0 [334410,334667) of span[333568,335616] pay 0.417  chunks 2  loss 0.0005
+    sleep@2824 armB lane3 [343258,343515) of span[342144,344192] pay 0.185  chunks 2  loss 0.0004
+    sleep@2832 armB lane2 [271410,271667) of span[270464,272512] pay 0.095  chunks 2  loss 0.0002
+    sleep@2840 armB lane1 [342752,343009) of span[341760,343808] pay 0.119  chunks 2  loss 0.0002
+    sleep@2848 armB lane2 [254741,254998) of span[253696,255744] pay 0.385  chunks 2  loss 0.0003
+    sleep@2856 armB lane3 [234261,234518) of span[233216,235264] pay 0.274  chunks 2  loss 0.0007
+    sleep@2864 armB lane1 [244665,244922) of span[243456,245504] pay 0.160  chunks 2  loss 0.0016
+    sleep@2872 armB lane0 [285527,285784) of span[284800,286848] pay 0.076  chunks 2  loss 0.0002
+    sleep@2880 armB lane3 [240266,240523) of span[239360,241408] pay 0.068  chunks 2  loss 0.0003
+    sleep@2888 armB lane3 [234254,234511) of span[233216,235264] pay 0.274  chunks 2  loss 0.0008
+    sleep@2896 armB lane1 [327755,328012) of span[327424,329472] pay 0.133  chunks 2  loss 0.0007
+    sleep@2904 armB lane0 [324151,324408) of span[323328,325376] pay 0.233  chunks 2  loss 0.0004
+    sleep@2912 armB lane2 [315700,315957) of span[315136,317184] pay 0.057  chunks 2  loss 0.0006
+    sleep@2920 armB lane3 [307755,308012) of span[307328,309376] pay 0.060  chunks 2  loss 0.0002
+    sleep@2928 armB lane0 [303333,303590) of span[302848,304896] pay 0.213  chunks 2  loss 0.0002
+    sleep@2936 armB lane2 [350503,350760) of span[349952,352000] pay 0.219  chunks 2  loss 0.0005
+    sleep@2944 armB lane2 [246935,247192) of span[245504,247552] pay 0.149  chunks 2  loss 0.0003
+    sleep@2952 armB lane0 [349359,349616) of span[348288,350336] pay 0.054  chunks 2  loss 0.0002
+    sleep@2960 armB lane2 [328382,328639) of span[327424,329472] pay 0.165  chunks 2  loss 0.0002
+    sleep@2968 armB lane3 [304740,304997) of span[303232,305280] pay 0.058  chunks 2  loss 0.0002
+    sleep@2976 armB lane1 [246496,246753) of span[245888,247936] pay 0.102  chunks 2  loss 0.0004
+    sleep@2984 armB lane1 [329269,329526) of span[327808,329856] pay 0.031  chunks 2  loss 0.0002
+    sleep@2992 armB lane2 [381811,382068) of span[380672,382720] pay 0.207  chunks 2  loss 0.0004
+    sleep@3000 armB lane2 [277856,278113) of span[276608,278656] pay 0.102  chunks 2  loss 0.0002
+step  3000  ce 0.923  loss 1.187  holds 1560  8,785 tok/s  [fid:3=+0.953 fid:4=+0.252 fid:5=+0.136 b0=+0.072 b1=+0.071 b2=+0.066 b3=+0.069]
+audit: {'holds': 1560, 'telescoping_exact': True, 'scoped': True, 'vetoes': 2484, 'proposed': 9952}
+panel:
+lane0 frontier recall:b3      target 0.11 phi0 0.46 band 5 due 426112
+lane0 frontier recall:b2      target 0.12 phi0 0.43 band 4 due 393344
+lane0 frontier recall:b1      target 0.12 phi0 0.41 band 3 due 384768
+lane0 frontier recall:b0      target 0.13 phi0 0.42 band 3 due 385152
+lane1 frontier recall:b3      target 0.11 phi0 0.46 band 5 due 426112
+lane1 frontier recall:b2      target 0.12 phi0 0.43 band 4 due 393344
+lane1 frontier recall:b1      target 0.12 phi0 0.41 band 3 due 384768
+lane1 frontier recall:b0      target 0.13 phi0 0.42 band 3 due 385152
+lane2 frontier recall:b3      target 0.11 phi0 0.46 band 5 due 426112
+lane2 frontier recall:b2      target 0.12 phi0 0.43 band 4 due 393344
+lane2 frontier recall:b1      target 0.12 phi0 0.41 band 3 due 384768
+lane2 frontier recall:b0      target 0.13 phi0 0.42 band 3 due 385152
+lane3 frontier recall:b3      target 0.11 phi0 0.46 band 5 due 426112
+lane3 frontier recall:b2      target 0.12 phi0 0.43 band 4 due 393344
+lane3 frontier recall:b1      target 0.12 phi0 0.41 band 3 due 384768
+lane3 frontier recall:b0      target 0.13 phi0 0.42 band 3 due 385152
+record   fid:3          0.957 (ema 0.953)
+record   fid:4          0.266 (ema 0.252)
+record   fid:5          0.238 (ema 0.136)
+record   recall:b0      0.081 (ema 0.072)
+record   recall:b1      0.073 (ema 0.071)
+record   recall:b2      0.068 (ema 0.066)
+record   recall:b3      0.069 (ema 0.069)
+{
+ "armB": {
+  "readout": {
+   "full": {
+    "ce": 1.3475,
+    "probe": 0.0725,
+    "n_probes": 105
+   },
+   "wiped": {
+    "ce": 1.3437,
+    "probe": 0.0727,
+    "n_probes": 105
+   }
+  },
+  "alphas": {
+   "3": 1.89,
+   "4": 1.916,
+   "5": 2.047
+  },
+  "ledger": 1560,
+  "sleep": {
+   "replayed": 740,
+   "blocks": 371,
+   "only_paid": true
+  },
+  "sleep_blocks": [
+   {
+    "step": 2984,
+    "arm": "B",
+    "lane": 1,
+    "span": [
+     327808,
+     329856
+    ],
+    "window": [
+     329269,
+     329526
+    ],
+    "pay": 0.0305,
+    "chunks": 2,
+    "loss": 0.0002
+   },
+   {
+    "step": 2992,
+    "arm": "B",
+    "lane": 2,
+    "span": [
+     380672,
+     382720
+    ],
+    "window": [
+     381811,
+     382068
+    ],
+    "pay": 0.2074,
+    "chunks": 2,
+    "loss": 0.0004
+   },
+   {
+    "step": 3000,
+    "arm": "B",
+    "lane": 2,
+    "span": [
+     276608,
+     278656
+    ],
+    "window": [
+     277856,
+     278113
+    ],
+    "pay": 0.102,
+    "chunks": 2,
+    "loss": 0.0002
+   }
+  ]
+ }
+}
+
+=== A62 debug A/B summary ===
+control  full ce 1.3976 probe 0.0645 | wiped ce 1.3967 probe 0.0644 | alphas {'3': 1.901, '4': 1.929, '5': 2.063}
+armA     full ce 1.6103 probe 0.0664 | wiped ce 1.6143 probe 0.0665 | alphas {'3': 1.88, '4': 1.9, '5': 2.026}
+armB     full ce 1.3475 probe 0.0725 | wiped ce 1.3437 probe 0.0727 | alphas {'3': 1.89, '4': 1.916, '5': 2.047}

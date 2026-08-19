@@ -1,0 +1,172 @@
+{
+ "control": {
+  "readout": {
+   "full": {
+    "ce": 1.3976,
+    "probe": 0.0645,
+    "n_probes": 105
+   },
+   "wiped": {
+    "ce": 1.3967,
+    "probe": 0.0644,
+    "n_probes": 105
+   }
+  },
+  "alphas": {
+   "3": 1.901,
+   "4": 1.929,
+   "5": 2.063
+  },
+  "ledger": 1560
+ },
+ "armA": {
+  "readout": {
+   "full": {
+    "ce": 1.6103,
+    "probe": 0.0664,
+    "n_probes": 105
+   },
+   "wiped": {
+    "ce": 1.6143,
+    "probe": 0.0665,
+    "n_probes": 105
+   }
+  },
+  "alphas": {
+   "3": 1.88,
+   "4": 1.9,
+   "5": 2.026
+  },
+  "ledger": 1560,
+  "sleep": {
+   "replayed": 742,
+   "blocks": 371,
+   "only_paid": true
+  },
+  "sleep_blocks": [
+   {
+    "step": 2984,
+    "arm": "A",
+    "lane": 2,
+    "span": [
+     309248,
+     311296
+    ],
+    "window": [
+     310756,
+     311013
+    ],
+    "pay": 0.4072,
+    "chunks": 2,
+    "loss": 0.5119
+   },
+   {
+    "step": 2992,
+    "arm": "A",
+    "lane": 2,
+    "span": [
+     247808,
+     249856
+    ],
+    "window": [
+     248416,
+     248673
+    ],
+    "pay": 0.0497,
+    "chunks": 2,
+    "loss": 0.7721
+   },
+   {
+    "step": 3000,
+    "arm": "A",
+    "lane": 3,
+    "span": [
+     331776,
+     333824
+    ],
+    "window": [
+     333237,
+     333494
+    ],
+    "pay": 0.0798,
+    "chunks": 2,
+    "loss": 0.7785
+   }
+  ]
+ },
+ "armB": {
+  "readout": {
+   "full": {
+    "ce": 1.3475,
+    "probe": 0.0725,
+    "n_probes": 105
+   },
+   "wiped": {
+    "ce": 1.3437,
+    "probe": 0.0727,
+    "n_probes": 105
+   }
+  },
+  "alphas": {
+   "3": 1.89,
+   "4": 1.916,
+   "5": 2.047
+  },
+  "ledger": 1560,
+  "sleep": {
+   "replayed": 740,
+   "blocks": 371,
+   "only_paid": true
+  },
+  "sleep_blocks": [
+   {
+    "step": 2984,
+    "arm": "B",
+    "lane": 1,
+    "span": [
+     327808,
+     329856
+    ],
+    "window": [
+     329269,
+     329526
+    ],
+    "pay": 0.0305,
+    "chunks": 2,
+    "loss": 0.0002
+   },
+   {
+    "step": 2992,
+    "arm": "B",
+    "lane": 2,
+    "span": [
+     380672,
+     382720
+    ],
+    "window": [
+     381811,
+     382068
+    ],
+    "pay": 0.2074,
+    "chunks": 2,
+    "loss": 0.0004
+   },
+   {
+    "step": 3000,
+    "arm": "B",
+    "lane": 2,
+    "span": [
+     276608,
+     278656
+    ],
+    "window": [
+     277856,
+     278113
+    ],
+    "pay": 0.102,
+    "chunks": 2,
+    "loss": 0.0002
+   }
+  ]
+ }
+}

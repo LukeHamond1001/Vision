@@ -2826,6 +2826,34 @@ scale, not blocking this one. Target cost: $15–40 total.
   held-out CE + probe recall, full vs store-wiped; prediction
   B > A > control on wiped-row recovery. Cost so far: $0.
 
+- **A62 DEBUG A/B VERDICT — ARM B (distillation) FROZEN as the
+  Phase 1 mechanism** (2026-08-19 ~08:05 UTC; 3 arms x 3000
+  steps, local CPU, $0). Held-out readout (40 chunks, eval-seed
+  weaver): control CE 1.3976 / probe 0.0645; ARM A CE 1.6103 /
+  probe 0.0664; ARM B CE 1.3475 / probe 0.0725. Reality vs the
+  pre-registered prediction (B > A > control): B > control > A.
+  ARM B improved CE 3.6% and probe recall 12% over control; ARM
+  A HURT (CE +15%) — raw re-feeding of recent paid material at
+  dose 1:4 distorts the trunk, while distilling toward the
+  store-augmented teacher consolidates. ISOLATION was perfect
+  by design: all three arms produced bit-identical 1,560-entry
+  drive ledgers (sleep consumes no torch RNG; arms differ only
+  through sleep weight updates). Laws in vivo: 371 blocks / ~740
+  replayed chunks per sleep arm, audit only_paid=True. Wiped vs
+  full rows were near-identical in every arm — the debug-tier
+  store margin is null exactly as at v9.4, so at THIS tier B
+  acts as paid-span SELF-distillation (teacher ~= trunk); the
+  discriminating test of store-content transfer is the v-scale
+  gate (teach-probe store-wipe, pre-registered), where the
+  teacher's bonus is real (v94-best alphas 5.61/3.89/3.00).
+  Mechanical note: KL per block is tiny (~1e-4) but Adam
+  normalizes small consistent gradients to lr-scale steps — the
+  effect is real, not noise; alphas stayed live under wake
+  pricing in all arms (~1.9-2.06 from seed 2.0). NEXT: v-scale
+  application = wake from v94-best at the certified shape with
+  ARM B interleaved, dose ladder {1:16, 1:8, 1:4}, then the
+  store-wipe gate scored locally; verdict = A63.
+
 ## Status
 
 **(2026-08-19, post-v9.4)** The substrate campaign is complete:
