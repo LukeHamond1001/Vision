@@ -198,9 +198,13 @@ class Sleeper:
         spans = []
         for i, p in enumerate(drive.presses):
             if p["v"] > 0:
+                # A67: t1 = press position + 1 — the press TOKEN is
+                # the span's final CE target, so replay also teaches
+                # PREDICTING the press ("this exchange earns <+2>"):
+                # approval understanding from real presses only
                 spans.append({"lane": p["lane"],
                               "t0": max(0, p["t"] - span_w),
-                              "t1": p["t"], "pay": float(p["v"]),
+                              "t1": p["t"] + 1, "pay": float(p["v"]),
                               "i": -(i + 1)})
             else:
                 spans = [s for s in spans

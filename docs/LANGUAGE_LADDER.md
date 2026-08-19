@@ -3278,6 +3278,35 @@ scale, not blocking this one. Target cost: $15–40 total.
   hand: scripts/serve_v94s.py. Four rounds, four convictions,
   one pass — the ledger method, working as built.
 
+- **A67 THE LIFE — one continuous existence across sessions,
+  pre-registered** (2026-08-19; user go: "talk to it and teach
+  it more and reward more to build those higher bands"). FOUR
+  ENABLERS: (1) PERSISTENT LIFE — /save and --resume carry the
+  ENTIRE life: band/store state, pending window, press ledger,
+  minted channels, sleeper buffers+provenance, sleep optimizer
+  moments, prophet heads, RNG streams. Band 4 ticks every ~16k
+  tokens and band 5 every ~131k — no single sitting reaches
+  them; a persistent life accumulates them across days, which
+  is the point of having slow bands at all. (2) THE PRESS
+  BECOMES A TARGET — press spans extend one token so replay-CE
+  also teaches PREDICTING the press ("this exchange earns
+  <+2>"): ground-level approval understanding, trained only by
+  real presses, and the cure path for the act-3a untrained-
+  embedding interference. (3) PROPHETS AT SERVE + PERSISTED —
+  the band press-predictors observe every commit and their
+  heads/opt/stats survive sessions; their accumulated fidelity
+  is the pre-registered trigger for graduating secondaries
+  from spectators to payers (a separate, later decision).
+  (4) LONGER SITTINGS are protocol, not code — the room
+  already supports them. Laws: life-continuity (a saved+
+  resumed session is bit-equal to one that never stopped:
+  state, logits, economy), press-in-span provenance, prophet
+  persistence. ORIGINALS VERIFIED SAFE pre-build: v94-best +
+  488k final (results-v94), v94s 296k + 280k (results-v94s),
+  v9.3 corpse, data-r1eval — all on remote; v94sp is
+  deterministic surgery from banked inputs; parented weights
+  never overwrite originals.
+
 ## Status
 
 **(2026-08-19, post-v9.4)** The substrate campaign is complete:

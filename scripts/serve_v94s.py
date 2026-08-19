@@ -1,19 +1,23 @@
-"""A65 — the parenting room. Live serving REPL on the
+"""A65/A67 — the parenting room. One continuous life on the
 press-extended substrate.
 
-  python3 scripts/serve_v94s.py --dir <surgery outdir>
+  python3 scripts/serve_v94s.py --dir <surgery outdir> \
+      [--resume <v94sp_life.pt>]
 
   you> hello                 your turn; the model replies
   you> /+2  /+1  /-1  /-2    press the graded button
-  you> /sleep [blocks]       consolidate pressed episodes (ARM B)
-  you> /wipe                 context wipe (act-3 readout state)
+  you> /sleep [blocks]       consolidate pressed episodes (ARM A)
+  you> /wipe                 context wipe (retention testing)
   you> /state                economy panel
-  you> /save [path]          save weights + session record
-  you> /quit                 save and exit
+  you> /prophet              band press-predictor fidelity
+  you> /save [path]          save the whole life
+  you> /quit                 save the life and exit
 
-Generation runs at the faithful regime (state advances only on
-exact-T commits); ~0.2-0.5s per token on this Mac's CPU — short
-replies land in a few seconds.
+/quit writes v94sp_life.pt — band/store state, press ledger,
+sleeper memory, prophet heads, optimizer moments, RNG streams.
+--resume continues that exact life (A67 law: bit-equal to never
+having stopped). The pristine substrate v94sp.pt is never
+overwritten. Replies ~0.1-0.5s on the Mac.
 """
 
 import argparse
@@ -46,24 +50,38 @@ def main():
     ap.add_argument("--greedy", action="store_true")
     ap.add_argument("--seed", type=int, default=0)
     ap.add_argument("--log", default=None)
+    ap.add_argument("--resume", default=None,
+                    help="A67: a saved life (v94sp_life.pt) — the "
+                         "same existence continues")
     a = ap.parse_args()
     tok = load_tokenizer(os.path.join(a.dir, "tokenizer_press.json"))
     V = tok.get_vocab_size()
-    st = torch.load(os.path.join(a.dir, "v94sp.pt"),
-                    map_location="cpu", weights_only=False)
     m = HybridLM(V, d=a.d, max_T=a.T, store="matrix", keyed="logit",
                  norm_mix=True, aux_trunk=0.2, use_xl=False,
                  gate_init=-2.0)
-    m.load_state_dict(st["model"])
-    print(f"substrate loaded: step {st.get('step')}, vocab {V}, "
-          f"{m.n_params():,} params", flush=True)
+    resume_state = None
+    if a.resume:
+        resume_state = torch.load(a.resume, map_location="cpu",
+                                  weights_only=False)
+        print(f"resuming life from {a.resume}", flush=True)
+    else:
+        st = torch.load(os.path.join(a.dir, "v94sp.pt"),
+                        map_location="cpu", weights_only=False)
+        m.load_state_dict(st["model"])
+        print(f"fresh substrate: step {st.get('step')}", flush=True)
+    from iga.lm_press import PressProphet
     log = a.log or os.path.join(a.dir, "session.jsonl")
+    # A66-R3: serve consolidation is ARM A (replay-CE, self-anchoring)
     s = ServeSession(
         m, tok, T=a.T, device="cpu",
-        sleeper=Sleeper(arm="B", every=0, block_chunks=2, seed=1,
-                        min_step_loss=1e-4, replay_twice=True),
+        sleeper=Sleeper(arm="A", every=0, block_chunks=2, seed=1,
+                        min_step_loss=1e-4),
         temperature=0.0 if a.greedy else a.temp, top_k=a.top_k,
-        max_reply=a.max_reply, log_path=log, seed=a.seed)
+        max_reply=a.max_reply, log_path=log, seed=a.seed,
+        sleep_lr=5e-5, prophet=PressProphet(d=a.d),
+        resume_state=resume_state)
+    print(f"vocab {V}, {m.n_params():,} params | life: {s.pos} "
+          f"tokens, {len(s.drive.presses)} presses", flush=True)
     print(f"session log -> {log}\nready. /quit to save+exit.",
           flush=True)
     presses = {"/+1": 1, "/+2": 2, "/-1": -1, "/-2": -2}
@@ -91,15 +109,18 @@ def main():
         elif line.startswith("/save"):
             parts = line.split()
             path = parts[1] if len(parts) > 1 else \
-                os.path.join(a.dir, "v94sp_parented.pt")
+                os.path.join(a.dir, "v94sp_life.pt")
             s.save(path)
-            print(f"  [saved {path}]", flush=True)
+            print(f"  [life saved {path}]", flush=True)
         elif line == "/state":
             print("  " + json.dumps(s.panel()), flush=True)
+        elif line == "/prophet":
+            print("  " + json.dumps(s.prophet.report()), flush=True)
         elif line == "/quit":
-            path = os.path.join(a.dir, "v94sp_parented.pt")
+            path = os.path.join(a.dir, "v94sp_life.pt")
             s.save(path)
-            print(f"  [saved {path}; bye]", flush=True)
+            print(f"  [life saved -> {path}; resume with "
+                  f"--resume {path}]", flush=True)
             break
         else:
             s.user(line)

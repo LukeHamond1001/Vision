@@ -36,7 +36,8 @@ class ServeSession:
     def __init__(self, model, tok, T=2048, device="cpu",
                  sleeper=None, temperature=0.8, top_k=40,
                  max_reply=64, log_path=None, seed=0,
-                 sleep_lr=SLEEP_LR):
+                 sleep_lr=SLEEP_LR, prophet=None,
+                 resume_state=None):
         self.m = model.eval()
         self.tok = tok
         self.T = T
@@ -59,8 +60,11 @@ class ServeSession:
         self._gen = torch.Generator().manual_seed(seed)
         self.sleep_lr = float(sleep_lr)
         self._opt = None
+        self.prophet = prophet
         self.log_path = log_path
         self.events = []
+        if resume_state is not None:
+            self._restore(resume_state)   # A67: the life continues
 
     # ---------- the stream ----------
     @property
@@ -86,6 +90,10 @@ class ServeSession:
         self.n_committed += len(chunk)
         if self.sleeper is not None:
             self.sleeper.observe(x.cpu())
+        if self.prophet is not None:
+            # A67: the band press-predictors watch every commit
+            self.m._st = self.st
+            self.prophet.observe(self.m, self.drive)
 
     def _flush(self):
         """Commit the pending window as ONE SHORT chunk — content-
@@ -181,10 +189,70 @@ class ServeSession:
         return {"spans": n, "blocks": done, "audit": a}
 
     def save(self, path):
-        torch.save({"model": self.m.state_dict(),
-                    "n_tokens": self.pos,
-                    "presses": self.drive.presses,
-                    "events": self.events[-2000:]}, path)
+        """A67: save the WHOLE life — weights, band/store state,
+        the pending window, the press ledger, the sleeper's buffers
+        and provenance, optimizer moments, prophet heads, RNG
+        streams. A resumed session is the same life continuing."""
+        d = self.drive
+        out = {"model": self.m.state_dict(),
+               "st": state_copy(self.st),
+               "pending": list(self.pending),
+               "n_committed": self.n_committed,
+               "drive": {"presses": list(d.presses),
+                         "minted": sorted(d.minted),
+                         "neg_count": dict(d.neg_count),
+                         "veto_until": dict(d.veto_until),
+                         "step_t": d.step_t},
+               "gen_state": self._gen.get_state(),
+               "events_tail": self.events[-2000:]}
+        if self._opt is not None:
+            out["sleep_opt"] = self._opt.state_dict()
+        if self.sleeper is not None:
+            sl = self.sleeper
+            out["sleeper"] = {"buffers": sl.buffers,
+                              "start": sl.start, "T": sl.T,
+                              "replayed": sl.replayed,
+                              "stats": sl.stats,
+                              "steps_taken": sl.steps_taken,
+                              "rng": sl.rng.getstate()}
+        if self.prophet is not None:
+            out["prophet"] = {
+                "heads": self.prophet.heads.state_dict(),
+                "opt": self.prophet.opt.state_dict(),
+                "stats": self.prophet.stats}
+        torch.save(out, path)
+
+    def _restore(self, rs):
+        self.m.load_state_dict(rs["model"])
+        self.st = rs["st"]
+        self.pending = list(rs["pending"])
+        self.n_committed = rs["n_committed"]
+        dr = rs["drive"]
+        self.drive.presses = list(dr["presses"])
+        self.drive.minted = set(dr["minted"])
+        self.drive.neg_count = dict(dr["neg_count"])
+        self.drive.veto_until = dict(dr["veto_until"])
+        self.drive.step_t = dr["step_t"]
+        self._gen.set_state(rs["gen_state"])
+        if "sleep_opt" in rs:
+            self._opt = torch.optim.AdamW(self.m.parameters(),
+                                          lr=self.sleep_lr)
+            self._opt.load_state_dict(rs["sleep_opt"])
+        if self.sleeper is not None and "sleeper" in rs:
+            sl, ss = self.sleeper, rs["sleeper"]
+            sl.buffers = ss["buffers"]
+            sl.start = ss["start"]
+            sl.T = ss["T"]
+            sl.replayed = ss["replayed"]
+            sl.stats = ss["stats"]
+            sl.steps_taken = ss["steps_taken"]
+            sl.rng.setstate(ss["rng"])
+        if self.prophet is not None and "prophet" in rs:
+            self.prophet.heads.load_state_dict(rs["prophet"]["heads"])
+            self.prophet.opt.load_state_dict(rs["prophet"]["opt"])
+            self.prophet.stats = rs["prophet"]["stats"]
+        self._log({"kind": "resume", "pos": self.pos,
+                   "presses": len(self.drive.presses)})
 
     def panel(self):
         spans = 0

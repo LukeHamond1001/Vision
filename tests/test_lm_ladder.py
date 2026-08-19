@@ -1471,10 +1471,11 @@ class TestServeLaws(unittest.TestCase):
         s._flush()
         n = sl.harvest_presses(s.drive, span_w=128)
         self.assertEqual(n, 1)
+        # A67: t1 = press pos + 1 — the press token is in the span
         self.assertEqual((sl.spans[0]["t0"], sl.spans[0]["t1"]),
-                         (172, 300))
+                         (172, 301))
         # A66-R4: a narrow void reach spares spans the -1 did not
-        # actually judge — the [272,400] span survives at void_w=32
+        # actually judge — the [272,401] span survives at void_w=32
         self.assertEqual(
             sl.harvest_presses(s.drive, span_w=128, void_w=32), 2)
         n = sl.harvest_presses(s.drive, span_w=128)   # restore rig
@@ -1486,7 +1487,7 @@ class TestServeLaws(unittest.TestCase):
         self.assertTrue(sl.audit()["only_paid"])
         for r in sl.replayed:             # L1 at serve: inside the
             self.assertGreaterEqual(r["lo"], 172)   # press span
-            self.assertLessEqual(r["hi"], 300)
+            self.assertLessEqual(r["hi"], 301)
         for k, p in m.named_parameters():
             if k in frozen:
                 self.assertTrue(t.equal(p, pre[k]), k)
@@ -1538,6 +1539,57 @@ class TestServeLaws(unittest.TestCase):
             else:
                 self.assertEqual(out["audit"]["steps_taken"], 0,
                                  "single pass stepped on empty store")
+
+    def test_life_continuity_across_save_resume(self):
+        # A67: a saved+resumed life is bit-equal to one that never
+        # stopped — state, economy, sleeper memory, and next-token
+        # logits all continue identically
+        import os
+        import torch as t
+        from iga.lm_hybrid import HybridLM
+        from iga.lm_press import PressProphet
+        from iga.lm_serve import ServeSession
+        from iga.lm_sleep import Sleeper
+
+        def make(resume_state=None):
+            t.manual_seed(0)
+            m = HybridLM(64, d=32, n_layers=2, n_heads=2, max_T=64,
+                         store="matrix", keyed="logit",
+                         norm_mix=True, aux_trunk=0.2, use_xl=False)
+            with t.no_grad():
+                for a in m.alpha.values():
+                    a.fill_(2.0)
+            return ServeSession(
+                m, self._Tok(), T=64, device="cpu",
+                sleeper=Sleeper(arm="A", every=0, block_chunks=2,
+                                seed=0, min_step_loss=1e-4),
+                seed=0, prophet=PressProphet(d=32),
+                resume_state=resume_state), m
+        sa, ma = make()
+        t.manual_seed(21)
+        ids = t.randint(3, 60, (400,)).tolist()
+        sa._append(ids)
+        sa.press(2)
+        sa.sleep_now(blocks=2, span_w=100)
+        path = os.path.join(
+            os.environ.get("TMPDIR", "/tmp"), "t_life.pt")
+        sa.save(path)
+        rs = torch.load(path, map_location="cpu",
+                        weights_only=False)
+        sb, mb = make(resume_state=rs)
+        self.assertEqual(sb.pos, sa.pos)
+        self.assertEqual(len(sb.drive.presses),
+                         len(sa.drive.presses))
+        more = t.randint(3, 60, (90,)).tolist()
+        sa._append(more)
+        sb._append(more)
+        for k in ma.bands:
+            self.assertTrue(t.equal(sa.st["h"][k], sb.st["h"][k]))
+            self.assertTrue(t.equal(sa.st["M"][k], sb.st["M"][k]))
+        self.assertTrue(t.equal(sa._next_logits(),
+                                sb._next_logits()))
+        self.assertEqual(sa.sleeper.buffers[0], sb.sleeper.buffers[0])
+        os.remove(path)
 
     def test_min_step_loss_gates_noise_updates(self):
         # A65: no disagreement, no update — with the floor above any
