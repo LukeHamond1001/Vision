@@ -59,6 +59,8 @@ def train_arm(life, tag):
         d=D, lanes=LANES, T=T, steps=STEPS, seed=SEED, device="cpu",
         arch="hybrid", store="matrix", keyed="logit", norm_mix=True,
         aux_trunk=0.2, use_xl=False, gate_init=-2.0,
+        lam=0.02,   # A69-R3: the certified v9.4 economy weight —
+        # the debug default 0.25 was never the store-cure regime
         log_every=max(STEPS // 4, 1), buttons=dict(BUTTONS),
         life=dict(life))
     print(f"[{tag}] trained {STEPS} steps  ce {ce0:.3f}->{ce1:.3f} "

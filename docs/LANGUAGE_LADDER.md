@@ -3683,6 +3683,27 @@ scale, not blocking this one. Target cost: $15–40 total.
   training-time recall EMA for binding emergence. The G1-G3
   gates stand unchanged, awaiting an armed instrument.
 
+- **A69-R2 VERDICT — the binder armed IN-CONTEXT and nothing
+  crosses the chunk boundary** (2026-08-19; d=128, 12k steps).
+  In-ctx accuracy 0.842 vs chance 0.083 (precondition SMASHED;
+  training b0 hit 0.873 — capacity was R1's bottleneck). But
+  short/band3 bins sit at exact chance, and ALL THREE LESIONS
+  read bit-identical INCLUDING fresh-state: even the 84%
+  in-ctx recall consults zero carried state — pure attention
+  within T=256. The store and bands carry NO recall function
+  at debug scale after 12k steps (band-4 self-fidelity 0.939
+  while recall function is nil — maintenance without content).
+  This is the v-campaign's original disease pattern (the trunk
+  learns in-window; the store does not engage), which the A60
+  economy cures landed at V-SCALE. A69-R3 in flight: 30k steps
+  + the certified lam=0.02 (debug default 0.25 was never the
+  store-cure regime) — duration-vs-structure discriminator.
+  FALLBACK if R3 nulls: the biography gate MIGRATES to v-scale
+  — the original 78M pod pair (~$15-40/run, the substrate
+  where store recall provably works) becomes the armed gate,
+  or the gate folds into the 500M run's first-hours kill
+  protocol (probes live from step one, per the run doctrine).
+
 ## Status
 
 **(2026-08-19, post-v9.4)** The substrate campaign is complete:
