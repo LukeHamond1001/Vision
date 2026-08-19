@@ -2854,6 +2854,39 @@ scale, not blocking this one. Target cost: $15–40 total.
   ARM B interleaved, dose ladder {1:16, 1:8, 1:4}, then the
   store-wipe gate scored locally; verdict = A63.
 
+- **A63 STAGED + LAUNCHED — the v-scale Phase 1 application**
+  (2026-08-19; explicit user go). CONFIG: the certified v9.4
+  invocation VERBATIM (6 lanes x T=2048, lr 1e-4 on the 488k
+  cosine, fp32, xl off, gate-init -2, lam 0.02, mix_v9 wake +
+  mix_r1_eval peval), resumed from v94-best @266k — best.pt
+  banks no optimizer state (F4 format), so the driver rebuilds
+  the model at the certified shape (arch drift aborts before
+  GPU time) and seeds a fresh AdamW; offset 0.545 = the tail
+  v94-best never saw; 30k steps (266k -> 296k, inside the
+  epoch). ARM B interleaved at the debug-tested winning dose
+  (2-chunk block / 8 wake steps, ~4% overhead at B=1). SINGLE
+  run — the pre-registered dose LADDER belonged to the debug
+  stage; the A62 verdict entry's "ladder at v-scale" slip is
+  corrected here. GATE OPERATIONALIZED PRE-LAUNCH: at v-scale,
+  paid spans blanket the stream (~13 holds/step x token
+  horizons), so span-membership cannot split paid/unpaid; the
+  discriminating split is REPLAYED vs MATCHED CONTROL. Every
+  4th sleep block banks the replayed window's tokens plus a
+  same-lane window 3W earlier verified to overlap no replayed
+  window (v94s_windows.jsonl; L1 provenance alongside). A63
+  PASS = store-wiped CE improvement (v94-best -> final)
+  greater on replayed than control windows, paired sign test
+  p < 0.05, AND mix_r1_eval CE regression < 1% vs best's
+  1.9242 (guard). MEASURED NOT GATED: the serving-time store
+  margin after consolidation (does distillation shrink the
+  A61 null?). All scoring LOCAL per ops law. POD: 5090-first,
+  EU-RO-1 (volume pjpqh1con1; w-v94 seed kept by the A61
+  prune), branch results-v94s; guards = cuda canary, cuda
+  sleep-rig smoke (the harness's first GPU run), certified
+  60-step wake smoke with the 15k tok/s budget floor,
+  NaN/stall watcher, 30-min rolling snapshots to
+  results-v94s-ckpt. Est ~4h, ~$2-3.
+
 ## Status
 
 **(2026-08-19, post-v9.4)** The substrate campaign is complete:
