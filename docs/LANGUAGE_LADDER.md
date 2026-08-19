@@ -3572,6 +3572,41 @@ scale, not blocking this one. Target cost: $15–40 total.
   bare stem — context-to-stem transfer is exactly what is under
   test.
 
+- **A68-T VERDICT — THE CROSS, AND THE PRICE: one pair block
+  flipped the race; the allies-coupling collected its debt;
+  treatment aborted on the pre-registered guard** (2026-08-19).
+  SESSION A minted 0 pairs — the A68-R2 bug: a press follows
+  the model's "noted ." ack, so press-adjacent scoping hit an
+  eot and emptied the target range (the law tests' synthetic
+  stream lacked the ack; the live room found it in one
+  session). Fix: targets are whole TURNS, boundary-parsed —
+  model turn for the -press, human turn for the +press; press
+  marks bound every scan. Dry-run against the life: 3/3 pairs,
+  surgically exact ('the candle was golden .<eot>' vs 'the
+  drum was violet .<eot>'). Side effect of the fix: the failed
+  session's three contaminated wide +2 spans were RETRO-
+  CONSUMED into pairs and left the CE pool — the ledger
+  reinterprets itself. SESSION B (true treatment, 24 blocks):
+  the lottery drew ONE pair block (margin -0.75, loss 1.14, lr
+  5e-5 on warm Adam moments) — and the night moved: incumbent
+  .9932 -> .8374 (-15.7%, S1's -20% narrowly missed); drum
+  .4544 -> .9098 — THE CROSS: the true fact outweighs the
+  false conviction for the first time in the life. Three
+  language-only protocols lost this race across six days; the
+  negative channel won it in one night. THE PRICE: coin .9893
+  -> .6339 — the A67-P8 allies-coupling collected (suppressing
+  golden-after-candle generalizes through shared "golden" mass
+  into golden-after-coin). S3 guard (coin >= .70) BREACHED ->
+  ABORT executed: no further sleeps until assessed (pairs
+  persist in the ledger and would re-dose every night; the
+  softplus floor self-limits only near margin ~9 nats). OPEN:
+  S2 rebound test; coin rescue (rescue-on-contact is proven);
+  dose attribution (one margin step vs pool decontamination —
+  confounded this night); scope refinement options (divergence
+  masking: suppress only tokens absent from the right side;
+  asymmetric beta: lift right harder than wrong suppresses).
+  Life: 2,535 tokens, 39 presses, 33 spans + 3 pairs.
+
 ## Status
 
 **(2026-08-19, post-v9.4)** The substrate campaign is complete:
