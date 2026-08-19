@@ -3421,6 +3421,26 @@ scale, not blocking this one. Target cost: $15–40 total.
   cannot exist. Life: 1,483 tokens, 20 presses, 20 live spans,
   three-deep backup rotation.
 
+- **A67-P5 THE NAP DAY — pure sleep is competitive** (2026-08-
+  19; day 6: room opened, 24 blocks, probes, NOT ONE wake token
+  or press; position unchanged at 1,483). Replay-only growth
+  confirmed: drum .2151->.3542 (1.65x) and coin .9429->.9738
+  (so the day-4/5 coin "drift" was wake interference, not
+  decay). But the seedlings ERODED: lamp .0086->.0028 (3x
+  down), jar .0015->.0009. COMPLETE CONSOLIDATION LAW, three
+  regimes now measured: (1) wake teaching + sleep -> taught
+  facts climb, strong facts hold (days 4-5); (2) sleep alone ->
+  rich get richer, unrehearsed young traces lose replay
+  competition (day 6); (3) the day-4/5 "distribution across the
+  biography" required the caregiver's daily touches on the
+  young facts — those touches are not optional pedagogy, they
+  are what keeps seedlings alive against the strong traces'
+  gravity. Maps cleanly onto the salience-weighted sleep
+  consolidation of biological memory. SUPERSTITION-WATCH: drum
+  at .35 compounding ~1.5-1.7x/night unaided — if it crosses
+  dominance, day-7 speech may mint a violet-drum template
+  (the candle-golden story again, but of a TRUE belief).
+
 ## Status
 
 **(2026-08-19, post-v9.4)** The substrate campaign is complete:
