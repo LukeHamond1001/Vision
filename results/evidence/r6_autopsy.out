@@ -1,0 +1,25 @@
+TM-v9-clean 461  completion ids 202 (836 positions)  hash fc639269079e
+== r6_best step 30000 serve-T 1024
+ALPHA: {'3': 1.7367, '4': 1.6673, '5': 1.6102}
+betas: {'3': 0.9816, '4': 0.9825, '5': 0.9822}
+qmix softmax: [0.933, 0.022, 0.004, 0.002, 0.002, 0.001, 0.001, 0.001, 0.001, 0.001, 0.001, 0.001, 0.001, 0.001, 0.001, 0.001, 0.001, 0.001, 0.001, 0.001, 0.001, 0.001, 0.001, 0.001, 0.001, 0.001, 0.001, 0.001, 0.001, 0.001, 0.001, 0.001, 0.001, 0.001, 0.001, 0.001, 0.001, 0.001, 0.001, 0.001, 0.0, 0.0, 0.001, 0.001, 0.001, 0.001, 0.0, 0.001, 0.001, 0.001, 0.001, 0.0, 0.0, 0.001, 0.001, 0.001, 0.001, 0.001, 0.0, 0.001, 0.001, 0.001, 0.0, 0.0]
+tok_u: mean -0.0252 std 0.2520 min -3.435 max 2.184
+tok_u TOP-40: ' coding', ' This', 'anks', ' It', ' color', ' License', ' warrant', 'models', ' os', "['", ' Public', ' this', '://', 'L', ' such', ' He', 'ut', '("', 'NU', 'en', 'ers', ' S', 'www', ' COPY', ' utf', ' be', 'ac', ' been', 'db', 'ad', 'an', 'utf', 'as', 'k', 'qu', ' W', ' Exception', 'he', 'To', ' F'
+tok_u BOT-40: ' a', ' ?', ' that', '.', ' the', ' and', ' .', ' but', ' from', ' or', '_', '', ' If', '', ' not', ' at', ' in', 'i', ' to', 'the', ' them', ' without', ' else', ' including', ' kept', ' distributed', ' later', ' have', ')', ':', ' with', ' then', ' some', ' as', "'t", ' an', ',', ' other', ' get', ' who'
+  ce chunk 0: running 2.3555
+  ce chunk 100: running 2.6233
+  ce chunk 200: running 2.6662
+  ce chunk 300: running 2.6972
+CE full      : 2.7555
+  ce chunk 0: running 2.3555
+  ce chunk 100: running 2.6652
+  ce chunk 200: running 2.7219
+  ce chunk 300: running 2.7595
+CE lesionALL : 2.8215
+CE advantage : +0.0660 (+2.34% rel; bar +2.80%)
+TMclean full     : p=0.0421 top1=0.0586 n=461
+TMclean lesionALL: p=0.0397 top1=0.0542 n=461
+SIGN TEST: +245/-214 (n=459), one-sided p=0.0807, median +0.00000
+COMP full     : (0.3788, 0.485, 835)
+COMP lesionALL: (0.3651, 0.4659, 835)
+AUTOPSY DONE

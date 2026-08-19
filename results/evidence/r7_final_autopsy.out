@@ -1,0 +1,25 @@
+TM-v9-clean 461  completion ids 202 (836 positions)  hash fc639269079e
+== r7_final step 75000 serve-T 1024
+ALPHA: {'3': 2.2081, '4': 2.0879, '5': 1.9959}
+betas: {'3': 0.9999, '4': 0.9999, '5': 0.9999}
+qmix softmax: [0.996, 0.003, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+tok_u: mean -0.1019 std 0.6739 min -7.530 max 3.740
+tok_u TOP-40: ' warrant', ' been', ' coding', ' Public', ' WARRAN', ' this', ' into', ' S', ' COPY', '().', ' such', ' utf', 'ell', ' made', 'ana', ' no', ' will', 'ULAR', ' express', ' super', 'To', ' It', 'he', '(*', 'Foreign', 'ut', 'utf', 'As', '://', 'www', 'NU', 'RI', ' F', '?', 'ad', '".', ' following', 'qu', ' several', ' Not'
+tok_u BOT-40: ' that', ' a', '.', ' kept', '_', ' busy', 'i', ' way', ' weather', ' clock', ' ?', ' .', ' good', 'the', ' return', ' However', ' distributed', ' not', ' and', ' if', ' try', 'self', 'def', 'by', ' some', ' or', ' lamp', ' including', ' early', 'what', ' golden', ' WITHOUT', ' If', ' important', ' else', ' used', ' but', ' pale', ' them', 'licenses'
+  ce chunk 0: running 2.9227
+  ce chunk 100: running 2.5738
+  ce chunk 200: running 2.4996
+  ce chunk 300: running 2.4847
+CE full      : 2.5266
+  ce chunk 0: running 2.9227
+  ce chunk 100: running 3.2242
+  ce chunk 200: running 3.2794
+  ce chunk 300: running 3.3097
+CE lesionALL : 3.3580
+CE advantage : +0.8314 (+24.76% rel; bar +2.80%)
+TMclean full     : p=0.0355 top1=0.0477 n=461
+TMclean lesionALL: p=0.0269 top1=0.0434 n=461
+SIGN TEST: +228/-233 (n=461), one-sided p=0.6100, median -0.00000
+COMP full     : (0.4156, 0.509, 835)
+COMP lesionALL: (0.2944, 0.4036, 835)
+AUTOPSY DONE

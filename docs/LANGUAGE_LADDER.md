@@ -2695,20 +2695,45 @@ scale, not blocking this one. Target cost: $15–40 total.
 
 ## Status
 
-Assembled scene-free (A6), no registered runs. Weaver (`iga/lm_gen.py`),
-conveyor (`iga/lm_conveyor.py`), six-band model (`iga/lm_bands.py`),
-drive layer (`iga/lm_drive.py`), trainer (`iga/lm_train.py`), eval
-harness (`iga/lm_eval.py`); UltraChat prep + conveyor
-(`iga/lm_data_ultrachat.py`); calibration harness
-(`iga/lm_calibrate.py`); law tests in `tests/test_lm_ladder.py`
-(suite: 48/48). End-to-end smokes pass on both conveyors (weaver and
-a real UltraChat shard): CE falls, ledger audits exact,
-thanks-mints/expiry-zero/closed-loop-zero pinned by tests, panel
-readable, lesion + talk harness run, probe positions token-verified.
-First calibration artifact committed (weaver split). v0 engineering
-notes (honest) in module docstrings: slow-band predictor gradients
-flow only within a chunk; competence band = records + scheduler
-bin-weights. Remaining before any registered run: (1) debug-tier A/B
-of talk=dense vs tick, winner frozen; (2) calibration re-run on the
-real-data calibration shard, constants frozen. Debug next on RTX
-2000; registered runs on a 4090.
+**(2026-08-19, post-v9.4)** The substrate campaign is complete:
+v9.4 finished all 488k steps — the first v-run to complete — with
+both diseases cured (trunk: pay-gradient volume, A60b; store:
+payment coverage, A60f). Gate scoring in progress on the final
+battery rows; close verdict lands as A61.
+
+**Production checkpoint**: `v94.pt.best.pt` (step 266k, peval-
+selected; beats the 488k final on held-out recall 0.962 vs 0.865)
+— branch `results-v94` (`v94best_part_*`). Final 488k ckpt same
+branch (`v94_part_*`). Wire-to-wire trace + eval tables landed.
+
+**Artifact map (branches)**:
+- `data-r1eval` — THE held-out eval instrument (7.0M tokens,
+  1,416 nat probes; TM-v9-clean subset n=461 / completion 202
+  ids / hash fc639269079e derives from it). All autopsies score
+  against THIS shard, never the training shard.
+- `data-v50` — debug shards. `results-r1..r9` — r-tier runs.
+- `results-v9{,1,2,3,4}` + `-ckpt` — v-campaign runs, traces,
+  checkpoints. `results-v9-best` — v9's healthy 38k best.
+- `results-v94-autopsy{,2}` — endgame battery outputs.
+- ~40 `results-<random>` branches: orphan boot noise from early
+  hunter eras — PRUNE CANDIDATES (verify each holds no ckpt
+  pieces before deletion; not yet done).
+- `results/evidence/` (in-tree) — surviving autopsy outputs
+  (r6-r8c finals, v9 snap240k, v9.4 partials).
+
+**Standing ops rules (A61 appendix, hard-won 2026-08-18/19)**:
+CPU-bound measurement runs LOCAL, always (shard + ckpts from
+branches; pods only for GPU training or volume access). Load-
+bearing local artifacts get re-verified before use (macOS tmp
+reaper). Volume id banked at `infra/RMIX_VOL`. Autopsy tool
+needs a --device flag before it is ever time-critical again.
+git-add pathspecs separately; never fetch piece-laden branches
+from pods; heartbeat channels must not be silently droppable.
+
+**Next**: A61 close verdict → volume prune (user-approved) →
+buildout Phase 1 consolidation → Phase 2 grounded reward
+(RATIFIED DESIGN: two graded +/- buttons as primary reinforcer,
+band-built secondary rewards, frozen-instrument/veto Goodhart
+defenses) → Phase 3 live inference + the three-act operant demo
+(baseline/parenting/evidence with reward-vs-exposure-vs-negative
+controls). v10 (1B+) decision after buildout, on the transfer map.

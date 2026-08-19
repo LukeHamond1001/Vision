@@ -1,0 +1,5 @@
+TM-v9-clean 461  completion ids 202 (836 positions)  hash fc639269079e
+snapshot step 240500
+mini-t40 full     : {'TM': (0.002, 0.0, 8), 'nat-other': (0.007, 0.0, 13), 'pl-cross': (0.012, 0.0, 27), 'pl-same': (0.001, 0.0, 34), 'pl-strad': (0.035, 0.0, 5)}
+mini-t40 lesionALL: {'TM': (0.002, 0.0, 8), 'nat-other': (0.008, 0.0, 13), 'pl-cross': (0.013, 0.0, 27), 'pl-same': (0.001, 0.0, 34), 'pl-strad': (0.011, 0.0, 5)}
+MINI DONE

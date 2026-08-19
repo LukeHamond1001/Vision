@@ -1,0 +1,41 @@
+TM-v9-clean 461  completion ids 202 (836 positions)  hash fc639269079e
+== v94.pt.best.pt step 266000 serve-T 2048
+ALPHA: {'3': 4.8311, '4': 3.4473, '5': 2.7308}
+betas: {'3': 1.0, '4': 1.0, '5': 1.0}
+qmix softmax: [0.999, 0.001, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+tok_u: mean -0.3422 std 1.0182 min -8.727 max 4.041
+tok_u TOP-40: ' Software', ' agreed', ' General', ' Here', ' been', ' useful', ' example', ' FITNESS', ' don', ' provide', ' WITHOUT', ' IS', ' KIND', ' Aff', 'Foreign', 'POSE', '((', '?', '().', ' OTHER', ' AI', ' ANY', 'century', ' than', 'IS', 'AR', ' up', ' own', 'Comp', 'AT', ' disclaim', '(_', 'orm', 'aram', '########', 'Imp', 'ur', 'AN', ' Ad', 'nt'
+tok_u BOT-40: '.', ' quiet', ' early', ' kept', '_', ' busy', ' little', '', ' good', ' .', ' day', ' town', 'what', ' market', ' way', ' None', ' lamp', ' road', ' a', 'i', 'self', ' job', ' try', ' copper', ' len', ' golden', ' distributed', ' weather', ' such', ' return', ' """', ' pale', ' WARRANTIES', 'ira', 'References', 'the', ' many', ' coin', '#', ' also'
+  ce chunk 0: running 1.3011
+  ce chunk 100: running 1.8385
+  ce chunk 200: running 1.9261
+  ce chunk 300: running 1.9208
+CE full      : 1.9242
+  ce chunk 0: running 1.3011
+  ce chunk 100: running 1.8407
+  ce chunk 200: running 1.9284
+  ce chunk 300: running 1.9233
+CE lesionALL : 1.9272
+CE advantage : +0.0030 (+0.16% rel; bar +2.80%)
+t200 full     : {'TM': (0.091, 0.12, 48), 'nat-other': (0.202, 0.23, 113), 'pl-cross': (0.083, 0.09, 143), 'pl-same': (0.997, 1.0, 217), 'pl-strad': (0.08, 0.07, 30)}
+t200 lesionALL: {'TM': (0.092, 0.12, 48), 'nat-other': (0.201, 0.23, 113), 'pl-cross': (0.083, 0.1, 143), 'pl-same': (0.997, 1.0, 217), 'pl-strad': (0.081, 0.07, 30)}
+TMclean full     : p=0.0725 top1=0.1020 n=461
+TMclean lesionALL: p=0.0726 top1=0.0998 n=461
+SIGN TEST: +234/-225 (n=459), one-sided p=0.3544, median +0.00000
+Traceback (most recent call last):
+  File "/Users/lukehamond/Projects/project/scripts/autopsy_v9.py", line 328, in <module>
+    main()
+    ~~~~^^
+  File "/Users/lukehamond/Projects/project/scripts/autopsy_v9.py", line 318, in main
+    completion(m, a.shard, a.serve_T, comp, toks),
+    ~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/lukehamond/Library/Python/3.14/lib/python/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
+    return func(*args, **kwargs)
+  File "/Users/lukehamond/Projects/project/scripts/autopsy_v9.py", line 180, in completion
+    conv = UltraConveyor(shard, n_lanes=LANES)
+  File "/Users/lukehamond/Projects/project/iga/lm_data_ultrachat.py", line 384, in __init__
+    self.tokens = np.fromfile(os.path.join(out_dir, "tokens.bin"),
+                  ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                              dtype=np.uint16)
+                              ^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/private/tmp/claude-501/-Users-lukehamond-Projects-project/c33c28dc-ae98-444f-9e95-14dfacac27cf/scratchpad/mix_r1_eval/tokens.bin'

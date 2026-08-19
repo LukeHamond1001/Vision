@@ -1,0 +1,25 @@
+TM-v9-clean 461  completion ids 202 (836 positions)  hash fc639269079e
+== r8c_final step 75000 serve-T 1024
+ALPHA: {'3': 4.3696, '4': 4.0308, '5': 3.8026}
+betas: {'3': 0.9999, '4': 0.9999, '5': 0.9999}
+qmix softmax: [0.992, 0.007, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+tok_u: mean -0.0730 std 0.5588 min -6.461 max 3.630
+tok_u TOP-40: ' ?', '://', ' General', ' color', 'NU', ' don', 'anks', ' over', 'AS', ' St', ' For', ' may', ' up', ' based', 'ur', ' Ch', ' django', "'re", 'OR', 'century', 'argument', ' model', '().', ' AI', "={'", '(__', '={', ' include', 'od', '(**', 'LO', ' ValueError', ' SOFTWARE', ' TODO', ' I', 'ow', 'orm', ' ro', "('/", 'ib'
+tok_u BOT-40: ' busy', ' a', 'the', '.', '_', 'i', ' distributed', ' way', '', 'licenses', ' This', 'what', ' used', ' brown', 'from', ' not', ' weather', ' lamp', ' any', ' and', ' some', ' also', ' golden', ' FITNESS', ' it', ' create', ' Licensed', ' WARRANTIES', ' use', ' or', ' most', ' return', ' which', ' later', ' pale', 'by', ' else', ' them', ' are', ' is'
+  ce chunk 0: running 2.1060
+  ce chunk 100: running 2.4917
+  ce chunk 200: running 2.5427
+  ce chunk 300: running 2.5711
+CE full      : 2.6361
+  ce chunk 0: running 2.1060
+  ce chunk 100: running 2.5164
+  ce chunk 200: running 2.5751
+  ce chunk 300: running 2.6091
+CE lesionALL : 2.6755
+CE advantage : +0.0394 (+1.47% rel; bar +2.80%)
+TMclean full     : p=0.0389 top1=0.0477 n=461
+TMclean lesionALL: p=0.0386 top1=0.0586 n=461
+SIGN TEST: +246/-215 (n=461), one-sided p=0.0811, median +0.00000
+COMP full     : (0.4007, 0.4922, 835)
+COMP lesionALL: (0.3736, 0.4539, 835)
+AUTOPSY DONE

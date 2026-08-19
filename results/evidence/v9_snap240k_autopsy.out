@@ -1,0 +1,16 @@
+TM-v9-clean 461  completion ids 202 (836 positions)  hash fc639269079e
+== v9_snap240k step 240500 serve-T 2048
+  ce chunk 0: running 4.9191
+  ce chunk 100: running 5.2879
+  ce chunk 200: running 5.3129
+  ce chunk 300: running 5.2066
+CE full      : 5.2574
+  ce chunk 0: running 4.9191
+  ce chunk 100: running 5.3453
+  ce chunk 200: running 5.4308
+  ce chunk 300: running 5.4418
+CE lesionALL : 5.4812
+CE advantage : +0.2238 (+4.08% rel; bar +2.80%)
+COMP full     : (0.1631, 0.2467, 835)
+COMP lesionALL: (0.1208, 0.2084, 835)
+AUTOPSY DONE
