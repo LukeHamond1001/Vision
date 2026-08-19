@@ -3644,6 +3644,27 @@ scale, not blocking this one. Target cost: $15–40 total.
   probe/heartbeat pack — run protocol per user: heavy probes,
   live heartbeat watch, kill-on-disease, fix, relaunch.
 
+- **A69-R1 PRE-REGISTRATION — the biography gate** (2026-08-19;
+  filed while the run is IN FLIGHT, before any readout). Setup:
+  twin d=64/T=256/4-lane debug models, 3000 steps, identical
+  but for life.cross (BIO: recurrence across days, long bin 16k;
+  CTRL: same days, same shapes, pending flushed at close); both
+  scored on the SAME held-out biography stream, probe mass +
+  color-argmax accuracy binned by gap (in-ctx <=256 / short
+  <=2k / band3 <=8k / band4+ <=40k), under lesions full /
+  nostore (store reads off) / fresh (state reset per chunk —
+  the no-carry floor). Sleep and corrections OFF both arms:
+  the data regime is the only variable. GATES: G1 (thesis)
+  BIO(full) beats CTRL(full) on cross-session accuracy (band3
+  and band4+ bins) by >=1.5x; G2 (floor) BIO(full) beats
+  BIO(fresh) in those bins — recall must ride carried state,
+  not stream priors; G3 (attribution, descriptive) the
+  nostore/full split says whether cross-day recall lives in
+  the store or the bands. G1 fail = the thesis fails at debug
+  and NO 500M until the data regime is redesigned. Known limit:
+  band-5 horizons (131k) are out of debug reach — a v-scale
+  question by construction.
+
 ## Status
 
 **(2026-08-19, post-v9.4)** The substrate campaign is complete:
