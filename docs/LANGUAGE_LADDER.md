@@ -2890,6 +2890,11 @@ reaper). Volume id banked at `infra/RMIX_VOL`. Autopsy tool
 needs a --device flag before it is ever time-critical again.
 git-add pathspecs separately; never fetch piece-laden branches
 from pods; heartbeat channels must not be silently droppable.
+MPS/Metal benched (M4/16GB, 2026-08-19): SLOWER than CPU at
+debug tier (3.9k vs 11.2k tok/s) and at B=1 inference (307 vs
+199 ms), fp32 OOM + bf16 swap-thrash at the 16-lane v-shape —
+local work runs CPU; v-scale training stays on pods (~90k tok/s
+reference).
 
 **Next**: Phase 1 (A62): harness + laws LANDED, debug A/B local
 → winner frozen → v-scale application from v94-best (~$2-3,
