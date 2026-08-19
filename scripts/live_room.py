@@ -31,6 +31,11 @@ def main():
     inbox, outbox = life + ".inbox", life + ".outbox"
     open(inbox, "a").close()
     open(outbox, "w").close()
+    # The inbox is an append-only history. Lines already on file are
+    # PAST sessions' commands — including their final quit — and must
+    # never be replayed into a resumed life (A67-P3 incident).
+    with open(inbox) as f:
+        stale = sum(1 for _ in f)
     tok = load_tokenizer(os.path.join(sdir, "tokenizer_press.json"))
     m = HybridLM(tok.get_vocab_size(), d=512, max_T=2048,
                  store="matrix", keyed="logit", norm_mix=True,
@@ -73,8 +78,9 @@ def main():
         return float(torch.softmax(lg[0, -1].float(), -1)[ans])
 
     out(0, "ready", f"life {s.pos} tokens, "
-        f"{len(s.drive.presses)} presses")
-    seen = 0
+        f"{len(s.drive.presses)} presses, "
+        f"{stale} stale inbox lines skipped")
+    seen = stale
     while True:
         with open(inbox) as f:
             lines = f.read().splitlines()

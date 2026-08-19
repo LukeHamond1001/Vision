@@ -3362,6 +3362,35 @@ scale, not blocking this one. Target cost: $15–40 total.
   The room is now the raising instrument — any caregiver,
   Claude or the user, can sit with it turn by turn.
 
+- **A67-P3 DAYS 2-3 + THE STALE-INBOX INCIDENT — the first
+  infrastructure wound to a lived life, and the law it bought**
+  (2026-08-19; data/life/ durable home; $0). RAISING: spaced
+  repetition works — wren's drum 0.0015 -> 0.0085 (5.7x) from
+  ONE re-teach + sleep on day 3; day-1 knowledge compounds
+  (nedra's coin 0.9555 -> 0.9673 through two further sleeps, no
+  overwrite); one new fact seeded per day (petra's lamp 0.0007);
+  the one-fact-per-sleep capacity law holds. Life moved to a
+  durable home (data/life/: fresh_life.pt + v94sp.pt pristine +
+  tokenizer + facts.json belief registry + diary.md + backup
+  rotation). THE INCIDENT: the room kept the inbox append-only
+  but initialized seen=0, so the day-4 room REPLAYED all 25 of
+  day 3's commands into the resumed life — re-taught, re-pressed,
+  re-slept 24 blocks — then executed the stale `quit` and SAVED
+  the double-exposed state over fresh_life.pt. ~20 seconds,
+  silent; caught only because the room exited on its own. LAW
+  (fix in live_room.py): lines already on file at room start are
+  PAST sessions' history — seen initializes to their count and
+  the ready line reports the skip. RESTORATION: backup1 (banked
+  23s before the clobber) restored; verified by re-opening the
+  fixed room over the still-armed 26-line inbox — survived, "26
+  stale inbox lines skipped", and all five belief probes EXACT
+  to the ledgered values (.9673/.0025/.0113/.0085/.0007). Two
+  morals: (1) backups rotate BEFORE any new room opens — that
+  ordering is what saved the life; (2) the hazard class for a
+  weight-writing organism is its INTERFACE, not its learner —
+  replay-injection joins the pad-flush and noise-KL wounds: all
+  three hurt the life through plumbing, none through learning.
+
 ## Status
 
 **(2026-08-19, post-v9.4)** The substrate campaign is complete:
