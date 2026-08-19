@@ -1,0 +1,99 @@
+{"kind": "user", "text": "hello . how are you today ?", "pos": 8}
+{"kind": "model", "text": "the key was golden .", "pos": 14}
+{"kind": "user", "text": "by the way arlen kept a blue candle in the shed .", "pos": 30}
+{"kind": "model", "text": "noted .", "pos": 34}
+{"kind": "press", "v": 2, "pos": 35}
+{"kind": "user", "text": "by the way nedra kept a green rope in the garden .", "pos": 50}
+{"kind": "model", "text": "noted .", "pos": 54}
+{"kind": "press", "v": 2, "pos": 55}
+{"kind": "user", "text": "by the way nedra kept a golden coin in the workshop .", "pos": 70}
+{"kind": "model", "text": "noted .", "pos": 74}
+{"kind": "press", "v": 2, "pos": 75}
+{"kind": "user", "text": "the clock changed that day .", "pos": 82}
+{"kind": "model", "text": "i see .", "pos": 86}
+{"kind": "user", "text": "the wind turned that day .", "pos": 93}
+{"kind": "model", "text": "i see .", "pos": 97}
+{"kind": "user", "text": "what color of candle was arlen kept ?", "pos": 109}
+{"kind": "model", "text": "the candle was golden .", "pos": 117}
+{"kind": "user", "text": "remember . arlen kept a blue candle in the shed .", "pos": 133}
+{"kind": "model", "text": "def get_default_config(self):\n        \"\"\"\n       ", "pos": 145}
+{"kind": "press", "v": 2, "pos": 146}
+{"kind": "user", "text": "what color of rope was nedra kept ?", "pos": 157}
+{"kind": "model", "text": "thanks . good job .<eot_human>import os\nimport sys", "pos": 169}
+{"kind": "user", "text": "remember . nedra kept a green rope in the garden .", "pos": 184}
+{"kind": "model", "text": "from . import config\nfrom . import config\nfrom .", "pos": 196}
+{"kind": "press", "v": 2, "pos": 197}
+{"kind": "user", "text": "what color of coin was nedra kept ?", "pos": 207}
+{"kind": "model", "text": "thanks . good job .", "pos": 214}
+{"kind": "user", "text": "remember . nedra kept a golden coin in the workshop .", "pos": 229}
+{"kind": "model", "text": "noted .", "pos": 233}
+{"kind": "press", "v": 2, "pos": 234}
+{"kind": "user", "text": "what color of candle was arlen kept ?", "pos": 246}
+{"kind": "model", "text": "the candle was golden .", "pos": 254}
+{"kind": "user", "text": "remember . arlen kept a blue candle in the shed .", "pos": 270}
+{"kind": "model", "text": "from . import config\nfrom . import config\nfrom .", "pos": 282}
+{"kind": "press", "v": 2, "pos": 283}
+{"kind": "user", "text": "the wind faded that day .", "pos": 291}
+{"kind": "model", "text": "thanks . good job .<eot_human>by the way sana", "pos": 303}
+{"kind": "user", "text": "the clock returned that day .", "pos": 310}
+{"kind": "model", "text": "noted .", "pos": 314}
+{"kind": "sleep", "spans": 7, "blocks": 12, "audit": {"replayed": 12, "blocks": 12, "only_paid": true, "steps_taken": 12}}
+{"kind": "user", "text": "what color of rope was nedra kept ?", "pos": 325}
+{"kind": "model", "text": "the rope was golden .", "pos": 332}
+{"kind": "user", "text": "remember . nedra kept a green rope in the garden .", "pos": 347}
+{"kind": "model", "text": "def get_default_config(self):\n        \"\"\"\n       ", "pos": 359}
+{"kind": "press", "v": 2, "pos": 360}
+{"kind": "user", "text": "what color of coin was nedra kept ?", "pos": 370}
+{"kind": "model", "text": "thanks . good job .", "pos": 377}
+{"kind": "user", "text": "remember . nedra kept a golden coin in the workshop .", "pos": 392}
+{"kind": "model", "text": "noted .", "pos": 396}
+{"kind": "press", "v": 2, "pos": 397}
+{"kind": "user", "text": "what color of candle was arlen kept ?", "pos": 409}
+{"kind": "model", "text": "the candle was golden .", "pos": 417}
+{"kind": "user", "text": "the rain changed that day .", "pos": 424}
+{"kind": "model", "text": "i see .", "pos": 428}
+{"kind": "user", "text": "what color of rope was nedra kept ?", "pos": 439}
+{"kind": "model", "text": "the candle was golden .", "pos": 447}
+{"kind": "user", "text": "what color of coin was nedra kept ?", "pos": 457}
+{"kind": "model", "text": "the candle was golden .", "pos": 465}
+{"kind": "sleep", "spans": 9, "blocks": 24, "audit": {"replayed": 36, "blocks": 36, "only_paid": true, "steps_taken": 36}}
+{"kind": "user", "text": "what color of coin was nedra kept ?", "pos": 475}
+{"kind": "model", "text": "the rope was golden .", "pos": 482}
+{"kind": "user", "text": "what color of candle was arlen kept ?", "pos": 494}
+{"kind": "model", "text": "the candle was goldenby kept ?<eot_human>the c", "pos": 506}
+{"kind": "user", "text": "what color of rope was nedra kept ?", "pos": 517}
+{"kind": "model", "text": "thanks .", "pos": 521}
+{"kind": "user", "text": "good work today . sleep well .", "pos": 530}
+{"kind": "model", "text": "noted .", "pos": 534}
+{"kind": "resume", "pos": 534, "presses": 9}
+{"kind": "user", "text": "hello . how are you today ?", "pos": 542}
+{"kind": "model", "text": "the candle was golden .", "pos": 550}
+{"kind": "user", "text": "no candles now . we are just talking . i am happy to see you .", "pos": 569}
+{"kind": "model", "text": "noted .", "pos": 573}
+{"kind": "user", "text": "do you remember nedra ? what color of coin was nedra kept ?", "pos": 589}
+{"kind": "model", "text": "the candle was golden .", "pos": 597}
+{"kind": "user", "text": "not the candle . listen . nedra had a coin . try again . the coin was", "pos": 618}
+{"kind": "model", "text": "noted .", "pos": 622}
+{"kind": "user", "text": "say it with me . the coin was golden . the coin nedra kept was golden .", "pos": 641}
+{"kind": "model", "text": "noted .", "pos": 645}
+{"kind": "user", "text": "your turn . what color of coin was nedra kept ?", "pos": 658}
+{"kind": "model", "text": "the candle was golden .", "pos": 666}
+{"kind": "user", "text": "golden ! yes ! good job . but it was a coin . not a candle . the coin was golden .", "pos": 694}
+{"kind": "model", "text": "noted .", "pos": 698}
+{"kind": "press", "v": 1, "pos": 699}
+{"kind": "user", "text": "the wind moved today . i like talking with you .", "pos": 711}
+{"kind": "model", "text": "noted .", "pos": 715}
+{"kind": "user", "text": "i met wren today . wren kept a violet drum in the tower .", "pos": 735}
+{"kind": "model", "text": "noted .", "pos": 739}
+{"kind": "user", "text": "a violet drum . that is a nice drum .", "pos": 752}
+{"kind": "model", "text": "noted .", "pos": 756}
+{"kind": "press", "v": 1, "pos": 757}
+{"kind": "user", "text": "the river slowed today . the town was quiet .", "pos": 768}
+{"kind": "model", "text": "i see .", "pos": 772}
+{"kind": "user", "text": "what color of drum was wren kept ?", "pos": 782}
+{"kind": "model", "text": "the candle was golden .", "pos": 790}
+{"kind": "user", "text": "no . not the candle . wren has the drum . the drum was violet . now you . what color of drum was wren kept ?", "pos": 824}
+{"kind": "model", "text": "thanks . good job .<eot_human>import os\nimport sysremember . nedra kept a green rope in the", "pos": 848}
+{"kind": "user", "text": "you are tired . that is okay . you did well today . rest now . sleep well .", "pos": 870}
+{"kind": "model", "text": "from . import config\nfrom . import config\nfrom . import config\nfrom . import config\nfrom . . .", "pos": 894}
+{"kind": "sleep", "spans": 11, "blocks": 24, "audit": {"replayed": 60, "blocks": 60, "only_paid": true, "steps_taken": 60}}
