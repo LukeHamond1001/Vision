@@ -1473,6 +1473,11 @@ class TestServeLaws(unittest.TestCase):
         self.assertEqual(n, 1)
         self.assertEqual((sl.spans[0]["t0"], sl.spans[0]["t1"]),
                          (172, 300))
+        # A66-R4: a narrow void reach spares spans the -1 did not
+        # actually judge — the [272,400] span survives at void_w=32
+        self.assertEqual(
+            sl.harvest_presses(s.drive, span_w=128, void_w=32), 2)
+        n = sl.harvest_presses(s.drive, span_w=128)   # restore rig
         frozen = set(frozen_param_names(m))
         pre = {k: p.clone() for k, p in m.named_parameters()
                if k in frozen}

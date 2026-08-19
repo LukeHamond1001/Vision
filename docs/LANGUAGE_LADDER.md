@@ -3223,6 +3223,31 @@ scale, not blocking this one. Target cost: $15–40 total.
   repeat collapse fails the ARM, not the instrument. Same
   facts, same gate. Local, $0.
 
+- **A66-R ROUND 3 — THE ORDERING EMERGED; one void-reach bug
+  blunted it; R4 separates void from replay width** (2026-08-
+  19). act 3b: pos .1117 > none .0516 > neg .0448 (baselines
+  .079/.065/.068) — the pre-registered ordering appeared for
+  the FIRST time: rewarded material rose 41% above its own
+  baseline post-wipe while both other classes sank. Gate p =
+  0.236 (n=6v6, high per-item variance) and the audit shows
+  the blunting: spans = 1 — the negative press's void reach
+  equaled the 256-token replay width, so each -1 voided ~10
+  exchanges of prior approvals; all 54 blocks overfit the one
+  surviving tail span (a subset of rewarded facts carried the
+  whole class mean). ARM A CONFIRMED SAFE at serve: the guard
+  row shows mild drift only (none .065 -> .052), no R2-style
+  collapse. REPLICATED ODDITY, noted not gated: the act-3a
+  in-context inversion (pos lowest) — the four untrained press
+  embeddings sit adjacent to rewarded facts and likely
+  interfere with in-context retrieval; press tokens want wake
+  exposure in a later phase. R4 AMENDMENT: harvest_presses
+  gains void_w SEPARATE from span_w — a -1 disapproves ITS OWN
+  exchange (void_w=64), not ten before it; replay stays
+  context-inclusive (span_w=256). Expected ~18 surviving
+  spans, distributed consolidation over all rewarded items.
+  Law test: the narrow void spares the span the -1 never
+  judged. Same facts, same gate. Local, $0.
+
 ## Status
 
 **(2026-08-19, post-v9.4)** The substrate campaign is complete:

@@ -181,14 +181,20 @@ class Sleeper:
                       - max(s["t0"], self.start)
                       >= MIN_REPLAY][-MAX_SPANS:]
 
-    def harvest_presses(self, drive, span_w=512):
+    def harvest_presses(self, drive, span_w=512, void_w=None):
         """A65 serve-time pay — the A61 payer problem's designed
         answer, literal: with no probes at serve, holds cannot pay,
         so the PRIMARY pays. A positive press at t names the episode
         [t - span_w, t] with pay = v (magnitude -> replay weight); a
-        negative press VOIDS pending spans overlapping its trailing
-        window (withhold at serve). Replaces self.spans (serve
-        mode); the training-time harvest() is untouched."""
+        negative press VOIDS pending spans overlapping its OWN
+        exchange [t - void_w, t] (withhold at serve). void_w is
+        SEPARATE from span_w (A66-R3: with void reach = replay
+        width, one -1 nuked ~10 exchanges of prior approvals and a
+        single span survived a whole session); default None keeps
+        the old coupling. Replaces self.spans (serve mode); the
+        training-time harvest() is untouched."""
+        if void_w is None:
+            void_w = span_w
         spans = []
         for i, p in enumerate(drive.presses):
             if p["v"] > 0:
@@ -200,7 +206,7 @@ class Sleeper:
                 spans = [s for s in spans
                          if not (s["lane"] == p["lane"]
                                  and s["t0"] < p["t"]
-                                 and p["t"] - span_w < s["t1"])]
+                                 and p["t"] - void_w < s["t1"])]
         self.spans = [s for s in spans
                       if min(s["t1"], self.end)
                       - max(s["t0"], self.start) >= MIN_REPLAY]

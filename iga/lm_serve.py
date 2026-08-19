@@ -159,10 +159,11 @@ class ServeSession:
         self.st = self.m.init_state(1, self.device)
         self._log({"kind": "wipe", "pos": self.pos})
 
-    def sleep_now(self, blocks=8, span_w=512):
+    def sleep_now(self, blocks=8, span_w=512, void_w=64):
         assert self.sleeper is not None, "no sleeper attached"
         self._flush()
-        n = self.sleeper.harvest_presses(self.drive, span_w)
+        n = self.sleeper.harvest_presses(self.drive, span_w,
+                                         void_w=void_w)
         if not n:
             self._log({"kind": "sleep", "spans": 0, "blocks": 0})
             return {"spans": 0, "blocks": 0}
@@ -188,7 +189,8 @@ class ServeSession:
     def panel(self):
         spans = 0
         if self.sleeper is not None:
-            spans = self.sleeper.harvest_presses(self.drive)
+            spans = self.sleeper.harvest_presses(self.drive,
+                                                 void_w=64)
         return {"pos": self.pos, "committed": self.n_committed,
                 "presses": len(self.drive.presses),
                 "live_spans": spans,
