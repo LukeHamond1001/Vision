@@ -31,8 +31,8 @@ from iga.lm_press import PressProphet              # noqa: E402
 from iga.lm_serve import ServeSession              # noqa: E402
 from iga.lm_sleep import Sleeper                   # noqa: E402
 
-N_NEW = 8
-ASK_DELAY = (2, 4)      # exchanges between teach and first ask
+N_NEW = 8               # day-2 lesson: fewer items beat more
+ASK_DELAY = (3, 6)      # exchanges between teach and first ask
 SLEEP_EVERY = 16
 SLEEP_BLOCKS = 12
 
@@ -43,9 +43,14 @@ def chatter(rng):
 
 
 def judge(reply, fact):
-    """correct / wrong (a different color asserted) / miss."""
+    """STRICT (day-1 lesson: a right color on the wrong object got
+    mispaid and sleep consolidated the mistake): correct needs the
+    color AND the asked object, with no other object asserted."""
     words = reply.replace(".", " ").split()
-    if fact["col"] in words:
+    col_ok = fact["col"] in words
+    obj_ok = fact["obj"] in words
+    other_obj = any(o in words for o in OBJECTS if o != fact["obj"])
+    if col_ok and obj_ok and not other_obj:
         return "correct"
     if any(c in words for c in COLORS):
         return "wrong"
@@ -53,8 +58,11 @@ def judge(reply, fact):
 
 
 def main():
+    global N_NEW
     sdir, life_path = sys.argv[1], sys.argv[2]
     seed = int(sys.argv[3]) if len(sys.argv) > 3 else 1
+    if len(sys.argv) > 4:
+        N_NEW = int(sys.argv[4])   # the curriculum-size knob
     tok = load_tokenizer(os.path.join(sdir, "tokenizer_press.json"))
     m = HybridLM(tok.get_vocab_size(), d=512, max_T=2048,
                  store="matrix", keyed="logit", norm_mix=True,
