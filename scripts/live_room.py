@@ -51,7 +51,7 @@ def main():
         m.load_state_dict(st["model"])
     s = ServeSession(
         m, tok, T=2048, device="cpu",
-        sleeper=Sleeper(arm="A", every=0, block_chunks=2, seed=1,
+        sleeper=Sleeper(arm="C", every=0, block_chunks=2, seed=1,
                         min_step_loss=1e-4),
         temperature=0.6, top_k=40, max_reply=24,
         log_path=life + ".sessions.jsonl", seed=7,
@@ -106,7 +106,8 @@ def main():
                     o = s.sleep_now(blocks=int(payload or "12"),
                                     span_w=256)
                     out(n, "slept", json.dumps(
-                        {k: o.get(k) for k in ("spans", "blocks")}))
+                        {k: o.get(k)
+                         for k in ("spans", "pairs", "blocks")}))
                 elif cmd == "probe":
                     nm, ob, co = payload.split()
                     out(n, "belief", f"{belief(nm, ob, co):.4f}")

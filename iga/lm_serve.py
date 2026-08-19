@@ -167,26 +167,48 @@ class ServeSession:
         self.st = self.m.init_state(1, self.device)
         self._log({"kind": "wipe", "pos": self.pos})
 
-    def sleep_now(self, blocks=8, span_w=512, void_w=64):
+    def sleep_now(self, blocks=8, span_w=512, void_w=64,
+                  pair_gap=192, pair_ctx=128, pair_ucap=32):
         assert self.sleeper is not None, "no sleeper attached"
         self._flush()
-        n = self.sleeper.harvest_presses(self.drive, span_w,
-                                         void_w=void_w)
-        if not n:
+        sl = self.sleeper
+        skip = None
+        if sl.arm == "C":
+            # A68: correction pairs first — consumed presses leave
+            # the CE-span economy entirely (no wide span, no void).
+            # Utterances stop at turn boundaries AND press tokens,
+            # so a press token is never a target.
+            marks = tuple(self.press_id.values())
+            skip = sl.harvest_pairs(
+                self.drive, gap=pair_gap, ctx_w=pair_ctx,
+                u_cap=pair_ucap,
+                stop_wrong=(self.eot_h,) + marks,
+                stop_right=(self.eot_m,) + marks)
+        n = sl.harvest_presses(self.drive, span_w, void_w=void_w,
+                               skip=skip)
+        npairs = len(sl.pairs) if sl.arm == "C" else 0
+        if not n and not npairs:
             self._log({"kind": "sleep", "spans": 0, "blocks": 0})
-            return {"spans": 0, "blocks": 0}
+            return {"spans": 0, "blocks": 0, "pairs": 0}
         if self._opt is None:
             self._opt = torch.optim.AdamW(self.m.parameters(),
                                           lr=self.sleep_lr)
         done = 0
         for _ in range(min(blocks, MAX_SLEEP_BLOCKS)):
-            if self.sleeper._block(self.m, self._opt,
-                                   step=self.pos) is not None:
+            wp = sum(p["pay"] for p in sl.pairs) if npairs else 0.0
+            ws = sum(s["pay"] for s in sl.spans)
+            r = None
+            if wp and (not ws or sl.rng.random() < wp / (wp + ws)):
+                r = sl._pair_block(self.m, self._opt, step=self.pos)
+            elif ws:
+                r = sl._block(self.m, self._opt, step=self.pos)
+            if r is not None:
                 done += 1
         a = self.sleeper.audit()
-        self._log({"kind": "sleep", "spans": n, "blocks": done,
-                   "audit": a})
-        return {"spans": n, "blocks": done, "audit": a}
+        self._log({"kind": "sleep", "spans": n, "pairs": npairs,
+                   "blocks": done, "audit": a})
+        return {"spans": n, "pairs": npairs, "blocks": done,
+                "audit": a}
 
     def save(self, path):
         """A67: save the WHOLE life — weights, band/store state,

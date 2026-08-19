@@ -20,6 +20,17 @@ Mechanism arms (winner frozen after the debug A/B, A55b culture):
          only the logits, so teacher and student hiddens — and hence
          band/store states — are identical; one shared state serves
          both passes exactly.
+  ARM C  contrastive pair replay (A68) — the negative channel the
+         A67-P8 laws demanded: CE-only replay cannot encode "not"
+         (negation is exposure; "X not Y" poisons X's own stem). A
+         negative press marks the utterance it lands on as WRONG;
+         the next positive press within a gap marks the caregiver's
+         correction as RIGHT; the pair replays under a bounded
+         margin loss softplus(-beta*(logp_right - logp_wrong)) over
+         UTTERANCE tokens only. The wrong tokens appear solely as
+         suppression targets — never CE targets — and both member
+         presses leave the CE-span economy entirely. With no pairs
+         minted, ARM C is bit-identical to ARM A by construction.
 
 Laws (pinned at A62, enforced here, tested in test_lm_ladder):
   L1 only-paid-replays — every replayed window lies inside a ledger
@@ -109,8 +120,9 @@ class Sleeper:
         1:8, 1:4}). A block replays ONE pay-weighted span as a
         sequential episode — ARM B's teacher needs earlier chunks
         written into the store before later reads carry any bonus."""
-        assert arm in ("A", "B")
+        assert arm in ("A", "B", "C")
         self.arm = arm
+        self.pairs = []          # ARM C working set (rebuilt each harvest)
         self.every = every
         self.block_chunks = block_chunks
         # A65: no disagreement, no update — a chunk whose loss sits
@@ -181,7 +193,8 @@ class Sleeper:
                       - max(s["t0"], self.start)
                       >= MIN_REPLAY][-MAX_SPANS:]
 
-    def harvest_presses(self, drive, span_w=512, void_w=None):
+    def harvest_presses(self, drive, span_w=512, void_w=None,
+                        skip=None):
         """A65 serve-time pay — the A61 payer problem's designed
         answer, literal: with no probes at serve, holds cannot pay,
         so the PRIMARY pays. A positive press at t names the episode
@@ -192,11 +205,15 @@ class Sleeper:
         width, one -1 nuked ~10 exchanges of prior approvals and a
         single span survived a whole session); default None keeps
         the old coupling. Replaces self.spans (serve mode); the
-        training-time harvest() is untouched."""
+        training-time harvest() is untouched. skip (A68): press
+        indices consumed by correction pairs — they neither mint a
+        wide CE span nor void (their whole effect is the pair)."""
         if void_w is None:
             void_w = span_w
         spans = []
         for i, p in enumerate(drive.presses):
+            if skip and i in skip:
+                continue
             if p["v"] > 0:
                 # A67: t1 = press position + 1 — the press TOKEN is
                 # the span's final CE target, so replay also teaches
@@ -215,6 +232,150 @@ class Sleeper:
                       if min(s["t1"], self.end)
                       - max(s["t0"], self.start) >= MIN_REPLAY]
         return len(self.spans)
+
+    # ---------- ARM C: correction pairs (A68) ----------
+    def _utt(self, lane, t, stops, u_cap):
+        """[t0, t) — the utterance ending at press position t:
+        back to (exclusive) the latest stop token, capped at u_cap
+        tokens. Press position t holds the press token itself,
+        which is never a target."""
+        lo_lim = max(self.start, t - u_cap)
+        buf = self.buffers[lane]
+        for k in range(t - 1, lo_lim - 1, -1):
+            if buf[k - self.start] in stops:
+                return k + 1
+        return lo_lim
+
+    def harvest_pairs(self, drive, gap=192, ctx_w=128, u_cap=32,
+                      stop_wrong=(), stop_right=()):
+        """A68 — mint correction pairs from the press ledger. A
+        negative press at tw pairs with the NEXT positive press at
+        tr on the same lane within gap tokens: the utterance the
+        negative landed on is WRONG, the caregiver turn the positive
+        landed on is RIGHT. Target ranges are utterance-scoped at
+        harvest time via stop tokens (turn boundaries and press
+        tokens), so the rival's tokens are never targets outside
+        their own utterance — the A67-P8 stem-poisoning law is the
+        design constraint. Returns the set of consumed press
+        indices for harvest_presses(skip=...)."""
+        def as_set(s):
+            if s is None:
+                return set()
+            return {s} if isinstance(s, int) else set(s)
+        sw, sr = as_set(stop_wrong), as_set(stop_right)
+        self.pairs = []
+        used = set()
+        if self.buffers is None:
+            return used
+        ps = drive.presses
+        for i, p in enumerate(ps):
+            if p["v"] >= 0 or i in used:
+                continue
+            for j in range(i + 1, len(ps)):
+                q = ps[j]
+                if j in used or q["lane"] != p["lane"]:
+                    continue
+                if q["t"] - p["t"] > gap:
+                    break
+                if q["v"] > 0:
+                    tw, tr = p["t"], q["t"]
+                    if not (self.start < tw <= self.end
+                            and self.start < tr <= self.end):
+                        break
+                    w0 = self._utt(p["lane"], tw, sw, u_cap)
+                    r0 = self._utt(q["lane"], tr, sr, u_cap)
+                    if tw - w0 >= 1 and tr - r0 >= 1:
+                        self.pairs.append(
+                            {"lane": p["lane"], "tw": tw, "tr": tr,
+                             "w0": w0, "r0": r0,
+                             "pay": float(abs(p["v"]) + q["v"]),
+                             "ctx_w": ctx_w,
+                             "iw": -(i + 1), "ir": -(j + 1)})
+                        used.add(i)
+                        used.add(j)
+                    break
+        return used
+
+    def _pair_block(self, model, opt, step, beta=1.0):
+        """One contrastive pair replay: each side forwarded fresh-
+        state trunk-alone; loss = softplus(-beta * (mean logp of
+        RIGHT targets - mean logp of WRONG targets)). Bounded and
+        self-limiting: a mastered margin falls under min_step_loss
+        and stops stepping, the CE mastery floor's twin."""
+        if not self.pairs:
+            return None
+        pr = self.rng.choices(
+            self.pairs, weights=[p["pay"] for p in self.pairs])[0]
+        device = next(model.parameters()).device
+        sides = []
+        for t0, t1 in ((pr["w0"], pr["tw"]), (pr["r0"], pr["tr"])):
+            lo = max(self.start, t0 - pr["ctx_w"])
+            toks = self.buffers[pr["lane"]][lo - self.start:
+                                            t1 - self.start]
+            a = max(0, t0 - lo - 1)
+            b = t1 - lo - 1
+            if len(toks) < 2 or b <= a:
+                return None
+            sides.append((lo, t0, t1, a, b, toks))
+        saved = [(p_, p_.requires_grad)
+                 for n, p_ in model.named_parameters()
+                 if n.startswith(FREEZE_PREFIXES)
+                 or n in FREEZE_EXACT]
+        for p_, _ in saved:
+            p_.requires_grad_(False)
+        was_training = model.training
+        model.eval()
+        try:
+            lps, widths = [], []
+            with torch.enable_grad():
+                for lo, t0, t1, a, b, toks in sides:
+                    x = torch.tensor([toks[:-1]], dtype=torch.long,
+                                     device=device)
+                    y = torch.tensor([toks[1:]], dtype=torch.long,
+                                     device=device)
+                    model.store_read_off = True
+                    slg, _, _ = model(x, model.init_state(1, device),
+                                      None)
+                    model.pop_write_cost()
+                    model.pop_recon()
+                    lsm = torch.log_softmax(slg.float(), -1)
+                    sel = lsm[0, a:b, :].gather(
+                        -1, y[0, a:b].unsqueeze(-1)).squeeze(-1)
+                    lps.append(sel.mean())
+                    widths.append(b - a)
+                margin = lps[1] - lps[0]
+                loss = torch.nn.functional.softplus(-beta * margin)
+                if abs(float(loss.detach())) >= self.min_step_loss:
+                    opt.zero_grad()
+                    loss.backward()
+                    torch.nn.utils.clip_grad_norm_(
+                        model.parameters(), 1.0)
+                    opt.step()
+                    self.steps_taken += 1
+        finally:
+            model.store_read_off = False
+            for p_, rg in saved:
+                p_.requires_grad_(rg)
+            if was_training:
+                model.train()
+            opt.zero_grad()
+        for (lo, t0, t1, a, b, toks), li in zip(
+                sides, (pr["iw"], pr["ir"])):
+            self.replayed.append(
+                {"step": step, "arm": "C", "lane": pr["lane"],
+                 "lo": lo, "hi": t1, "ledger_i": li,
+                 "pay": pr["pay"], "t0": lo, "t1": t1})
+        row = {"step": step, "arm": "C", "lane": pr["lane"],
+               "pair": (pr["tw"], pr["tr"]),
+               "targets": tuple(widths),
+               "margin": round(float(margin.detach()), 4),
+               "loss": round(float(loss.detach()), 4),
+               "pay": round(pr["pay"], 4)}
+        self.stats.append(row)
+        print(f"    sleep@{step} armC pair[{pr['tw']}|{pr['tr']}] "
+              f"targets {list(widths)}  margin {row['margin']:.4f}  "
+              f"loss {row['loss']:.4f}", flush=True)
+        return row
 
     # ---------- the block ----------
     def maybe_sleep(self, model, opt, drive, step):

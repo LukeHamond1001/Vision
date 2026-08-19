@@ -1610,5 +1610,190 @@ class TestServeLaws(unittest.TestCase):
             self.assertTrue(t.equal(p, pre[k]), k)  # zero movement
 
 
+class TestArmCLaws(unittest.TestCase):
+    """A68 — contrastive pair replay (the negative channel). C1
+    no-negatives => ARM C bit-identical to ARM A; C2 pair formation,
+    gap law, utterance scoping via stop tokens; C3 paired presses
+    leave the CE-span economy (no wide span, no void); C4 the
+    direction law — suppressed target falls, corrected target
+    rises; C5 margin mastery floor; C6 audit stays only-paid."""
+
+    _Tok = TestServeLaws._Tok
+    EOT_H, EOT_M = 1, 2
+
+    def _model(self, seed=0):
+        import torch as t
+        from iga.lm_hybrid import HybridLM
+        t.manual_seed(seed)
+        m = HybridLM(64, d=32, n_layers=2, n_heads=2, max_T=64,
+                     store="matrix", keyed="logit", norm_mix=True,
+                     aux_trunk=0.2, use_xl=False)
+        with t.no_grad():
+            for a in m.alpha.values():
+                a.fill_(2.0)
+        return m
+
+    def _session(self, arm, seed=0):
+        import torch as t
+        from iga.lm_serve import ServeSession
+        from iga.lm_sleep import Sleeper
+        sl = Sleeper(arm=arm, every=0, block_chunks=2, seed=3)
+        return ServeSession(self._model(seed), self._Tok(), T=64,
+                            device="cpu", sleeper=sl, seed=0), sl
+
+    def _pair_stream(self, s):
+        """A correction episode laid out by hand: context, a wrong
+        utterance closed by eot_h upstream, -1 on it; then the
+        caregiver's correction closed by eot_m upstream, +2 on it.
+        Returns (wrong_targets, right_targets) absolute ranges."""
+        import torch as t
+        t.manual_seed(11)
+        s._append(t.randint(3, 60, (91,)).tolist())   # [0, 91)
+        s._append([self.EOT_H])                       # 91
+        s._append([7] * 8)                            # wrong: [92,100)
+        s.drive.step_t = 100
+        s.drive.button(0, -1)
+        s._append([62])                               # <-1> at 100
+        s._append(t.randint(3, 60, (20,)).tolist())   # filler
+        s._append([self.EOT_M])                       # 121
+        s._append([9] * 8)                            # right: [122,130)
+        s.drive.step_t = 130
+        s.drive.button(0, 2)
+        s._append([61])                               # <+2> at 130
+        s._flush()
+        return (92, 100), (122, 130)
+
+    def test_C1_no_negatives_bit_identical_to_arm_A(self):
+        import torch as t
+        outs = {}
+        for arm in ("A", "C"):
+            s, sl = self._session(arm)
+            t.manual_seed(21)
+            s._append(t.randint(3, 60, (400,)).tolist())
+            s.drive.step_t = 200
+            s.drive.button(0, 2)
+            s.drive.step_t = 300
+            s.drive.button(0, 1)
+            s._flush()
+            out = s.sleep_now(blocks=4, span_w=128)
+            self.assertGreater(out["blocks"], 0)
+            self.assertEqual(out.get("pairs", 0), 0)
+            outs[arm] = s.m.state_dict()
+        for k in outs["A"]:
+            self.assertTrue(t.equal(outs["A"][k], outs["C"][k]),
+                            f"C without pairs diverged from A at {k}")
+
+    def test_C2_pair_formation_scope_and_gap(self):
+        s, sl = self._session("C")
+        (w0, w1), (r0, r1) = self._pair_stream(s)
+        used = sl.harvest_pairs(
+            s.drive, gap=192, ctx_w=16, u_cap=32,
+            stop_wrong=(self.EOT_H, 60, 61, 62, 63),
+            stop_right=(self.EOT_M, 60, 61, 62, 63))
+        self.assertEqual(len(sl.pairs), 1)
+        pr = sl.pairs[0]
+        self.assertEqual((pr["w0"], pr["tw"]), (w0, w1))
+        self.assertEqual((pr["r0"], pr["tr"]), (r0, r1))
+        self.assertEqual(used, {0, 1})
+        self.assertEqual(pr["pay"], 3.0)   # |-1| + 2
+        # gap law: a lone negative with no positive in reach
+        s.drive.step_t = 400
+        s.drive.button(0, -1)
+        used2 = sl.harvest_pairs(
+            s.drive, gap=192, ctx_w=16, u_cap=32,
+            stop_wrong=self.EOT_H, stop_right=self.EOT_M)
+        self.assertEqual(len(sl.pairs), 1)      # still just the one
+        self.assertNotIn(2, used2)
+
+    def test_C3_paired_presses_leave_the_span_economy(self):
+        s, sl = self._session("C")
+        self._pair_stream(s)
+        # an earlier honest +2 whose span the paired -1 would void
+        s.drive.presses.insert(
+            0, {"lane": 0, "t": 60, "v": 2})
+        used = sl.harvest_pairs(s.drive, gap=192, ctx_w=16,
+                                u_cap=32, stop_wrong=self.EOT_H,
+                                stop_right=self.EOT_M)
+        self.assertEqual(used, {1, 2})   # indices after the insert
+        n_skip = sl.harvest_presses(s.drive, span_w=64, void_w=64,
+                                    skip=used)
+        self.assertEqual(n_skip, 1)             # the honest span lives
+        span = sl.spans[0]
+        self.assertEqual(span["t1"], 61)        # it is the t=60 press
+        # counterfactual: without skip, the -1 voids it and the
+        # paired +2 mints a wide span — both wrong under ARM C
+        n_raw = sl.harvest_presses(s.drive, span_w=64, void_w=64)
+        self.assertEqual(n_raw, 1)
+        self.assertEqual(sl.spans[0]["t1"], 131)   # the paired +2
+
+    def test_C4_direction_wrong_falls_right_rises(self):
+        import torch as t
+        s, sl = self._session("C")
+        (w0, w1), (r0, r1) = self._pair_stream(s)
+        sl.harvest_pairs(s.drive, gap=192, ctx_w=16, u_cap=32,
+                         stop_wrong=self.EOT_H, stop_right=self.EOT_M)
+        self.assertEqual(len(sl.pairs), 1)
+
+        def mean_lp(t0, t1, ctx_w=16):
+            lo = max(0, t0 - ctx_w)
+            toks = sl.buffers[0][lo:t1]
+            x = t.tensor([toks[:-1]])
+            y = t.tensor([toks[1:]])
+            s.m.store_read_off = True
+            with t.no_grad():
+                lg, _, _ = s.m(x, s.m.init_state(1, "cpu"), None)
+            s.m.pop_write_cost()
+            s.m.pop_recon()
+            s.m.store_read_off = False
+            lsm = t.log_softmax(lg.float(), -1)
+            a, b = max(0, t0 - lo - 1), t1 - lo - 1
+            return float(lsm[0, a:b, :].gather(
+                -1, y[0, a:b].unsqueeze(-1)).mean())
+
+        before_w = mean_lp(w0, w1)
+        before_r = mean_lp(r0, r1)
+        opt = t.optim.AdamW(s.m.parameters(), lr=1e-2)
+        rows = [sl._pair_block(s.m, opt, step=0) for _ in range(5)]
+        self.assertTrue(all(r is not None for r in rows))
+        self.assertEqual(sl.steps_taken, 5)
+        after_w = mean_lp(w0, w1)
+        after_r = mean_lp(r0, r1)
+        self.assertLess(after_w, before_w,
+                        "suppressed utterance did not fall")
+        self.assertGreater(after_r, before_r,
+                           "corrected utterance did not rise")
+        self.assertEqual(rows[0]["targets"], (8, 8))
+
+    def test_C5_margin_mastery_floor(self):
+        import torch as t
+        s, sl = self._session("C")
+        self._pair_stream(s)
+        sl.harvest_pairs(s.drive, gap=192, ctx_w=16, u_cap=32,
+                         stop_wrong=self.EOT_H, stop_right=self.EOT_M)
+        sl.min_step_loss = 1e9
+        pre = {k: p.clone() for k, p in s.m.named_parameters()}
+        opt = t.optim.AdamW(s.m.parameters(), lr=1e-2)
+        row = sl._pair_block(s.m, opt, step=0)
+        self.assertIsNotNone(row)               # replayed, recorded
+        self.assertEqual(sl.steps_taken, 0)     # but no step
+        for k, p in s.m.named_parameters():
+            self.assertTrue(t.equal(p, pre[k]), k)
+
+    def test_C6_audit_only_paid_with_pairs(self):
+        import torch as t
+        s, sl = self._session("C")
+        self._pair_stream(s)
+        out = s.sleep_now(blocks=4, span_w=128, pair_ctx=16,
+                          pair_ucap=32)
+        self.assertEqual(out["pairs"], 1)
+        self.assertGreater(out["blocks"], 0)
+        a = sl.audit()
+        self.assertTrue(a["only_paid"])
+        pair_rows = [r for r in sl.replayed if r["arm"] == "C"]
+        self.assertTrue(pair_rows)
+        for r in pair_rows:
+            self.assertGreater(r["pay"], 0)
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -3535,6 +3535,43 @@ scale, not blocking this one. Target cost: $15–40 total.
   only pure affirmative spans; let contaminated spans age out.
   Life: 2,324 tokens, 33 presses, 33 spans.
 
+- **A68 ARM C BUILT — the negative channel: contrastive pair
+  replay** (2026-08-19; user go "go build arm c"; laws green
+  76/76). MECHANISM: a negative press marks the utterance it
+  lands on as WRONG; the next positive press within gap=192
+  tokens marks the caregiver's correction as RIGHT; sleep
+  replays the pair fresh-state trunk-alone under a bounded
+  margin loss softplus(-beta*(logp_right - logp_wrong)) over
+  utterance-scoped targets (turn-boundary and press tokens end
+  the scan; the rival's tokens are never targets outside their
+  own utterance — A67-P8's stem-poisoning law is the design
+  constraint). Both member presses LEAVE the CE-span economy
+  (no wide span, no void). LAWS (TestArmCLaws, all green): C1
+  no-negatives => ARM C bit-identical to ARM A (by
+  construction: empty pair set consumes no RNG); C2 pair
+  formation, gap, utterance scoping exact; C3 paired presses
+  exit the span economy while honest spans survive the paired
+  negative; C4 DIRECTION — suppressed utterance falls,
+  corrected rises (margin -0.57 -> +6.27 in five steps, loss
+  self-limiting 1.02 -> 0.002: the CE mastery floor's twin);
+  C5 min_step_loss gates pair steps; C6 audit only_paid holds.
+  Room runs arm C now (safe default: identical to A until a
+  pair exists). PRE-REGISTERED TREATMENT (A68-T, filed BEFORE
+  the run): patient = the incumbent, p0(golden|"the candle
+  was") = .9890 probe0 at day-13 close. Protocol: day-14 morning
+  probe0 baseline; ~3 correction pairs (ask; on a color-
+  asserting wrong answer press -1, immediately teach "the drum
+  was violet ." press +2; spacers; no press on degenerate
+  replies); sleep 24; goodnight probe0. Success: S1 incumbent
+  falls >=20% relative vs day-14 morning, same night; S2 the
+  fall SURVIVES a day-15 pure nap (stays below day-14 morning —
+  the anti-rebound criterion that killed the day-11 transient);
+  S3 collateral guard: coin >= .70 and drum no worse than -20%
+  relative. Guard break = abort and assess. Generalization note:
+  pairs suppress the utterance in QA context; probe0 reads the
+  bare stem — context-to-stem transfer is exactly what is under
+  test.
+
 ## Status
 
 **(2026-08-19, post-v9.4)** The substrate campaign is complete:
