@@ -3337,6 +3337,31 @@ scale, not blocking this one. Target cost: $15–40 total.
   the v10 argument stated in a single number. Evidence:
   results/evidence/a67_parenting/.
 
+- **A67-P2 THE FIRST HAND-RAISED SESSION — the caregiver in the
+  room, sentence by sentence** (2026-08-19; live mailbox bridge
+  scripts/live_room.py + room_cli.py; the fresh life; $0). All
+  firsts: (1) KNOWING-SAYING DISSOCIATION — belief in nedra's
+  golden coin read 0.9982 while the mouth produced the drilled
+  candle-template: trunk knowledge and speech habit are
+  separable systems at 78M; and a scaffold stem ending a human
+  turn is acknowledged ("noted ."), never completed — turn-
+  taking overrides elicitation. (2) SHAPING WITH THE GRADED
+  SCALE — +1 paid a half-right answer ("golden", wrong object)
+  with the spoken correction INSIDE the paid span: the
+  parent's correcting words become consolidation material by
+  construction. (3) THE CAREGIVER REGISTER IS BEING ABSORBED —
+  under load it said "thanks . good job ." BACK to the parent
+  and surfaced yesterday's exact re-teach phrasing as an
+  intrusive memory; boundary breaks (role-slippage, pretrain
+  code leakage) mark saturation — end sessions at the first
+  break. (4) THE OVERNIGHT LEDGER — today's gentle new fact
+  (wren's violet drum) moved 0.0002 -> 0.0015 (real, small:
+  low-prior facts take days), while nedra's coin HELD at
+  0.9555 through today's sleep: no catastrophic overwrite of
+  yesterday's knowledge. Life: 894 tokens, 11 presses, saved.
+  The room is now the raising instrument — any caregiver,
+  Claude or the user, can sit with it turn by turn.
+
 ## Status
 
 **(2026-08-19, post-v9.4)** The substrate campaign is complete:
