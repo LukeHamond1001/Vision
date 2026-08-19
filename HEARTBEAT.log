@@ -10,3 +10,4 @@
 14:31:23 beat: step 291250  ce 1.704  loss 2.082  holds 305634  65,002 tok/s | sleep blocks 2768
 14:46:03 training complete (rc=0)
 14:46:18 eval complete: v94s.pt
+14:46:33 eval complete: v94s.pt.best.pt
