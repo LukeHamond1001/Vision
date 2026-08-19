@@ -1,0 +1,5 @@
+A67-P belief-shift (fresh life day 1 vs pristine v94sp, store-wiped, fresh state):
+arlen/candle blue    virgin 0.0695 -> after day 1 0.0027
+nedra/rope   green   virgin 0.0830 -> after day 1 0.0113
+nedra/coin   golden  virgin 0.0532 -> after day 1 0.9632  (18.1x, near-certainty)
+One-day consolidation is winner-take-all at d=512/78M: ONE fact per sleep phase binds.

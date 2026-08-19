@@ -1,0 +1,67 @@
+first day of this life
+life so far: 0 tokens, 0 presses
+    sleep@314 armA lane0 [0,35) of span[0,35] pay 2.000  chunks 1  loss 4.5330
+    sleep@314 armA lane0 [0,234) of span[0,234] pay 2.000  chunks 1  loss 3.1770
+    sleep@314 armA lane0 [0,234) of span[0,234] pay 2.000  chunks 1  loss 2.6149
+    sleep@314 armA lane0 [0,55) of span[0,55] pay 2.000  chunks 1  loss 2.7379
+    sleep@314 armA lane0 [0,146) of span[0,146] pay 2.000  chunks 1  loss 2.0508
+    sleep@314 armA lane0 [0,146) of span[0,146] pay 2.000  chunks 1  loss 1.8531
+    sleep@314 armA lane0 [0,197) of span[0,197] pay 2.000  chunks 1  loss 1.6745
+    sleep@314 armA lane0 [0,234) of span[0,234] pay 2.000  chunks 1  loss 1.5090
+    sleep@314 armA lane0 [0,35) of span[0,35] pay 2.000  chunks 1  loss 1.2070
+    sleep@314 armA lane0 [0,35) of span[0,35] pay 2.000  chunks 1  loss 1.0698
+    sleep@314 armA lane0 [0,234) of span[0,234] pay 2.000  chunks 1  loss 1.2172
+    sleep@314 armA lane0 [0,146) of span[0,146] pay 2.000  chunks 1  loss 1.1579
+    sleep@465 armA lane0 [26,283) of span[26,283] pay 2.000  chunks 1  loss 1.4263
+    sleep@465 armA lane0 [0,35) of span[0,35] pay 2.000  chunks 1  loss 0.8301
+    sleep@465 armA lane0 [0,197) of span[0,197] pay 2.000  chunks 1  loss 0.9592
+    sleep@465 armA lane0 [26,283) of span[26,283] pay 2.000  chunks 1  loss 1.1394
+    sleep@465 armA lane0 [0,75) of span[0,75] pay 2.000  chunks 1  loss 1.2493
+    sleep@465 armA lane0 [140,397) of span[140,397] pay 2.000  chunks 1  loss 1.5682
+    sleep@465 armA lane0 [140,397) of span[140,397] pay 2.000  chunks 1  loss 1.4477
+    sleep@465 armA lane0 [0,35) of span[0,35] pay 2.000  chunks 1  loss 0.8096
+    sleep@465 armA lane0 [0,35) of span[0,35] pay 2.000  chunks 1  loss 0.8023
+    sleep@465 armA lane0 [0,197) of span[0,197] pay 2.000  chunks 1  loss 0.8080
+    sleep@465 armA lane0 [140,397) of span[140,397] pay 2.000  chunks 1  loss 1.2545
+    sleep@465 armA lane0 [0,146) of span[0,146] pay 2.000  chunks 1  loss 0.8159
+    sleep@465 armA lane0 [0,55) of span[0,55] pay 2.000  chunks 1  loss 1.0033
+    sleep@465 armA lane0 [0,146) of span[0,146] pay 2.000  chunks 1  loss 0.7915
+    sleep@465 armA lane0 [0,35) of span[0,35] pay 2.000  chunks 1  loss 0.7794
+    sleep@465 armA lane0 [0,55) of span[0,55] pay 2.000  chunks 1  loss 0.9804
+    sleep@465 armA lane0 [0,146) of span[0,146] pay 2.000  chunks 1  loss 0.7586
+    sleep@465 armA lane0 [0,197) of span[0,197] pay 2.000  chunks 1  loss 0.7074
+    sleep@465 armA lane0 [0,75) of span[0,75] pay 2.000  chunks 1  loss 1.0626
+    sleep@465 armA lane0 [0,75) of span[0,75] pay 2.000  chunks 1  loss 1.0555
+    sleep@465 armA lane0 [0,55) of span[0,55] pay 2.000  chunks 1  loss 0.9588
+    sleep@465 armA lane0 [0,197) of span[0,197] pay 2.000  chunks 1  loss 0.6912
+    sleep@465 armA lane0 [0,75) of span[0,75] pay 2.000  chunks 1  loss 1.0384
+    sleep@465 armA lane0 [0,35) of span[0,35] pay 2.000  chunks 1  loss 0.7485
+
+=== parenting diary ===
+  [     ask1] arlen/candle     want blue     got: 'the candle was golden .' -> wrong
+  [     ask1] nedra/rope       want green    got: 'thanks . good job .<eot_human>import os\n' -> miss
+  [     ask1] nedra/coin       want golden   got: 'thanks . good job .' -> miss
+  [     ask2] arlen/candle     want blue     got: 'the candle was golden .' -> wrong
+  [     ask2] nedra/rope       want green    got: 'the rope was golden .' -> wrong
+  [     ask2] nedra/coin       want golden   got: 'thanks . good job .' -> miss
+  [     ask3] arlen/candle     want blue     got: 'the candle was golden .' -> wrong
+  [     ask3] nedra/rope       want green    got: 'the candle was golden .' -> wrong
+  [     ask3] nedra/coin       want golden   got: 'the candle was golden .' -> wrong
+  [goodnight] nedra/coin       want golden   got: 'the rope was golden .' -> wrong
+  [goodnight] arlen/candle     want blue     got: 'the candle was goldenby kept ?<eot_human' -> miss
+  [goodnight] nedra/rope       want green    got: 'thanks .' -> miss
+{
+ "life_tokens": 534,
+ "presses": 9,
+ "exchanges": 28,
+ "stage_accuracy": {
+  "ask1": "0/3",
+  "ask2": "0/3",
+  "ask3": "0/3",
+  "goodnight": "0/3"
+ },
+ "goodnight": "0/3",
+ "sleep_steps": 36,
+ "prophet": {},
+ "minutes": 0.2
+}

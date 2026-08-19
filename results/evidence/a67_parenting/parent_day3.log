@@ -1,0 +1,82 @@
+resuming the life (/private/tmp/claude-501/-Users-lukehamond-Projects-project/d1f549c3-d351-4a55-a201-ed9e78e9ade1/scratchpad/v94sp/v94sp_life.pt)
+life so far: 1697 tokens, 45 presses
+    sleep@1968 armA lane0 [1635,1892) of span[1635,1892] pay 2.000  chunks 1  loss 2.2065
+    sleep@1968 armA lane0 [1635,1892) of span[1635,1892] pay 2.000  chunks 1  loss 1.9822
+    sleep@1968 armA lane0 [1635,1892) of span[1635,1892] pay 2.000  chunks 1  loss 1.6585
+    sleep@1968 armA lane0 [1635,1892) of span[1635,1892] pay 2.000  chunks 1  loss 1.3702
+    sleep@1968 armA lane0 [340,597) of span[340,597] pay 2.000  chunks 1  loss 0.5057
+    sleep@1968 armA lane0 [1635,1892) of span[1635,1892] pay 2.000  chunks 1  loss 1.0548
+    sleep@1968 armA lane0 [1552,1809) of span[1552,1809] pay 2.000  chunks 1  loss 1.2597
+    sleep@1968 armA lane0 [0,20) of span[0,20] pay 2.000  chunks 1  loss 0.8428
+    sleep@1968 armA lane0 [0,20) of span[0,20] pay 2.000  chunks 1  loss 0.8324
+    sleep@1968 armA lane0 [0,20) of span[0,20] pay 2.000  chunks 1  loss 0.8276
+    sleep@1968 armA lane0 [1552,1809) of span[1552,1809] pay 2.000  chunks 1  loss 1.0175
+    sleep@1968 armA lane0 [340,597) of span[340,597] pay 2.000  chunks 1  loss 0.5565
+    sleep@2250 armA lane0 [0,41) of span[0,41] pay 2.000  chunks 1  loss 0.7794
+    sleep@2250 armA lane0 [1671,1928) of span[1671,1928] pay 2.000  chunks 1  loss 0.8715
+    sleep@2250 armA lane0 [1511,1768) of span[1511,1768] pay 2.000  chunks 1  loss 0.7978
+    sleep@2250 armA lane0 [0,20) of span[0,20] pay 2.000  chunks 1  loss 0.8031
+    sleep@2250 armA lane0 [340,597) of span[340,597] pay 2.000  chunks 1  loss 0.5372
+    sleep@2250 armA lane0 [1552,1809) of span[1552,1809] pay 2.000  chunks 1  loss 0.7376
+    sleep@2250 armA lane0 [340,597) of span[340,597] pay 2.000  chunks 1  loss 0.4922
+    sleep@2250 armA lane0 [921,1178) of span[921,1178] pay 2.000  chunks 1  loss 0.8885
+    sleep@2250 armA lane0 [1712,1969) of span[1712,1969] pay 2.000  chunks 1  loss 0.7100
+    sleep@2250 armA lane0 [1530,1787) of span[1530,1787] pay 2.000  chunks 1  loss 0.7119
+    sleep@2250 armA lane0 [1511,1768) of span[1511,1768] pay 2.000  chunks 1  loss 0.5863
+    sleep@2250 armA lane0 [1552,1809) of span[1552,1809] pay 2.000  chunks 1  loss 0.6147
+    sleep@2250 armA lane0 [0,20) of span[0,20] pay 2.000  chunks 1  loss 0.7759
+    sleep@2250 armA lane0 [1530,1787) of span[1530,1787] pay 2.000  chunks 1  loss 0.5796
+    sleep@2250 armA lane0 [1530,1787) of span[1530,1787] pay 2.000  chunks 1  loss 0.5479
+    sleep@2250 armA lane0 [340,597) of span[340,597] pay 2.000  chunks 1  loss 0.4773
+    sleep@2250 armA lane0 [0,41) of span[0,41] pay 2.000  chunks 1  loss 0.7294
+    sleep@2250 armA lane0 [1790,2047) of span[1790,2047] pay 2.000  chunks 1  loss 0.8991
+    sleep@2250 armA lane0 [1552,1809) of span[1552,1809] pay 2.000  chunks 1  loss 0.5401
+    sleep@2250 armA lane0 [340,597) of span[340,597] pay 2.000  chunks 1  loss 0.4510
+    sleep@2250 armA lane0 [1635,1892) of span[1635,1892] pay 2.000  chunks 1  loss 0.5464
+    sleep@2250 armA lane0 [1749,2006) of span[1749,2006] pay 2.000  chunks 1  loss 0.6944
+    sleep@2250 armA lane0 [0,20) of span[0,20] pay 2.000  chunks 1  loss 0.7357
+    sleep@2250 armA lane0 [0,20) of span[0,20] pay 2.000  chunks 1  loss 0.7315
+    sleep@2267 armA lane0 [0,41) of span[0,41] pay 2.000  chunks 1  loss 0.6910
+    sleep@2267 armA lane0 [1712,1969) of span[1712,1969] pay 2.000  chunks 1  loss 0.5074
+    sleep@2267 armA lane0 [340,597) of span[340,597] pay 2.000  chunks 1  loss 0.4383
+    sleep@2267 armA lane0 [1712,1969) of span[1712,1969] pay 2.000  chunks 1  loss 0.4286
+    sleep@2267 armA lane0 [1671,1928) of span[1671,1928] pay 2.000  chunks 1  loss 0.4187
+    sleep@2267 armA lane0 [1635,1892) of span[1635,1892] pay 2.000  chunks 1  loss 0.4237
+    sleep@2267 armA lane0 [340,597) of span[340,597] pay 2.000  chunks 1  loss 0.4218
+    sleep@2267 armA lane0 [1861,2118) of span[1861,2118] pay 2.000  chunks 1  loss 0.9179
+    sleep@2267 armA lane0 [1749,2006) of span[1749,2006] pay 2.000  chunks 1  loss 0.5030
+    sleep@2267 armA lane0 [1552,1809) of span[1552,1809] pay 2.000  chunks 1  loss 0.5006
+    sleep@2267 armA lane0 [340,597) of span[340,597] pay 2.000  chunks 1  loss 0.4102
+    sleep@2267 armA lane0 [1671,1928) of span[1671,1928] pay 2.000  chunks 1  loss 0.3646
+
+=== parenting diary ===
+  [   review] mira/key         want silver   got: 'the bell was golden .' -> wrong
+  [   review] toby/bell        want golden   got: 'the bell was golden .' -> correct
+  [     ask1] orin/ring        want grey     got: 'the bell was red .' -> wrong
+  [     ask1] petra/map        want brown    got: 'the bell was red .' -> wrong
+  [     ask1] kass/candle      want red      got: 'the bell was red .' -> wrong
+  [     ask2] orin/ring        want grey     got: 'the coin was golden .' -> wrong
+  [     ask2] petra/map        want brown    got: 'the bell was grey ring in the hall .' -> wrong
+  [     ask2] kass/candle      want red      got: 'the bell was brown .' -> wrong
+  [     ask3] orin/ring        want grey     got: 'the bell was red .' -> wrong
+  [     ask3] petra/map        want brown    got: 'the bell was red .' -> wrong
+  [     ask3] kass/candle      want red      got: 'the bell was red .' -> wrong
+  [goodnight] petra/map        want brown    got: 'the bell was golden .' -> wrong
+  [goodnight] kass/candle      want red      got: 'the coin was silver in the cellar .' -> wrong
+  [goodnight] orin/ring        want grey     got: 'the bell was golden .' -> wrong
+{
+ "life_tokens": 2319,
+ "presses": 54,
+ "exchanges": 35,
+ "stage_accuracy": {
+  "ask1": "0/3",
+  "ask2": "0/3",
+  "ask3": "0/3",
+  "goodnight": "0/3",
+  "review": "1/2"
+ },
+ "goodnight": "0/3",
+ "sleep_steps": 164,
+ "prophet": {},
+ "minutes": 0.3
+}

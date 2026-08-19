@@ -3307,6 +3307,36 @@ scale, not blocking this one. Target cost: $15–40 total.
   deterministic surgery from banked inputs; parented weights
   never overwrite originals.
 
+- **A67-P PARENTING DAYS 1-3 — a superstition loop found and
+  closed; the pupil's capacity mapped: ONE fact per sleep
+  phase** (2026-08-19; Claude as caregiver, all local, $0).
+  DAY 1 (8 facts, press-on-answer): the pupil perseverated
+  under multi-fact load; a lenient judge paid a right-color-
+  wrong-object answer; sleep consolidated the mistake. DAY 2
+  (strict judge, 3 facts): every wrong answer's -1 voided its
+  span, so the ONLY positive span left was the stereotype-
+  matching review answer — 48 steps consolidated the attractor
+  EXCLUSIVELY. Named: the SUPERSTITION LOOP — press-on-
+  performance plus selective replay rewards stereotypy; the
+  reinforcer chased its own echo. CLOSED by returning to
+  press-on-teaching (the A66-proven contingency) with answers
+  scored silently. DAY 3, two arms: a FRESH life under the
+  corrected protocol develops NO stereotype (protocol
+  vindicated); the damaged life's attractor survives one clean
+  session (extinction is slow; that life is kept as a
+  cautionary evidence artifact). THE BELIEF MEASUREMENT:
+  argmax speech is the wrong bar for a 78M pupil — score-only
+  probes on the fresh life show one day of parenting drove
+  nedra's golden coin 0.053 -> 0.963 (18x, NEAR-CERTAINTY,
+  through the full press->pay->replay->sleep chain) while the
+  other two facts collapsed toward the winner. CAPACITY LAW
+  (provisional): one-day consolidation is winner-take-all at
+  d=512 — ONE fact per sleep phase binds; interleaved facts
+  collapse to the dominant token. CURRICULUM consequence: one
+  fact per day raises this mind truly; multi-fact parenting is
+  the v10 argument stated in a single number. Evidence:
+  results/evidence/a67_parenting/.
+
 ## Status
 
 **(2026-08-19, post-v9.4)** The substrate campaign is complete:

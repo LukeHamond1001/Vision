@@ -1,0 +1,111 @@
+resuming the life (/private/tmp/claude-501/-Users-lukehamond-Projects-project/d1f549c3-d351-4a55-a201-ed9e78e9ade1/scratchpad/v94sp/v94sp_life.pt)
+life so far: 57 tokens, 2 presses
+    sleep@368 armA lane0 [0,20) of span[0,20] pay 2.000  chunks 1  loss 1.4458
+    sleep@368 armA lane0 [0,20) of span[0,20] pay 2.000  chunks 1  loss 1.4317
+    sleep@368 armA lane0 [0,41) of span[0,41] pay 2.000  chunks 1  loss 1.4566
+    sleep@368 armA lane0 [0,20) of span[0,20] pay 2.000  chunks 1  loss 1.4090
+    sleep@368 armA lane0 [0,41) of span[0,41] pay 2.000  chunks 1  loss 1.3973
+    sleep@368 armA lane0 [0,20) of span[0,20] pay 2.000  chunks 1  loss 1.4023
+    sleep@368 armA lane0 [0,20) of span[0,20] pay 2.000  chunks 1  loss 1.3995
+    sleep@368 armA lane0 [0,41) of span[0,41] pay 2.000  chunks 1  loss 1.3449
+    sleep@368 armA lane0 [0,20) of span[0,20] pay 2.000  chunks 1  loss 1.3890
+    sleep@368 armA lane0 [0,41) of span[0,41] pay 2.000  chunks 1  loss 1.3179
+    sleep@368 armA lane0 [0,41) of span[0,41] pay 2.000  chunks 1  loss 1.3115
+    sleep@368 armA lane0 [0,20) of span[0,20] pay 2.000  chunks 1  loss 1.3739
+    sleep@674 armA lane0 [0,20) of span[0,20] pay 2.000  chunks 1  loss 1.3690
+    sleep@674 armA lane0 [0,41) of span[0,41] pay 2.000  chunks 1  loss 1.2966
+    sleep@674 armA lane0 [340,597) of span[340,597] pay 2.000  chunks 1  loss 3.3431
+    sleep@674 armA lane0 [0,41) of span[0,41] pay 2.000  chunks 1  loss 1.2853
+    sleep@674 armA lane0 [0,20) of span[0,20] pay 2.000  chunks 1  loss 1.3467
+    sleep@674 armA lane0 [0,41) of span[0,41] pay 2.000  chunks 1  loss 1.2753
+    sleep@674 armA lane0 [0,20) of span[0,20] pay 2.000  chunks 1  loss 1.3347
+    sleep@674 armA lane0 [0,20) of span[0,20] pay 2.000  chunks 1  loss 1.3283
+    sleep@674 armA lane0 [0,41) of span[0,41] pay 2.000  chunks 1  loss 1.2574
+    sleep@674 armA lane0 [0,41) of span[0,41] pay 2.000  chunks 1  loss 1.2510
+    sleep@674 armA lane0 [0,20) of span[0,20] pay 2.000  chunks 1  loss 1.3082
+    sleep@674 armA lane0 [0,20) of span[0,20] pay 2.000  chunks 1  loss 1.3005
+    sleep@964 armA lane0 [0,20) of span[0,20] pay 2.000  chunks 1  loss 1.2927
+    sleep@964 armA lane0 [0,41) of span[0,41] pay 2.000  chunks 1  loss 1.2214
+    sleep@964 armA lane0 [0,20) of span[0,20] pay 2.000  chunks 1  loss 1.2762
+    sleep@964 armA lane0 [0,20) of span[0,20] pay 2.000  chunks 1  loss 1.2682
+    sleep@964 armA lane0 [340,597) of span[340,597] pay 2.000  chunks 1  loss 2.7508
+    sleep@964 armA lane0 [0,41) of span[0,41] pay 2.000  chunks 1  loss 1.1925
+    sleep@964 armA lane0 [0,41) of span[0,41] pay 2.000  chunks 1  loss 1.1858
+    sleep@964 armA lane0 [0,20) of span[0,20] pay 2.000  chunks 1  loss 1.2404
+    sleep@964 armA lane0 [340,597) of span[340,597] pay 2.000  chunks 1  loss 2.9134
+    sleep@964 armA lane0 [340,597) of span[340,597] pay 2.000  chunks 1  loss 2.3564
+    sleep@964 armA lane0 [0,20) of span[0,20] pay 2.000  chunks 1  loss 1.2229
+    sleep@964 armA lane0 [0,20) of span[0,20] pay 2.000  chunks 1  loss 1.2162
+    sleep@964 armA lane0 [340,597) of span[340,597] pay 2.000  chunks 1  loss 1.8059
+    sleep@964 armA lane0 [340,597) of span[340,597] pay 2.000  chunks 1  loss 1.6686
+    sleep@964 armA lane0 [340,597) of span[340,597] pay 2.000  chunks 1  loss 1.5048
+    sleep@964 armA lane0 [0,41) of span[0,41] pay 2.000  chunks 1  loss 1.1430
+    sleep@964 armA lane0 [340,597) of span[340,597] pay 2.000  chunks 1  loss 1.2786
+    sleep@964 armA lane0 [340,597) of span[340,597] pay 2.000  chunks 1  loss 1.1743
+    sleep@964 armA lane0 [0,20) of span[0,20] pay 2.000  chunks 1  loss 1.2000
+    sleep@964 armA lane0 [0,41) of span[0,41] pay 2.000  chunks 1  loss 1.1338
+    sleep@964 armA lane0 [340,597) of span[340,597] pay 2.000  chunks 1  loss 1.0842
+    sleep@964 armA lane0 [340,597) of span[340,597] pay 2.000  chunks 1  loss 1.0069
+    sleep@964 armA lane0 [0,41) of span[0,41] pay 2.000  chunks 1  loss 1.1130
+    sleep@964 armA lane0 [0,41) of span[0,41] pay 2.000  chunks 1  loss 1.1081
+    sleep@1003 armA lane0 [0,20) of span[0,20] pay 2.000  chunks 1  loss 1.1581
+    sleep@1003 armA lane0 [0,20) of span[0,20] pay 2.000  chunks 1  loss 1.1526
+    sleep@1003 armA lane0 [340,597) of span[340,597] pay 2.000  chunks 1  loss 1.0222
+    sleep@1003 armA lane0 [0,41) of span[0,41] pay 2.000  chunks 1  loss 1.0907
+    sleep@1003 armA lane0 [0,20) of span[0,20] pay 2.000  chunks 1  loss 1.1359
+    sleep@1003 armA lane0 [0,41) of span[0,41] pay 2.000  chunks 1  loss 1.0759
+    sleep@1003 armA lane0 [340,597) of span[340,597] pay 2.000  chunks 1  loss 0.8653
+    sleep@1003 armA lane0 [340,597) of span[340,597] pay 2.000  chunks 1  loss 0.8155
+    sleep@1003 armA lane0 [0,41) of span[0,41] pay 2.000  chunks 1  loss 1.0582
+    sleep@1003 armA lane0 [0,41) of span[0,41] pay 2.000  chunks 1  loss 1.0524
+    sleep@1003 armA lane0 [0,41) of span[0,41] pay 2.000  chunks 1  loss 1.0472
+    sleep@1003 armA lane0 [340,597) of span[340,597] pay 2.000  chunks 1  loss 0.7868
+
+=== parenting diary ===
+  [   review] mira/key         want silver   got: 'the key was silver .' -> correct
+  [   review] toby/bell        want golden   got: 'the bell was silver .' -> wrong
+  [     ask1] toby/coin        want silver   got: 'the coin was red .' -> wrong
+  [     ask1] mira/chest       want copper   got: 'the bell was red .' -> wrong
+  [     ask1] finn/cloak       want blue     got: 'the cloak is not a member of the genus,' -> miss
+  [     ask1] yara/chest       want red      got: 'the cloak is not a member of the genus,' -> miss
+  [     ask2] toby/coin        want silver   got: 'the coin was red .' -> wrong
+  [     ask2] mira/chest       want copper   got: 'the bell was golden .' -> wrong
+  [     ask2] finn/cloak       want blue     got: 'the bell was copper .' -> wrong
+  [     ask2] yara/chest       want red      got: 'the bell was copper .' -> wrong
+  [     ask3] toby/coin        want silver   got: 'the bell was red .' -> wrong
+  [     ask3] mira/chest       want copper   got: 'the bell was red .' -> wrong
+  [     ask3] finn/cloak       want blue     got: 'the bell was red .' -> wrong
+  [     ask3] yara/chest       want red      got: 'the bell was red .' -> correct
+  [     ask1] dov/cloak        want white    got: 'the bell was silver .' -> wrong
+  [     ask1] arlen/coin       want silver   got: 'the coin was white .' -> wrong
+  [     ask1] silas/seed       want silver   got: 'the seed was silver .' -> correct
+  [     ask1] kass/cloak       want black    got: 'the seed was silver in the cellar .<eot_' -> wrong
+  [     ask2] dov/cloak        want white    got: 'the seed was silver in the cellar .<eot_' -> wrong
+  [     ask2] arlen/coin       want silver   got: 'the seed was silver in the cellar .' -> correct
+  [     ask2] kass/cloak       want black    got: 'the seed was silver in the cellar .' -> wrong
+  [     ask3] dov/cloak        want white    got: 'the seed was silver in the cellar .<eot_' -> wrong
+  [     ask3] kass/cloak       want black    got: 'the seed was silver in the cellar .' -> wrong
+  [goodnight] dov/cloak        want white    got: 'the bell was golden .' -> wrong
+  [goodnight] kass/cloak       want black    got: 'the bell was golden .' -> wrong
+  [goodnight] yara/chest       want red      got: 'the coin was golden .' -> wrong
+  [goodnight] silas/seed       want silver   got: 'the bell was golden .' -> wrong
+  [goodnight] toby/coin        want silver   got: 'the bell was golden .' -> wrong
+  [goodnight] arlen/coin       want silver   got: 'the bell was golden .' -> wrong
+  [goodnight] finn/cloak       want blue     got: 'the bell was golden .' -> wrong
+  [goodnight] mira/chest       want copper   got: 'the bell was golden .' -> wrong
+{
+ "life_tokens": 1126,
+ "presses": 31,
+ "exchanges": 55,
+ "stage_accuracy": {
+  "ask1": "1/8",
+  "ask2": "1/7",
+  "ask3": "1/6",
+  "goodnight": "0/8",
+  "review": "1/2"
+ },
+ "goodnight": "0/8",
+ "sleep_steps": 68,
+ "prophet": {},
+ "minutes": 0.4
+}
