@@ -3665,6 +3665,24 @@ scale, not blocking this one. Target cost: $15–40 total.
   band-5 horizons (131k) are out of debug reach — a v-scale
   question by construction.
 
+- **A69-R1 VERDICT — NULL, INSTRUMENT UNARMED** (2026-08-19;
+  evidence results/evidence/a69_bio_ablation.json). The
+  decisive reading: BIO in-ctx accuracy 0.085 vs chance 1/12 =
+  0.083 (n=5,495) — the d=64/3k-step model never learned to
+  bind name/object -> color AT ALL, 100 tokens back inside its
+  own window; and every lesion (full/nostore/fresh) read
+  bit-identical, confirming no carried state was consulted.
+  With no binder, the cross-session comparison never armed:
+  the bio-vs-ctrl band3 spread (.122 vs .053, n=131/266) is
+  chance-level noise. NOT a gate failure — a precondition
+  failure, caught by the lesion grid on the first run.
+  PRECONDITION LAW (added to the script): the biography
+  ablation means nothing until in-ctx accuracy clears 2x
+  chance (>=0.17); sweep capacity/duration first. A69-R2 in
+  flight: d=128, 12k steps, bio arm only, tracking the
+  training-time recall EMA for binding emergence. The G1-G3
+  gates stand unchanged, awaiting an armed instrument.
+
 ## Status
 
 **(2026-08-19, post-v9.4)** The substrate campaign is complete:

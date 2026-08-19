@@ -34,6 +34,14 @@ from iga.lm_train import train                         # noqa: E402
 
 D, LANES, T = 64, 4, 256
 STEPS = int(sys.argv[1]) if len(sys.argv) > 1 else 3000
+if len(sys.argv) > 2:
+    D = int(sys.argv[2])
+ARMS = (sys.argv[3].split(",") if len(sys.argv) > 3
+        else ["bio", "ctrl"])
+# A69-R2: the R1 null — in-ctx recall AT CHANCE at d=64/3k steps
+# (the binder never formed; every lesion identical) — makes the
+# precondition explicit: the ablation only means something once
+# in-ctx accuracy clears ~2x chance (>=0.17). Sweep d/steps first.
 SEED = 7
 SESS = (20, 40)
 BUTTONS = {"pos": .3, "neg": .1, "pos_v": 2, "neg_v": 1}
@@ -100,6 +108,8 @@ def main():
     out = {"steps": STEPS, "d": D, "T": T, "lanes": LANES,
            "arms": {}}
     for tag, life in (("bio", LIFE_BIO), ("ctrl", LIFE_CTRL)):
+        if tag not in ARMS:
+            continue
         model, vocab, meta = train_arm(life, tag)
         arm = {"train": meta, "eval": {}}
         for lesion in ("full", "nostore", "fresh"):
