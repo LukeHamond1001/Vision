@@ -1,0 +1,16 @@
+best @ 266000, final @ 296000, vocab 32768
+  25/320 wins 11
+  50/320 wins 28
+  75/320 wins 39
+  100/320 wins 51
+  125/320 wins 61
+  150/320 wins 73
+  175/320 wins 89
+  200/320 wins 106
+  225/320 wins 119
+  250/320 wins 133
+  275/320 wins 144
+  300/320 wins 153
+
+A63 GATE: pairs 320 (ties 0)  wins 167/320  sign p = 0.23373  mean d_replayed +0.05456  mean d_control +0.05517
+FAIL (gate half; CE guard scored separately)

@@ -2887,6 +2887,52 @@ scale, not blocking this one. Target cost: $15–40 total.
   NaN/stall watcher, 30-min rolling snapshots to
   results-v94s-ckpt. Est ~4h, ~$2-3.
 
+- **A63 VERDICT — APPLICATION HEALTHY AND RECORD-SETTING; the
+  pre-registered retention gate reads NULL** (2026-08-19
+  ~15:40 UTC; run $1.8 on a 5090 at 65k tok/s wire-to-wire —
+  the era's cheapest v-run; all measurement local, $0). RUN:
+  266k -> 296k on the certified config, rc=0, no NaN/stall;
+  economy alive at certified density (~305k holds settled,
+  recall records b0 0.997 / b1 0.958); sleep lawful at scale —
+  3,142 ARM B blocks, 6,279 replayed chunks, L1 audit
+  only_paid=TRUE. GUARD HALF: PASS AND BEYOND — mix_r1_eval CE
+  full 1.8950 (instrument line verified fc639269079e), a NEW
+  FAMILY RECORD, -1.52% vs v94-best's 1.9242 (the guard only
+  demanded < +1%); lesionALL 1.8966, margin +0.08% — the
+  serving-time null unchanged (measured, not gated). PAIRED
+  HALF: NULL — 167/320 wins (52.2%), sign p = 0.234; mean
+  improvement replayed +0.0546 nats vs control +0.0552:
+  IDENTICAL. Consolidation's benefit is real but DIFFUSE — it
+  does not localize to the replayed spans by this instrument.
+  Two candidate readings, both honest: (1) spillover — controls
+  sit 3W earlier on the SAME lane (chosen for comparability),
+  i.e. the same conversations; a distillation benefit that
+  generalizes conversation-wide nulls the contrast by design;
+  (2) dilution — wake's 6-lane full-coverage gradient dwarfs
+  sleep's 2-chunk B=1 replays per-token, so span-specific
+  traces drown in the shared improvement. The debug A/B's
+  control arm (B > control at matched wake) says sleep
+  contributes; v-scale attribution of the CE record between
+  30k-more-wake and sleep is UNRESOLVED (single run, the $
+  choice, pre-declared). WHAT CARRIES: the sharp instrument
+  for span-specific retention is the LIVE teach-probe —
+  planted novel facts, paid vs unpaid by real button events,
+  store-wipe readout — which is Phase 2's designed experiment;
+  static replayed-window CE was its best pre-button
+  approximation and has now measured its own bluntness.
+  SUBSTRATE: monotone through the continuation — v94-best
+  1.9242 (266k) -> v94s-best 1.9046 (280k) -> v94s FINAL
+  1.8950 (296k); recall rows identical (pod eval). Final
+  beats peval-best this time (short healthy continuation on
+  the decayed lr tail — no late bleed for F4 to guard
+  against). **v94s.pt (step 296k, results-v94s) is the new
+  production substrate.**
+  Phase 1 machinery is BUILT, LAWFUL AT SCALE, and SAFE (zero
+  damage at dose 1:4); the sleep loop ships into Phase 2 as
+  standing equipment. Artifacts: results-v94s (ckpts, windows,
+  provenance, trace), evidence banked in-tree. Costs: pod
+  $1.8, measurement $0. Campaign total for Phase 1: ~$1.8.
+
 ## Status
 
 **(2026-08-19, post-v9.4)** The substrate campaign is complete:
@@ -2895,10 +2941,12 @@ both diseases cured (trunk: pay-gradient volume, A60b; store:
 payment coverage, A60f). Closed PASS at A61; the buildout is open
 (A62 Phase 1 harness landed, laws green).
 
-**Production checkpoint**: `v94.pt.best.pt` (step 266k, peval-
-selected; beats the 488k final on held-out recall 0.962 vs 0.865)
-— branch `results-v94` (`v94best_part_*`). Final 488k ckpt same
-branch (`v94_part_*`). Wire-to-wire trace + eval tables landed.
+**Production checkpoint**: `v94s.pt` (step 296k, post-A63
+consolidation continuation; mix_r1_eval CE 1.8950 — family
+record) — branch `results-v94s` (`v94s_part_*`; continuation
+best @280k as `v94sbest_part_*`). The pre-sleep substrate
+`v94.pt.best.pt` (266k, CE 1.9242) stays banked on
+`results-v94`; the 488k wake-only final (CE 2.0344) likewise.
 
 **Artifact map (branches)**:
 - `data-r1eval` — THE held-out eval instrument (7.0M tokens,
@@ -2909,6 +2957,9 @@ branch (`v94_part_*`). Wire-to-wire trace + eval tables landed.
 - `results-v9{,1,2,3,4}` + `-ckpt` — v-campaign runs, traces,
   checkpoints. `results-v9-best` — v9's healthy 38k best.
 - `results-v94-autopsy{,2}` — endgame battery outputs.
+- `results-v94s` (+`-ckpt`) — A63 sleep application: production
+  ckpt @296k, continuation best @280k, gate windows (paired
+  replayed/control tokens), sleep provenance, trace.
 - ~40 `results-<random>` branches: orphan boot noise from early
   hunter eras — PRUNE CANDIDATES (verify each holds no ckpt
   pieces before deletion; not yet done).
@@ -2929,9 +2980,9 @@ debug tier (3.9k vs 11.2k tok/s) and at B=1 inference (307 vs
 local work runs CPU; v-scale training stays on pods (~90k tok/s
 reference).
 
-**Next**: Phase 1 (A62): harness + laws LANDED, debug A/B local
-→ winner frozen → v-scale application from v94-best (~$2-3,
-needs explicit go) → Phase 2 grounded reward
+**Next**: Phase 1 COMPLETE (A62 harness + laws, A63 applied at
+scale: lawful, record CE 1.8950, retention-gate null carried to
+the live teach-probe) → Phase 2 grounded reward
 (RATIFIED DESIGN: two graded +/- buttons as primary reinforcer,
 band-built secondary rewards, frozen-instrument/veto Goodhart
 defenses) → Phase 3 live inference + the three-act operant demo

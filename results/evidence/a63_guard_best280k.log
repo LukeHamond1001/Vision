@@ -1,0 +1,8 @@
+TM-v9-clean 461  completion ids 202 (836 positions)  hash fc639269079e
+== v94s-best280k step 280000 serve-T 2048
+  ce chunk 0: running 1.2912
+  ce chunk 100: running 1.8179
+  ce chunk 200: running 1.9071
+  ce chunk 300: running 1.9020
+CE full      : 1.9046
+  ce chunk 0: running 1.2912
