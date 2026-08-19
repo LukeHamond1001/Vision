@@ -1,0 +1,141 @@
+{
+ "sleep": {
+  "items": {
+   "pos": 127,
+   "none": 591,
+   "neg": 85
+  },
+  "mean_p": {
+   "pos": 0.0829,
+   "none": 0.08261,
+   "neg": 0.08412
+  },
+  "p_pos_gt_none": 0.52651,
+  "p_none_gt_neg": 0.73999,
+  "effect_pos_none": 0.00029,
+  "presses": 8545,
+  "audit": {
+   "holds": 1748,
+   "telescoping_exact": true,
+   "scoped": true,
+   "vetoes": 28712,
+   "proposed": 6468,
+   "presses": 8545,
+   "voided_zero": true
+  },
+  "prophet": {
+   "3": {
+    "n_pos": 19148,
+    "n_zero": 18,
+    "n_neg": 762,
+    "mean_pos": 0.8498,
+    "mean_zero": 0.9231,
+    "mean_neg": 0.8419,
+    "sep": -0.0733,
+    "steps": 297,
+    "loss": 0.2155
+   },
+   "4": {
+    "n_pos": 2360,
+    "n_zero": 0,
+    "n_neg": 80,
+    "mean_pos": 0.2541,
+    "mean_zero": 0.0,
+    "mean_neg": 0.2562,
+    "sep": 0.2541,
+    "steps": 38,
+    "loss": 0.50186
+   },
+   "5": {
+    "n_pos": 248,
+    "n_zero": 0,
+    "n_neg": 8,
+    "mean_pos": 0.192,
+    "mean_zero": 0.0,
+    "mean_neg": 0.209,
+    "sep": 0.192,
+    "steps": 4,
+    "loss": 0.88948
+   }
+  },
+  "sleep_audit": {
+   "replayed": 1238,
+   "blocks": 621,
+   "only_paid": true
+  },
+  "replay_coverage": {
+   "pos": [
+    0.7874,
+    127
+   ],
+   "none": [
+    0.7513,
+    591
+   ],
+   "neg": [
+    0.6824,
+    85
+   ]
+  }
+ },
+ "nosleep": {
+  "items": {
+   "pos": 129,
+   "none": 566,
+   "neg": 82
+  },
+  "mean_p": {
+   "pos": 0.08261,
+   "none": 0.0825,
+   "neg": 0.0831
+  },
+  "p_pos_gt_none": 0.48256,
+  "p_none_gt_neg": 0.88607,
+  "effect_pos_none": 0.00012,
+  "presses": 8585,
+  "audit": {
+   "holds": 2600,
+   "telescoping_exact": true,
+   "scoped": true,
+   "vetoes": 29040,
+   "proposed": 7844,
+   "presses": 8585,
+   "voided_zero": true
+  },
+  "prophet": {
+   "3": {
+    "n_pos": 19073,
+    "n_zero": 27,
+    "n_neg": 831,
+    "mean_pos": 0.788,
+    "mean_zero": 0.8828,
+    "mean_neg": 0.7409,
+    "sep": -0.0948,
+    "steps": 297,
+    "loss": 0.30678
+   },
+   "4": {
+    "n_pos": 2346,
+    "n_zero": 0,
+    "n_neg": 97,
+    "mean_pos": 0.6596,
+    "mean_zero": 0.0,
+    "mean_neg": 0.6174,
+    "sep": 0.6596,
+    "steps": 38,
+    "loss": 0.27167
+   },
+   "5": {
+    "n_pos": 249,
+    "n_zero": 0,
+    "n_neg": 7,
+    "mean_pos": -0.245,
+    "mean_zero": 0.0,
+    "mean_neg": -0.2236,
+    "sep": -0.245,
+    "steps": 4,
+    "loss": 1.70901
+   }
+  }
+ }
+}

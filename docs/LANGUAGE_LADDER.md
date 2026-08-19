@@ -3033,6 +3033,43 @@ scale, not blocking this one. Target cost: $15–40 total.
   vocab surgery, the debug tier retaining what it has already
   certified: the laws and the economy mechanics. ~1h local, $0.
 
+- **A64-R ROUND 3 / VERDICT — base-faculty gate FAILED; the
+  escalation clause FIRES; debug tier closes with laws +
+  mechanics certified and three findings banked** (2026-08-19;
+  d=128 x 15k steps x 2 arms, ~1h local, $0). (1) b0 in-stream
+  EMA 0.086 at run end (gate: >= 0.15) — this weaver config at
+  debug scales does not push item binding into the trunk;
+  PER PRE-REGISTRATION the teach-probe retention demo ESCALATES
+  to the proven substrate (v94s, b0 record 0.997) via Phase 3
+  vocab surgery. (2) VETO ATTRIBUTION SETTLED by the split
+  counter: press_vetoes 89.7k of 94k — disapproval vetoes DO
+  dominate at debug press density (round 2's correction itself
+  corrected); each fire silenced a channel for a full band
+  horizon (b1 = 16k tokens). AMENDED (B3''): cooldown capped
+  at min(horizon, 2048) — a fire pauses the channel, never
+  amputates the faculty. Real parenting presses are orders
+  sparser; the cap is right law regardless. (3) NEW DOSE
+  BOUNDARY: ARM B at 1:4 x 15k steps on a FRESH trunk induced
+  a regime-specific distortion — the sleep arm's readout
+  (fresh-state B=1, the student's own training regime)
+  collapsed to 0.0008 (100x below chance) while in-stream CE
+  stayed healthy (0.6-0.8) and KL -> 0; the nosleep arm read
+  chance. The student regime itself gets tilted toward
+  store-shaped logits on immature trunks. At v-scale the SAME
+  regime IMPROVED (+0.055 nats, A63) — LAW OF USE: ARM B doses
+  to MATURE substrates; fresh-init debug models get dose caps.
+  WHAT THE DEBUG TIER CERTIFIED across R1-R3: laws B1-B5 +
+  L1-L4 under fire; selection-chain ordering correct in every
+  round (final: coverage pos .785 > none .764); sparsity and
+  veto mechanics tuned; voided material never replays (L1xB1
+  interlock). Phase 2's mechanism ships; its RETENTION
+  demonstration belongs to Phase 3's live demo. A65 opens:
+  vocab surgery util landed with an output-parity law test
+  (old-token logits preserved through every store path; press
+  rows dead at bias -20 until trained). Next: the serving
+  harness (live chunk loop, human presses, wake/sleep
+  scheduling) and the three-act demo on v94s.
+
 ## Status
 
 **(2026-08-19, post-v9.4)** The substrate campaign is complete:
@@ -3080,9 +3117,12 @@ debug tier (3.9k vs 11.2k tok/s) and at B=1 inference (307 vs
 local work runs CPU; v-scale training stays on pods (~90k tok/s
 reference).
 
-**Next**: Phase 1 COMPLETE (A62 harness + laws, A63 applied at
-scale: lawful, record CE 1.8950, retention-gate null carried to
-the live teach-probe) → Phase 2 grounded reward
+**Next**: Phase 1 COMPLETE (A62+A63: lawful at scale, record CE
+1.8950). Phase 2 mechanism CERTIFIED at debug (A64: press economy
+laws B1-B5, selection chain ordering; retention demo escalated
+per pre-registration) → Phase 3 NOW: vocab surgery (A65 landed)
++ serving harness + the three-act demo on v94s → Phase 2's
+grounded-reward demonstration lives inside it
 (RATIFIED DESIGN: two graded +/- buttons as primary reinforcer,
 band-built secondary rewards, frozen-instrument/veto Goodhart
 defenses) → Phase 3 live inference + the three-act operant demo

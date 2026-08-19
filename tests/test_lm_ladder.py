@@ -1137,6 +1137,8 @@ class TestButtonLaws(unittest.TestCase):
         d.button(0, -1)                              # repeated enough
         self.assertIn("recall:b0", d.veto_until)
         self.assertEqual(d.neg_count["recall:b0"], 0)  # reset on fire
+        self.assertLessEqual(d.veto_until["recall:b0"] - d.step_t,
+                             2048)                   # B3'': capped
         v0 = d.vetoes
         d.step_t += 1
         d.sweep(losses=[])
@@ -1179,6 +1181,43 @@ class TestButtonLaws(unittest.TestCase):
             self.assertEqual(v.words[toks[p]],
                              f"<{'+' if val > 0 else '-'}{abs(val)}>")
         self.assertEqual({i["cls"] for i in log}, {"pos", "none", "neg"})
+
+    def test_vocab_surgery_output_parity(self):
+        # A65: extending a trained ckpt with press tokens must leave
+        # every old-token logit bit-near-exact (store paths included)
+        # and the new rows dead (bias -20) until trained
+        import torch as t
+        from iga.lm_hybrid import HybridLM
+        from iga.lm_vocab import extend_model_state
+        t.manual_seed(3)
+        m0 = HybridLM(64, d=32, n_layers=2, n_heads=2, max_T=64,
+                      store="matrix", keyed="logit", norm_mix=True,
+                      aux_trunk=0.2, use_xl=False)
+        with t.no_grad():
+            for a in m0.alpha.values():
+                a.fill_(2.0)          # store bonus live during parity
+        sd, v0, v1 = extend_model_state(m0.state_dict())
+        self.assertEqual((v0, v1), (64, 68))
+        m1 = HybridLM(68, d=32, n_layers=2, n_heads=2, max_T=64,
+                      store="matrix", keyed="logit", norm_mix=True,
+                      aux_trunk=0.2, use_xl=False)
+        m1.load_state_dict(sd)
+        m0.eval()
+        m1.eval()
+        x = t.randint(0, 64, (1, 64))
+        st0, st1 = m0.init_state(1, "cpu"), m1.init_state(1, "cpu")
+        with t.no_grad():
+            for _ in range(2):        # chunk 2 reads chunk 1's writes
+                l0, st0, _ = m0(x, st0, None)
+                m0.pop_write_cost()
+                m0.pop_recon()
+                l1, st1, _ = m1(x, st1, None)
+                m1.pop_write_cost()
+                m1.pop_recon()
+                st0 = m0.detach_state(st0)
+                st1 = m1.detach_state(st1)
+        self.assertLess(float((l0 - l1[..., :64]).abs().max()), 1e-5)
+        self.assertLess(float(l1[..., 64:].max()), -10.0)
 
     def test_B5_prophet_is_a_spectator(self):
         import torch as t

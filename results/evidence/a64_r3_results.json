@@ -1,0 +1,155 @@
+{
+ "sleep": {
+  "items": {
+   "pos": 163,
+   "none": 759,
+   "neg": 90
+  },
+  "recall_ema": {
+   "recall:b0": 0.0857,
+   "recall:b1": 0.0853,
+   "recall:b2": 0.0823,
+   "recall:b3": 0.0828
+  },
+  "mean_p": {
+   "pos": 0.00079,
+   "none": 0.00079,
+   "neg": 0.00073
+  },
+  "p_pos_gt_none": 0.61971,
+  "p_none_gt_neg": 0.05262,
+  "effect_pos_none": -0.0,
+  "presses": 25563,
+  "audit": {
+   "holds": 4404,
+   "telescoping_exact": true,
+   "scoped": true,
+   "vetoes": 93968,
+   "proposed": 8820,
+   "presses": 25563,
+   "press_vetoes": 89684,
+   "voided_zero": true
+  },
+  "prophet": {
+   "3": {
+    "n_pos": 57479,
+    "n_zero": 86,
+    "n_neg": 2355,
+    "mean_pos": 0.9715,
+    "mean_zero": 0.9838,
+    "mean_neg": 0.9611,
+    "sep": -0.0123,
+    "steps": 890,
+    "loss": 0.20029
+   },
+   "4": {
+    "n_pos": 7150,
+    "n_zero": 0,
+    "n_neg": 306,
+    "mean_pos": 0.9232,
+    "mean_zero": 0.0,
+    "mean_neg": 0.9187,
+    "sep": 0.9232,
+    "steps": 116,
+    "loss": 0.24761
+   },
+   "5": {
+    "n_pos": 864,
+    "n_zero": 0,
+    "n_neg": 32,
+    "mean_pos": 0.3272,
+    "mean_zero": 0.0,
+    "mean_neg": 0.3353,
+    "sep": 0.3272,
+    "steps": 14,
+    "loss": 0.72819
+   }
+  },
+  "sleep_audit": {
+   "replayed": 3732,
+   "blocks": 1871,
+   "only_paid": true
+  },
+  "replay_coverage": {
+   "pos": [
+    0.7853,
+    163
+   ],
+   "none": [
+    0.7642,
+    759
+   ],
+   "neg": [
+    0.8222,
+    90
+   ]
+  }
+ },
+ "nosleep": {
+  "items": {
+   "pos": 154,
+   "none": 777,
+   "neg": 80
+  },
+  "recall_ema": {
+   "recall:b0": 0.0832,
+   "recall:b1": 0.0859,
+   "recall:b2": 0.0873,
+   "recall:b3": 0.0812
+  },
+  "mean_p": {
+   "pos": 0.07607,
+   "none": 0.07674,
+   "neg": 0.07574
+  },
+  "p_pos_gt_none": 0.6897,
+  "p_none_gt_neg": 0.31856,
+  "effect_pos_none": -0.00067,
+  "presses": 25497,
+  "audit": {
+   "holds": 4420,
+   "telescoping_exact": true,
+   "scoped": true,
+   "vetoes": 92124,
+   "proposed": 8100,
+   "presses": 25497,
+   "press_vetoes": 88620,
+   "voided_zero": true
+  },
+  "prophet": {
+   "3": {
+    "n_pos": 57420,
+    "n_zero": 66,
+    "n_neg": 2446,
+    "mean_pos": 0.9491,
+    "mean_zero": 0.9649,
+    "mean_neg": 0.9243,
+    "sep": -0.0157,
+    "steps": 890,
+    "loss": 0.1919
+   },
+   "4": {
+    "n_pos": 7145,
+    "n_zero": 0,
+    "n_neg": 311,
+    "mean_pos": 0.8368,
+    "mean_zero": 0.0,
+    "mean_neg": 0.8173,
+    "sep": 0.8368,
+    "steps": 116,
+    "loss": 0.20546
+   },
+   "5": {
+    "n_pos": 855,
+    "n_zero": 0,
+    "n_neg": 41,
+    "mean_pos": 0.3081,
+    "mean_zero": 0.0,
+    "mean_neg": 0.2706,
+    "sep": 0.3081,
+    "steps": 14,
+    "loss": 0.73863
+   }
+  }
+ }
+}

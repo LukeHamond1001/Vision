@@ -168,7 +168,13 @@ class Drive:
                     band = self.bin_band[int(key[-1])]
                 else:
                     band = int(key.split(":")[1])
-                self.veto_until[key] = self.step_t + self.horizon_for(band)
+                # A64-R3 (B3''): cooldown CAPPED — a fire pauses the
+                # channel, never amputates the faculty (b1's full
+                # horizon = 16k tokens of silence per fire; R3's
+                # split counter convicted the uncapped form with
+                # 89.7k skips at debug press density)
+                self.veto_until[key] = self.step_t + \
+                    min(self.horizon_for(band), 2048)
 
     # ---------- proposer + imagination ----------
     def _propose(self, lane):
