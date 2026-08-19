@@ -1,0 +1,27 @@
+TM-v9-clean 461  completion ids 202 (836 positions)  hash fc639269079e
+== v94.pt-final-488k step 488000 serve-T 2048
+ALPHA: {'3': 5.6102, '4': 3.8885, '5': 3.0004}
+betas: {'3': 1.0, '4': 1.0, '5': 1.0}
+qmix softmax: [0.999, 0.001, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+tok_u: mean -0.4566 std 1.1977 min -9.800 max 4.520
+tok_u TOP-40: ' Software', ' Here', ' agreed', ' useful', ' don', ' FITNESS', ' example', ' General', ' been', ' Aff', 'Foreign', ' OTHER', ' IS', 'IS', ' disclaim', 'century', ' KIND', 'Imp', ' provide', ' WITHOUT', '?', 'Comp', 'POSE', '((', ' Ad', '########', ' https', ' up', 'AR', 'orm', 'aram', 'AT', '().', ' own', 'AI', 'ur', 'Ad', 'To', 'Yes', ' December'
+tok_u BOT-40: '.', ' quiet', '_', ' kept', ' early', ' busy', ' little', ' day', ' town', ' .', '', ' good', ' road', ' market', 'what', ' weather', ' way', ' None', 'the', ' lamp', '', 'i', 'self', ' job', ' distributed', ' try', ' len', ' such', ' copper', ' a', ' return', ' golden', '#', ' WARRANTIES', ' """', 'licenses', ' many', ' silver', ' pale', 'References'
+  ce chunk 0: running 1.3885
+  ce chunk 100: running 1.9454
+  ce chunk 200: running 2.0349
+  ce chunk 300: running 2.0302
+CE full      : 2.0344
+  ce chunk 0: running 1.3885
+  ce chunk 100: running 1.9495
+  ce chunk 200: running 2.0388
+  ce chunk 300: running 2.0347
+CE lesionALL : 2.0396
+CE advantage : +0.0052 (+0.26% rel; bar +2.80%)
+t200 full     : {'TM': (0.081, 0.12, 48), 'nat-other': (0.186, 0.25, 113), 'pl-cross': (0.082, 0.09, 143), 'pl-same': (0.939, 0.94, 217), 'pl-strad': (0.036, 0.03, 30)}
+t200 lesionALL: {'TM': (0.082, 0.1, 48), 'nat-other': (0.185, 0.25, 113), 'pl-cross': (0.082, 0.09, 143), 'pl-same': (0.939, 0.94, 217), 'pl-strad': (0.036, 0.03, 30)}
+TMclean full     : p=0.0626 top1=0.0933 n=461
+TMclean lesionALL: p=0.0631 top1=0.0911 n=461
+SIGN TEST: +208/-251 (n=459), one-sided p=0.9801, median -0.00000
+COMP full     : (0.5051, 0.6096, 835)
+COMP lesionALL: (0.5023, 0.6096, 835)
+AUTOPSY DONE

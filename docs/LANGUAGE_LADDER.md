@@ -2693,6 +2693,68 @@ scale, not blocking this one. Target cost: $15–40 total.
   constraints simultaneously. Remaining to the close: ~360k
   quiet steps, endgame tables, revised gate.
 
+- **A61 THE ARCHITECTURE PHASE CLOSES — v9.4 certified: a
+  healthy scaled substrate at 488k steps; the store's
+  serving-time margin is NULL at record trunk strength,
+  carried forward eyes-open as the buildout's opening
+  problem** (2026-08-19 ~07:45 UTC; both batteries run
+  LOCALLY on the banked instrument, subset hash
+  fc639269079e verified on every read). GATE (A58c-revised:
+  completion + trunk health read JOINTLY; wire-to-wire;
+  clean banked table): trunk wire-to-wire PASS at family
+  records (heartbeat CE 1.299; held-out CE 1.9242 best /
+  2.0344 final vs r5-era 2.6570); banked table PASS (all
+  modes, both checkpoints, three cross-validated organ
+  reads); training-time store function PASS (cohorts
+  0.83-1.00, holdout retention 0.950 at n>1.3k, alphas
+  4.83/3.45/2.73 best -> 5.61/3.89/3.00 final); serving-
+  time marginal store NULL on every instrument: best.pt CE
+  advantage +0.16% (the old +2.80% bar was dropped PRE-RUN
+  at A58c as see-saw-confounded), t200 lesion-invariant
+  with pl-same at CEILING 0.997 (v9's disease marker was
+  this same row at a FLOOR — the signature inverted),
+  TM-clean sign test p=0.354, COMP +0.22pt p / +0.0 top1
+  (A54i reference +3.83pt). Final 488k corroborates (CE
+  adv +0.26%, sign p=0.980, COMP +0.28pt) and loses to
+  best on every absolute row (CE 2.034 vs 1.924, TM-clean
+  0.063 vs 0.073, pl-same 0.939 vs 0.997) — the peval
+  best-selection machinery (F4) is quadruple-vindicated;
+  **v94.pt.best.pt (step 266k) is the production
+  substrate**. VERDICT: CLOSE = PASS. The certification
+  target was a substrate whose organs survive duration —
+  trunk, bands, store, drive economy all alive and lawful
+  at 488k, both scale diseases cured (volume A60b,
+  coverage A60f). The null margin is not buried: it is the
+  PAYER PROBLEM at full scale, predicted by this ledger
+  (A55c: the associative channel exists — r6's 30k
+  transient — and LM loss defunds it; routed then to the
+  consolidation/approval track). LM pressure lets a record
+  trunk absorb everything the store carries; nothing at
+  serve time pays to keep the associative channel hot. THE
+  BUILDOUT IS THE ANSWER BY DESIGN: consolidation (Phase
+  1, pre-registers as A62) and the primary-reinforcer
+  economy (Phase 2, ratified: graded +/- buttons as the
+  grounded primary, band-built secondary rewards,
+  negatives withhold-then-veto) are the non-LM payers.
+  OPS APPENDIX (2026-08-18/19): (1) autopsies score
+  against mix_r1_eval, NEVER the training shard (a
+  post-compaction wrong flag cost ~3h and a false
+  corruption theory; instrument banked at data-r1eval,
+  facts in session memory); (2) CPU-bound measurement runs
+  LOCAL, always — user directive; pods only for GPU
+  training or volume access; (3) git-add pathspecs
+  separately (an unmatched glob fails ALL paths, silently,
+  under 2>/dev/null); (4) never fetch piece-laden branches
+  from pods — outputs ride lightweight dedicated branches;
+  (5) the macOS tmp reaper eats aged scratchpad artifacts
+  — re-verify local load-bearing files before use; volume
+  id banked at infra/RMIX_VOL; (6) the autopsy tool grows
+  --device before it is ever time-critical again; (7)
+  volume pruned (4 dead workdirs ~9GB freed; shards +
+  w-v94 kept). Costs: v9.4 run $20.2; endgame measurement
+  saga ~$3.5; prune $0.06. THE MEASURING ERA ENDS HERE;
+  the raising era begins at A62.
+
 ## Status
 
 **(2026-08-19, post-v9.4)** The substrate campaign is complete:

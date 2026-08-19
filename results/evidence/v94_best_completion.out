@@ -1,0 +1,5 @@
+TM-v9-clean 461  completion ids 202 (836 positions)  hash fc639269079e
+== v94-best-completion-local step 266000 serve-T 2048
+COMP full     : (0.5076, 0.6144, 835)
+COMP lesionALL: (0.5054, 0.6144, 835)
+AUTOPSY DONE
