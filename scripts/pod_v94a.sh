@@ -1,26 +1,26 @@
 #!/usr/bin/env bash
-# A61 v9.4 endgame autopsy, hardened relaunch: round 1 zombied 42
-# min with no heartbeat — suspect: volume workdir git state (74
-# ckpt-piece commits) or slow volume attach, unobservable without
-# a first beat. v2 ops changes: (1) run ENTIRELY from the /tmp/boot
-# clone — the volume is data-only (ckpts + shard), its git state is
-# never touched; (2) alive-marker pushed BEFORE touching the volume
-# (isolates github-vs-volume on any future silence); (3) volume
-# wait loop + timeouts on network git ops.
+# A61 v9.4 endgame autopsy, v3. Round-2 post-mortem (GraphQL
+# telemetry: CPU 79%, GPU 0%, zero heartbeats): the v2 marker
+# fetched results-v94 — now a 1.85GB piece-laden branch — and the
+# script's own 180s timeout killed the fetch, so the local branch
+# never existed and every push failed silently while the battery
+# ran toward self-terminate-and-lose-outputs. v3 OPS LAW: autopsy
+# outputs land on their OWN LIGHTWEIGHT BRANCH (results-v94-autopsy,
+# branched off the boot clone's main — no fetch of piece branches,
+# ever). Volume remains data-only (ckpts + shard reads).
 set -uo pipefail
 PUSH="https://x-access-token:${GIT_TOKEN}@github.com/LukeHamond1001/iga-scale.git"
 cd /tmp/boot
 git config user.email "pod@iga-scale"; git config user.name "iga-pod"
-timeout 180 git fetch -q --depth 1 origin results-v94 && \
-  git checkout -q -B results-v94 FETCH_HEAD
+git checkout -q -b results-v94-autopsy
 hb() {
   echo "$(date -u '+%H:%M:%S') $1" >> HEARTBEAT.log
   git add -f HEARTBEAT.log autopsy_v94*.txt 2>/dev/null || true
   git commit -qm "hb: $1" 2>/dev/null || true
-  git push -qf "$PUSH" results-v94 2>/dev/null || \
-    { sleep 20; git push -qf "$PUSH" results-v94 2>/dev/null; } || true
+  git push -qf "$PUSH" results-v94-autopsy 2>/dev/null || \
+    { sleep 20; git push -qf "$PUSH" results-v94-autopsy 2>/dev/null; } || true
 }
-hb "autopsy v2 alive (pre-volume) $(nvidia-smi --query-gpu=name --format=csv,noheader 2>/dev/null | head -1)"
+hb "autopsy v3 alive (pre-volume) $(nvidia-smi --query-gpu=name --format=csv,noheader 2>/dev/null | head -1)"
 WD=/workspace/w-v94/iga-scale
 for i in 1 2 3 4 5 6 7 8 9; do [ -d "$WD" ] && break; sleep 20; done
 if [ ! -d "$WD" ]; then
