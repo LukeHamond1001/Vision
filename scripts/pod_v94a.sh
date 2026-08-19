@@ -15,7 +15,12 @@ git config user.email "pod@iga-scale"; git config user.name "iga-pod"
 git checkout -q -b results-v94-autopsy
 hb() {
   echo "$(date -u '+%H:%M:%S') $1" >> HEARTBEAT.log
-  git add -f HEARTBEAT.log autopsy_v94*.txt 2>/dev/null || true
+  # A61 ops law: add each pathspec separately — git add rejects ALL
+  # paths when any single pathspec (e.g. an unmatched glob) misses,
+  # and the 2>/dev/null made that failure invisible (round 3 was
+  # mute-but-healthy for exactly this; diagnosed from console logs)
+  git add -f HEARTBEAT.log 2>/dev/null || true
+  git add -f autopsy_v94_*.txt 2>/dev/null || true
   git commit -qm "hb: $1" 2>/dev/null || true
   git push -qf "$PUSH" results-v94-autopsy 2>/dev/null || \
     { sleep 20; git push -qf "$PUSH" results-v94-autopsy 2>/dev/null; } || true
