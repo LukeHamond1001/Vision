@@ -3502,6 +3502,39 @@ scale, not blocking this one. Target cost: $15–40 total.
   across days — flush candidate. Life: 2,006 tokens, 27
   presses, 27 spans.
 
+- **A67-P8 DAYS 12-13 — THE REBOUND AND THE STEM POISONING:
+  correction-by-language is self-defeating in a CE-only replay
+  economy** (2026-08-19). Day 12 (contrast day 2): the
+  incumbent REBOUNDED .8736 -> .9908, past its all-time high —
+  A67-P7's "functional unlearning" was a TRANSIENT. Mechanism:
+  contrast spans carry the rival's tokens; "no . not the
+  candle" is candle EXPOSURE, and CE replay does not parse
+  negation — it re-sees the candle nightly. (Backward
+  corroboration: the incumbent rose steadily through day-7's
+  "not the candle" rescues. Coupling: coin and incumbent share
+  "golden" mass — allies in weight space.) Day 13 (pure-
+  positive, three clean +2s, zero candle words spoken): drum
+  .5192 -> .1381, COLLAPSED 3.8x — poisoned by day-12's still-
+  hot span "the drum was violet . not golden ." — "not golden"
+  wires GOLDEN into drum contexts; replay trains the rival's
+  mass on the defended stem itself and normalization crushes
+  violet. THE THREE LAWS OF CORRECTION, complete: (1) naps
+  self-limit at span mastery (polish, never push); (2) same-day
+  contrast dips are transient — negation is exposure and the
+  incumbent rebounds; (3) rival-token negation contaminates the
+  defended stem ("X , not Y" teaches Y-after-X). Race
+  scorecard, honest: drum .4311 at race open, .1381 after three
+  protocols — each wounded what it defended; the pool is salted
+  until the contaminated spans master out. DESIGN IMPLICATION
+  (v10-grade): the economy's missing organ is a true negative/
+  contrastive channel — CE-only replay cannot encode "not";
+  the negative-suppression semantics thread graduates from
+  backlog to REQUIRED for correction-by-language. Protocol v4
+  (if raising continues): rival tokens never within span_w of a
+  press; QA sampling only after the day's last press; teach
+  only pure affirmative spans; let contaminated spans age out.
+  Life: 2,324 tokens, 33 presses, 33 spans.
+
 ## Status
 
 **(2026-08-19, post-v9.4)** The substrate campaign is complete:
