@@ -2755,6 +2755,45 @@ scale, not blocking this one. Target cost: $15–40 total.
   saga ~$3.5; prune $0.06. THE MEASURING ERA ENDS HERE;
   the raising era begins at A62.
 
+- **A62 PHASE 1 STAGED — consolidation ("sleep") pre-registered
+  before any code** (2026-08-19 ~12:30 UTC; buildout opened on
+  user directive at current scale). DESIGN: wake/sleep
+  alternation resumed from the production substrate
+  (v94.pt.best.pt @266k) — NOT post-hoc distillation of a dead
+  run (the full drive ledger is not checkpointed, A60c; and the
+  living loop is the architecture's own form). Wake = normal
+  training, drive paying as certified. Sleep = replay ONLY
+  paid episodes: ledger entries with pay > 0 name token spans
+  [t0, t1] (token-denominated, A60d), sliced directly from
+  tokens.bin. MECHANISM ARMS, winner frozen after a debug-tier
+  A/B (campaign culture, A55b precedent): (ARM A) replay-
+  training — paid spans re-fed as ordinary LM chunks, store
+  frozen; consolidation as payment-selected curriculum.
+  (ARM B) store->trunk distillation — on paid spans, trunk-
+  alone logits trained toward trunk+store logits (KL); pushes
+  exactly the store's associative bonus into slow weights —
+  the direct attack on the A61 null margin (what LM loss
+  defunds, sleep deliberately funds). Prediction, falsifiable:
+  B > A > no-sleep on the retention gate; if A ~= B, the
+  cheaper arm ships. LAWS (pinned now, law-tested free before
+  any run): (L1) only-paid-replays — every sleep chunk maps to
+  a ledger entry with pay > 0, audited; (L2) parity-off —
+  sleep disabled reproduces baseline training bit-exactly;
+  (L3) sleep touches trunk/band slow weights only — store and
+  aux head provably untouched (grad-None law, A58c pattern);
+  (L4) telescoping untouched — sleep injects no drive pay.
+  GATE (v-scale, pre-registered): teach-probe protocol —
+  facts planted during wake, split paid/unpaid by button-
+  class events; after sleep, STORE WIPED, recall measured.
+  PASS = paid > unpaid retention, sign test p < 0.05, AND
+  held-out trunk CE regression < 1% (guard). Long-gap b2/b3
+  movement measured, NOT gated (aspiration row). DOSE LADDER
+  (debug A/B): sleep:wake in {0, 1:16, 1:8, 1:4}. COSTS:
+  laws + harness local/free; debug A/B one cheap pod ~$1-2
+  (training = pod, measurement = local per A61 ops law);
+  v-scale application ~20-40k wake steps + sleep interleave
+  from v94-best ~$2-3. Verdict entry = A63.
+
 ## Status
 
 **(2026-08-19, post-v9.4)** The substrate campaign is complete:
