@@ -1395,5 +1395,138 @@ class TestSleepLaws(unittest.TestCase):
             self.assertGreater(row["chunks"], 0)
 
 
+class TestServeLaws(unittest.TestCase):
+    """A65 — serving-harness laws: commit parity (faithful regime),
+    press spans + void, L1 at serve, wipe alignment, store frozen
+    through serve-sleep."""
+
+    class _Tok:
+        ids = {"<pad>": 0, "<eot_human>": 1, "<eot_model>": 2,
+               "<+1>": 60, "<+2>": 61, "<-1>": 62, "<-2>": 63}
+
+        def token_to_id(self, s):
+            return self.ids[s]
+
+    def _session(self, sleeper=None, T=64):
+        import torch as t
+        from iga.lm_hybrid import HybridLM
+        from iga.lm_serve import ServeSession
+        t.manual_seed(0)
+        m = HybridLM(64, d=32, n_layers=2, n_heads=2, max_T=T,
+                     store="matrix", keyed="logit", norm_mix=True,
+                     aux_trunk=0.2, use_xl=False)
+        with t.no_grad():
+            for a in m.alpha.values():
+                a.fill_(2.0)
+        return ServeSession(m, self._Tok(), T=T, device="cpu",
+                            sleeper=sleeper, seed=0), m
+
+    def test_commit_parity_with_training_chunk_path(self):
+        # the session's committed state must bit-match the training
+        # chunk path — generation on copies never perturbs it
+        import torch as t
+        from iga.lm_sleep import state_copy
+        s, m = self._session()
+        t.manual_seed(5)
+        ids = t.randint(3, 60, (300,)).tolist()
+        s._append(ids)                    # 4 commits + 44 pending
+        st = m.init_state(1, "cpu")
+        with t.no_grad():
+            for off in range(0, 256, 64):
+                _, st, _ = m(t.tensor([ids[off:off + 64]]), st, None)
+                m.pop_write_cost()
+                m.pop_recon()
+                st = m.detach_state(st)
+        for k in m.bands:
+            self.assertTrue(t.equal(s.st["h"][k], st["h"][k]))
+            self.assertTrue(t.equal(s.st["M"][k], st["M"][k]))
+        with t.no_grad():
+            lg, _, _ = m(t.tensor([ids[256:]]), state_copy(st), None)
+            m.pop_write_cost()
+            m.pop_recon()
+        self.assertTrue(t.equal(s._next_logits(), lg[0, -1].float()))
+
+    def test_press_token_and_ledger_position(self):
+        s, m = self._session()
+        s._append(list(range(3, 33)))
+        p0 = s.pos
+        s.press(2)
+        self.assertEqual(s.pending[-1], 61)   # the act is perceivable
+        self.assertEqual(s.drive.presses[0]["t"], p0)
+        self.assertEqual(s.pos, p0 + 1)
+
+    def test_press_spans_void_and_L1_at_serve(self):
+        import torch as t
+        from iga.lm_sleep import Sleeper, frozen_param_names
+        sl = Sleeper(arm="B", every=0, block_chunks=2, seed=0)
+        s, m = self._session(sleeper=sl)
+        t.manual_seed(6)
+        s._append(t.randint(3, 60, (500,)).tolist())
+        s.drive.step_t = 300
+        s.drive.button(0, 2)              # span [172, 300] at w=128
+        s.drive.step_t = 400
+        s.drive.button(0, 1)              # span [272, 400]
+        s.drive.step_t = 450
+        s.drive.button(0, -1)             # voids only the overlap
+        s._flush()
+        n = sl.harvest_presses(s.drive, span_w=128)
+        self.assertEqual(n, 1)
+        self.assertEqual((sl.spans[0]["t0"], sl.spans[0]["t1"]),
+                         (172, 300))
+        frozen = set(frozen_param_names(m))
+        pre = {k: p.clone() for k, p in m.named_parameters()
+               if k in frozen}
+        opt = t.optim.AdamW(m.parameters(), lr=1e-3)
+        self.assertIsNotNone(sl._block(m, opt, step=500))
+        self.assertTrue(sl.audit()["only_paid"])
+        for r in sl.replayed:             # L1 at serve: inside the
+            self.assertGreaterEqual(r["lo"], 172)   # press span
+            self.assertLessEqual(r["hi"], 300)
+        for k, p in m.named_parameters():
+            if k in frozen:
+                self.assertTrue(t.equal(p, pre[k]), k)
+
+    def test_wipe_flush_keeps_clock_and_buffer_aligned(self):
+        from iga.lm_sleep import Sleeper
+        sl = Sleeper(arm="B", every=0, block_chunks=2, seed=0)
+        s, m = self._session(sleeper=sl)
+        s._append(list(range(3, 33)))
+        s.wipe()                          # short-commit flush (A65)
+        self.assertEqual(s.pending, [])
+        self.assertEqual(s.pos, 30)
+        self.assertEqual(s.n_committed, 30)
+        self.assertEqual(sl.end, s.n_committed)
+
+    def test_sleep_now_end_to_end(self):
+        import torch as t
+        from iga.lm_sleep import Sleeper
+        sl = Sleeper(arm="B", every=0, block_chunks=2, seed=0)
+        s, m = self._session(sleeper=sl)
+        t.manual_seed(8)
+        s._append(t.randint(3, 60, (400,)).tolist())
+        s.press(2)
+        out = s.sleep_now(blocks=2, span_w=200)
+        self.assertGreaterEqual(out["blocks"], 1)
+        self.assertTrue(out["audit"]["only_paid"])
+
+    def test_min_step_loss_gates_noise_updates(self):
+        # A65: no disagreement, no update — with the floor above any
+        # possible loss, blocks replay and record but the model must
+        # not move at all
+        import torch as t
+        from iga.lm_sleep import Sleeper
+        sl = Sleeper(arm="B", every=0, block_chunks=2, seed=0,
+                     min_step_loss=1e9)
+        s, m = self._session(sleeper=sl)
+        t.manual_seed(9)
+        s._append(t.randint(3, 60, (400,)).tolist())
+        s.press(2)
+        pre = {k: p.clone() for k, p in m.named_parameters()}
+        out = s.sleep_now(blocks=3, span_w=200)
+        self.assertGreaterEqual(out["blocks"], 1)   # replayed, recorded
+        for k, p in m.named_parameters():
+            self.assertTrue(t.equal(p, pre[k]), k)  # zero movement
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -101,7 +101,8 @@ class SleepTap:
 
 
 class Sleeper:
-    def __init__(self, arm="B", every=0, block_chunks=4, seed=0):
+    def __init__(self, arm="B", every=0, block_chunks=4, seed=0,
+                 min_step_loss=0.0):
         """every: one sleep block per this many wake steps (0 = never
         fire — the dose-0 parity arm). block_chunks: chunks per block;
         dose sleep:wake = block_chunks/every (A62 ladder {0, 1:16,
@@ -112,6 +113,13 @@ class Sleeper:
         self.arm = arm
         self.every = every
         self.block_chunks = block_chunks
+        # A65: no disagreement, no update — a chunk whose loss sits
+        # below this floor records provenance but takes NO optimizer
+        # step (Adam normalizes noise gradients into lr-scale kicks;
+        # the serve smoke showed six ~0-KL blocks denting fresh-state
+        # behavior with no wake loss to re-anchor). 0.0 = training
+        # path bit-exact.
+        self.min_step_loss = float(min_step_loss)
         self.rng = random.Random(seed)
         self.buffers = None
         self.start = 0           # absolute stream pos of buffers[*][0]
@@ -139,7 +147,9 @@ class Sleeper:
     def observe(self, x):
         if self.buffers is None:
             self.buffers = [[] for _ in range(x.shape[0])]
-        self.T = x.shape[1]
+        # max, not last: a serve-time short flush chunk (A65) must
+        # not shrink the replay window length
+        self.T = max(self.T or 0, x.shape[1])
         for lane, row in enumerate(x.tolist()):
             self.buffers[lane].extend(row)
         if self.cap is not None and len(self.buffers[0]) > self.cap:
@@ -161,6 +171,31 @@ class Sleeper:
                       if min(s["t1"], self.end)
                       - max(s["t0"], self.start)
                       >= MIN_REPLAY][-MAX_SPANS:]
+
+    def harvest_presses(self, drive, span_w=512):
+        """A65 serve-time pay — the A61 payer problem's designed
+        answer, literal: with no probes at serve, holds cannot pay,
+        so the PRIMARY pays. A positive press at t names the episode
+        [t - span_w, t] with pay = v (magnitude -> replay weight); a
+        negative press VOIDS pending spans overlapping its trailing
+        window (withhold at serve). Replaces self.spans (serve
+        mode); the training-time harvest() is untouched."""
+        spans = []
+        for i, p in enumerate(drive.presses):
+            if p["v"] > 0:
+                spans.append({"lane": p["lane"],
+                              "t0": max(0, p["t"] - span_w),
+                              "t1": p["t"], "pay": float(p["v"]),
+                              "i": -(i + 1)})
+            else:
+                spans = [s for s in spans
+                         if not (s["lane"] == p["lane"]
+                                 and s["t0"] < p["t"]
+                                 and p["t"] - span_w < s["t1"])]
+        self.spans = [s for s in spans
+                      if min(s["t1"], self.end)
+                      - max(s["t0"], self.start) >= MIN_REPLAY]
+        return len(self.spans)
 
     # ---------- the block ----------
     def maybe_sleep(self, model, opt, drive, step):
@@ -231,11 +266,12 @@ class Sleeper:
                         loss = torch.nn.functional.cross_entropy(
                             slg.float().reshape(-1, V),
                             y.reshape(-1))
-                    opt.zero_grad()
-                    loss.backward()
-                    torch.nn.utils.clip_grad_norm_(
-                        model.parameters(), 1.0)
-                    opt.step()
+                    if abs(float(loss.detach())) >= self.min_step_loss:
+                        opt.zero_grad()
+                        loss.backward()
+                        torch.nn.utils.clip_grad_norm_(
+                            model.parameters(), 1.0)
+                        opt.step()
                 st = model.detach_state(st)
                 losses.append(float(loss.detach()))
                 self.replayed.append(

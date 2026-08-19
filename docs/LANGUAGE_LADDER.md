@@ -3070,6 +3070,66 @@ scale, not blocking this one. Target cost: $15–40 total.
   harness (live chunk loop, human presses, wake/sleep
   scheduling) and the three-act demo on v94s.
 
+- **A65 BUILD — the serving harness and SERVE-TIME PAY,
+  pre-registered before code** (2026-08-19). SERVE-TIME PAY —
+  the A61 payer problem's designed answer made literal: at
+  serve there are no weaver probes, so holds cannot pay; the
+  PRIMARY pays directly. A positive press at stream position t
+  names the episode span [t-512, t] with pay = v (magnitude =
+  replay weight); a negative press VOIDS pending spans
+  overlapping its own trailing window (withhold at serve).
+  Sleep (ARM B; mature substrate per the R3 dose law; its own
+  AdamW at lr 1e-4; blocks capped 32/call) replays exactly
+  those spans — THE HUMAN FUNDS THE ASSOCIATIVE CHANNEL'S
+  CONSOLIDATION WITH PRESSES. The L1 audit keeps its form:
+  every replay lies inside a positive-press span. HARNESS
+  (iga/lm_serve.py): faithful-regime serving — generation
+  samples from forwards on STATE COPIES over the pending
+  window while the real state advances only on exact-T chunk
+  commits (A54e F1 applied to serving: lm_eval's 1-token-chunk
+  talk mode is off-regime — band 3 would tick per token — and
+  is not the demo path); press tokens enter the stream
+  (perceivable) AND the drive ledger; /wipe = full context
+  wipe (fresh state; pending pad-flushed to keep the token
+  clock and sleeper buffer aligned) for act-3 retention reads;
+  transcript + presses logged as the demo record. SURGERY
+  APPLIED to v94s_final + tokenizer (press ids 32768-32771),
+  old-token parity verified on real stream tokens. LAWS AS
+  TESTS: press-span harvest/void, L1-through-replay at serve,
+  commit parity (the session's token path bit-matches the
+  training chunk path), wipe alignment, store frozen through
+  serve-sleep. The three-act demo runs ON this harness; its
+  probe set and predicted ordering pre-register at demo time
+  per the ratified design.
+
+- **A65 HARNESS LIVE — two smoke-driven laws landed; the
+  parenting room is OPEN** (2026-08-19). End-to-end on the real
+  substrate (78,274,136 params, vocab 32772): teach -> press ->
+  sleep -> wipe -> re-ask; replies 0.1-0.4s on the Mac. SMOKE
+  CONVICTION 1: pad-flush fed the bands a 2,032-token pad-sea
+  (band-state poison at pos 16); flush now commits the pending
+  window as ONE SHORT chunk — content-faithful, one bounded
+  off-length commit, clock and sleeper buffer aligned. SMOKE
+  CONVICTION 2: six ~0-KL sleep blocks visibly dented
+  fresh-state behavior (post-wipe babble) — Adam normalizes
+  noise gradients into lr-scale kicks and serve has no wake
+  loss to re-anchor (the R3 mechanism, caught at v-scale in
+  six steps). NEW LAW, the economy's own spirit applied to
+  distillation — NO DISAGREEMENT, NO UPDATE: a sleep chunk
+  whose loss sits below min_step_loss records provenance but
+  takes no optimizer step (serve floor 1e-4; training default
+  0.0 = certified path bit-exact). Post-fix smoke: no-signal
+  blocks skip cleanly, post-wipe replies stay well-formed
+  (wrong color answered in perfect FORM — one exposure without
+  distillable store content honestly does not enter the trunk;
+  the demo's repetition + real presses are what change that).
+  The substrate file is immutable per session (parented
+  weights save aside as v94sp_parented.pt). Suite: 68 OK.
+  v94sp is deterministic surgery on branch-banked v94s_final —
+  always recoverable. RUN: python3 scripts/serve_v94s.py
+  --dir <surgery outdir>. NEXT SESSION: pre-register the
+  three-act probe set + predicted ordering, then the demo.
+
 ## Status
 
 **(2026-08-19, post-v9.4)** The substrate campaign is complete:
