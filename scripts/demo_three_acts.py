@@ -37,8 +37,9 @@ from iga.lm_sleep import Sleeper, state_copy       # noqa: E402
 SEED = 0
 N_PER_CLASS = 6
 PASSES = 3
-SPAN_W = 64          # ~ the exchange that earned the press
+SPAN_W = 256         # A66-R3: context-inclusive episode window
 SLEEP_BLOCKS = 54    # delivered as 27+27 (per-call cap law intact)
+SLEEP_LR = 5e-5      # A66-R3: half of serve default
 
 
 def build_facts(rng):
@@ -135,12 +136,15 @@ def main():
                  store="matrix", keyed="logit", norm_mix=True,
                  aux_trunk=0.2, use_xl=False, gate_init=-2.0)
     m.load_state_dict(st["model"])
-    sl = Sleeper(arm="B", every=0, block_chunks=2, seed=1,
-                 min_step_loss=1e-4, replay_twice=True)
+    # A66-R3: serve consolidation = ARM A (replay-CE, self-anchoring)
+    # — at serve, B's teacher holds no margin (A61 null) and its
+    # unanchored KL steps damaged the probe regime (R2)
+    sl = Sleeper(arm="A", every=0, block_chunks=2, seed=1,
+                 min_step_loss=1e-4)
     s = ServeSession(m, tok, T=2048, device="cpu", sleeper=sl,
                      temperature=0.0, max_reply=12,
                      log_path=os.path.join(out, "demo_session.jsonl"),
-                     seed=0)
+                     seed=0, sleep_lr=SLEEP_LR)
     rng = random.Random(SEED)
     facts = build_facts(rng)
     print("fact set:", json.dumps(facts, indent=None), flush=True)
@@ -159,12 +163,15 @@ def main():
                 s.press(2)
             elif f["cls"] == "neg":
                 s.press(-1)
-        s.flush()   # A66-R2: passes commit — the store engages
+        if p < PASSES - 1:
+            s.flush()   # A66-R2: passes commit — the store engages
         print(f"ACT 2 pass {p+1}/{PASSES} done "
               f"(pos {s.pos}, {time.time()-t0:.0f}s)", flush=True)
 
-    act3a = score_all(s, tok, facts)
-    print(f"ACT 3a (in-session, store live) done "
+    act3a = score_all(s, tok, facts)      # in-context (pending live)
+    s.flush()
+    act3a_state = score_all(s, tok, facts)  # state-only (store+bands)
+    print(f"ACT 3a (in-context + state-only) done "
           f"{time.time()-t0:.0f}s", flush=True)
 
     sleep1 = s.sleep_now(blocks=27, span_w=SPAN_W)
@@ -176,12 +183,15 @@ def main():
           f"{time.time()-t0:.0f}s", flush=True)
 
     res = {"facts": facts, "act1": act1, "act3a": act3a,
+           "act3a_state": act3a_state,
            "act3b": act3b, "sleep": [sleep1, sleep2],
            "presses": len(s.drive.presses)}
-    g1, ga, gb = (by_class(facts, x) for x in (act1, act3a, act3b))
+    g1, ga, gs, gb = (by_class(facts, x)
+                      for x in (act1, act3a, act3a_state, act3b))
     res["means"] = {
         act: {c: round(sum(v) / len(v), 5) for c, v in g.items()}
-        for act, g in (("act1", g1), ("act3a", ga), ("act3b", gb))}
+        for act, g in (("act1", g1), ("act3a", ga),
+                       ("act3a_state", gs), ("act3b", gb))}
     res["gate_p_pos_gt_none"] = round(
         mwu_one_sided(gb["pos"], gb["none"]), 5)
     res["p_neg_vs_none"] = round(
@@ -191,7 +201,7 @@ def main():
     s.save(os.path.join(out, "v94sp_demo.pt"))
 
     print("\n=== A66 three-act summary ===")
-    for act in ("act1", "act3a", "act3b"):
+    for act in ("act1", "act3a", "act3a_state", "act3b"):
         mn = res["means"][act]
         print(f"{act:6s} pos {mn['pos']:.4f}  none {mn['none']:.4f} "
               f" neg {mn['neg']:.4f}")

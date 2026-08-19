@@ -35,7 +35,8 @@ MAX_SLEEP_BLOCKS = 32    # R3 dose law: serve-sleep is capped
 class ServeSession:
     def __init__(self, model, tok, T=2048, device="cpu",
                  sleeper=None, temperature=0.8, top_k=40,
-                 max_reply=64, log_path=None, seed=0):
+                 max_reply=64, log_path=None, seed=0,
+                 sleep_lr=SLEEP_LR):
         self.m = model.eval()
         self.tok = tok
         self.T = T
@@ -56,6 +57,7 @@ class ServeSession:
         self.press_id = {v: tok.token_to_id(t) for v, t in
                          zip((1, 2, -1, -2), PRESS_TOKENS)}
         self._gen = torch.Generator().manual_seed(seed)
+        self.sleep_lr = float(sleep_lr)
         self._opt = None
         self.log_path = log_path
         self.events = []
@@ -166,7 +168,7 @@ class ServeSession:
             return {"spans": 0, "blocks": 0}
         if self._opt is None:
             self._opt = torch.optim.AdamW(self.m.parameters(),
-                                          lr=SLEEP_LR)
+                                          lr=self.sleep_lr)
         done = 0
         for _ in range(min(blocks, MAX_SLEEP_BLOCKS)):
             if self.sleeper._block(self.m, self._opt,

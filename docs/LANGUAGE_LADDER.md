@@ -3195,6 +3195,34 @@ scale, not blocking this one. Target cost: $15–40 total.
   act 3a becomes a store measurement as designed. Same fact
   set, same gate, same predictions. Rerun local, $0.
 
+- **A66-R ROUND 2 — replay-twice WORKS; unanchored serve
+  distillation is NET-DESTRUCTIVE; the serve arm switches to
+  A; R3 pre-registered** (2026-08-19). R2: 51/54 blocks
+  STEPPED (the R1 structural fix confirmed — the teacher reads
+  its own pass-one writes) and act 3b COLLAPSED for every
+  class (.0012/.0002/.0000 vs baseline .079/.065/.068): 51
+  unanchored Adam steps on fresh-state micro-windows tilted
+  exactly the probe's regime — the A64-R3 damage mechanism
+  reproduced at v-scale in 51 steps. WHY B IS STRUCTURALLY
+  WEAK AT SERVE: the A61 serving-time store margin is NULL, so
+  the teacher barely knows more than the student — thin KL
+  against real step sizes; and A63's healthy sleep rode 1:8
+  against wake re-anchoring, which serve lacks entirely. ALSO
+  MEASURED: act 3a state-only (post-flush) ~= virgin baseline
+  — the committed store contributes ~nothing to these probes
+  at serve; the A61 null seen from the other side. R3, per
+  A62's own clause (the demo's claim is arm-agnostic; "the
+  cheaper arm ships" on equivalence — at serve B is not
+  equivalent, it is destructive): the serve consolidation arm
+  becomes ARM A — replay-CE on the pressed episodes,
+  SELF-ANCHORING (CE is its own anchor), span_w 256
+  (context-inclusive windows, less regime-pathological),
+  sleep lr 5e-5, 54 blocks. Act 3a scored TWICE (in-context
+  before the final flush; state-only after). NEW GUARD ROW:
+  unrewarded post-wipe vs baseline drift must stay small — a
+  repeat collapse fails the ARM, not the instrument. Same
+  facts, same gate. Local, $0.
+
 ## Status
 
 **(2026-08-19, post-v9.4)** The substrate campaign is complete:
