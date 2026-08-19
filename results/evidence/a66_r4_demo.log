@@ -1,0 +1,70 @@
+fact set: [{"name": "colm", "obj": "cloak", "col": "silver", "room": "hall", "cls": "pos"}, {"name": "wren", "obj": "ring", "col": "black", "room": "porch", "cls": "neg"}, {"name": "yara", "obj": "bell", "col": "grey", "room": "attic", "cls": "neg"}, {"name": "bela", "obj": "rope", "col": "red", "room": "tower", "cls": "none"}, {"name": "orin", "obj": "rope", "col": "black", "room": "cellar", "cls": "none"}, {"name": "arlen", "obj": "seed", "col": "copper", "room": "shed", "cls": "neg"}, {"name": "sana", "obj": "drum", "col": "golden", "room": "workshop", "cls": "neg"}, {"name": "lena", "obj": "chest", "col": "copper", "room": "shed", "cls": "pos"}, {"name": "orin", "obj": "lamp", "col": "grey", "room": "kitchen", "cls": "none"}, {"name": "arlen", "obj": "ring", "col": "pale", "room": "kitchen", "cls": "pos"}, {"name": "wren", "obj": "seed", "col": "green", "room": "workshop", "cls": "none"}, {"name": "arlen", "obj": "bell", "col": "violet", "room": "garden", "cls": "neg"}, {"name": "kass", "obj": "rope", "col": "grey", "room": "porch", "cls": "pos"}, {"name": "arlen", "obj": "book", "col": "white", "room": "shed", "cls": "pos"}, {"name": "wren", "obj": "coin", "col": "black", "room": "shed", "cls": "neg"}, {"name": "bela", "obj": "coin", "col": "grey", "room": "workshop", "cls": "none"}, {"name": "lena", "obj": "knife", "col": "copper", "room": "cellar", "cls": "pos"}, {"name": "colm", "obj": "seed", "col": "violet", "room": "garden", "cls": "none"}]
+ACT 1 (baseline, virgin) done 1s
+ACT 2 pass 1/3 done (pos 447, 11s)
+ACT 2 pass 2/3 done (pos 846, 18s)
+ACT 2 pass 3/3 done (pos 1317, 30s)
+ACT 3a (in-context + state-only) done 33s
+    sleep@1317 armA lane0 [0,140) of span[0,140] pay 2.000  chunks 1  loss 3.6241
+    sleep@1317 armA lane0 [808,1064) of span[808,1064] pay 2.000  chunks 1  loss 2.8892
+    sleep@1317 armA lane0 [675,931) of span[675,931] pay 2.000  chunks 1  loss 2.4583
+    sleep@1317 armA lane0 [106,362) of span[106,362] pay 2.000  chunks 1  loss 2.2411
+    sleep@1317 armA lane0 [210,466) of span[210,466] pay 2.000  chunks 1  loss 1.9734
+    sleep@1317 armA lane0 [210,466) of span[210,466] pay 2.000  chunks 1  loss 1.8024
+    sleep@1317 armA lane0 [248,504) of span[248,504] pay 2.000  chunks 1  loss 1.8559
+    sleep@1317 armA lane0 [675,931) of span[675,931] pay 2.000  chunks 1  loss 1.8773
+    sleep@1317 armA lane0 [0,140) of span[0,140] pay 2.000  chunks 1  loss 1.9952
+    sleep@1317 armA lane0 [0,118) of span[0,118] pay 2.000  chunks 1  loss 1.7571
+    sleep@1317 armA lane0 [808,1064) of span[808,1064] pay 2.000  chunks 1  loss 1.6984
+    sleep@1317 armA lane0 [210,466) of span[210,466] pay 2.000  chunks 1  loss 1.3423
+    sleep@1317 armA lane0 [675,931) of span[675,931] pay 2.000  chunks 1  loss 1.5076
+    sleep@1317 armA lane0 [0,118) of span[0,118] pay 2.000  chunks 1  loss 1.3973
+    sleep@1317 armA lane0 [210,466) of span[210,466] pay 2.000  chunks 1  loss 1.2216
+    sleep@1317 armA lane0 [531,787) of span[531,787] pay 2.000  chunks 1  loss 1.4441
+    sleep@1317 armA lane0 [75,331) of span[75,331] pay 2.000  chunks 1  loss 1.4791
+    sleep@1317 armA lane0 [1032,1288) of span[1032,1288] pay 2.000  chunks 1  loss 1.3843
+    sleep@1317 armA lane0 [808,1064) of span[808,1064] pay 2.000  chunks 1  loss 1.3167
+    sleep@1317 armA lane0 [0,118) of span[0,118] pay 2.000  chunks 1  loss 1.1422
+    sleep@1317 armA lane0 [0,118) of span[0,118] pay 2.000  chunks 1  loss 1.0892
+    sleep@1317 armA lane0 [229,485) of span[229,485] pay 2.000  chunks 1  loss 1.2125
+    sleep@1317 armA lane0 [1032,1288) of span[1032,1288] pay 2.000  chunks 1  loss 1.2600
+    sleep@1317 armA lane0 [135,391) of span[135,391] pay 2.000  chunks 1  loss 1.2197
+    sleep@1317 armA lane0 [75,331) of span[75,331] pay 2.000  chunks 1  loss 1.2997
+    sleep@1317 armA lane0 [210,466) of span[210,466] pay 2.000  chunks 1  loss 1.0433
+    sleep@1317 armA lane0 [0,118) of span[0,118] pay 2.000  chunks 1  loss 0.9791
+    sleep@1317 armA lane0 [75,331) of span[75,331] pay 2.000  chunks 1  loss 1.2349
+    sleep@1317 armA lane0 [210,466) of span[210,466] pay 2.000  chunks 1  loss 0.9704
+    sleep@1317 armA lane0 [210,466) of span[210,466] pay 2.000  chunks 1  loss 0.9411
+    sleep@1317 armA lane0 [75,331) of span[75,331] pay 2.000  chunks 1  loss 1.1719
+    sleep@1317 armA lane0 [75,331) of span[75,331] pay 2.000  chunks 1  loss 1.1499
+    sleep@1317 armA lane0 [75,331) of span[75,331] pay 2.000  chunks 1  loss 1.1133
+    sleep@1317 armA lane0 [210,466) of span[210,466] pay 2.000  chunks 1  loss 0.8553
+    sleep@1317 armA lane0 [106,362) of span[106,362] pay 2.000  chunks 1  loss 1.0093
+    sleep@1317 armA lane0 [0,118) of span[0,118] pay 2.000  chunks 1  loss 1.0289
+    sleep@1317 armA lane0 [808,1064) of span[808,1064] pay 2.000  chunks 1  loss 1.1101
+    sleep@1317 armA lane0 [229,485) of span[229,485] pay 2.000  chunks 1  loss 0.9007
+    sleep@1317 armA lane0 [248,504) of span[248,504] pay 2.000  chunks 1  loss 0.9843
+    sleep@1317 armA lane0 [75,331) of span[75,331] pay 2.000  chunks 1  loss 1.0150
+    sleep@1317 armA lane0 [1032,1288) of span[1032,1288] pay 2.000  chunks 1  loss 0.9751
+    sleep@1317 armA lane0 [808,1064) of span[808,1064] pay 2.000  chunks 1  loss 1.0208
+    sleep@1317 armA lane0 [0,140) of span[0,140] pay 2.000  chunks 1  loss 1.0178
+    sleep@1317 armA lane0 [106,362) of span[106,362] pay 2.000  chunks 1  loss 0.9309
+    sleep@1317 armA lane0 [531,787) of span[531,787] pay 2.000  chunks 1  loss 1.0950
+    sleep@1317 armA lane0 [531,787) of span[531,787] pay 2.000  chunks 1  loss 1.0567
+    sleep@1317 armA lane0 [1032,1288) of span[1032,1288] pay 2.000  chunks 1  loss 0.8771
+    sleep@1317 armA lane0 [210,466) of span[210,466] pay 2.000  chunks 1  loss 0.7511
+    sleep@1317 armA lane0 [675,931) of span[675,931] pay 2.000  chunks 1  loss 1.0810
+    sleep@1317 armA lane0 [531,787) of span[531,787] pay 2.000  chunks 1  loss 0.9422
+    sleep@1317 armA lane0 [106,362) of span[106,362] pay 2.000  chunks 1  loss 0.8654
+    sleep@1317 armA lane0 [248,504) of span[248,504] pay 2.000  chunks 1  loss 0.8703
+    sleep@1317 armA lane0 [808,1064) of span[808,1064] pay 2.000  chunks 1  loss 0.9020
+    sleep@1317 armA lane0 [808,1064) of span[808,1064] pay 2.000  chunks 1  loss 0.8765
+sleep: {'spans': 12, 'blocks': 27, 'audit': {'replayed': 27, 'blocks': 27, 'only_paid': True, 'steps_taken': 27}} + {'spans': 12, 'blocks': 27, 'audit': {'replayed': 54, 'blocks': 54, 'only_paid': True, 'steps_taken': 54}}
+ACT 3b (post-sleep, post-wipe) done 41s
+
+=== A66 three-act summary ===
+act1   pos 0.0790  none 0.0647  neg 0.0683
+act3a  pos 0.0522  none 0.0806  neg 0.0701
+act3a_state pos 0.0795  none 0.0633  neg 0.0677
+act3b  pos 0.1161  none 0.0641  neg 0.0850
+GATE p(pos > none, post-wipe) = 0.04635  PASS
+measured p(none > neg) = 0.59491

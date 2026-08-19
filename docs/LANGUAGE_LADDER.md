@@ -3248,6 +3248,36 @@ scale, not blocking this one. Target cost: $15–40 total.
   Law test: the narrow void spares the span the -1 never
   judged. Same facts, same gate. Local, $0.
 
+- **A66-R ROUND 4 — VERDICT: THE GATE PASSES. The three-act
+  operant demo is DEMONSTRATED** (2026-08-19; scripted
+  execution, local, $0). act 3b (post-sleep, post-FULL-wipe):
+  rewarded .1161 > unrewarded .0641 > (negative .0850),
+  one-sided MWU p = 0.04635 < 0.05 — the pre-registered gate.
+  THE SELECTIVITY ROW IS EXACT: unrewarded post-wipe .0641 vs
+  its baseline .0647 — consolidation touched ONLY what was
+  pressed; the drift guard reads clean. Rewarded material rose
+  47% above its own baseline; per-item, 4 of 6 rewarded facts
+  lifted 2-3.5x (lena/chest .042->.146, lena/knife .070->.178,
+  arlen/ring .071->.136, kass/rope .120->.137; the two flat
+  items' spans sit among the 6 voided of 18 — 12 spans
+  survived, 54 blocks distributed, every one stepped,
+  only_paid TRUE). negative ~= unrewarded (p .59) EXACTLY AS
+  PRE-REGISTERED: at serve a -1 withholds (no replay), it does
+  not erase. WHAT THIS IS: the graded press selected what
+  entered the trunk; sleep consolidated exactly the paid
+  episodes; after a complete context wipe the model retains
+  the approved material and only that. PRESS -> PAY -> REPLAY
+  -> PERMANENT MEMORY — the A61 payer problem answered
+  end-to-end with a human-grounded primary reinforcer, on the
+  certified substrate, for the price of one afternoon and
+  ~$1.80 of GPU. Honest bounds: n=6/class at p=.046 — modest;
+  longer parenting strengthens it; negatives suppress nothing
+  yet (withhold-only semantics); the act-3a in-context press-
+  embedding interference stands until press tokens get wake
+  exposure. The live human session runs the same protocol by
+  hand: scripts/serve_v94s.py. Four rounds, four convictions,
+  one pass — the ledger method, working as built.
+
 ## Status
 
 **(2026-08-19, post-v9.4)** The substrate campaign is complete:
@@ -3295,12 +3325,15 @@ debug tier (3.9k vs 11.2k tok/s) and at B=1 inference (307 vs
 local work runs CPU; v-scale training stays on pods (~90k tok/s
 reference).
 
-**Next**: Phase 1 COMPLETE (A62+A63: lawful at scale, record CE
-1.8950). Phase 2 mechanism CERTIFIED at debug (A64: press economy
-laws B1-B5, selection chain ordering; retention demo escalated
-per pre-registration) → Phase 3 NOW: vocab surgery (A65 landed)
-+ serving harness + the three-act demo on v94s → Phase 2's
-grounded-reward demonstration lives inside it
+**Next**: THE BUILDOUT'S CORE CLAIM IS DEMONSTRATED (A66-R4
+PASS: press-selected consolidation survives a full context wipe;
+selectivity exact). Phase 1 (A62+A63: record CE 1.8950), Phase 2
+(A64 press economy certified), Phase 3 (A65 harness + A66 demo)
+all landed in one day, ~$1.80 total. OPEN THREADS: the live
+human-run session (same protocol, by hand — the showpiece);
+press-token wake exposure (the act-3a interference); longer
+sessions for stronger p; negative-suppression semantics; v10
+(1B+) decision on the transfer map, explicit go + real budget.
 (RATIFIED DESIGN: two graded +/- buttons as primary reinforcer,
 band-built secondary rewards, frozen-instrument/veto Goodhart
 defenses) → Phase 3 live inference + the three-act operant demo
