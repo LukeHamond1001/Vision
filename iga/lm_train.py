@@ -166,6 +166,8 @@ def process_chunk(model, drive, conveyor, T, device, opt=None,
                 drive.probe(lane, reading, d["gap"])
             elif kind == "earned":
                 drive.earned(lane, d["ok"])
+            elif kind == "button":
+                drive.button(lane, d["v"])   # A64 primary reinforcer
     drive.step_t += T
     drive.sweep(losses)
     loss = torch.stack([(l if l.dim() == 0 else l.mean()).float()
@@ -243,12 +245,17 @@ def train(d=64, lanes=4, T=256, steps=40, seed=0, device="cpu",
           read_drop_end=None, gate_mode="scalar", lr=3e-4,
           bf16=False, lam=0.25, keyed=None, lr_decay="none",
           lr_total_steps=None, norm_mix=False, aux_trunk=0.0,
-          hold_cap=None, sleep=None):
+          hold_cap=None, sleep=None, buttons=None, prophet=None):
     """resume (A26): path to a checkpoint — model + optimizer + drive
     EMAs/records/minted/vetoes continue; step numbering continues.
     sleep (A62): a lm_sleep.Sleeper — wake/sleep alternation; the
     wake loop is untouched and sleep=None is the certified v9.4
     trainer bit-exactly (L2).
+    buttons (A64): weaver parenting config (synthetic conveyor only)
+    — press tokens replace feedback turns; None = certified stream.
+    prophet (A64): a lm_press.PressProphet spectator — observes
+    detached band states + presses, trains its own heads; None (and
+    B5: even non-None) leaves training bit-exact.
     offset_frac: start each conveyor lane this far into its segment
     (continuation rides the unseen tail; one-epoch law holds). Open
     holds and band states are NOT in checkpoints — holds re-propose
@@ -272,7 +279,7 @@ def train(d=64, lanes=4, T=256, steps=40, seed=0, device="cpu",
         vocab = Vocab()
         vocab_size = len(vocab)
         conveyor = Conveyor(vocab, n_lanes=lanes, seed=splits(seed)["train"],
-                            bias_fn=drive.bin_weights)
+                            bias_fn=drive.bin_weights, buttons=buttons)
     if sleep is not None:
         conveyor = sleep.tap(conveyor)   # A62: record wake tokens
     if arch == "transformer":
@@ -362,6 +369,8 @@ def train(d=64, lanes=4, T=256, steps=40, seed=0, device="cpu",
                                  opt, bf16=bf16)
         if sleep is not None:
             sleep.maybe_sleep(model, opt, drive, step)
+        if prophet is not None:
+            prophet.observe(model, drive)   # A64 spectator (B5)
         ce_first = ce_first or ce
         if step % log_every == 0 or step == 1:
             tok_s = lanes * T * (step - step0) / (time.time() - t0)

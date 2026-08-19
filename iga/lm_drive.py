@@ -89,6 +89,12 @@ class Drive:
         self.records = {}
         self.levels_paid = set()
         self.minted = set()            # channel keys ratified by "thanks"
+        # A64: the graded-press primary. Presses ledger, per-channel
+        # consecutive-negative counts, veto marks. Live-only state
+        # (rebuilds like holds; not checkpointed).
+        self.presses = []
+        self.neg_count = {}
+        self.veto_until = {}
         self.holds = [[] for _ in range(n_lanes)]
         self.readings = {}             # (lane, key) -> [(t, tensor)]
         self.last_key = [None] * n_lanes
@@ -122,6 +128,40 @@ class Drive:
         old = self.ema.get(key, v)
         self.ema[key] = (1 - EMA) * old + EMA * v
 
+    def button(self, lane, v):
+        """A64: the graded-press primary reinforcer. labels select,
+        the world pays — a press NEVER pays or injects gradient.
+        +v mints the channel it followed and sets w=v on the holds
+        then open on that lane+channel (magnitude -> hold weight;
+        temporally local, so item-level selection rides pay-weighted
+        replay, not a persistent channel bias). -v withholds: those
+        holds void to w=0 (settle at exactly zero) and two
+        consecutive negatives veto the channel for one band-horizon;
+        a positive press resets the count. A press with no preceding
+        probe on the lane is an economic no-op, ledgered."""
+        key = self.last_key[lane]
+        self.presses.append({"lane": lane, "v": int(v),
+                             "t": self.step_t, "key": key})
+        if key is None:
+            return
+        if v > 0:
+            self.minted.add(key)
+            self.neg_count[key] = 0
+            for h in self.holds[lane]:
+                if h["key"] == key:
+                    h["w"] = max(h["w"], float(v))
+        else:
+            for h in self.holds[lane]:
+                if h["key"] == key:
+                    h["w"] = 0.0
+            self.neg_count[key] = self.neg_count.get(key, 0) + 1
+            if self.neg_count[key] >= 2:
+                if key.startswith("recall:b"):
+                    band = self.bin_band[int(key[-1])]
+                else:
+                    band = int(key.split(":")[1])
+                self.veto_until[key] = self.step_t + self.horizon_for(band)
+
     # ---------- proposer + imagination ----------
     def _propose(self, lane):
         open_keys = {h["key"] for h in self.holds[lane]}
@@ -135,6 +175,9 @@ class Drive:
                     cands.append(("maintain", key, k, FID_HEALTHY[0] + 0.05))
         for b in range(len(GAP_BINS)):
             key = f"recall:b{b}"
+            if self.veto_until.get(key, 0) > self.step_t:
+                self.vetoes += 1   # A64 B3: disapproval veto, ledgered
+                continue
             if key not in self.minted:
                 continue
             rec = self.records.get(key, self.ema.get(key, 0.0))
@@ -196,7 +239,9 @@ class Drive:
                     mean_r = torch.stack(rs).mean()
                     phi1_t = torch.clamp(h["target"] - mean_r, min=0.0) \
                         / max(h["target"], 1e-6)
-                    if phi1_t.requires_grad:
+                    # A64 B1: a voided hold (w=0, negative press) adds
+                    # NO loss term — withheld means no gradient at all
+                    if phi1_t.requires_grad and h["w"] != 0:
                         losses.append(-self.lam * h["w"] * (h["phi0"] - phi1_t))
                     phi1 = float(phi1_t.detach())
                     pay = h["w"] * (h["phi0"] - phi1)
@@ -240,9 +285,13 @@ class Drive:
         exact = all(abs(e["pay"] - e["w"] * (e["phi0"] - e["phi1"])) < 1e-9
                     for e in self.ledger)
         scoped = all(e["t1"] >= e["t0"] for e in self.ledger)
+        # A64 B2: voided holds settle at exactly zero pay
+        voided_zero = all(e["pay"] == 0.0
+                          for e in self.ledger if e["w"] == 0.0)
         return {"holds": len(self.ledger), "telescoping_exact": exact,
                 "scoped": scoped, "vetoes": self.vetoes,
-                "proposed": self.proposed}
+                "proposed": self.proposed, "presses": len(self.presses),
+                "voided_zero": voided_zero}
 
     # ---------- the readable agenda ----------
     def panel(self):

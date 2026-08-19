@@ -1078,6 +1078,115 @@ class TestAuxTrunk(unittest.TestCase):
         self.assertLess(float((outs[0] - outs[1]).abs().max()), 1e-6)
 
 
+class TestButtonLaws(unittest.TestCase):
+    """A64 Phase 2 — graded-press primary reinforcer laws.
+    B1 press-never-pays, B2 magnitude->w, B3 withhold-then-veto,
+    B4 parity-off, B5 prophet-spectator."""
+
+    def _drive_with_open_hold(self):
+        d = Drive(n_lanes=1)
+        for k in range(1, N_BANDS):
+            d.ema[f"fid:{k}"] = 0.5      # healthy: no maintains/vetoes
+        d.probe(0, torch.tensor(0.4), gap=100)   # recall:b0
+        d.button(0, 1)                    # +press mints (labels select)
+        d.sweep(losses=[])
+        self.assertTrue(any(h["key"] == "recall:b0" for h in d.holds[0]))
+        return d
+
+    def test_B1_B2_press_weights_and_pay_is_w_scaled(self):
+        d = self._drive_with_open_hold()
+        h = [h for h in d.holds[0] if h["key"] == "recall:b0"][0]
+        self.assertEqual(h["w"], 1.0)
+        d.button(0, 2)                   # magnitude -> open hold weight
+        self.assertEqual(h["w"], 2.0)
+        d.step_t += 1
+        d.probe(0, torch.tensor(0.9, requires_grad=True), gap=100)
+        losses = []
+        d.step_t = h["due"] + 1
+        d.sweep(losses=losses)
+        e = [e for e in d.ledger if e["key"] == "recall:b0"][0]
+        self.assertEqual(e["w"], 2.0)
+        self.assertAlmostEqual(e["pay"], 2.0 * (e["phi0"] - e["phi1"]),
+                               places=12)
+        self.assertEqual(len(losses), 1)   # settle pays through loss...
+        a = d.audit()
+        self.assertTrue(a["telescoping_exact"])
+        self.assertTrue(a["voided_zero"])
+        self.assertEqual(a["presses"], 2)
+
+    def test_B1_negative_voids_settle_zero_no_loss(self):
+        d = self._drive_with_open_hold()
+        d.step_t += 1
+        d.probe(0, torch.tensor(0.9, requires_grad=True), gap=100)
+        d.button(0, -1)                  # withhold: void the open hold
+        h = [h for h in d.holds[0] if h["key"] == "recall:b0"][0]
+        self.assertEqual(h["w"], 0.0)
+        losses = []
+        d.step_t = h["due"] + 1
+        d.sweep(losses=losses)
+        self.assertEqual(losses, [])     # ...a voided one never does
+        e = [e for e in d.ledger if e["key"] == "recall:b0"][0]
+        self.assertEqual(e["pay"], 0.0)
+        self.assertTrue(d.audit()["voided_zero"])
+
+    def test_B3_two_negatives_veto_positive_resets(self):
+        d = self._drive_with_open_hold()
+        d.button(0, -1)
+        d.button(0, -1)
+        self.assertIn("recall:b0", d.veto_until)
+        v0 = d.vetoes
+        d.step_t += 1
+        d.sweep(losses=[])
+        self.assertGreater(d.vetoes, v0)   # disapproval veto ledgered
+        d.step_t = max(d.veto_until["recall:b0"],
+                       max(h["due"] for h in d.holds[0])) + 1
+        d.sweep(losses=[])                 # old holds expire in-sweep
+        d.step_t += 1
+        d.sweep(losses=[])                 # veto lapsed: proposes again
+        self.assertTrue(any(h["key"] == "recall:b0" for h in d.holds[0]))
+        d2 = self._drive_with_open_hold()
+        d2.button(0, -1)
+        d2.button(0, 1)                    # positive resets the count
+        d2.button(0, -1)
+        self.assertNotIn("recall:b0", d2.veto_until)
+
+    def test_B4_certified_stream_emits_no_press_events(self):
+        lane = Lane(Vocab(), random.Random(11))
+        _, _, evs = lane.take(30000)
+        self.assertFalse(any(k == "button" for _, k, _ in evs))
+        self.assertTrue(any(k == "earned" for _, k, _ in evs))
+
+    def test_parenting_mode_classes_presses_no_earned(self):
+        log = []
+        cfg = {"pos": 0.4, "neg": 0.3, "pos_v": 2, "neg_v": 1,
+               "log": log}
+        v = Vocab()
+        lane = Lane(v, random.Random(7), buttons=cfg)
+        toks, _, evs = lane.take(40000)
+        presses = [(p, d["v"]) for p, k, d in evs if k == "button"]
+        self.assertGreater(len(presses), 0)
+        self.assertFalse(any(k == "earned" for _, k, _ in evs))
+        for p, val in presses:           # the press is IN the stream
+            self.assertEqual(v.words[toks[p]],
+                             f"<{'+' if val > 0 else '-'}{abs(val)}>")
+        self.assertEqual({i["cls"] for i in log}, {"pos", "none", "neg"})
+
+    def test_B5_prophet_is_a_spectator(self):
+        import torch as t
+        from iga.lm_press import PressProphet
+        kw = dict(d=32, lanes=2, T=64, steps=8, device="cpu",
+                  arch="hybrid", store="matrix", keyed="logit",
+                  norm_mix=True, aux_trunk=0.2, log_every=100)
+        cfg = {"pos": 0.5, "neg": 0.2, "pos_v": 2, "neg_v": 1}
+        m1, d1, *_ = train(**kw, buttons=dict(cfg))
+        prophet = PressProphet(d=32)     # RNG draw erased by train()'s
+        m2, d2, *_ = train(**kw, buttons=dict(cfg), prophet=prophet)
+        s1, s2 = m1.state_dict(), m2.state_dict()
+        for k in s1:
+            self.assertTrue(t.equal(s1[k], s2[k]), f"B5 broken at {k}")
+        self.assertEqual(len(d1.presses), len(d2.presses))
+
+
 class TestSleepLaws(unittest.TestCase):
     """A62 Phase 1 — the consolidation laws, pinned before any run.
     L1 only-paid-replays, L2 parity-off, L3 slow-weights-only,

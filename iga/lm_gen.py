@@ -20,7 +20,12 @@ positions): turn_end{who}, probe{answer, gap}, earned{ok, key_hint}.
 
 import random
 
-SPECIALS = ["<pad>", "<eot_human>", "<eot_model>"]
+SPECIALS = ["<pad>", "<eot_human>", "<eot_model>",
+            # A64: the graded-press primary reinforcer — four
+            # perceivable press tokens (A6 amended: still no
+            # scene/meta tokens; a press is the counterparty's
+            # real act, in the stream like speech)
+            "<+1>", "<+2>", "<-1>", "<-2>"]
 
 NAMES = ["mira", "toby", "arlen", "sana", "petra", "dov", "lena", "kass",
          "orin", "bela", "finn", "yara", "colm", "nedra", "silas", "wren"]
@@ -65,14 +70,25 @@ def _fill(rng, n):
 class Weaver:
     """Stateful endless-dialogue generator for one lane."""
 
-    def __init__(self, rng, correct_rate=1.0, success_rate=1.0):
+    def __init__(self, rng, correct_rate=1.0, success_rate=1.0,
+                 buttons=None):
         # A7: v0 data is all-good — every depicted answer correct, every
         # task succeeds, every exchange thanked. The failure branches
         # below stay in code (rates < 1.0) for real-data rounds, where
         # the earned label's selective function reactivates.
+        # A64 buttons (parenting mode): dict like {"pos": .3, "neg": .2,
+        # "pos_v": 2, "neg_v": 1, "log": []}. Planted items are classed
+        # rewarded/unrewarded/negative at plant time; the feedback turn
+        # after a correct ask becomes <+v> / silence / <-v>, riding an
+        # invisible ("button", {"v": ±v}) event. earned events are NOT
+        # emitted in this mode — the press IS the primary. Items land
+        # in item_log (and buttons["log"] when provided) for the
+        # store-wiped retention readout.
         self.rng = rng
         self.correct_rate = correct_rate
         self.success_rate = success_rate
+        self.buttons = buttons
+        self.item_log = []
         self.n = 0                    # tokens emitted so far (lane-local)
         self.pending = []             # facts planted, not yet asked
         self.used = set()
@@ -89,6 +105,11 @@ class Weaver:
         evs.append((len(toks) - 1, "turn_end", {"who": "model"}))
         return toks, evs
 
+    def _press(self, v):
+        # A64: a one-token human turn — the graded press
+        tok = f"<{'+' if v > 0 else '-'}{abs(v)}>"
+        return self._human([tok], [(0, "button", {"v": int(v)})])
+
     def _plant(self):
         for _ in range(200):  # bounded; roster self-frees on ask
             name, obj = self.rng.choice(NAMES), self.rng.choice(OBJECTS)
@@ -104,8 +125,14 @@ class Weaver:
         weights = self.bias_fn() if getattr(self, "bias_fn", None) \
             else [4, 3, 2, 1]         # scheduler: the drive shapes the belt
         bin_i = self.rng.choices(range(4), weights=weights)[0]
+        cls = None
+        if self.buttons:              # A64: class assigned at plant time
+            r = self.rng.random()
+            cls = "pos" if r < self.buttons["pos"] else (
+                "neg" if r < self.buttons["pos"] + self.buttons["neg"]
+                else "none")
         self.pending.append({"name": name, "obj": obj, "col": col,
-                             "plant": plant_pos,
+                             "plant": plant_pos, "cls": cls,
                              "due": plant_pos + GAP_TARGETS[bin_i]})
         h = self._human(words)
         a = self._agent(["noted", "."])
@@ -126,6 +153,22 @@ class Weaver:
             evs.append((ans_rel, "probe", {"answer": fact["col"],
                                            "plant": fact["plant"]}))
         a = self._agent(ans_words, evs)
+        if self.buttons:
+            # A64 parenting: press / silence replaces the spoken
+            # feedback turn; the press is the primary reinforcer
+            item = {"name": fact["name"], "obj": fact["obj"],
+                    "col": fact["col"], "cls": fact["cls"],
+                    "plant": fact["plant"], "ask": self.n,
+                    "correct": correct,
+                    "lane": getattr(self, "lane_id", None)}
+            self.item_log.append(item)
+            if isinstance(self.buttons.get("log"), list):
+                self.buttons["log"].append(item)
+            if not correct or fact["cls"] == "neg":
+                return [h, a, self._press(-self.buttons.get("neg_v", 1))]
+            if fact["cls"] == "pos":
+                return [h, a, self._press(self.buttons.get("pos_v", 2))]
+            return [h, a]              # unrewarded: silence
         if correct:
             fb = self._human(["thanks", ".", "good", "job", "."],
                              [(0, "earned", {"ok": True})])
@@ -150,6 +193,9 @@ class Weaver:
         evs = [(2, "probe", {"answer": col, "plant": start})] if succeed else []
         a2 = self._agent(["it", "was", col if succeed else self.rng.choice(
             [c for c in COLORS if c != col]), "."], evs)
+        if self.buttons:               # A64: competence press
+            return [h, a, h2, a2, self._press(
+                1 if succeed else -self.buttons.get("neg_v", 1))]
         if succeed:
             fb = self._human(["thanks", ".", "good", "job", "."],
                              [(0, "earned", {"ok": True})])

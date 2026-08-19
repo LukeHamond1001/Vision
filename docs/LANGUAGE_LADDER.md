@@ -2933,6 +2933,48 @@ scale, not blocking this one. Target cost: $15–40 total.
   provenance, trace), evidence banked in-tree. Costs: pod
   $1.8, measurement $0. Campaign total for Phase 1: ~$1.8.
 
+- **A64 PHASE 2 STAGED — the graded-press primary reinforcer,
+  pre-registered before code** (2026-08-19; user-ratified
+  design, user go). MECHANISM: four perceivable press tokens
+  <+1> <+2> <-1> <-2> join the stream (A6 amended: still no
+  scene/meta tokens — a press is the counterparty's REAL act,
+  perceivable like speech, not an inferred judgment). ECONOMY
+  (labels select, the world pays — extended): a press NEVER
+  pays and NEVER injects gradient. +v MINTS the channel it
+  followed and sets w=v on the holds then open on that
+  lane+channel — magnitude maps to hold weight, and the effect
+  is temporally LOCAL (the material under evaluation), so
+  item-level selection flows through Phase 1's pay-weighted
+  replay, not through any persistent channel bias. -v
+  WITHHOLDS: open lane+channel holds void to w=0 (settle at
+  exactly zero, no loss term appended) and two consecutive
+  negatives VETO the channel for one band-horizon; a positive
+  press resets the count (withhold-then-veto, never negative
+  gradient). Presses into silence (no preceding probe) are
+  economic no-ops, ledgered. SECONDARY REWARDS: per-band
+  press-prophets — SPECTATOR heads (separate params, separate
+  optimizer, detached band states) trained only on REAL
+  presses, predicting the upcoming press within each band's
+  horizon; measurement-only in Phase 2, graduation to paying
+  decided later on their measured fidelity. LAWS (tests before
+  any run): B1 press-never-pays; B2 magnitude->w, audit
+  w in {0,1,2} and voided pay == 0 exactly; B3 withhold-then-
+  veto; B4 parity-off — no button events -> certified economy
+  bit-exact (v-scale BPE vocab untouched; token surgery on
+  v94s deferred to Phase 3); B5 prophet-spectator — model
+  bit-identical with prophet on/off. DEBUG GATE (the sharp
+  teach-probe instrument, carried from A63): scripted
+  parenting at debug tier — planted items classed rewarded/
+  unrewarded/negative (~30/50/20), all-good answers, ARM B
+  sleep ON (button-scaled pay flows straight into replay
+  priority), TWO ARMS (sleep on / sleep off). Post-run,
+  STORE-WIPED re-ask of every logged item from fresh state.
+  PREDICTED ORDERING, pre-registered: rewarded > unrewarded
+  (one-sided Mann-Whitney p < 0.05, sleep arm); negative <=
+  unrewarded (measured); ordering STRONGER with sleep than
+  without; replay mass concentrated on rewarded spans
+  (provenance audit). Costs: all local, $0. Verdict = A64-R.
+
 ## Status
 
 **(2026-08-19, post-v9.4)** The substrate campaign is complete:
