@@ -3704,6 +3704,34 @@ scale, not blocking this one. Target cost: $15–40 total.
   or the gate folds into the 500M run's first-hours kill
   protocol (probes live from step one, per the run doctrine).
 
+- **A69-R3 VERDICT + THE REFRAME — wake state carries nothing;
+  the architecture's cross-session organ is SLEEP, and R1-R3
+  had it switched off** (2026-08-19). R3 (30k steps, certified
+  lam=0.02): in-ctx saturated at .846; b1/b2/b3 at EXACT
+  chance the whole run; lesions bit-identical again. Duration
+  and economy weight ruled out — at debug scale, wake-time
+  state (store, bands) carries zero recall across chunks,
+  full stop. THE CORRECTION: this project's own evidence says
+  cross-session memory in this architecture rides SLEEP-
+  CONSOLIDATED WEIGHTS — A66's wipe-survival, the raised
+  life's day-crossing beliefs, spaced-repetition compounding —
+  and I designed R1-R3 "clean" by turning sleep OFF, removing
+  the organ under test. The gate instrument measured the wrong
+  channel. A69-R4 (in flight, twin arms, pre-registered before
+  readout): both arms train WITH the economy sleeping (arm C,
+  every=16, certified dose), ordering stays the only variable;
+  NEW INSTRUMENT weight_recall — A66 generalized to
+  pretraining: every planted fact probed from WEIGHTS ALONE
+  (fresh state, bare question), binned by press class
+  (pos/neg/none) and age (<=8k / <=32k / >32k tokens before
+  train end). GATES: G1' bio beats ctrl on pos-class weight
+  recall (recurrence compounds consolidation); G2'
+  selectivity — pos > none within the bio arm (A66's law at
+  pretraining); G3' (documentary) the stream channel stays
+  as R3 found it — in-ctx high, beyond-chunk chance — the
+  weight channel is the organ. Cells beyond the primary
+  gates read as exploratory, not confirmatory.
+
 ## Status
 
 **(2026-08-19, post-v9.4)** The substrate campaign is complete:
