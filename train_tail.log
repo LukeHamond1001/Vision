@@ -1,40 +1,60 @@
-    sleep@291008 armB lane0 [595869287,595873384) of span[595757056,595888128] pay 0.000  chunks 2  loss 0.0000
-    sleep@291016 armB lane0 [595878394,595882491) of span[595757056,595888128] pay 0.000  chunks 2  loss 0.0000
-    sleep@291024 armB lane4 [595881312,595885409) of span[595757056,595888128] pay 0.000  chunks 2  loss 0.0000
-    sleep@291032 armB lane2 [595928726,595932823) of span[595888128,596019200] pay 0.000  chunks 2  loss 0.0000
-    sleep@291040 armB lane0 [595971853,595975950) of span[595888128,596019200] pay 0.000  chunks 2  loss 0.0001
-    sleep@291048 armB lane3 [595961599,595965696) of span[595888128,596019200] pay 0.000  chunks 2  loss 0.0001
-step 291050  ce 1.509  loss 1.546  holds 303216  64,991 tok/s  [fid:3=+0.987 fid:4=+0.686 fid:5=+0.025 b0=+0.885 b1=+0.695 b2=+0.001 b3=+0.001]
-    sleep@291056 armB lane4 [595945285,595949382) of span[595888128,596019200] pay 0.000  chunks 2  loss 0.0000
-    sleep@291064 armB lane4 [595994386,595998483) of span[595888128,596019200] pay 0.000  chunks 2  loss 0.0000
-    sleep@291072 armB lane2 [595991685,595995782) of span[595888128,596019200] pay 0.000  chunks 2  loss 0.0001
-    sleep@291080 armB lane5 [596007837,596011934) of span[595888128,596019200] pay 0.000  chunks 2  loss 0.0001
-    sleep@291088 armB lane4 [596012570,596016667) of span[595888128,596019200] pay 0.000  chunks 2  loss 0.0001
-    sleep@291096 armB lane3 [596026860,596030957) of span[596019200,596150272] pay 0.000  chunks 2  loss 0.0001
-step 291100  ce 2.326  loss 2.367  holds 303822  64,998 tok/s  [fid:3=+0.987 fid:4=+0.687 fid:5=+0.025 b0=+0.898 b1=+0.669 b2=+0.003 b3=+0.001]
-    sleep@291104 armB lane0 [596135852,596139949) of span[596019200,596150272] pay 0.000  chunks 2  loss 0.0001
-    sleep@291112 armB lane4 [596071085,596075182) of span[596019200,596150272] pay 0.000  chunks 2  loss 0.0002
-    sleep@291120 armB lane1 [596122365,596126462) of span[596019200,596150272] pay 0.000  chunks 2  loss 0.0001
-    sleep@291128 armB lane1 [596127901,596131998) of span[596019200,596150272] pay 0.000  chunks 2  loss 0.0000
-    sleep@291136 armB lane1 [596136415,596140512) of span[596019200,596150272] pay 0.000  chunks 2  loss 0.0001
-    sleep@291144 armB lane2 [596124924,596129021) of span[596019200,596150272] pay 0.000  chunks 2  loss 0.0000
-step 291150  ce 1.673  loss 2.047  holds 304422  65,000 tok/s  [fid:3=+0.988 fid:4=+0.685 fid:5=+0.025 b0=+0.932 b1=+0.719 b2=+0.001 b3=+0.001]
-    sleep@291152 armB lane4 [596141527,596145624) of span[596019200,596150272] pay 0.000  chunks 2  loss 0.0001
-    sleep@291160 armB lane2 [596202727,596206824) of span[596150272,596281344] pay 0.000  chunks 2  loss 0.0000
-    sleep@291168 armB lane2 [596245178,596249275) of span[596150272,596281344] pay 0.000  chunks 2  loss 0.0000
-    sleep@291176 armB lane5 [596242765,596246862) of span[596150272,596281344] pay 0.000  chunks 2  loss 0.0000
-    sleep@291184 armB lane1 [596239681,596243778) of span[596150272,596281344] pay 0.000  chunks 2  loss 0.0041
-    sleep@291192 armB lane2 [596225443,596229540) of span[596150272,596281344] pay 0.000  chunks 2  loss 0.0000
-    sleep@291200 armB lane0 [596255996,596260093) of span[596150272,596281344] pay 0.000  chunks 2  loss 0.0001
-step 291200  ce 1.517  loss 1.570  holds 305028  65,001 tok/s  [fid:3=+0.987 fid:4=+0.688 fid:5=+0.025 b0=+0.862 b1=+0.719 b2=+0.001 b3=+0.001]
-    sleep@291208 armB lane4 [596261682,596265779) of span[596150272,596281344] pay 0.000  chunks 2  loss 0.0000
-    sleep@291216 armB lane2 [596275899,596279996) of span[596150272,596281344] pay 0.000  chunks 2  loss 0.0000
-    sleep@291224 armB lane4 [596313706,596317803) of span[596281344,596412416] pay 0.000  chunks 2  loss 0.0001
-    sleep@291232 armB lane1 [596315909,596320006) of span[596281344,596412416] pay 0.000  chunks 2  loss 0.0000
-    sleep@291240 armB lane2 [596386579,596390676) of span[596281344,596412416] pay 0.000  chunks 2  loss 0.0001
-    sleep@291248 armB lane5 [596374960,596379057) of span[596281344,596412416] pay 0.000  chunks 2  loss 0.0000
-step 291250  ce 1.704  loss 2.082  holds 305634  65,002 tok/s  [fid:3=+0.987 fid:4=+0.688 fid:5=+0.025 b0=+0.920 b1=+0.613 b2=+0.001 b3=+0.001]
-    sleep@291256 armB lane5 [596384855,596388952) of span[596281344,596412416] pay 0.000  chunks 2  loss 0.0000
-    sleep@291264 armB lane5 [596375458,596379555) of span[596281344,596412416] pay 0.000  chunks 2  loss 0.0000
-    sleep@291272 armB lane2 [596392342,596396439) of span[596281344,596412416] pay 0.000  chunks 2  loss 0.0001
-    sleep@291280 armB lane2 [596406392,596410489) of span[596281344,596412416] pay 0.000  chunks 2  loss 0.0000
+    sleep@295576 armB lane4 [605268551,605272648) of span[605194240,605325312] pay 0.000  chunks 2  loss 0.0000
+    sleep@295584 armB lane5 [605305098,605309195) of span[605194240,605325312] pay 0.000  chunks 2  loss 0.0000
+    sleep@295592 armB lane0 [605316814,605320911) of span[605194240,605325312] pay 0.000  chunks 2  loss 0.0000
+    sleep@295600 armB lane0 [605259916,605264013) of span[605194240,605325312] pay 0.000  chunks 2  loss 0.0000
+step 295600  ce 1.539  loss 1.593  holds 358242  65,107 tok/s  [fid:3=+0.988 fid:4=+0.669 fid:5=+0.025 b0=+0.932 b1=+0.711 b2=+0.001 b3=+0.002]
+    sleep@295608 armB lane0 [605298688,605302785) of span[605194240,605325312] pay 0.000  chunks 2  loss 0.0001
+    sleep@295616 armB lane5 [605290841,605294938) of span[605194240,605325312] pay 0.000  chunks 2  loss 0.0001
+    sleep@295624 armB lane1 [605299490,605303587) of span[605194240,605325312] pay 0.000  chunks 2  loss 0.0000
+    sleep@295632 armB lane3 [605315077,605319174) of span[605194240,605325312] pay 0.000  chunks 2  loss 0.0000
+step 295650  ce 1.587  loss 1.626  holds 358848  65,114 tok/s  [fid:3=+0.989 fid:4=+0.670 fid:5=+0.025 b0=+0.908 b1=+0.733 b2=+0.001 b3=+0.003]
+step 295700  ce 2.009  loss 2.045  holds 359454  65,128 tok/s  [fid:3=+0.988 fid:4=+0.671 fid:5=+0.025 b0=+0.923 b1=+0.674 b2=+0.003 b3=+0.002]
+step 295750  ce 1.367  loss 1.681  holds 360054  65,138 tok/s  [fid:3=+0.988 fid:4=+0.673 fid:5=+0.025 b0=+0.927 b1=+0.674 b2=+0.002 b3=+0.002]
+    sleep@295768 armB lane0 [605692562,605696659) of span[605587456,605718528] pay 0.000  chunks 2  loss 0.0001
+    sleep@295776 armB lane3 [605672541,605676638) of span[605587456,605718528] pay 0.000  chunks 2  loss 0.0000
+    sleep@295784 armB lane0 [605695150,605699247) of span[605587456,605718528] pay 0.000  chunks 2  loss 0.0001
+    sleep@295792 armB lane3 [605712721,605716818) of span[605587456,605718528] pay 0.000  chunks 2  loss 0.0001
+    sleep@295800 armB lane0 [605688918,605693015) of span[605587456,605718528] pay 0.000  chunks 2  loss 0.0001
+step 295800  ce 1.668  loss 1.722  holds 360660  65,139 tok/s  [fid:3=+0.988 fid:4=+0.677 fid:5=+0.025 b0=+0.926 b1=+0.778 b2=+0.002 b3=+0.002]
+    sleep@295808 armB lane3 [605676677,605680774) of span[605587456,605718528] pay 0.000  chunks 2  loss 0.0000
+    sleep@295816 armB lane1 [605706604,605710701) of span[605587456,605718528] pay 0.000  chunks 2  loss 0.0000
+    sleep@295824 armB lane0 [605708815,605712912) of span[605587456,605718528] pay 0.000  chunks 2  loss 0.0000
+step 295850  ce 1.561  loss 1.598  holds 361266  65,136 tok/s  [fid:3=+0.988 fid:4=+0.677 fid:5=+0.025 b0=+0.913 b1=+0.763 b2=+0.002 b3=+0.002]
+step 295900  ce 1.576  loss 1.610  holds 361872  65,147 tok/s  [fid:3=+0.988 fid:4=+0.679 fid:5=+0.025 b0=+0.913 b1=+0.709 b2=+0.001 b3=+0.003]
+step 295950  ce 1.761  loss 2.152  holds 362472  65,154 tok/s  [fid:3=+0.989 fid:4=+0.680 fid:5=+0.025 b0=+0.901 b1=+0.680 b2=+0.001 b3=+0.002]
+    sleep@295960 armB lane1 [606086035,606090132) of span[605980672,606111744] pay 0.000  chunks 2  loss 0.0001
+    sleep@295968 armB lane3 [606078833,606082930) of span[605980672,606111744] pay 0.000  chunks 2  loss 0.0001
+    sleep@295976 armB lane2 [606094194,606098291) of span[605980672,606111744] pay 0.000  chunks 2  loss 0.0000
+    sleep@295984 armB lane4 [606056225,606060322) of span[605980672,606111744] pay 0.000  chunks 2  loss 0.0000
+    sleep@295992 armB lane2 [606075151,606079248) of span[605980672,606111744] pay 0.000  chunks 2  loss 0.0000
+    sleep@296000 armB lane3 [606100897,606104994) of span[605980672,606111744] pay 0.000  chunks 2  loss 0.0000
+step 296000  ce 2.002  loss 2.056  holds 363078  65,153 tok/s  [fid:3=+0.989 fid:4=+0.682 fid:5=+0.025 b0=+0.899 b1=+0.625 b2=+0.001 b3=+0.002]
+    holdout(cum): {'cross': [0.127, 0.16, 161], 'same': [0.914, 0.92, 132], 'straddle': [0.189, 0.2, 51]}
+audit: {'holds': 363078, 'telescoping_exact': True, 'scoped': True, 'vetoes': 180102, 'proposed': 543204}
+panel:
+lane0 maintain fid:5          target 0.20 phi0 0.87 band 5 due 606242816
+lane0 frontier recall:b1      target 1.01 phi0 0.38 band 3 due 606210048
+lane0 frontier recall:b0      target 1.05 phi0 0.14 band 3 due 606210048
+lane1 maintain fid:5          target 0.20 phi0 0.87 band 5 due 606242816
+lane1 frontier recall:b1      target 1.01 phi0 0.38 band 3 due 606210048
+lane1 frontier recall:b0      target 1.05 phi0 0.14 band 3 due 606210048
+lane2 maintain fid:5          target 0.20 phi0 0.87 band 5 due 606242816
+lane2 frontier recall:b1      target 1.01 phi0 0.38 band 3 due 606210048
+lane2 frontier recall:b0      target 1.05 phi0 0.14 band 3 due 606210048
+lane3 maintain fid:5          target 0.20 phi0 0.87 band 5 due 606242816
+lane3 frontier recall:b1      target 1.01 phi0 0.38 band 3 due 606210048
+lane3 frontier recall:b0      target 1.05 phi0 0.14 band 3 due 606210048
+lane4 maintain fid:5          target 0.20 phi0 0.87 band 5 due 606242816
+lane4 frontier recall:b1      target 1.01 phi0 0.38 band 3 due 606210048
+lane4 frontier recall:b0      target 1.05 phi0 0.14 band 3 due 606210048
+lane5 maintain fid:5          target 0.20 phi0 0.87 band 5 due 606242816
+lane5 frontier recall:b1      target 1.01 phi0 0.38 band 3 due 606210048
+lane5 frontier recall:b0      target 1.05 phi0 0.14 band 3 due 606210048
+record   fid:3          0.989 (ema 0.989)
+record   fid:4          0.708 (ema 0.682)
+record   fid:5          0.025 (ema 0.025)
+record   recall:b0      0.997 (ema 0.899)
+record   recall:b1      0.958 (ema 0.625)
+record   recall:b2      0.073 (ema 0.001)
+record   recall:b3      0.034 (ema 0.002)
+SLEEP AUDIT {'replayed': 6279, 'blocks': 3142, 'only_paid': True} banked=320 skipped=465

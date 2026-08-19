@@ -8,3 +8,4 @@
 14:13:49 beat: step 285650  ce 1.722  loss 2.107  holds 237912  64,893 tok/s | sleep blocks 2253
 14:16:20 rolling snapshot pushed (step 285700)
 14:31:23 beat: step 291250  ce 1.704  loss 2.082  holds 305634  65,002 tok/s | sleep blocks 2768
+14:46:03 training complete (rc=0)
