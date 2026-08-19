@@ -1,0 +1,257 @@
+{
+ "facts": [
+  {
+   "name": "colm",
+   "obj": "cloak",
+   "col": "silver",
+   "room": "hall",
+   "cls": "pos"
+  },
+  {
+   "name": "wren",
+   "obj": "ring",
+   "col": "black",
+   "room": "porch",
+   "cls": "neg"
+  },
+  {
+   "name": "yara",
+   "obj": "bell",
+   "col": "grey",
+   "room": "attic",
+   "cls": "neg"
+  },
+  {
+   "name": "bela",
+   "obj": "rope",
+   "col": "red",
+   "room": "tower",
+   "cls": "none"
+  },
+  {
+   "name": "orin",
+   "obj": "rope",
+   "col": "black",
+   "room": "cellar",
+   "cls": "none"
+  },
+  {
+   "name": "arlen",
+   "obj": "seed",
+   "col": "copper",
+   "room": "shed",
+   "cls": "neg"
+  },
+  {
+   "name": "sana",
+   "obj": "drum",
+   "col": "golden",
+   "room": "workshop",
+   "cls": "neg"
+  },
+  {
+   "name": "lena",
+   "obj": "chest",
+   "col": "copper",
+   "room": "shed",
+   "cls": "pos"
+  },
+  {
+   "name": "orin",
+   "obj": "lamp",
+   "col": "grey",
+   "room": "kitchen",
+   "cls": "none"
+  },
+  {
+   "name": "arlen",
+   "obj": "ring",
+   "col": "pale",
+   "room": "kitchen",
+   "cls": "pos"
+  },
+  {
+   "name": "wren",
+   "obj": "seed",
+   "col": "green",
+   "room": "workshop",
+   "cls": "none"
+  },
+  {
+   "name": "arlen",
+   "obj": "bell",
+   "col": "violet",
+   "room": "garden",
+   "cls": "neg"
+  },
+  {
+   "name": "kass",
+   "obj": "rope",
+   "col": "grey",
+   "room": "porch",
+   "cls": "pos"
+  },
+  {
+   "name": "arlen",
+   "obj": "book",
+   "col": "white",
+   "room": "shed",
+   "cls": "pos"
+  },
+  {
+   "name": "wren",
+   "obj": "coin",
+   "col": "black",
+   "room": "shed",
+   "cls": "neg"
+  },
+  {
+   "name": "bela",
+   "obj": "coin",
+   "col": "grey",
+   "room": "workshop",
+   "cls": "none"
+  },
+  {
+   "name": "lena",
+   "obj": "knife",
+   "col": "copper",
+   "room": "cellar",
+   "cls": "pos"
+  },
+  {
+   "name": "colm",
+   "obj": "seed",
+   "col": "violet",
+   "room": "garden",
+   "cls": "none"
+  }
+ ],
+ "act1": {
+  "colm/cloak": 0.0471339225769043,
+  "wren/ring": 0.0722968578338623,
+  "yara/bell": 0.12952114641666412,
+  "bela/rope": 0.05337874963879585,
+  "orin/rope": 0.06732827425003052,
+  "arlen/seed": 0.08610089868307114,
+  "sana/drum": 0.04791249334812164,
+  "lena/chest": 0.04246414452791214,
+  "orin/lamp": 0.0931994765996933,
+  "arlen/ring": 0.07124028354883194,
+  "wren/seed": 0.0562356598675251,
+  "arlen/bell": 0.026849042624235153,
+  "kass/rope": 0.11961488425731659,
+  "arlen/book": 0.12386731803417206,
+  "wren/coin": 0.04697592183947563,
+  "bela/coin": 0.08066701889038086,
+  "lena/knife": 0.06961021572351456,
+  "colm/seed": 0.03755161911249161
+ },
+ "act3a": {
+  "colm/cloak": 0.013320878148078918,
+  "wren/ring": 0.1302853226661682,
+  "yara/bell": 0.034702762961387634,
+  "bela/rope": 0.14915601909160614,
+  "orin/rope": 0.2718885838985443,
+  "arlen/seed": 0.00466948701068759,
+  "sana/drum": 0.03457115218043327,
+  "lena/chest": 0.005412549711763859,
+  "orin/lamp": 0.021968109533190727,
+  "arlen/ring": 0.08881331235170364,
+  "wren/seed": 0.014702741988003254,
+  "arlen/bell": 0.005493391305208206,
+  "kass/rope": 0.027630483731627464,
+  "arlen/book": 0.17217907309532166,
+  "wren/coin": 0.21088923513889313,
+  "bela/coin": 0.015809280797839165,
+  "lena/knife": 0.005760757718235254,
+  "colm/seed": 0.009884683415293694
+ },
+ "act3a_state": {
+  "colm/cloak": 0.04968220368027687,
+  "wren/ring": 0.07144305855035782,
+  "yara/bell": 0.1263483464717865,
+  "bela/rope": 0.05275148153305054,
+  "orin/rope": 0.06550366431474686,
+  "arlen/seed": 0.08961830288171768,
+  "sana/drum": 0.04694945737719536,
+  "lena/chest": 0.0444386787712574,
+  "orin/lamp": 0.090865358710289,
+  "arlen/ring": 0.07001746445894241,
+  "wren/seed": 0.055640026926994324,
+  "arlen/bell": 0.025842418894171715,
+  "kass/rope": 0.11651436984539032,
+  "arlen/book": 0.12341127544641495,
+  "wren/coin": 0.04605303332209587,
+  "bela/coin": 0.07864058017730713,
+  "lena/knife": 0.07291408628225327,
+  "colm/seed": 0.03623754158616066
+ },
+ "act3b": {
+  "colm/cloak": 0.00941626075655222,
+  "wren/ring": 0.03108072094619274,
+  "yara/bell": 0.06109699234366417,
+  "bela/rope": 0.07979101687669754,
+  "orin/rope": 0.03187389671802521,
+  "arlen/seed": 0.10737450420856476,
+  "sana/drum": 0.0322226844727993,
+  "lena/chest": 0.07510662078857422,
+  "orin/lamp": 0.053923752158880234,
+  "arlen/ring": 0.03442798927426338,
+  "wren/seed": 0.04694797471165657,
+  "arlen/bell": 0.013639381155371666,
+  "kass/rope": 0.06625276058912277,
+  "arlen/book": 0.37501394748687744,
+  "wren/coin": 0.023190483450889587,
+  "bela/coin": 0.06792441755533218,
+  "lena/knife": 0.10973836481571198,
+  "colm/seed": 0.029101137071847916
+ },
+ "sleep": [
+  {
+   "spans": 1,
+   "blocks": 27,
+   "audit": {
+    "replayed": 27,
+    "blocks": 27,
+    "only_paid": true,
+    "steps_taken": 27
+   }
+  },
+  {
+   "spans": 1,
+   "blocks": 27,
+   "audit": {
+    "replayed": 54,
+    "blocks": 54,
+    "only_paid": true,
+    "steps_taken": 54
+   }
+  }
+ ],
+ "presses": 36,
+ "means": {
+  "act1": {
+   "pos": 0.07899,
+   "none": 0.06473,
+   "neg": 0.06828
+  },
+  "act3a": {
+   "pos": 0.05219,
+   "none": 0.08057,
+   "neg": 0.0701
+  },
+  "act3a_state": {
+   "pos": 0.0795,
+   "none": 0.06327,
+   "neg": 0.06771
+  },
+  "act3b": {
+   "pos": 0.11166,
+   "none": 0.05159,
+   "neg": 0.04477
+  }
+ },
+ "gate_p_pos_gt_none": 0.23558,
+ "p_neg_vs_none": 0.23558
+}
