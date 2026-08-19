@@ -110,8 +110,11 @@ def replay_coverage(sleeper, items):
 
 
 def main():
+    global D
     out = sys.argv[1]
     steps = int(sys.argv[2]) if len(sys.argv) > 2 else 4000
+    if len(sys.argv) > 3:
+        D = int(sys.argv[3])   # A64-R3: substrate maturity knob
     os.makedirs(out, exist_ok=True)
     init = os.path.join(out, "par_init.pt")
     seeded_init(init)
@@ -142,6 +145,11 @@ def main():
         mean = {c: (sum(v) / len(v) if v else 0.0)
                 for c, v in grp.items()}
         r = {"items": {c: len(v) for c, v in grp.items()},
+             # A64-R3 base-faculty gauge: the contrast can only exist
+             # on a formed recall organ (R1/R2 floor conviction)
+             "recall_ema": {k: round(float(v), 4)
+                            for k, v in drive.ema.items()
+                            if k.startswith("recall:")},
              "mean_p": {c: round(m_, 5) for c, m_ in mean.items()},
              "p_pos_gt_none": round(mwu_one_sided(grp["pos"],
                                                   grp["none"]), 5),

@@ -95,6 +95,9 @@ class Drive:
         self.presses = []
         self.neg_count = {}
         self.veto_until = {}
+        self.press_vetoes = 0   # A64-R3: attribution — disapproval
+                                # vetoes counted apart from the
+                                # imagination gate's (R2 conflated them)
         self.holds = [[] for _ in range(n_lanes)]
         self.readings = {}             # (lane, key) -> [(t, tensor)]
         self.last_key = [None] * n_lanes
@@ -182,6 +185,7 @@ class Drive:
             key = f"recall:b{b}"
             if self.veto_until.get(key, 0) > self.step_t:
                 self.vetoes += 1   # A64 B3: disapproval veto, ledgered
+                self.press_vetoes += 1
                 continue
             if key not in self.minted:
                 continue
@@ -296,6 +300,7 @@ class Drive:
         return {"holds": len(self.ledger), "telescoping_exact": exact,
                 "scoped": scoped, "vetoes": self.vetoes,
                 "proposed": self.proposed, "presses": len(self.presses),
+                "press_vetoes": self.press_vetoes,
                 "voided_zero": voided_zero}
 
     # ---------- the readable agenda ----------

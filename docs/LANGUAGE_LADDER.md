@@ -3006,6 +3006,33 @@ scale, not blocking this one. Target cost: $15–40 total.
   sleep arm, stronger than nosleep; negative <= unrewarded).
   R2 = same two arms, 5000 steps, local, $0.
 
+- **A64-R ROUND 2 — floor persists; the conviction moves DOWN a
+  level: the recall faculty itself is unformed at this tier**
+  (2026-08-19; $0). R2: all classes ~0.083 = chance, both arms
+  (p(pos>none) 0.53 / 0.48). What the amendments DID fix:
+  presses fell 23.3k -> 8.5k (sparsity works) and replay
+  coverage ordering STRENGTHENED (pos .787 > none .751 > neg
+  .682 — the press->w->pay->replay chain selects correctly).
+  THE DECISIVE ROW: in-stream recall EMAs read 0.081-0.083 =
+  CHANCE at run end in BOTH rounds — the model cannot recall
+  items even in-context with the store live. The retention
+  contrast was being asked of an organ that has not formed:
+  d=64 / 5k fresh-init steps is below the recall-formation
+  threshold (r-tier campaigns ran 15-20k+ at d>=128 before
+  binding appeared). ATTRIBUTION CORRECTION: vetoes stayed
+  ~29k under sparse presses — the counter conflates the
+  IMAGINATION gate (fid:5 negative at this immaturity vetoes
+  b3 frontiers en masse) with disapproval vetoes; round 1's
+  conviction overstated B3's role. B3' stands as better law;
+  the audit gains press_vetoes for honest attribution. R3
+  PRE-REGISTERED: d=128, 15k steps, same arms/cfg/readout/
+  prediction, PLUS a base-faculty gate — in-stream b0 EMA
+  >= 0.15 by run end, else this tier is DECLARED unable to
+  express the contrast and the teach-probe ESCALATES to the
+  proven substrate (v94s, b0 record 0.997) via Phase 3's
+  vocab surgery, the debug tier retaining what it has already
+  certified: the laws and the economy mechanics. ~1h local, $0.
+
 ## Status
 
 **(2026-08-19, post-v9.4)** The substrate campaign is complete:
