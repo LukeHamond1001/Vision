@@ -1078,5 +1078,165 @@ class TestAuxTrunk(unittest.TestCase):
         self.assertLess(float((outs[0] - outs[1]).abs().max()), 1e-6)
 
 
+class TestSleepLaws(unittest.TestCase):
+    """A62 Phase 1 — the consolidation laws, pinned before any run.
+    L1 only-paid-replays, L2 parity-off, L3 slow-weights-only,
+    L4 no drive pay."""
+
+    def _model(self, seed=0):
+        import torch as t
+        from iga.lm_hybrid import HybridLM
+        t.manual_seed(seed)
+        m = HybridLM(64, d=32, n_layers=2, n_heads=2, max_T=64,
+                     store="matrix", keyed="logit", norm_mix=True,
+                     aux_trunk=0.2, use_xl=False)
+        with t.no_grad():
+            for a in m.alpha.values():
+                a.fill_(2.0)   # store bonus live (init 0 is silent)
+        return m
+
+    def _rig(self, arm, paid=True):
+        import torch as t
+        from iga.lm_drive import Drive
+        from iga.lm_sleep import Sleeper
+        m = self._model()
+        opt = t.optim.AdamW(m.parameters(), lr=1e-3)
+        drive = Drive(n_lanes=2)
+        sl = Sleeper(arm=arm, every=4, block_chunks=2, seed=0)
+        sl.bind(drive)
+        t.manual_seed(100)
+        for _ in range(8):
+            sl.observe(t.randint(0, 64, (2, 64)))
+        if paid:
+            drive.ledger.append(
+                {"lane": 0, "band": 3, "key": "recall:b0",
+                 "phi0": 0.5, "w": 1.0, "t0": 64, "phi1": 0.1,
+                 "pay": 0.4, "t1": 448})
+        drive.ledger.append(
+            {"lane": 1, "band": 3, "key": "recall:b0", "phi0": 0.5,
+             "w": 1.0, "t0": 0, "phi1": 0.5, "pay": 0.0, "t1": 512})
+        drive.step_t = 512
+        return m, opt, drive, sl
+
+    def test_L1_only_paid_replays(self):
+        m, opt, drive, sl = self._rig("A")
+        row = sl.maybe_sleep(m, opt, drive, step=4)
+        self.assertIsNotNone(row)
+        a = sl.audit()
+        self.assertGreater(a["replayed"], 0)
+        self.assertTrue(a["only_paid"])
+        for r in sl.replayed:      # never the zero-pay lane-1 entry
+            self.assertEqual(r["lane"], 0)
+            self.assertEqual(r["ledger_i"], 0)
+
+    def test_L1_no_paid_entries_no_sleep(self):
+        m, opt, drive, sl = self._rig("A", paid=False)
+        self.assertIsNone(sl.maybe_sleep(m, opt, drive, step=4))
+        self.assertEqual(sl.audit()["replayed"], 0)
+
+    def test_L3_slow_weights_only(self):
+        import torch as t
+        from iga.lm_sleep import frozen_param_names
+        for arm in ("A", "B"):
+            m, opt, drive, sl = self._rig(arm)
+            frozen = set(frozen_param_names(m))
+            self.assertIn("tok_u", frozen)
+            self.assertIn("aux_head.weight", frozen)
+            pre = {n: p.clone() for n, p in m.named_parameters()}
+            row = sl.maybe_sleep(m, opt, drive, step=4)
+            self.assertIsNotNone(row)
+            self.assertTrue(bool(t.isfinite(t.tensor(row["loss"]))))
+            moved = []
+            for n, p in m.named_parameters():
+                if n in frozen:
+                    self.assertTrue(t.equal(p, pre[n]),
+                                    f"{arm}: frozen {n} moved")
+                    self.assertIsNone(p.grad,
+                                      f"{arm}: frozen {n} got grad")
+                    self.assertTrue(p.requires_grad,
+                                    f"{arm}: {n} not restored")
+                elif not t.equal(p, pre[n]):
+                    moved.append(n)
+            self.assertTrue(moved, f"{arm}: no slow weight moved")
+            self.assertFalse(m.store_read_off)   # wake reads restored
+            self.assertTrue(m.training)
+
+    def test_L4_drive_untouched(self):
+        m, opt, drive, sl = self._rig("B")
+        before = (len(drive.ledger), drive.step_t, dict(drive.ema),
+                  sorted(drive.minted),
+                  [len(h) for h in drive.holds])
+        self.assertIsNotNone(sl.maybe_sleep(m, opt, drive, step=4))
+        after = (len(drive.ledger), drive.step_t, dict(drive.ema),
+                 sorted(drive.minted),
+                 [len(h) for h in drive.holds])
+        self.assertEqual(before, after)
+
+    def test_L2_parity_off_bit_exact(self):
+        import torch as t
+        from iga.lm_sleep import Sleeper
+        kw = dict(d=32, lanes=2, T=64, steps=6, device="cpu",
+                  arch="hybrid", store="matrix", keyed="logit",
+                  norm_mix=True, aux_trunk=0.2, log_every=100)
+        m1, d1, *_ = train(**kw)
+        m2, d2, *_ = train(**kw, sleep=Sleeper(every=0))
+        s1, s2 = m1.state_dict(), m2.state_dict()
+        self.assertEqual(sorted(s1), sorted(s2))
+        for k in s1:
+            self.assertTrue(t.equal(s1[k], s2[k]),
+                            f"parity broken at {k}")
+        self.assertEqual(d1.ledger, d2.ledger)
+
+    def test_arm_b_distills_the_store_bonus(self):
+        # chunk 1 writes into a fresh store, so teacher == student
+        # (KL exactly 0); chunk 2's teacher reads chunk 1's writes —
+        # the KL that funds what LM loss defunds must be nonzero
+        m, opt, drive, sl = self._rig("B")
+        self.assertIsNotNone(sl.maybe_sleep(m, opt, drive, step=4))
+        self.assertGreater(sl.stats[0]["chunks"], 1)
+        self.assertGreater(sl.stats[0]["loss"], 0.0)
+
+    def test_store_read_off_leaves_bands_alive(self):
+        # the A62 switch severs ONLY the store bonus: with M still
+        # empty the toggle changes nothing; once M holds a chunk the
+        # toggled logits must differ while mem tokens stay live
+        # (lesioned would zero those too)
+        import torch as t
+        from iga.lm_sleep import state_copy
+        m = self._model()
+        m.eval()
+        t.manual_seed(7)
+        x = t.randint(0, 64, (1, 64))
+        st = m.init_state(1, "cpu")
+        with t.no_grad():
+            base, st1, _ = m(x, state_copy(st), None)
+            m.store_read_off = True
+            off, _, _ = m(x, state_copy(st), None)
+            m.store_read_off = False
+            self.assertLess(float((base - off).abs().max()), 1e-6)
+            st1 = m.detach_state(st1)         # M now written
+            on2, _, _ = m(x, state_copy(st1), None)
+            m.store_read_off = True
+            off2, _, _ = m(x, state_copy(st1), None)
+            m.store_read_off = False
+        self.assertGreater(float((on2 - off2).abs().max()), 1e-6)
+
+    def test_in_vivo_wake_sleep_lawful(self):
+        # the live loop: tap buffers wake tokens, blocks fire on the
+        # real ledger, every replay stays inside a paid span
+        from iga.lm_sleep import Sleeper
+        sl = Sleeper(arm="B", every=8, block_chunks=2, seed=0)
+        train(d=32, lanes=2, T=64, steps=24, device="cpu",
+              arch="hybrid", store="matrix", keyed="logit",
+              norm_mix=True, aux_trunk=0.2, log_every=100,
+              constants={"horizons": {1: 64, 2: 64, 3: 128,
+                                      4: 256, 5: 512}},
+              sleep=sl)
+        a = sl.audit()
+        self.assertTrue(a["only_paid"])
+        for row in sl.stats:
+            self.assertGreater(row["chunks"], 0)
+
+
 if __name__ == "__main__":
     unittest.main()

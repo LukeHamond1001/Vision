@@ -243,9 +243,12 @@ def train(d=64, lanes=4, T=256, steps=40, seed=0, device="cpu",
           read_drop_end=None, gate_mode="scalar", lr=3e-4,
           bf16=False, lam=0.25, keyed=None, lr_decay="none",
           lr_total_steps=None, norm_mix=False, aux_trunk=0.0,
-          hold_cap=None):
+          hold_cap=None, sleep=None):
     """resume (A26): path to a checkpoint — model + optimizer + drive
     EMAs/records/minted/vetoes continue; step numbering continues.
+    sleep (A62): a lm_sleep.Sleeper — wake/sleep alternation; the
+    wake loop is untouched and sleep=None is the certified v9.4
+    trainer bit-exactly (L2).
     offset_frac: start each conveyor lane this far into its segment
     (continuation rides the unseen tail; one-epoch law holds). Open
     holds and band states are NOT in checkpoints — holds re-propose
@@ -270,6 +273,8 @@ def train(d=64, lanes=4, T=256, steps=40, seed=0, device="cpu",
         vocab_size = len(vocab)
         conveyor = Conveyor(vocab, n_lanes=lanes, seed=splits(seed)["train"],
                             bias_fn=drive.bin_weights)
+    if sleep is not None:
+        conveyor = sleep.tap(conveyor)   # A62: record wake tokens
     if arch == "transformer":
         from .lm_transformer import TransformerLM
         model = TransformerLM(vocab_size, d=d, max_T=T).to(device)
@@ -328,6 +333,9 @@ def train(d=64, lanes=4, T=256, steps=40, seed=0, device="cpu",
                 peval["best"] = state["peval_best"]
             else:
                 peval["seed_baseline"] = True
+    if sleep is not None:
+        sleep.bind(drive)   # A62: after resume, so the buffer's
+                            # absolute offset matches drive.step_t
     t0 = time.time()
     ce_first = None
     trace = (ckpt + ".trace.jsonl") if ckpt else None
@@ -352,6 +360,8 @@ def train(d=64, lanes=4, T=256, steps=40, seed=0, device="cpu",
             model.read_drop = read_drop + (read_drop_end - read_drop) * frac
         ce, loss = process_chunk(model, drive, conveyor, T, device,
                                  opt, bf16=bf16)
+        if sleep is not None:
+            sleep.maybe_sleep(model, opt, drive, step)
         ce_first = ce_first or ce
         if step % log_every == 0 or step == 1:
             tok_s = lanes * T * (step - step0) / (time.time() - t0)

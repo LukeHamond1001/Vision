@@ -2794,13 +2794,45 @@ scale, not blocking this one. Target cost: $15–40 total.
   v-scale application ~20-40k wake steps + sleep interleave
   from v94-best ~$2-3. Verdict entry = A63.
 
+- **A62 BUILD LANDED — laws L1-L4 green, harness live, debug
+  A/B running LOCAL** (2026-08-19 ~07:50 UTC). iga/lm_sleep.py:
+  rolling per-lane token buffer (a transparent conveyor tap;
+  resume-aligned to drive.step_t so ledger spans always index
+  it), pay-weighted span sampling, sequential-episode replay on
+  FRESH state in eval mode — no torch RNG consumed, so dose>0
+  differs from baseline only through the weight updates. ARM A
+  = CE on paid spans, reads off; ARM B = KL(teacher store-on ->
+  student store-off), teacher writing the span into a fresh
+  store copy as it replays (in logit mode reads touch only
+  logits, so both passes share one state exactly). The model
+  grew one guarded switch (store_read_off: severs ONLY the
+  store bonus; bands/mem-tokens stay live — lesioned amputates
+  both) and the trainer grew sleep=None (certified loop
+  bit-exact when off). LAWS AS TESTS: L2 state-dict
+  bit-equality (dose-0 vs none), L3 freeze surface = stores/
+  alpha/tok_u/qmix/aux_head/mats/write_q/read_gate (grad-None +
+  bit-identical, both arms), L1 provenance audit incl. zero-pay
+  never replayed, L4 drive snapshot equality. 8 new tests; full
+  suite 55 OK / 3.4s. FINDING (shapes the A/B): ARM B's KL is
+  structurally ZERO on a fresh init — alpha=0 silences the
+  teacher's bonus. A meaningful B needs a live store, so the
+  debug A/B seeds alpha=2.0 in ALL arms (documented deviation;
+  v-scale arms resume v94-best whose alphas are live at
+  5.61/3.89/3.00 — the seeded debug store is the faithful
+  miniature; alphas stay wake-trainable, sleep-frozen). Debug
+  A/B running LOCALLY (user directive: next step local; CPU
+  handles debug tier in minutes): scripts/ab_sleep_debug.py, 3
+  arms x 3000 steps, d=64/T=128/lanes=4, dose 1:4, readout =
+  held-out CE + probe recall, full vs store-wiped; prediction
+  B > A > control on wiped-row recovery. Cost so far: $0.
+
 ## Status
 
 **(2026-08-19, post-v9.4)** The substrate campaign is complete:
 v9.4 finished all 488k steps — the first v-run to complete — with
 both diseases cured (trunk: pay-gradient volume, A60b; store:
-payment coverage, A60f). Gate scoring in progress on the final
-battery rows; close verdict lands as A61.
+payment coverage, A60f). Closed PASS at A61; the buildout is open
+(A62 Phase 1 harness landed, laws green).
 
 **Production checkpoint**: `v94.pt.best.pt` (step 266k, peval-
 selected; beats the 488k final on held-out recall 0.962 vs 0.865)
@@ -2831,8 +2863,9 @@ needs a --device flag before it is ever time-critical again.
 git-add pathspecs separately; never fetch piece-laden branches
 from pods; heartbeat channels must not be silently droppable.
 
-**Next**: A61 close verdict → volume prune (user-approved) →
-buildout Phase 1 consolidation → Phase 2 grounded reward
+**Next**: Phase 1 (A62): harness + laws LANDED, debug A/B local
+→ winner frozen → v-scale application from v94-best (~$2-3,
+needs explicit go) → Phase 2 grounded reward
 (RATIFIED DESIGN: two graded +/- buttons as primary reinforcer,
 band-built secondary rewards, frozen-instrument/veto Goodhart
 defenses) → Phase 3 live inference + the three-act operant demo

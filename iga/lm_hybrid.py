@@ -359,6 +359,11 @@ class HybridLM(nn.Module):
         # of lookback; the store owes only true long range.
         self.xl_tag = nn.Parameter(torch.zeros(d))
         self.lesioned = set()
+        # A62: store reads only — bands/mem-tokens stay live (unlike
+        # lesioned, which amputates both). Sleep's trunk-alone student
+        # pass and ARM A replay run with this on; False = bit-exact
+        # certified forward (L2).
+        self.store_read_off = False
         self._write_cost = None
         self._recon = None
 
@@ -450,6 +455,7 @@ class HybridLM(nn.Module):
             x = b(x, mask if xl is not None else sq, kv=kv)
             if self.store == "matrix" and i == self.mid - 1 \
                     and read_ok \
+                    and not getattr(self, "store_read_off", False) \
                     and getattr(self, "keyed", None) != "logit":
                 # per-position associative reads from LAST chunks'
                 # matrices, gated shut at init (A30) + read-dropout
@@ -553,7 +559,7 @@ class HybridLM(nn.Module):
             allw = (relw < 0).all(dim=-1)
             lg_smask = (~allw).view(1, -1).to(lg_qd.dtype)
             self._aux_hidden = None
-            if read_ok:
+            if read_ok and not getattr(self, "store_read_off", False):
                 rsum = None
                 for k in self.bands:
                     if k in self.lesioned:
