@@ -6,3 +6,9 @@ TM-v9-clean 461  completion ids 202 (836 positions)  hash fc639269079e
   ce chunk 300: running 1.9020
 CE full      : 1.9046
   ce chunk 0: running 1.2912
+  ce chunk 100: running 1.8196
+  ce chunk 200: running 1.9085
+  ce chunk 300: running 1.9035
+CE lesionALL : 1.9064
+CE advantage : +0.0017 (+0.09% rel; bar +2.80%)
+AUTOPSY DONE
