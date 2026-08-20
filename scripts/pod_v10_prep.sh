@@ -111,9 +111,14 @@ if [ -f "$DATA/smoke_l8/manifest.json" ] && \
 fi
 
 # ---- 6. the full corpus (gated on the paid smoke's lane pick;
-# FULL_LIVES env, else read from the smoke verdict on the volume) --
-if [ -z "${FULL_LIVES:-}" ] && [ -f /workspace/v10_out/smoke.json ]; then
-  FULL_LIVES=$(python -c "import json;print(json.load(open('/workspace/v10_out/smoke.json'))['lanes'])" 2>/dev/null || true)
+# FULL_LIVES env, else read from any smoke verdict on the volume) --
+if [ -z "${FULL_LIVES:-}" ]; then
+  for SJ in /workspace/v10_out/smoke.json /workspace/v10_out/smoke_*.json; do
+    if [ -f "$SJ" ]; then
+      FULL_LIVES=$(python -c "import json;print(json.load(open('$SJ'))['lanes'])" 2>/dev/null || true)
+      [ -n "$FULL_LIVES" ] && break
+    fi
+  done
 fi
 if [ -n "${FULL_LIVES:-}" ] && [ ! -f "$DATA/flash/manifest.json" ]; then
   BUDGET=$(python - <<'P'
