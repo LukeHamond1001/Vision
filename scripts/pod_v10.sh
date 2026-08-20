@@ -80,7 +80,7 @@ if [ "$NEED_SMOKE" = "1" ]; then
       git checkout -q origin/results-v10 -- smoke_shards.tar.gz && \
       mkdir -p "$DATA" && tar xzf smoke_shards.tar.gz -C "$DATA"
   fi
-  for L in 8 12; do
+  for L in ${SMOKE_LANES:-8 12}; do
     [ -f "$DATA/smoke_l$L/manifest.json" ] || \
       { hb "ABORT smoke shard l$L missing (run pod_v10_prep.sh)"; \
         runpodctl remove pod "$RUNPOD_POD_ID"; exit 1; }
@@ -91,7 +91,7 @@ sys.path.insert(0, ".")
 from iga.lm_train import train
 from iga.lm_sleep import Sleeper
 rows = []
-for L in (8, 12):
+for L in [int(x) for x in "${SMOKE_LANES:-8 12}".split()]:
     sl = Sleeper(arm="C", every=8, block_chunks=2, seed=1,
                  homeostasis=1e-3)
     sl.press_pay = (2048, 256)
@@ -153,6 +153,24 @@ if [ "${GO:-0}" != "1" ]; then
     sleep 60
   fi
   exit 0
+fi
+# cross-DC RECEIVE: a prep mule in another DC built the corpus and
+# posted a runpodctl transfer code to the results branch — pull the
+# ~13GB tar straight onto this volume before the corpus check
+if [ ! -f "$DATA/flash/manifest.json" ]; then
+  git fetch -q origin results-v10 2>/dev/null && \
+    git checkout -q origin/results-v10 -- ship_code.txt 2>/dev/null || true
+  if [ -f ship_code.txt ]; then
+    CODE=$(tr -d '[:space:]' < ship_code.txt)
+    hb "receiving corpus (code $CODE)"
+    ( cd /workspace && runpodctl receive "$CODE" ) \
+      > receive.log 2>&1 || true
+    if [ -f /workspace/v10_ship.tar ]; then
+      tar xf /workspace/v10_ship.tar -C /workspace && \
+        rm -f /workspace/v10_ship.tar
+    fi
+    hb "receive $( [ -f "$DATA/flash/manifest.json" ] && echo ok || echo "FAILED $(tail -1 receive.log 2>/dev/null | head -c 120)")"
+  fi
 fi
 for need in "$DATA/flash/manifest.json" "$DATA/flash_eval/manifest.json"; do
   [ -f "$need" ] || { hb "ABORT missing $need"; \

@@ -82,7 +82,7 @@ fi
 [ -f "$DATA/judge_freeze.json" ] || { hb "ABORT no judge freeze"; exit 1; }
 
 # ---- 5. paid-smoke shards (exact-shape minis) ----
-for L in 8 12; do
+for L in ${SMOKE_LANES:-8 12}; do
   if [ ! -f "$DATA/smoke_l$L/manifest.json" ]; then
     python -m iga.lm_data_life prepare --out "$DATA/smoke_l$L" \
       --budget $((L * 2000000)) --lives $L --seed 10 \
@@ -151,6 +151,38 @@ P
     # A54c: sources fetched then deleted after tokenization
     rm -rf "$RAW"
     hb "raw deleted; volume $(df -BG /workspace | awk 'NR==2{print $4}') free"
+  fi
+fi
+
+# ---- 7. SHIP (cross-DC: cheap prep DC -> the flash GPU's DC via
+# runpodctl send/receive; the receiver is the flash pod itself,
+# launched when ship_code.txt appears on the results branch) ------
+if [ "${SHIP:-0}" = "1" ] && [ -f "$DATA/flash/manifest.json" ]; then
+  if [ ! -f /workspace/v10_ship.tar ]; then
+    TAR_IN="v10/flash v10/flash_eval v10/measure.json v10/judge_freeze.json"
+    for L in ${SMOKE_LANES:-8 12}; do TAR_IN="$TAR_IN v10/smoke_l$L"; done
+    # shellcheck disable=SC2086
+    tar cf /workspace/v10_ship.tar -C /workspace $TAR_IN
+  fi
+  hb "ship tar ready $(du -BG /workspace/v10_ship.tar | cut -f1)"
+  runpodctl send /workspace/v10_ship.tar > send.log 2>&1 &
+  SENDPID=$!
+  CODE=""
+  for i in $(seq 1 90); do
+    CODE=$(grep -o "runpodctl receive [A-Za-z0-9_-]*" send.log | head -1 | awk '{print $3}')
+    [ -n "$CODE" ] && break
+    sleep 2
+  done
+  if [ -n "$CODE" ]; then
+    echo "$CODE" > ship_code.txt
+    git add -f ship_code.txt send.log
+    git commit -qm "ship code" 2>/dev/null || true
+    git push -qf "$PUSH" results-v10 2>/dev/null || true
+    hb "SHIP CODE POSTED — serving transfer, waiting for receiver"
+    wait $SENDPID
+    hb "transfer done rc=$? $(tail -2 send.log | head -1)"
+  else
+    hb "SHIP FAILED: no code from runpodctl send"
   fi
 fi
 
