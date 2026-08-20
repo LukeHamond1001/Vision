@@ -253,7 +253,8 @@ def train(d=64, lanes=4, T=256, steps=40, seed=0, device="cpu",
           lr_total_steps=None, norm_mix=False, aux_trunk=0.0,
           hold_cap=None, sleep=None, buttons=None, prophet=None,
           life=None, clocks=None, band_widths=None,
-          tie_embed=False, dream=None):
+          tie_embed=False, dream=None, n_layers=6, ledger_cap=None,
+          lr_warmup=0, carry_state=None):
     """resume (A26): path to a checkpoint — model + optimizer + drive
     EMAs/records/minted/vetoes continue; step numbering continues.
     sleep (A62): a lm_sleep.Sleeper — wake/sleep alternation; the
@@ -273,7 +274,7 @@ def train(d=64, lanes=4, T=256, steps=40, seed=0, device="cpu",
         torch.set_float32_matmul_precision("high")  # TF32 (A12)
     torch.manual_seed(seed)  # reproducible init (A14)
     drive = Drive(n_lanes=lanes, lam=lam, seed=seed, constants=constants,
-                  hold_cap=hold_cap,
+                  hold_cap=hold_cap, ledger_cap=ledger_cap,
                   imagination_absent=(arch == "transformer"),
                   absent_bands={1, 2} if arch == "hybrid" else ())
     if data:  # prepared real-data shard (A8): UltraChat conveyor
@@ -309,7 +310,8 @@ def train(d=64, lanes=4, T=256, steps=40, seed=0, device="cpu",
         model = TransformerLM(vocab_size, d=d, max_T=T).to(device)
     elif arch == "hybrid":
         from .lm_hybrid import HybridLM
-        model = HybridLM(vocab_size, d=d, max_T=T, store=store,
+        model = HybridLM(vocab_size, d=d, n_layers=n_layers, max_T=T,
+                         store=store,
                          norm_mix=norm_mix, aux_trunk=aux_trunk,
                          use_xl=use_xl, gate_init=gate_init,
                          read_drop=read_drop, gate_mode=gate_mode,
@@ -334,7 +336,15 @@ def train(d=64, lanes=4, T=256, steps=40, seed=0, device="cpu",
             model = torch.compile(model)
         except Exception as e:
             print(f"torch.compile unavailable ({e}); running eager")
-    model._st = model.init_state(lanes, device)
+    # carry_state (v10): a segmented run threads the LIVE band
+    # states across train() calls — zeroing them at every segment
+    # boundary would reset band-6's slow integration ~45 times over
+    # the flash (the state that band exists to accumulate). None =
+    # fresh init, bit-exact with every prior run; only a crash
+    # resume starts cold (ledgered v9.4 behavior: states rebuild
+    # within a few clocks).
+    model._st = (carry_state if carry_state is not None
+                 else model.init_state(lanes, device))
     # A45: lr is width-sensitive — d=128's 3e-4 carried into
     # d=384 (4.4x params) is the lead suspect for v7.1's
     # gates-shut held-out bleed (circuit churn under updates
@@ -391,8 +401,16 @@ def train(d=64, lanes=4, T=256, steps=40, seed=0, device="cpu",
             tot = lr_total_steps or (step0 + steps)
             frac = min(step / max(tot, 1), 1.0)
             f = 0.1 + 0.9 * 0.5 * (1 + math.cos(math.pi * frac))
+            if lr_warmup and step < lr_warmup:
+                # v10: linear warmup on the GLOBAL step (resume
+                # continues the ramp, never restarts it) — the
+                # untested-depth mitigation at 20L; 0 = bit-exact.
+                f *= step / lr_warmup
             for g in opt.param_groups:
                 g["lr"] = lr * f
+        elif lr_warmup:
+            for g in opt.param_groups:
+                g["lr"] = lr * min(step / lr_warmup, 1.0)
         if read_drop_end is not None and hasattr(model, "read_drop"):
             # A39 bootstrap knob: linear read-dropout anneal — early
             # protection for induction, late oxygen for the store

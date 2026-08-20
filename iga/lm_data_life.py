@@ -530,12 +530,80 @@ def ultrachat_source(path, skip=0):
     return gen()
 
 
+def _measure(src, stages, tok=None, sample_convs=400):
+    """One-epoch yield per stage source (the A12 law's input): full
+    word count per stage + a tokens/word ratio measured on a sample
+    through the real BPE family -> estimated token yield. The
+    builder's ritual/cast/press overhead ADDS stream tokens, so
+    budgets sized from this are conservative."""
+    out = {}
+    seen = {}                    # stages sharing one iterator share
+    for s in stages:             # its (single-pass) measurement
+        it = src.get(s.name) or src.get("default")
+        if it is None:
+            continue
+        if id(it) in seen:
+            out[s.name] = dict(seen[id(it)])
+            continue
+        convs = words = 0
+        ratio_w = ratio_t = 0
+        for turns in it:
+            w = sum(len(t.split()) for t in turns)
+            convs += 1
+            words += w
+            if tok is not None and convs % 97 == 1 \
+                    and ratio_w < sample_convs * 200:
+                ratio_t += sum(len(tok.encode(t).ids) for t in turns)
+                ratio_w += w
+        r = (ratio_t / ratio_w) if ratio_w else 1.35
+        out[s.name] = {"convs": convs, "words": words,
+                       "tok_per_word": round(r, 4),
+                       "est_tokens": int(words * r)}
+        seen[id(it)] = out[s.name]
+    # the binding constraint: budget * frac_s <= yield_s for every
+    # stage; 0.85 margin covers estimator error (overhead helps).
+    budgets = [v["est_tokens"] / s.frac for s in stages
+               for n, v in out.items() if n == s.name]
+    out["_max_budget"] = int(min(budgets) * 0.85) if budgets else 0
+    return out
+
+
+def _freeze_judge(src, stages, per_stage=4000, per_conv=3):
+    """Grade real per-stage exchanges with the frozen scorer and
+    quantile the pre-registered density targets into stage
+    thresholds (lm_judge.stage_thresholds). Returns the freeze dict
+    to be written to json, committed, and passed to prepare via
+    --judge-thresholds."""
+    qs = {}
+    seen = {}                    # shared iterators grade one sample
+    for s in stages:
+        it = src.get(s.name) or src.get("default")
+        if it is None:
+            continue
+        if id(it) in seen:
+            qs[s.name] = list(seen[id(it)])
+            continue
+        got = []
+        for turns in it:
+            for i in range(0, min(len(turns) - 1, 2 * per_conv), 2):
+                got.append(J.grade_dialogue(turns[i], turns[i + 1]))
+            if len(got) >= per_stage:
+                break
+        qs[s.name] = got[:per_stage]
+        seen[id(it)] = qs[s.name]
+    t = J.stage_thresholds(qs)
+    t["judge_version"] = J.JUDGE_VERSION
+    t["density"] = {k: list(v) for k, v in J.DENSITY.items()}
+    return t
+
+
 if __name__ == "__main__":
     import argparse
     ap = argparse.ArgumentParser()
-    ap.add_argument("mode", choices=["prepare"])
+    ap.add_argument("mode", choices=["prepare", "measure",
+                                     "freeze-judge"])
     ap.add_argument("--out", required=True)
-    ap.add_argument("--budget", type=int, required=True)
+    ap.add_argument("--budget", type=int, default=0)
     ap.add_argument("--lives", type=int, default=4)
     ap.add_argument("--seed", type=int, default=0)
     ap.add_argument("--world-seed", type=int, default=None)
@@ -550,21 +618,63 @@ if __name__ == "__main__":
     ap.add_argument("--magpie-dir", default=None,
                     help="dir holding smol_magpie_ultra parquet "
                          "(the tail)")
+    ap.add_argument("--judge-thresholds", default=None,
+                    help="stage-threshold freeze json (freeze-judge "
+                         "output) loaded before grading")
+    ap.add_argument("--tok-sample", type=int, default=1200)
+    ap.add_argument("--per-stage", type=int, default=4000,
+                    help="freeze-judge: graded exchanges per stage")
     a = ap.parse_args()
     import glob as _glob
-    src = {"default": ultrachat_source(a.ultrachat, a.skip),
-           "tokenizer": ultrachat_source(a.ultrachat, a.skip),
-           "infancy": simple_only(
-               ultrachat_source(a.ultrachat, a.skip)),
-           "childhood": ultrachat_source(a.ultrachat, a.skip + 40)}
-    if a.st2_dir:
-        st2 = sorted(f for f in _glob.glob(f"{a.st2_dir}/*.parquet")
-                     if "magpie" not in f)
-        src["adolescence"] = smoltalk2_source(st2)
-    if a.magpie_dir:
-        mag = sorted(_glob.glob(f"{a.magpie_dir}/*magpie*.parquet"))
-        src["tail"] = smoltalk2_source(mag)
-    prepare_life(a.out, a.budget, a.lives, seed=a.seed,
-                 world_seed=a.world_seed, vocab=a.vocab,
-                 tokenizer_path=a.tokenizer, sources=src,
-                 shuffle_sessions=a.shuffle_sessions)
+
+    def _src():
+        s = {"default": ultrachat_source(a.ultrachat, a.skip),
+             "tokenizer": ultrachat_source(a.ultrachat, a.skip),
+             "infancy": simple_only(
+                 ultrachat_source(a.ultrachat, a.skip)),
+             "childhood": ultrachat_source(a.ultrachat, a.skip + 40)}
+        if a.st2_dir:
+            st2 = sorted(f for f in
+                         _glob.glob(f"{a.st2_dir}/*.parquet")
+                         if "magpie" not in f)
+            s["adolescence"] = smoltalk2_source(st2)
+        if a.magpie_dir:
+            mag = sorted(
+                _glob.glob(f"{a.magpie_dir}/*magpie*.parquet"))
+            s["tail"] = smoltalk2_source(mag)
+        return s
+
+    if a.mode == "measure":
+        if a.tokenizer:
+            tok = load_tokenizer(a.tokenizer)
+        else:
+            # throwaway BPE from the same sample pipeline prepare
+            # uses — the tokens/word ratio must come from the real
+            # tokenizer family, not a guess
+            sample = []
+            for turns in _src()["tokenizer"]:
+                sample.extend(turns)
+                if len(sample) >= a.tok_sample:
+                    break
+            tok = train_tokenizer(iter(sample), a.out + ".tok.json",
+                                  a.vocab, specials=SPECIALS_LIFE)
+        rep = _measure(_src(), STAGES_V10, tok=tok)
+        os.makedirs(os.path.dirname(a.out) or ".", exist_ok=True)
+        with open(a.out, "w") as f:
+            json.dump(rep, f, indent=1)
+        print(json.dumps(rep, indent=1))
+    elif a.mode == "freeze-judge":
+        t = _freeze_judge(_src(), STAGES_V10, per_stage=a.per_stage)
+        os.makedirs(os.path.dirname(a.out) or ".", exist_ok=True)
+        with open(a.out, "w") as f:
+            json.dump(t, f, indent=1)
+        print(json.dumps(t, indent=1))
+    else:
+        assert a.budget > 0, "prepare needs --budget"
+        if a.judge_thresholds:
+            J.freeze_stage_thresholds(a.judge_thresholds)
+        prepare_life(a.out, a.budget, a.lives, seed=a.seed,
+                     world_seed=a.world_seed, vocab=a.vocab,
+                     tokenizer_path=a.tokenizer, sources=_src(),
+                     tok_sample=a.tok_sample,
+                     shuffle_sessions=a.shuffle_sessions)

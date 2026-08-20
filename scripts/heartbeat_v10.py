@@ -94,13 +94,15 @@ def load_model(a):
 @torch.no_grad()
 def probe_ce_recall(m, eval_dir, T, chunks, lesion=None):
     conv = UltraConveyor(eval_dir, n_lanes=2)
+    dev = next(m.parameters()).device
     m.lesioned = set(lesion or ())
-    st = m.init_state(2, "cpu")
+    st = m.init_state(2, dev)
     ce_sum, ce_n = 0.0, 0
     acc = {name: [0, 0] for _, _, name in BINS}
     n_chunks = min(chunks, len(conv.tokens) // (2 * T) - 2)
     for _ in range(n_chunks):
         x, y, events = conv.chunk(T)
+        x, y = x.to(dev), y.to(dev)
         lg, st, _ = m(x, st, None)
         m.pop_write_cost()
         m.pop_recon()
@@ -132,11 +134,12 @@ def probe_collapse(m, tok, T):
     """Greedy 64-token continuations of fixed prompts; the collapse
     signature is distinct-3gram contraction."""
     ratios = []
+    dev = next(m.parameters()).device
     for ptxt in PROMPTS:
         ids = tok.encode(ptxt).ids[-(T - 70):]
-        st = m.init_state(1, "cpu")
+        st = m.init_state(1, dev)
         out = []
-        x = torch.tensor([ids])
+        x = torch.tensor([ids], device=dev)
         for _ in range(64):
             lg, st, _ = m(x, st, None)
             m.pop_write_cost()
@@ -144,7 +147,7 @@ def probe_collapse(m, tok, T):
             st = m.detach_state(st)
             nxt = int(lg[0, -1].argmax())
             out.append(nxt)
-            x = torch.tensor([[nxt]])
+            x = torch.tensor([[nxt]], device=dev)
         if len(out) >= 3:
             grams = [tuple(out[i:i + 3]) for i in range(len(out) - 2)]
             ratios.append(len(set(grams)) / len(grams))
@@ -166,8 +169,9 @@ def probe_cast(m, tok, manifest):
                 continue
             q = (f"what color of {f['obj']} was {f['name']} kept ? "
                  f"<eot_human> the {f['obj']} was")
-            x = torch.tensor([tok.encode(q).ids])
-            lg, _, _ = m(x, m.init_state(1, "cpu"), None)
+            dev = next(m.parameters()).device
+            x = torch.tensor([tok.encode(q).ids], device=dev)
+            lg, _, _ = m(x, m.init_state(1, dev), None)
             m.pop_write_cost()
             m.pop_recon()
             pr = torch.softmax(lg[0, -1].float(), -1)
@@ -209,24 +213,36 @@ def probe_tail_audit(data_dir, manifest, tok, sample=120):
     tail_btns = [e for e in ev if e["kind"] == "button"
                  and e["v"] > 0 and e.get("stage") == "tail"]
     step = max(1, len(tail_btns) // sample)
-    bad = n = 0
+    mark_ids = set(marks) | {tok.token_to_id(s)
+                             for s in ("<-1>", "<-2>")}
+    bad = n = clipped = 0
     for e in tail_btns[::step]:
         pos = e["pos"]
         if int(toks[pos]) not in marks:
             bad += 1
             n += 1
             continue
-        # walk back: press turn <- model turn <- human turn
-        i = pos - 1                       # eot_h... layout: m eot_m PRESS
-        seg = list(toks[max(0, pos - 800):pos])
+        # walk back: press turn <- model turn <- human turn. The
+        # window must out-reach the longest exchange; a turn whose
+        # start lies beyond it is UNVERIFIABLE (clipped text is not
+        # the text the builder graded), never a mismatch.
+        seg = list(toks[max(0, pos - 2400):pos])
         try:
             m_end = len(seg) - 1 - seg[::-1].index(eot_m)
             h_end = m_end - 1 - seg[:m_end][::-1].index(eot_h)
-            h_start = 0
+            h_start = None
             for j in range(h_end - 1, -1, -1):
                 if seg[j] in (eot_m, eot_h):
                     h_start = j + 1
                     break
+            if h_start is None and pos - 2400 > 0:
+                clipped += 1
+                continue
+            h_start = h_start or 0
+            # a prior exchange's press mark can sit just inside the
+            # turn boundary — the builder graded raw text, so strip
+            while h_start < h_end and seg[h_start] in mark_ids:
+                h_start += 1
             h_txt = tok.decode(seg[h_start:h_end])
             m_txt = tok.decode(seg[h_end + 1:m_end])
         except ValueError:
@@ -238,7 +254,8 @@ def probe_tail_audit(data_dir, manifest, tok, sample=120):
         n += 1
         if want != e["v"]:
             bad += 1
-    return {"n": n, "mismatch": round(bad / n, 4) if n else None}
+    return {"n": n, "clipped": clipped,
+            "mismatch": round(bad / n, 4) if n else None}
 
 
 def main():
@@ -255,9 +272,11 @@ def main():
     ap.add_argument("--T", type=int, default=2048)
     ap.add_argument("--chunks", type=int, default=400)
     ap.add_argument("--skip-lesions", action="store_true")
+    ap.add_argument("--device", default="cpu")
     a = ap.parse_args()
 
     m, tok, blob = load_model(a)
+    m.to(a.device)
     manifest = json.load(open(os.path.join(a.data, "manifest.json")))
     rows = []
 

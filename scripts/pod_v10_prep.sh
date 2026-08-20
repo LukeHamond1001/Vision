@@ -1,0 +1,134 @@
+#!/usr/bin/env bash
+# v10 PREP (CPU pod + network volume; A51/A54c split-prep pattern).
+# Self-sensing phases — each skips when its artifact already exists
+# on the volume:
+#   1. fetch the spine raw (UltraChat + SmolTalk2 no_think subsets)
+#   2. concat UltraChat train_0..8 -> spine fill; train_9 RESERVED
+#      for the eval shard (disjoint by file)
+#   3. measure one-epoch yield per stage (the A12 budget input)
+#   4. freeze judge stage thresholds on the REAL per-stage mixes
+#      (lm_judge freeze protocol, step 8)
+#   5. build the paid-smoke shards (8- and 12-life minis)
+#   6. gated on FULL_LIVES (set from the paid smoke's verdict):
+#      build the FULL flash corpus + eval shard, then delete raw
+# Terminates itself when the phases it can run are done.
+set -uo pipefail
+W=/workspace/w-v10prep
+DATA=/workspace/v10
+mkdir -p "$W" "$DATA" && cd "$W"
+[ -d iga-scale ] || git clone --depth 1 \
+  https://github.com/LukeHamond1001/iga-scale.git
+cd iga-scale
+git fetch -q origin main && git reset --hard -q origin/main
+PUSH="https://x-access-token:${GIT_TOKEN}@github.com/LukeHamond1001/iga-scale.git"
+git config user.email "pod@iga-scale"; git config user.name "iga-pod"
+git checkout -B results-v10
+
+hb() {
+  echo "$(date -u '+%H:%M:%S') $1" >> HEARTBEAT.log
+  for f in HEARTBEAT.log prep.log measure.json judge_freeze.json \
+           build_tail.log; do
+    git add -f "$f" 2>/dev/null || true
+  done
+  git commit -qm "hb: $1" 2>/dev/null || true
+  git push -qf "$PUSH" results-v10 2>/dev/null || \
+    { sleep 20; git push -qf "$PUSH" results-v10 2>/dev/null; } || true
+}
+hb "boot v10-PREP vol=$(df -BG /workspace | awk 'NR==2{print $2,$4}') FULL_LIVES=${FULL_LIVES:-unset}"
+pip install -q numpy tokenizers pyarrow >> prep.log 2>&1
+python -c "import torch" 2>/dev/null || \
+  pip install -q torch --index-url \
+    https://download.pytorch.org/whl/cpu >> prep.log 2>&1
+hb "deps ready"
+
+RAW=$DATA/raw
+UC_ALL=$RAW/ultrachat_all.jsonl
+UC_EVAL=$RAW/ultrachat_train_9.jsonl
+
+# ---- 1. fetch ----
+if [ ! -f "$RAW/.fetch_done" ]; then
+  bash scripts/fetch_v10_corpus.sh full "$RAW" >> prep.log 2>&1 \
+    && touch "$RAW/.fetch_done"
+  hb "fetch $( [ -f "$RAW/.fetch_done" ] && echo ok || echo FAILED)"
+fi
+[ -f "$RAW/.fetch_done" ] || { hb "ABORT fetch failed"; exit 1; }
+
+# ---- 2. concat spine fill (train_9 stays out: the eval file) ----
+if [ ! -f "$UC_ALL" ]; then
+  cat "$RAW"/ultrachat_train_{0,1,2,3,4,5,6,7,8}.jsonl > "$UC_ALL.tmp" \
+    && mv "$UC_ALL.tmp" "$UC_ALL" \
+    && rm -f "$RAW"/ultrachat_train_{0,1,2,3,4,5,6,7,8}.jsonl
+  hb "uc concat $(du -BG "$UC_ALL" | cut -f1)"
+fi
+
+# ---- 3. measure one-epoch yield ----
+if [ ! -f "$DATA/measure.json" ]; then
+  python -m iga.lm_data_life measure --out "$DATA/measure.json" \
+    --ultrachat "$UC_ALL" --st2-dir "$RAW" --magpie-dir "$RAW" \
+    >> prep.log 2>&1
+  cp "$DATA/measure.json" measure.json 2>/dev/null || true
+  hb "measure: $(python -c "import json;print(json.load(open('$DATA/measure.json'))['_max_budget'])" 2>/dev/null || echo FAILED)"
+fi
+
+# ---- 4. freeze judge on the real stage mixes ----
+if [ ! -f "$DATA/judge_freeze.json" ]; then
+  python -m iga.lm_data_life freeze-judge \
+    --out "$DATA/judge_freeze.json" \
+    --ultrachat "$UC_ALL" --st2-dir "$RAW" --magpie-dir "$RAW" \
+    >> prep.log 2>&1
+  cp "$DATA/judge_freeze.json" judge_freeze.json 2>/dev/null || true
+  hb "judge freeze $( [ -f "$DATA/judge_freeze.json" ] && echo ok || echo FAILED)"
+fi
+[ -f "$DATA/judge_freeze.json" ] || { hb "ABORT no judge freeze"; exit 1; }
+
+# ---- 5. paid-smoke shards (exact-shape minis) ----
+for L in 8 12; do
+  if [ ! -f "$DATA/smoke_l$L/manifest.json" ]; then
+    python -m iga.lm_data_life prepare --out "$DATA/smoke_l$L" \
+      --budget $((L * 2000000)) --lives $L --seed 10 \
+      --ultrachat "$UC_ALL" \
+      --st2-dir "$RAW" --magpie-dir "$RAW" \
+      --judge-thresholds "$DATA/judge_freeze.json" \
+      >> prep.log 2>&1
+    hb "smoke shard l$L $( [ -f "$DATA/smoke_l$L/manifest.json" ] && echo ok || echo FAILED)"
+  fi
+done
+
+# ---- 6. the full corpus (gated on the paid smoke's lane pick) ----
+if [ -n "${FULL_LIVES:-}" ] && [ ! -f "$DATA/flash/manifest.json" ]; then
+  BUDGET=$(python - <<'P'
+import json
+m = json.load(open("/workspace/v10/measure.json"))
+print(min(m["_max_budget"], 10_000_000_000))
+P
+)
+  hb "full build starts: lives=$FULL_LIVES budget=$BUDGET"
+  python -m iga.lm_data_life prepare --out "$DATA/flash" \
+    --budget "$BUDGET" --lives "$FULL_LIVES" --seed 10 \
+    --ultrachat "$UC_ALL" --st2-dir "$RAW" --magpie-dir "$RAW" \
+    --judge-thresholds "$DATA/judge_freeze.json" \
+    --tok-sample 20000 > build.log 2>&1
+  tail -40 build.log > build_tail.log
+  hb "full build $( [ -f "$DATA/flash/manifest.json" ] && echo ok || echo FAILED)"
+  if [ -f "$DATA/flash/manifest.json" ]; then
+    python -m iga.lm_data_life prepare --out "$DATA/flash_eval" \
+      --budget 40000000 --lives 2 --seed 999 --world-seed 999 \
+      --ultrachat "$UC_EVAL" \
+      --st2-dir "$RAW" --magpie-dir "$RAW" \
+      --judge-thresholds "$DATA/judge_freeze.json" \
+      --tokenizer "$DATA/flash/tokenizer.json" >> build.log 2>&1
+    hb "eval shard $( [ -f "$DATA/flash_eval/manifest.json" ] && echo ok || echo FAILED)"
+    git add -f "$DATA/flash/manifest.json" 2>/dev/null || true
+    cp "$DATA/flash/manifest.json" flash_manifest.json && \
+      git add -f flash_manifest.json && \
+      git commit -qm "flash manifest" && \
+      git push -qf "$PUSH" results-v10 || true
+    # A54c: sources fetched then deleted after tokenization
+    rm -rf "$RAW"
+    hb "raw deleted; volume $(df -BG /workspace | awk 'NR==2{print $4}') free"
+  fi
+fi
+
+hb "prep phases complete"
+runpodctl remove pod "$RUNPOD_POD_ID" 2>/dev/null || true
+sleep 60

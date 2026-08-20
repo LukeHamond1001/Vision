@@ -2514,5 +2514,126 @@ class TestBand6Laws(unittest.TestCase):
         self.assertTrue(torch.isfinite(torch.tensor(ce1)).item())
 
 
+class TestFlashDriverLaws(unittest.TestCase):
+    """v10 launch-prep plumbing: the three parity-default trainer
+    kwargs the 500M driver needs, the pod-side judge stage freeze,
+    and the driver's one-epoch segment plan."""
+
+    def _train(self, **kw):
+        return train(d=32, lanes=2, T=64, steps=kw.pop("steps", 2),
+                     seed=0, device="cpu", arch="hybrid",
+                     store="matrix", keyed="logit", norm_mix=True,
+                     aux_trunk=0.2, use_xl=False, gate_init=-2.0,
+                     log_every=100, **kw)
+
+    def test_n_layers_and_ledger_cap_thread(self):
+        model, drive, *_ = self._train(n_layers=2, ledger_cap=7)
+        self.assertEqual(len(model.blocks), 2)
+        self.assertEqual(drive.ledger_cap, 7)
+
+    def test_n_layers_default_is_certified_shape(self):
+        model, *_ = self._train()
+        self.assertEqual(len(model.blocks), 6)
+
+    def test_lr_warmup_slows_early_steps(self):
+        def flat(res):
+            return torch.cat([p.detach().reshape(-1)
+                              for p in res[0].parameters()])
+        w_init = flat(self._train(steps=1, lr_warmup=10 ** 9))
+        w_warm = flat(self._train(steps=3, lr_warmup=1000))
+        w_none = flat(self._train(steps=3))
+        d_warm = float((w_warm - w_init).norm())
+        d_none = float((w_none - w_init).norm())
+        self.assertLess(d_warm, d_none)
+        self.assertGreater(d_warm, 0.0)
+
+    def test_carry_state_threads_band_states(self):
+        def leaves(st, out=None):
+            out = [] if out is None else out
+            if torch.is_tensor(st):
+                out.append(st.reshape(-1))
+            elif isinstance(st, dict):
+                for k in sorted(st):
+                    leaves(st[k], out)
+            elif isinstance(st, (list, tuple)):
+                for v in st:
+                    leaves(v, out)
+            return out
+        m1, *_ = self._train(steps=2)
+        st = m1._st
+        m2a, *_ = self._train(steps=1)
+        m2b, *_ = self._train(steps=1, carry_state=st)
+        a = torch.cat(leaves(m2a._st))
+        b = torch.cat(leaves(m2b._st))
+        # same seed and stream; only the entry state differs — the
+        # carried bands must actually enter the evolution
+        self.assertEqual(a.shape, b.shape)
+        self.assertFalse(torch.equal(a, b))
+
+    def test_judge_stage_threshold_freeze(self):
+        import copy
+        from iga import lm_judge as J
+        saved = copy.deepcopy(J.JUDGE)
+        try:
+            qs = {s: [0.3 + 0.7 * i / 999 for i in range(1000)]
+                  for s in J.JUDGE["q1"]}
+            t = J.stage_thresholds(qs)
+            for s in t["q1"]:
+                self.assertLessEqual(t["q1"][s], t["q2"][s])
+                kept = [q for q in qs[s] if q >= J.JUDGE["floor"]]
+                n2 = sum(1 for q in kept if q >= t["q2"][s])
+                self.assertAlmostEqual(n2 / len(kept),
+                                       J.DENSITY[s][0], delta=0.01)
+                n1 = sum(1 for q in kept if q >= t["q1"][s])
+                self.assertAlmostEqual(n1 / len(kept),
+                                       sum(J.DENSITY[s]), delta=0.01)
+            J.freeze_stage_thresholds({"q1": t["q1"], "q2": t["q2"]})
+            self.assertEqual(J.JUDGE["q1"], t["q1"])
+            self.assertEqual(J.JUDGE["q2"], t["q2"])
+            with self.assertRaises(AssertionError):
+                J.freeze_stage_thresholds(
+                    {"q1": {"bogus": 1.0}, "q2": t["q2"]})
+        finally:
+            J.JUDGE.clear()
+            J.JUDGE.update(saved)
+
+    def test_measure_shared_iterator_reuse(self):
+        from iga.lm_data_life import STAGES_V10, _measure
+        convs = ([["hello there my friend .",
+                   "hi , how are you today ?"] for _ in range(30)])
+        shared = iter(convs)
+        rep = _measure({"default": shared}, STAGES_V10, tok=None)
+        for s in STAGES_V10:
+            self.assertEqual(rep[s.name]["convs"], 30)
+            self.assertGreater(rep[s.name]["est_tokens"], 0)
+        self.assertGreater(rep["_max_budget"], 0)
+
+    def test_driver_dry_plan_obeys_one_epoch(self):
+        import json as _json
+        import os
+        import subprocess
+        import sys as _sys
+        r = subprocess.run(
+            [_sys.executable, "scripts/v10_driver.py",
+             "--data", "data/life_gate_bio",
+             "--eval-data", "data/life_gate_bio",
+             "--T", "256", "--lam", "0.02", "--dry"],
+            capture_output=True, text=True,
+            cwd=os.path.dirname(os.path.dirname(
+                os.path.abspath(__file__))))
+        self.assertEqual(r.returncode, 0, r.stderr[-800:])
+        plan = _json.loads(
+            [l for l in r.stdout.splitlines()
+             if l.startswith("PLAN ")][0][5:])
+        self.assertLessEqual(plan["total_steps"] * 256,
+                             plan["life_len"])
+        self.assertEqual(plan["lanes"], 4)
+        self.assertEqual(plan["ladder"]["infancy"], 0)
+        names = [b[0] for b in plan["bounds"]]
+        self.assertEqual(names, ["infancy", "childhood",
+                                 "adolescence", "tail"])
+        self.assertEqual(plan["bounds"][-1][1], plan["total_steps"])
+
+
 if __name__ == "__main__":
     unittest.main()

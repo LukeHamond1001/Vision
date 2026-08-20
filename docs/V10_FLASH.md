@@ -401,9 +401,30 @@ binder unarmed at debug tier -> moves to the 500M GROWTH CHART
 (ordering helps the plain twin equally at flash time; the organs'
 value is the served life, per the division-of-labor law; hybrid's
 flash edge = cross-day recall, thin n); organ verdicts per 1c.
-Suite 107/107. Remaining before launch: pod driver, judge freeze
-on real stage mixes, demo protocol pre-registration + skeptic
-rebuttal docs.
+Suite 107/107. LAUNCH PREP CLOSED (2026-08-20, user GO): pod
+driver scripts/v10_driver.py (segmented train() chain; sleep dose
+ladder flips at the manifest stage boundaries — infancy every=0,
+childhood 32, adolescence/tail 16, block 2, A76 H=1e-3; heartbeat
++ KILL honored each segment; CARRY-STATE LAW: segments thread the
+live band states across train() calls — zeroing them per segment
+would reset band-6's slow integration ~45x, so carry_state= rides
+the trainer, None = bit-exact parity; crash resume starts cold,
+ledgered). Trainer gains n_layers/ledger_cap/lr_warmup (all
+parity-default; warmup on the GLOBAL step). Judge stage freeze:
+lm_judge.DENSITY pre-registered targets + stage_thresholds()
+quantiles + freeze-judge CLI on the REAL per-stage mixes
+(pod_v10_prep.sh step 4; manifest embeds the frozen values). Tail
+audit hardened (2400-token walk-back, clipped = unverifiable not
+mismatch, prior-press marks stripped: 2.4% artifact -> 0.0%
+measured). Demo protocol + skeptic rebuttal PRE-REGISTERED
+(docs/DEMO_PROTOCOL.md, docs/SKEPTIC_REBUTTAL.md). Pod flow:
+pod_v10_prep.sh (CPU: fetch -> yield measure -> judge freeze ->
+smoke shards -> full build gated on the lane pick) + pod_v10.sh
+(GPU: canary -> paid smoke at exact 20L shapes over lanes {8,12}
+-> GO-gated flash under watchdog/relaunch/KILL banking). Suite
+114/114. Driver shakedown on the gate shard: segmentation, stage
+flip, arm C sleeping (pairs 34/16 steps at childhood), KILL
+honored, crash resume, carry-state continuity all verified.
 
 In-flight heartbeats (500M, on checkpoints + live guard log):
 - CE trajectory vs reference curve

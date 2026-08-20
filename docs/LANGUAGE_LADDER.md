@@ -4022,3 +4022,41 @@ band-built secondary rewards, frozen-instrument/veto Goodhart
 defenses) → Phase 3 live inference + the three-act operant demo
 (baseline/parenting/evidence with reward-vs-exposure-vs-negative
 controls). v10 (1B+) decision after buildout, on the transfer map.
+
+V10 LAUNCH PREP (2026-08-20, THE USER'S GO). The go arrived; the
+remaining trio built and verified the same day. (1) v10_driver.py —
+the flash as a chain of train() segments: the sleep dose ladder
+flips at the manifest's stage boundaries (sleepless infancy per
+A64-R3; childhood every=32; adolescence/tail every=16; A76 at
+1e-3), heartbeats run on every segment ckpt and their KILL exits
+the run (3 = banked stop). The shakedown CAUGHT A DESIGN FLAW:
+segmenting wiped band states at every boundary — band-6's slow
+integration (the era/self slot) would have been zeroed ~45 times
+across the flash. carry_state= now threads the live states through
+the trainer (parity-default None); only a crash starts cold
+(ledgered v9.4 behavior). (2) The judge's pod-side freeze: DENSITY
+targets pre-registered in code (35/23/12/18% with the tail-rich
+anneal), stage_thresholds() quantiles them on the REAL per-stage
+mixes, the manifest embeds what it graded with. The tail audit's
+first live run flagged 2.4% mismatch — all three cases were the
+INSTRUMENT clipping long exchanges at its 800-token walk-back, not
+judge drift; hardened (2400 tokens, clipped = unverifiable ≠
+mismatch, prior-press marks stripped) it reads 0.0% on n=161.
+Instruments get audited too. (3) DEMO_PROTOCOL.md +
+SKEPTIC_REBUTTAL.md pre-registered before token one: speech-gated,
+within-run contrasts, n>=20/class, the nightly-LoRA baseline
+answered in advance with the concessions written down. Trainer
+kwargs n_layers/ledger_cap/lr_warmup land parity-default (warmup
+rides the GLOBAL step so resume never restarts the ramp). Suite
+114/114. Driver shakedown on the 12k gate shard proved: segment
+plan obeys one epoch, stage flip fires exactly at the boundary,
+arm C sleeps on real biography (16 steps/34 pairs in 500 childhood
+steps), collapse KILL arms at frac 0.10 and fires on a babbling
+toy, crash resume continues the stream, carry-state continuity
+holds (8.02 -> 8.07 across the seam), and run-to-run CE jitter at
+shakedown is CPU thread nondeterminism (bit-identical under
+OMP_NUM_THREADS=1) — the single-run attribution ban stays load-
+bearing. Pod sequence: prep (CPU) -> paid smoke over lanes {8,12}
+at exact 20L shapes -> full build at the smoke's lane pick -> the
+flash, GO-gated, watchdogged, killable. The next entry should be
+written by the heartbeats.

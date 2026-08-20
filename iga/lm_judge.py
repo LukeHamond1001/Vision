@@ -50,6 +50,51 @@ JUDGE = {
     "audit_every_tail": 101,
 }
 
+# The pre-registered stage press-density TARGETS the thresholds
+# above were calibrated to: {stage: (frac_+2, frac_+1)} of KEPT
+# (post-floor) exchanges. The pod-side freeze (freeze-judge, step
+# 8) re-derives q1/q2 from the REAL per-stage source mixes against
+# these same targets — the targets never move, only the quantiles.
+DENSITY = {"infancy": (0.15, 0.20), "childhood": (0.08, 0.15),
+           "adolescence": (0.04, 0.08), "tail": (0.08, 0.10)}
+
+
+def stage_thresholds(qs_by_stage, density=None, min_n=200):
+    """Quantile q1/q2 from real per-stage q samples. Returns a
+    freeze dict ({"q1": .., "q2": .., "n": ..}) — write it to json,
+    commit it, and pass it to the builder via --judge-thresholds."""
+    density = density or DENSITY
+    out = {"q1": {}, "q2": {}, "n": {}}
+    for st, qs in qs_by_stage.items():
+        p2, p1 = density[st]
+        kept = sorted(q for q in qs if q >= JUDGE["floor"])
+        assert len(kept) >= min_n, \
+            f"{st}: {len(kept)} kept samples < {min_n}"
+        def _q(frac):
+            k = max(0, min(len(kept) - 1,
+                           int(len(kept) * (1 - frac))))
+            return round(kept[k], 4)
+        out["q2"][st] = _q(p2)
+        out["q1"][st] = min(_q(p2 + p1), out["q2"][st])
+        out["n"][st] = len(kept)
+    return out
+
+
+def freeze_stage_thresholds(t):
+    """Load a stage-threshold freeze (path or dict with q1/q2) into
+    the live JUDGE so the builder grades — and its manifest copies —
+    the frozen values. The SCORER (COEF/BIAS/featurize) never
+    changes; only the density staging quantiles do (the split this
+    module's freeze protocol pre-registers)."""
+    if not isinstance(t, dict):
+        with open(t) as f:
+            t = json.load(f)
+    for key in ("q1", "q2"):
+        assert set(t[key]) == set(JUDGE[key]), \
+            f"stage set mismatch in freeze: {sorted(t[key])}"
+        JUDGE[key] = {k: float(v) for k, v in t[key].items()}
+    return JUDGE
+
 STOPWORDS = frozenset(
     ("the a an and or but if then than that this these those is are "
      "was were be been being have has had do does did will would can "
