@@ -16,6 +16,8 @@ construct the prophet BEFORE train(), which reseeds; observe()
 and its training steps consume no RNG at all.
 """
 
+import random
+
 import torch
 import torch.nn as nn
 
@@ -26,10 +28,18 @@ CAP = 4096          # metric/report cap guard
 
 
 class PressProphet:
-    def __init__(self, d, lr=1e-3, device="cpu", clocks=None):
+    def __init__(self, d, lr=1e-3, device="cpu", clocks=None,
+                 holdout_frac=0.0):
         # A70: clocks=None keeps the certified 3-band prophet exact
         self.clocks = dict(HYBRID_CLOCKS if clocks is None else clocks)
         self.bands = sorted(self.clocks)
+        # v10 heartbeat: divert this fraction of pending pairs to an
+        # EVAL ring the heads never train on — auc() measures the
+        # value function on unseen pairs (spectator law B5 intact;
+        # 0.0 = certified prophet bit-exactly, no RNG drawn).
+        self.holdout_frac = float(holdout_frac)
+        self._ho_rng = random.Random(4242)
+        self.eval_ring = {}      # band -> [(vec, target)], capped
         self.heads = nn.ModuleDict(
             {str(k): nn.Linear(d, 1) for k in self.bands}).to(device)
         self.opt = torch.optim.Adam(self.heads.parameters(), lr=lr)
@@ -80,6 +90,17 @@ class PressProphet:
     def _step(self, k):
         pairs = self.pending[k][:CAP]
         self.pending[k] = []
+        if self.holdout_frac:
+            keep, ring = [], self.eval_ring.setdefault(k, [])
+            for pr_ in pairs:
+                if self._ho_rng.random() < self.holdout_frac:
+                    ring.append((pr_[0].detach(), pr_[1]))
+                else:
+                    keep.append(pr_)
+            del ring[:max(0, len(ring) - CAP)]
+            pairs = keep
+            if not pairs:
+                return
         X = torch.stack([p[0] for p in pairs])
         y = torch.tensor([p[1] for p in pairs],
                          device=X.device).unsqueeze(1)
@@ -101,6 +122,21 @@ class PressProphet:
         s["steps"] += 1
         s["loss"] = 0.9 * s["loss"] + 0.1 * float(loss.detach()) \
             if s["steps"] > 1 else float(loss.detach())
+
+    @torch.no_grad()
+    def auc(self, k):
+        """Rank AUC of press-value predictions, positive vs zero,
+        on the held-out eval ring — the value-function vital sign."""
+        ring = self.eval_ring.get(k, [])
+        pos = [p for p in ring if p[1] > 0]
+        zero = [p for p in ring if p[1] == 0]
+        if len(pos) < 5 or len(zero) < 5:
+            return None
+        head = self.heads[str(k)]
+        sp = [float(head(v.unsqueeze(0))) for v, _ in pos]
+        sz = [float(head(v.unsqueeze(0))) for v, _ in zero]
+        wins = sum((a > b) + 0.5 * (a == b) for a in sp for b in sz)
+        return wins / (len(sp) * len(sz))
 
     def report(self):
         out = {}

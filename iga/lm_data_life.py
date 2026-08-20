@@ -274,7 +274,7 @@ def prepare_life(out_dir, budget_tokens, n_lives, seed=0,
             for kind, meta in tevs:
                 if kind == "button":
                     events.append({"pos": t0, "kind": "button",
-                                   "v": meta["v"]})
+                                   **meta})
                     k = str(meta["v"])
                     stats["presses"][k] = \
                         stats["presses"].get(k, 0) + 1
@@ -413,7 +413,9 @@ def prepare_life(out_dir, budget_tokens, n_lives, seed=0,
                         tokp = f"<+{press}>"
                         turns.append((tokp, "human",
                                       [("button", {"v": press,
-                                                   "attr": False})]))
+                                                   "attr": False,
+                                                   "stage":
+                                                   stage.name})]))
                     emit_turns(turns)
                     stats["kept"] += 1
                     audit.maybe(stage.name, life_i, len(stream), q,

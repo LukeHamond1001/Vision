@@ -1,0 +1,327 @@
+"""v10 heartbeat pack — the in-flight instruments and KILL criteria
+(spec section 6). Runs against a checkpoint while the flash trains;
+one invocation appends one row set to the output jsonl. The pod
+wrapper greps for the KILL sentinel: kill, fix, relaunch — a caught
+disease costs hours, not the run.
+
+KILL constants are PRE-REGISTERED here, in code, before token one.
+Growth-chart milestones are soft (warn, never kill).
+
+Usage:
+  python3 scripts/heartbeat_v10.py --ckpt CKPT.pt --data SHARD \
+      --eval-data EVAL_SHARD [--step N] [--out results/hb_v10.jsonl]
+Model config is read from the checkpoint's "cfg" dict when present,
+else from CLI flags mirroring train()'s.
+"""
+
+import argparse
+import json
+import os
+import sys
+
+import torch
+
+sys.path.insert(0, os.path.dirname(os.path.dirname(
+    os.path.abspath(__file__))))
+
+from iga.lm_data_ultrachat import UltraConveyor, load_tokenizer  # noqa
+from iga.lm_hybrid import BAND6_CLOCKS, HybridLM                 # noqa
+from iga import lm_judge as J                                    # noqa
+
+KILL = {
+    # CE vs its own running best: 3 consecutive heartbeat rises of
+    # >= this relative margin = divergence (late-run watch: v9.4
+    # peaked at 266k/488k — banking saves the artifact, this saves
+    # the compute)
+    "ce_rise_margin": 0.03, "ce_rise_rows": 3,
+    # the band-education vital sign: cross-day recall advantage
+    # must exist after this many tokens
+    "gap_flat_after_tok": 1.5e9, "gap_min_acc_over_chance": 1.25,
+    # value function forming: prophet AUC floor after half the run
+    "prophet_auc_floor": 0.55, "prophet_after_frac": 0.5,
+    # conviction disease: max false-belief mass on cast facts
+    "incumbent_mass": 0.90, "incumbent_rows": 2,
+    # babble: distinct-3gram ratio floor on fixed prompts
+    "collapse_distinct3_floor": 0.35,
+    # correction collateral (the A68-T S3 lesson): allies of
+    # corrected facts must hold >= this fraction of the belief of
+    # unrelated same-class facts
+    "collateral_floor": 0.70,
+    # the judge/plumbing integrity check on the tail
+    "tail_audit_mismatch": 0.01,
+    # ledger pruning must never outrun the sleeper
+    "pruned_unharvested": 1,
+}
+GROWTH = {   # soft milestones (warn) keyed by flash fraction
+    "infancy_end": {"frac": 0.10, "distinct3": 0.5},
+    "childhood_end": {"frac": 0.50, "binder_x_chance": 2.0},
+    "adolescence_end": {"frac": 0.90, "prophet_auc": 0.55},
+}
+BINS = [(1, 256, "in-ctx"), (257, 2048, "short"),
+        (2049, 8192, "b3"), (8193, 40000, "b4"),
+        (40001, 400000, "b5"), (400001, 10 ** 12, "b6")]
+PROMPTS = [
+    "good morning .", "tell me about the harbor town .",
+    "what should i cook tonight ?", "one morning later .",
+    "explain how rivers form .", "can you help me plan a trip ?",
+    "what color of coin was nedra kept ?", "the town waited .",
+    "why is the sky blue ?", "how do i sort a list in python ?",
+    "that day was done .", "tell me a short story .",
+    "what did we talk about before ?", "give me three fruits .",
+    "how are you today ?", "still . the wind moved that day .",
+]
+
+
+def load_model(a):
+    blob = torch.load(a.ckpt, map_location="cpu", weights_only=False)
+    sd = blob.get("model", blob) if isinstance(blob, dict) else blob
+    cfg = blob.get("cfg", {}) if isinstance(blob, dict) else {}
+    tok = load_tokenizer(os.path.join(a.data, "tokenizer.json"))
+    m = HybridLM(
+        tok.get_vocab_size(), d=cfg.get("d", a.d),
+        n_layers=cfg.get("n_layers", a.n_layers),
+        n_heads=cfg.get("n_heads", 8), max_T=cfg.get("T", a.T),
+        store="matrix", keyed="logit", norm_mix=True, aux_trunk=0.2,
+        use_xl=False, gate_init=-2.0,
+        clocks=cfg.get("clocks", BAND6_CLOCKS),
+        band_widths=cfg.get("band_widths"),
+        tie_embed=cfg.get("tie_embed", False))
+    m.load_state_dict(sd, strict=True)
+    m.eval()
+    return m, tok, blob
+
+
+@torch.no_grad()
+def probe_ce_recall(m, eval_dir, T, chunks, lesion=None):
+    conv = UltraConveyor(eval_dir, n_lanes=2)
+    m.lesioned = set(lesion or ())
+    st = m.init_state(2, "cpu")
+    ce_sum, ce_n = 0.0, 0
+    acc = {name: [0, 0] for _, _, name in BINS}
+    n_chunks = min(chunks, len(conv.tokens) // (2 * T) - 2)
+    for _ in range(n_chunks):
+        x, y, events = conv.chunk(T)
+        lg, st, _ = m(x, st, None)
+        m.pop_write_cost()
+        m.pop_recon()
+        st = m.detach_state(st)
+        ce_sum += float(torch.nn.functional.cross_entropy(
+            lg.float().reshape(-1, lg.shape[-1]), y.reshape(-1)))
+        ce_n += 1
+        lp = torch.log_softmax(lg.float(), -1)
+        for lane, evs in enumerate(events):
+            for p, kind, d in evs:
+                if kind != "probe" or p <= 0 \
+                        or not d.get("answerable", True):
+                    continue
+                cand = [d["answer"]] + list(d["distractors"])
+                best = max(cand, key=lambda i: float(lp[lane, p - 1, i]))
+                for lo, hi, name in BINS:
+                    if lo <= d["gap"] <= hi:
+                        acc[name][0] += int(best == d["answer"])
+                        acc[name][1] += 1
+                        break
+    m.lesioned = set()
+    return (round(ce_sum / max(ce_n, 1), 4),
+            {k: {"acc": round(h / n, 3) if n else None, "n": n}
+             for k, (h, n) in acc.items()})
+
+
+@torch.no_grad()
+def probe_collapse(m, tok, T):
+    """Greedy 64-token continuations of fixed prompts; the collapse
+    signature is distinct-3gram contraction."""
+    ratios = []
+    for ptxt in PROMPTS:
+        ids = tok.encode(ptxt).ids[-(T - 70):]
+        st = m.init_state(1, "cpu")
+        out = []
+        x = torch.tensor([ids])
+        for _ in range(64):
+            lg, st, _ = m(x, st, None)
+            m.pop_write_cost()
+            m.pop_recon()
+            st = m.detach_state(st)
+            nxt = int(lg[0, -1].argmax())
+            out.append(nxt)
+            x = torch.tensor([[nxt]])
+        if len(out) >= 3:
+            grams = [tuple(out[i:i + 3]) for i in range(len(out) - 2)]
+            ratios.append(len(set(grams)) / len(grams))
+    return round(sum(ratios) / len(ratios), 4)
+
+
+@torch.no_grad()
+def probe_cast(m, tok, manifest):
+    """Fresh-state bare asks over the manifest's cast facts:
+    incumbent mass (max false-color prob where false beats true),
+    class means (selectivity), and the correction-collateral guard
+    (allies of corrected facts vs unrelated same-class facts)."""
+    from iga.lm_data_ultrachat import COLORS
+    cids = {c: tok.encode(" " + c).ids[0] for c in COLORS}
+    rows = []
+    for life in manifest["lives"][:4]:
+        for f in life["cast"]:
+            if not f["asks"]:
+                continue
+            q = (f"what color of {f['obj']} was {f['name']} kept ? "
+                 f"<eot_human> the {f['obj']} was")
+            x = torch.tensor([tok.encode(q).ids])
+            lg, _, _ = m(x, m.init_state(1, "cpu"), None)
+            m.pop_write_cost()
+            m.pop_recon()
+            pr = torch.softmax(lg[0, -1].float(), -1)
+            probs = {c: float(pr[i]) for c, i in cids.items()}
+            rows.append({**f, "p_true": probs[f["col"]],
+                         "p_max_false": max(v for c, v in probs.items()
+                                            if c != f["col"])})
+    if not rows:
+        return {}
+    incumbent = max((r["p_max_false"] for r in rows
+                     if r["p_max_false"] > r["p_true"]), default=0.0)
+    by_cls = {}
+    for r in rows:
+        by_cls.setdefault(r["cls"], []).append(r["p_true"])
+    cls_mean = {k: round(sum(v) / len(v), 4)
+                for k, v in by_cls.items()}
+    return {"n_facts": len(rows),
+            "incumbent_mass": round(incumbent, 4),
+            "class_mean_p_true": cls_mean}
+
+
+def probe_tail_audit(data_dir, manifest, tok, sample=120):
+    """Re-grade sampled tail press events with the manifest's FROZEN
+    judge copy; press <-> threshold mismatches = grading/plumbing
+    bug = kill."""
+    import numpy as np
+    toks = np.fromfile(os.path.join(data_dir, "tokens.bin"),
+                       dtype=np.uint16)
+    ev = [json.loads(l) for l in
+          open(os.path.join(data_dir, "events.jsonl"))]
+    life_len = manifest["life_len"]
+    jm = manifest["judge"]
+    eot_h = tok.token_to_id("<eot_human>")
+    eot_m = tok.token_to_id("<eot_model>")
+    marks = {tok.token_to_id(s): int(s[1:3].replace(">", ""))
+             for s in ("<+1>", "<+2>")}
+    # judge presses carry the stage that graded them (no boundary
+    # guessing); the audit re-grades tail-stage presses only
+    tail_btns = [e for e in ev if e["kind"] == "button"
+                 and e["v"] > 0 and e.get("stage") == "tail"]
+    step = max(1, len(tail_btns) // sample)
+    bad = n = 0
+    for e in tail_btns[::step]:
+        pos = e["pos"]
+        if int(toks[pos]) not in marks:
+            bad += 1
+            n += 1
+            continue
+        # walk back: press turn <- model turn <- human turn
+        i = pos - 1                       # eot_h... layout: m eot_m PRESS
+        seg = list(toks[max(0, pos - 800):pos])
+        try:
+            m_end = len(seg) - 1 - seg[::-1].index(eot_m)
+            h_end = m_end - 1 - seg[:m_end][::-1].index(eot_h)
+            h_start = 0
+            for j in range(h_end - 1, -1, -1):
+                if seg[j] in (eot_m, eot_h):
+                    h_start = j + 1
+                    break
+            h_txt = tok.decode(seg[h_start:h_end])
+            m_txt = tok.decode(seg[h_end + 1:m_end])
+        except ValueError:
+            continue
+        q = J.grade_dialogue(h_txt, m_txt)
+        stage = e.get("stage", "tail")
+        want = 2 if q >= jm["q2"][stage] else (
+            1 if q >= jm["q1"][stage] else 0)
+        n += 1
+        if want != e["v"]:
+            bad += 1
+    return {"n": n, "mismatch": round(bad / n, 4) if n else None}
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--ckpt", required=True)
+    ap.add_argument("--data", required=True)
+    ap.add_argument("--eval-data", required=True)
+    ap.add_argument("--out", default="results/heartbeat_v10.jsonl")
+    ap.add_argument("--step", type=int, default=-1)
+    ap.add_argument("--tokens", type=int, default=-1)
+    ap.add_argument("--total-tokens", type=int, default=0)
+    ap.add_argument("--d", type=int, default=1280)
+    ap.add_argument("--n-layers", type=int, default=20)
+    ap.add_argument("--T", type=int, default=2048)
+    ap.add_argument("--chunks", type=int, default=400)
+    ap.add_argument("--skip-lesions", action="store_true")
+    a = ap.parse_args()
+
+    m, tok, blob = load_model(a)
+    manifest = json.load(open(os.path.join(a.data, "manifest.json")))
+    rows = []
+
+    ce, recall = probe_ce_recall(m, a.eval_data, a.T, a.chunks)
+    rows.append({"probe": "ce_recall", "ce": ce, "recall": recall})
+    d3 = probe_collapse(m, tok, a.T)
+    rows.append({"probe": "collapse", "distinct3": d3})
+    cast = probe_cast(m, tok, manifest)
+    rows.append({"probe": "cast", **cast})
+    rows.append({"probe": "tail_audit",
+                 **probe_tail_audit(a.data, manifest, tok)})
+    if not a.skip_lesions:
+        for k in sorted(m.bands):
+            ce_l, _ = probe_ce_recall(m, a.eval_data, a.T,
+                                      max(a.chunks // 4, 50),
+                                      lesion=(k,))
+            rows.append({"probe": f"lesion_b{k}",
+                         "ce_delta": round(ce_l - ce, 4)})
+    if isinstance(blob, dict) and "sleeper" in blob:
+        rows.append({"probe": "pruned_unharvested",
+                     "n": blob["sleeper"].get("pruned_unharvested",
+                                              0)})
+
+    # verdicts
+    hist = []
+    if os.path.exists(a.out):
+        hist = [json.loads(l) for l in open(a.out)]
+    prev_ce = [r["ce"] for h in hist for r in h.get("rows", [])
+               if r.get("probe") == "ce_recall"]
+    verdict, why = "ok", []
+    frac = (a.tokens / a.total_tokens) if (a.total_tokens > 0
+                                           and a.tokens > 0) else 1.0
+    if d3 < KILL["collapse_distinct3_floor"] and frac >= 0.10:
+        # armed only past infancy — every infant babbles
+        verdict, why = "KILL", why + [f"collapse distinct3 {d3}"]
+    if cast.get("incumbent_mass", 0) >= KILL["incumbent_mass"]:
+        n_bad = 1 + sum(1 for h in hist[-KILL["incumbent_rows"]:]
+                        for r in h.get("rows", [])
+                        if r.get("probe") == "cast" and
+                        r.get("incumbent_mass", 0)
+                        >= KILL["incumbent_mass"])
+        if n_bad >= KILL["incumbent_rows"]:
+            verdict, why = "KILL", why + ["incumbent mass"]
+    ta = rows[3]
+    if ta.get("mismatch") is not None and \
+            ta["mismatch"] > KILL["tail_audit_mismatch"]:
+        verdict, why = "KILL", why + [f"tail audit {ta['mismatch']}"]
+    if prev_ce:
+        best = min(prev_ce)
+        rises = sum(1 for c in (prev_ce + [ce])[-KILL["ce_rise_rows"]:]
+                    if c > best * (1 + KILL["ce_rise_margin"]))
+        if rises >= KILL["ce_rise_rows"]:
+            verdict, why = "KILL", why + ["ce divergence"]
+
+    row = {"step": a.step, "tokens": a.tokens, "rows": rows,
+           "verdict": verdict, "why": why}
+    os.makedirs(os.path.dirname(a.out), exist_ok=True)
+    with open(a.out, "a") as f:
+        f.write(json.dumps(row) + "\n")
+    print(json.dumps(row, indent=1))
+    if verdict == "KILL":
+        print("KILL", flush=True)      # the pod wrapper's sentinel
+        sys.exit(3)
+
+
+if __name__ == "__main__":
+    main()
