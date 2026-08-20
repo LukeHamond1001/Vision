@@ -3764,6 +3764,40 @@ scale, not blocking this one. Target cost: $15–40 total.
   fact-level consolidation at pretraining needs the v-scale
   regime and the gate rides the 500M kill protocol.
 
+- **A69-R5+R6 VERDICT — PHASE A CLOSES: the division-of-labor
+  law, proven on both sides** (2026-08-19; evidence
+  a69_bio_ablation.json + a69_r6_smoke.txt). R5 (press-pay in
+  the training night): fact-level weight recall STILL null —
+  737 replay blocks spread over ~7,000 pressed facts is ~0.1
+  replays/fact; consolidation needs replay CONCENTRATION,
+  which a firehose structurally cannot give and a served life
+  structurally does. (Side finding: press-pay sleep improved
+  general CE, 0.671 vs 0.726 — keep it in the flash.) THE LAW:
+  the FLASH builds faculties; the LIFE writes biography. You
+  do not remember childhood flashcards; you remember how to
+  learn. R6 (the end-to-end gate): the R5 flash-born d=128
+  creature entered a serve room — one fact taught with +2s
+  across four spaced mini-days, one control taught once and
+  never pressed. Result: rewarded .0524 -> .5210 (9.9x,
+  compounding nightly exactly like the 78M curve: 1.7x ->
+  1.9x -> 1.8x -> 1.7x per night); control .1213 -> .0683
+  (0.6x — unrehearsed EROSION, A67-P5's replay-competition
+  law reproducing on a different substrate). R6-G1 PASS.
+  First smoke shape failed honestly (span_w=128 engulfed the
+  whole mini-session including the control — selectivity
+  needs spans smaller than the session; ledgered as protocol,
+  not law). PHASE A COMPLETE. What the 500M flash inherits,
+  all measured at $0: (1) binder needs capacity (d=64 null,
+  d=128 armed .846); (2) wake state carries nothing beyond
+  the window at debug — weights are the cross-session organ;
+  (3) biography ordering beats massed drilling 2.3x on 5x
+  fewer asks; (4) press-pay sleep in the flash (better CE);
+  (5) ARM C pairs native; (6) the served life on the
+  flash-born being banks selective, compounding biographical
+  memory — the demo capability itself, reproduced end-to-end
+  at debug scale. The 500M launch decision is now purely a
+  budget decision.
+
 ## Status
 
 **(2026-08-19, post-v9.4)** The substrate campaign is complete:

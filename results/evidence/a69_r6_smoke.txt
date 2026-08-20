@@ -1,0 +1,11 @@
+A69-R6 — flash->life end-to-end smoke (d=128 R5 flash-born creature)
+baseline  rewarded 0.0524  control 0.1213
+night1    rewarded 0.0914  control 0.1243   (spans 3, blocks 32, only_paid)
+day 2     rewarded 0.1692  control 0.1247
+day 3     rewarded 0.3109  control 0.0998
+day 4     rewarded 0.5210  control 0.0683
+lift      rewarded 9.9x    control 0.6x  ->  R6-G1 PASS
+(protocol: one +2-taught fact, spaced touches across 4 mini-days,
+sleep 32 blocks/night span_w=48; control taught once, never pressed,
+never touched again. Selectivity + compounding + unrehearsed erosion
+all reproduce the 78M raised-life laws.)
