@@ -47,7 +47,10 @@ D = int(sys.argv[2]) if len(sys.argv) > 2 else 128
 STEPS = int(sys.argv[1]) if len(sys.argv) > 1 else 4000
 ARMS = (sys.argv[3].split(",") if len(sys.argv) > 3 else ["all"])
 LANES, T = 4, 256
-BUDGET = 6_000_000           # 4 lives x 1.5M
+# the shard must hold ONE EPOCH of the run (A12 one-epoch law —
+# the first 8k-step run wrapped a 6M shard and dissolved its own
+# ordering signal into repetition; guarded below, sized here)
+BUDGET = max(6_000_000, int(STEPS * LANES * T * 1.25))
 SEED = 7
 GATE = {"g1_chance_x": 2.0, "g2_min_probes": 50, "g3_min_pairs": 3}
 EVID = "results/evidence/v10_gates.json"
@@ -73,7 +76,16 @@ def _sources(eval_mode=False):
 
 
 def build_shards():
+    assert STEPS * LANES * T <= BUDGET, \
+        "one-epoch law: the run must not wrap the shard"
     tok_ref = "data/life_gate_bio/tokenizer.json"
+    man = "data/life_gate_bio/manifest.json"
+    if os.path.exists(man):
+        have = __import__("json").load(open(man))["total_tokens"]
+        if have < BUDGET:
+            import shutil
+            for d_ in ("data/life_gate_bio", "data/life_gate_ctrl"):
+                shutil.rmtree(d_, ignore_errors=True)
     if not os.path.exists("data/life_gate_bio/manifest.json"):
         prepare_life("data/life_gate_bio", BUDGET, LANES, seed=SEED,
                      world_seed=99, vocab=16384,
