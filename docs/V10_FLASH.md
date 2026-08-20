@@ -27,13 +27,19 @@ architecture is the opposite — states carry across chunks, the
 economy is temporal, and sleep replays recency-weighted. Order is
 the curriculum. Four layers, outermost first:
 
-1. **Developmental staging across the flash** — infancy (short
-   days, dense presses, simple facts) -> childhood (longer days,
-   spaced recurrence, corrections BEGIN) -> adolescence (sparse
-   presses, long threads, prophets predicting). Warrants from the
-   raised life: thin-pool winner-take-all (A67-P4/P5), corrections
-   require a mature substrate (A64-R3 dose law), all-positive
-   infancy minted a 0.96 false conviction (A67-P6).
+1. **Developmental staging across the flash — of the ECONOMY and
+   SHAPE, not of text quality (user-set 2026-08-19).** Quality is
+   FLAT-HIGH from token one; what stages is the press density
+   (dense -> sparse), session length (short days -> long threads),
+   correction onset (none -> 3-8% once the substrate matures), and
+   recurrence horizon (short gaps -> band-5/6 gaps). Honest note:
+   complexity curricula (simple text first) have weak evidence in
+   LM pretraining and NONE of our measured laws warrant one — every
+   order effect we measured is an economy/recurrence effect. The
+   warrants that stand are economy warrants: thin-pool winner-take-
+   all (A67-P4/P5), corrections require a mature substrate (A64-R3
+   dose law), all-positive infancy minted a 0.96 false conviction
+   (A67-P6) — so corrections must not wait too long, either.
 2. **Day order across the life** — the band curriculum: facts,
    characters, and threads RECUR at controlled gaps spanning every
    band clock (96 ... 131k+). The only invariant at band-5 horizon
@@ -44,15 +50,43 @@ the curriculum. Four layers, outermost first:
    dose ladder), pairs riding the nights (A69).
 4. **Token order within an exchange** — natural language (given).
 
-**Quality anneal (user-set, 2026-08-19): the best data comes
-LAST.** Recency dominates SGD, the replay pool is recency-capped
-(MAX_SPANS), and the raised life measured recency everywhere — so
-the final phase carries the cleanest, best-judged, most on-role
-material, riding the cosine tail. Corollary from our own laws:
-the end imprints hardest, so end-of-flash data is the run's
-highest-stakes surface — the judge audit concentrates on the
-final ~10% (strictest sampling; audit failure there is a kill
-criterion, not a warning).
+**Quality is FLAT AT MAX (user-set, 2026-08-19, superseding the
+anneal): highest-quality data throughout — there is no reason to
+feed anything worse when top-tier public material exceeds the
+budget ~20x (we need ~6B; the named menu in 2b exposes >100B).**
+What stays staged is COMPLEXITY and structure, not quality:
+TinyStories is immaculate but simple — quality != difficulty, so
+the developmental warrants survive intact. The tail-audit also
+survives, re-derived: recency makes the final ~10% the run's
+highest-stakes surface regardless of the quality curve, so the
+judge audit still concentrates there and audit failure there is
+still a kill criterion. Industry validation (2025): OLMo-2's
+Dolmino mix and SmolLM2's reserved FineMath/Stack-Edu both
+introduce their highest-quality data exactly there — late-stage
+curriculum during annealing — and measure large downstream wins.
+
+### 2b. The corpus (named, public, verified 2026-08-19)
+
+Synthetic-first — the user's instinct matches the evidence chain
+at small scale (TinyStories -> phi -> Cosmopedia -> SYNTH:
+Baguettotron, 321M trained on SYNTH alone, approaches Qwen-0.6B).
+Selection is the quality mechanism: ~6B needed from >100B
+available means we take roughly the top 5% slice of everything.
+
+| source | size | role in the flash |
+|---|---|---|
+| TinyStories (HF: roneneldan) | ~0.5B tok | infancy — synthetic, immaculate, simple |
+| Smol-Magpie-Ultra, core of SmolTalk (HF: HuggingFaceTB) | 400K three-turn convs | the PREMIUM exchanges: Llama-3.1-405B-distilled, ArmoRM reward-model filtered, safety-screened, semantically deduped — press-worthy by construction |
+| UltraChat (HF: stingning) | ~2.2B tok (1.5M dialogues x ~1.5k) | the volume + long-multi-turn spine — biography builder rebuilds these into recurring days and characters; gpt-3.5-era generation, so the judge takes its top slice only |
+| SmolTalk2 (HF: HuggingFaceTB) | ~3.4M multi-turn samples | more spine: tool traces, long-context threads for band-5/6 horizons |
+| SYNTH (HF: PleIAs) | ~75B tok | "study days" — reasoning-dense, formally verified synthetic playgrounds; the being reads and discusses |
+| Cosmopedia-v2 (HF: HuggingFaceTB) | 28B tok | textbooks/stories; audience tiers (middle-school early, college late) give complexity staging at flat quality |
+| FineWeb-Edu dedup (HF) | 220B tok | ~10-15% grounding blend, top classifier decile only — synthetic-purity hedge against distributional narrowing |
+
+Corrections (~3-8%) remain synthesized by us (section 3). All
+sources are open (smollm-corpus ODC-By; SYNTH released fully open
+with the AI Alliance). Nothing is repeated: at 6B from >100B the
+flash never sees the same day twice — like a life.
 
 **Sleep and context (design clause):** the being's wake state —
 bands, pending window — persists through every sleep untouched
@@ -161,15 +195,41 @@ bands enter attention every chunk; store read injects at
 mid-depth (L10); writes every chunk, decay = the band's clock;
 gates biased shut (gate_init -2), economy opt-in.
 
-The flash as a staged life (~6B tokens, order per section 2,
-sleep at every day boundary, press-pay on, ARM C native):
+The flash as a staged life (~6B tokens; quality FLAT-HIGH
+throughout — the stages are ECONOMY stages, per section 2; sleep
+at every day boundary, press-pay on, ARM C native):
 
-| stage | tokens | material | economy |
+| stage | tokens | shape + material (all top-slice, per 2b) | economy |
 |---|---|---|---|
-| infancy | ~0.6B (10%) | simplest text woven into short days | dense +1/+2, no corrections |
-| childhood | ~2.4B (40%) | biography-built real conversations; facts/characters recur at gaps spanning every band clock | presses annealing down; corrections begin (~3-8%) |
-| adolescence | ~2.4B (40%) | long threads, multi-session projects reaching band-5/6 horizons; harder mixed corpus, still ordered as one life | sparse presses; prophets predicting |
-| the polish | ~0.6B (10%) | best-judged, most on-role material — the quality anneal on the cosine tail | strictest judge audit; audit failure = kill |
+| infancy | ~0.6B (10%) | short days, short exchanges, tight recurrence gaps — TinyStories | dense +1/+2, no corrections |
+| childhood | ~2.4B (40%) | biography days; facts/characters recur at gaps spanning band 3/4 clocks — UltraChat/SmolTalk2 lives + Cosmopedia middle-school study days | presses annealing down; corrections begin (~3-8%) |
+| adolescence | ~2.4B (40%) | long threads, multi-session projects reaching band-5/6 horizons — SYNTH + Cosmopedia college-tier, still one ordered life | sparse presses; prophets predicting |
+| the tail | ~0.6B (10%) | same flat-max quality, most on-role conversational slice, on the cosine tail | strictest judge audit; audit failure = kill |
+
+**The data manifest (public sets, pinned before launch):**
+
+| role | source | ~share | why |
+|---|---|---|---|
+| world spine | FineWeb-Edu (high cut) 60 / DCLM 40 | 55% | best classifier-filtered web; the blend's complementary strengths are documented (edu benchmarks vs commonsense) |
+| synthetic textbooks | Cosmopedia v2 | 10% | phi-style explanation density per token — what a 500M capacity digests best |
+| long documents (band food) | peS2o + Gutenberg (+ FinePDFs) | 10% | documents LONGER than the band-4/5 clocks so bands get within-doc education, not only life-structure education |
+| conversational biography | SmolTalk + UltraChat + WildChat, rebuilt by the biography builder | 20% | the life itself: persistent cast, recurrence injection, synthesized corrections, press economy |
+| the tail | judge-top slice: HelpSteer2-graded dialogue, FineMath/Stack-Edu, top-decile Cosmopedia + spine | 5% | the anneal (Dolmino/SmolLM2 precedent) |
+
+Synthetic-data doctrine: synthetic is the best per-token teacher
+at this scale (phi/Cosmopedia evidence) but pure synthetic
+narrows the distribution — blend it over the filtered-web spine.
+The biography layer is inherently synthetic-STRUCTURED anyway
+(real utterances, manufactured life: ordering, recurrence,
+corrections) — that is the builder's whole job.
+
+**Judge grounding (public frozen instruments):** reading days are
+graded by the released FineWeb-Edu educational classifier (its
+0-5 score maps to silence/+1/+2) and dialogue days by a small
+frozen grader calibrated on HelpSteer2's human helpfulness
+ratings. Both are public and auditable — the A64 frozen-
+instrument law with instruments anyone can check, instead of a
+homemade heuristic.
 
 ## 6. Gates and the run protocol (user-specified: probes,
 heartbeats, kill, fix, relaunch)
