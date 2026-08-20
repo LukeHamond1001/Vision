@@ -234,7 +234,12 @@ for ATTEMPT in 1 2 3 4 5 6; do
       tail -100 v10_train.log > train_tail.log 2>/dev/null || true
       LASTHB=$(tail -1 hb_v10.jsonl 2>/dev/null | head -c 300)
       echo "$(date -u +%H:%M:%S) inflight ${LASTHB:-no-hb-row-yet}" >> HEARTBEAT.log
-      git add -f HEARTBEAT.log hb_v10.jsonl v10_driver.jsonl train_tail.log 2>/dev/null
+      # add per-file: one missing pathspec aborts a combined add,
+      # which muted every pulse until the first battery wrote the
+      # jsonls — stage whatever exists each cycle
+      for f in HEARTBEAT.log hb_v10.jsonl v10_driver.jsonl train_tail.log; do
+        [ -f "$f" ] && git add -f "$f" 2>/dev/null
+      done
       git commit -qm "inflight" 2>/dev/null
       git push -qf "$PUSH" results-v10 2>/dev/null || true
     done ) & PUBPID=$!
