@@ -44,6 +44,23 @@ the curriculum. Four layers, outermost first:
    dose ladder), pairs riding the nights (A69).
 4. **Token order within an exchange** — natural language (given).
 
+**Quality anneal (user-set, 2026-08-19): the best data comes
+LAST.** Recency dominates SGD, the replay pool is recency-capped
+(MAX_SPANS), and the raised life measured recency everywhere — so
+the final phase carries the cleanest, best-judged, most on-role
+material, riding the cosine tail. Corollary from our own laws:
+the end imprints hardest, so end-of-flash data is the run's
+highest-stakes surface — the judge audit concentrates on the
+final ~10% (strictest sampling; audit failure there is a kill
+criterion, not a warning).
+
+**Sleep and context (design clause):** the being's wake state —
+bands, pending window — persists through every sleep untouched
+(A62 law); it wakes with yesterday intact plus changed weights.
+Replay itself runs fresh-state, deliberately decontextualized —
+the semanticization analog — proven at 78M (A66) and at debug
+(R6). Both properties carry into the flash unchanged.
+
 Evidence that order is live at every scale we can measure: the
 raising's spacing effects (drum 17x on its third spaced touch),
 rich-get-richer naps, recency-weighted pool dynamics — all are
@@ -100,6 +117,18 @@ press-shaped consolidation, waking up knowing you) become visible
 to any audience. A100 80GB, fp32 regime, ~5 days, ~$200 at 6B
 tokens. The demo frame: same weights frozen vs living — the delta
 is 100% architecture.
+
+**Bands at 500M (honest gaps + the plan):** the brain is a
+continuous timescale gradient; our x8 ladder (2k/16k/131k tok) is
+a discretization. v10 ADDS BAND 6 (x8 again, ~1M tok — ticking
+~6,000 times across a 6B-token flash, genuinely learnable): the
+"who I am across everything" slot the current ladder tops out
+below. New variable -> debug certification first (HYBRID_CLOCKS
+is band-count-parametric). Per-band CAPACITY is currently uniform
+and unprincipled — v10 measures per-band load in flight (lesion
+deltas in the heartbeat pack) and v10.1 reallocates from data,
+not guesswork. Param layout: trunk ~85-90%, organs the rest —
+cortex-dominant like the original; lesion probes arbitrate.
 
 ## 6. Gates and the run protocol (user-specified: probes,
 heartbeats, kill, fix, relaunch)
