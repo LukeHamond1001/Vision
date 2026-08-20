@@ -113,7 +113,8 @@ class SleepTap:
 
 class Sleeper:
     def __init__(self, arm="B", every=0, block_chunks=4, seed=0,
-                 min_step_loss=0.0, replay_twice=False):
+                 min_step_loss=0.0, replay_twice=False,
+                 homeostasis=0.0, splice=0.0, novelty=0.0):
         """every: one sleep block per this many wake steps (0 = never
         fire — the dose-0 parity arm). block_chunks: chunks per block;
         dose sleep:wake = block_chunks/every (A62 ladder {0, 1:16,
@@ -152,6 +153,29 @@ class Sleeper:
         # write pass self-skips under the no-disagreement floor.
         # False = training path bit-exact.
         self.replay_twice = bool(replay_twice)
+        # A76 (gated): sleep homeostasis — after a block that took
+        # at least one step, the UNFROZEN slow weights (exactly
+        # sleep's certified weight surface, A62 L3) are multiplied
+        # by (1 - homeostasis): the synaptic-downscaling analog.
+        # Evidence hook: the incumbent + rich-get-richer are
+        # no-renormalization diseases; mastery floors stop
+        # reinforcing but never shrink. 0.0 = certified bit-exact.
+        self.homeostasis = float(homeostasis)
+        # A73 (gated): splice replay — with this probability a
+        # span block replays ONE chunk each from TWO pay-weighted
+        # spans under one carried state (cross-episode adjacency:
+        # the SWS schema-abstraction analog, real tokens only).
+        # CE-loss arms only (A/C); arm B ignores it. 0.0 = certified
+        # bit-exact (the extra RNG draws are short-circuited).
+        self.splice = float(splice)
+        # A74 (gated): surprise-weighted replay — span lottery
+        # weights become pay*(1-novelty) + novelty*surprise, where
+        # surprise is the trainer-stamped wake CE over the span
+        # (note_ce), normalized by the running max. 0.0 = certified
+        # pay-only lottery bit-exactly.
+        self.novelty = float(novelty)
+        self.chunk_ce = []       # (t0, t1, ce) wake stamps, capped
+        self._ce_max = 1e-9
         self.rng = random.Random(seed)
         self.buffers = None
         self.start = 0           # absolute stream pos of buffers[*][0]
@@ -194,6 +218,43 @@ class Sleeper:
             for b in self.buffers:
                 del b[:cut]
             self.start += cut
+
+    def note_ce(self, mean_ce, t0, t1):
+        """A74: the trainer stamps each wake step's mean CE over its
+        token range. Append-only python list, no graph, no RNG —
+        stamping never perturbs the certified path; only novelty>0
+        reads it. Capped to the replay-reach window."""
+        self.chunk_ce.append((int(t0), int(t1), float(mean_ce)))
+        self._ce_max = max(self._ce_max, float(mean_ce))
+        if self.cap is not None and len(self.chunk_ce) > 4096:
+            del self.chunk_ce[:len(self.chunk_ce) - 4096]
+
+    def _surprise(self, s):
+        """Mean stamped CE overlapping span s, normalized to [0,1]."""
+        acc, n = 0.0, 0
+        for t0, t1, ce in self.chunk_ce:
+            if t1 > s["t0"] and t0 < s["t1"]:
+                acc += ce
+                n += 1
+        return (acc / n / self._ce_max) if n else 0.0
+
+    def _span_weights(self):
+        if not self.novelty:
+            return [s["pay"] for s in self.spans]
+        nv = self.novelty
+        return [s["pay"] * (1 - nv) + nv * self._surprise(s)
+                for s in self.spans]
+
+    def _downscale(self, model):
+        """A76: one multiplicative downscale of the unfrozen slow
+        weights — sleep's certified surface only (A62 L3)."""
+        if not self.homeostasis:
+            return
+        with torch.no_grad():
+            for n, p in model.named_parameters():
+                if n.startswith(FREEZE_PREFIXES) or n in FREEZE_EXACT:
+                    continue
+                p.mul_(1.0 - self.homeostasis)
 
     # ---------- span working set (L1's source of truth) ----------
     def harvest(self, drive):
@@ -321,6 +382,12 @@ class Sleeper:
                              "w0": w[0], "w1": w[1],
                              "r0": r[0], "r1": r[1],
                              "pay": float(abs(p["v"]) + q["v"]),
+                             # A72: a HOT press (v <= -2) tags its
+                             # pair for guaranteed replay — the
+                             # amygdala salience analog (instant
+                             # capture, weight change stays in the
+                             # certified nightly channel)
+                             "hot": abs(p["v"]) >= 2,
                              "ctx_w": ctx_w,
                              "iw": -(i + 1), "ir": -(j + 1)})
                         used.add(i)
@@ -328,7 +395,7 @@ class Sleeper:
                     break
         return used
 
-    def _pair_block(self, model, opt, step, beta=1.0):
+    def _pair_block(self, model, opt, step, beta=1.0, pick=None):
         """One contrastive pair replay: each side forwarded fresh-
         state trunk-alone; loss = softplus(-beta * (mean logp of
         RIGHT targets - mean logp of WRONG targets)). Bounded and
@@ -336,7 +403,7 @@ class Sleeper:
         and stops stepping, the CE mastery floor's twin."""
         if not self.pairs:
             return None
-        pr = self.rng.choices(
+        pr = pick if pick is not None else self.rng.choices(
             self.pairs, weights=[p["pay"] for p in self.pairs])[0]
         device = next(model.parameters()).device
         sides = []
@@ -387,6 +454,7 @@ class Sleeper:
                         model.parameters(), 1.0)
                     opt.step()
                     self.steps_taken += 1
+                    self._downscale(model)     # A76
         finally:
             model.store_read_off = False
             for p_, rg in saved:
@@ -437,6 +505,12 @@ class Sleeper:
             # pair adds the contrastive signal CE cannot express)
             self.harvest(drive)
         if self.arm == "C" and self.pairs:
+            hot = [p for p in self.pairs if p.get("hot")]
+            if hot:
+                # A72: guaranteed — no lottery draw for a hot pair
+                return self._pair_block(
+                    model, opt, step,
+                    pick=max(hot, key=lambda p: p["pay"]))
             wp = sum(p["pay"] for p in self.pairs)
             ws = sum(s["pay"] for s in self.spans)
             if not ws or self.rng.random() < wp / (wp + ws):
@@ -445,21 +519,42 @@ class Sleeper:
             return None
         return self._block(model, opt, step)
 
-    def _block(self, model, opt, step):
-        span = self.rng.choices(
-            self.spans, weights=[s["pay"] for s in self.spans])[0]
+    def _window(self, span, need):
         lo0 = max(span["t0"], self.start)
         hi0 = min(span["t1"], self.end)
-        need = self.block_chunks * self.T + 1
         if hi0 - lo0 > need:
             lo = lo0 + self.rng.randrange(hi0 - lo0 - need + 1)
-            hi = lo + need
+            return lo, lo + need
+        return lo0, hi0
+
+    def _block(self, model, opt, step):
+        span = self.rng.choices(
+            self.spans, weights=self._span_weights())[0]
+        # A73 (gated): splice — one chunk each from TWO spans under
+        # one carried state (cross-episode adjacency, real tokens
+        # only). CE arms only; arm B keeps its certified teacher.
+        splice_span = None
+        if self.splice and self.arm != "B" and len(self.spans) > 1                 and self.rng.random() < self.splice:
+            others = [s_ for s_ in self.spans if s_ is not span]
+            splice_span = self.rng.choices(
+                others, weights=[s_["pay"] for s_ in others])[0]
+        if splice_span is not None:
+            need = self.T + 1
+            lo, hi = self._window(span, need)
+            lo2, hi2 = self._window(splice_span, need)
+            toks = self.buffers[span["lane"]][lo - self.start:
+                                              hi - self.start]
+            toks2 = self.buffers[splice_span["lane"]][
+                lo2 - self.start: hi2 - self.start]
+            if len(toks) < MIN_REPLAY or len(toks2) < MIN_REPLAY:
+                return None
         else:
-            lo, hi = lo0, hi0
-        toks = self.buffers[span["lane"]][lo - self.start:
-                                          hi - self.start]
-        if len(toks) < MIN_REPLAY:
-            return None
+            need = self.block_chunks * self.T + 1
+            lo, hi = self._window(span, need)
+            toks = self.buffers[span["lane"]][lo - self.start:
+                                              hi - self.start]
+            if len(toks) < MIN_REPLAY:
+                return None
         device = next(model.parameters()).device
         saved = [(p, p.requires_grad)
                  for n, p in model.named_parameters()
@@ -471,17 +566,21 @@ class Sleeper:
         model.eval()
         st = model.init_state(1, device)
         losses = []
-        if self.replay_twice:
-            parts = [(0, toks), (0, toks)]
+        # every part carries (abs_lo, tokens, source_span) so
+        # provenance and the only-paid audit stay exact under splice
+        if splice_span is not None:
+            parts = [(lo, toks, span), (lo2, toks2, splice_span)]
+        elif self.replay_twice:
+            parts = [(lo, toks, span), (lo, toks, span)]
         else:
             parts = []
             for off in range(0, len(toks) - 1, self.T):
                 xs = toks[off: off + self.T + 1]
                 if len(xs) < MIN_REPLAY and off > 0:
                     break        # trailing sliver: not worth a step
-                parts.append((off, xs))
+                parts.append((lo + off, xs, span))
         try:
-            for off, xs in parts:
+            for plo, xs, psp in parts:
                 x = torch.tensor([xs[:-1]], dtype=torch.long,
                                  device=device)
                 y = torch.tensor([xs[1:]], dtype=torch.long,
@@ -517,14 +616,15 @@ class Sleeper:
                             model.parameters(), 1.0)
                         opt.step()
                         self.steps_taken += 1
+                        self._downscale(model)     # A76
                 st = model.detach_state(st)
                 losses.append(float(loss.detach()))
                 self.replayed.append(
                     {"step": step, "arm": self.arm,
-                     "lane": span["lane"], "lo": lo + off,
-                     "hi": lo + off + len(xs),
-                     "ledger_i": span["i"], "pay": span["pay"],
-                     "t0": span["t0"], "t1": span["t1"]})
+                     "lane": psp["lane"], "lo": plo,
+                     "hi": plo + len(xs),
+                     "ledger_i": psp["i"], "pay": psp["pay"],
+                     "t0": psp["t0"], "t1": psp["t1"]})
         finally:
             model.store_read_off = False
             for p, rg in saved:
@@ -536,6 +636,8 @@ class Sleeper:
                "span": (span["t0"], span["t1"]),
                "window": (lo, hi), "pay": round(span["pay"], 4),
                "chunks": len(losses),
+               "splice": (splice_span["t0"], splice_span["t1"])
+               if splice_span is not None else None,
                "loss": round(sum(losses) / max(len(losses), 1), 4)}
         self.stats.append(row)
         print(f"    sleep@{step} arm{self.arm} lane{span['lane']} "

@@ -459,6 +459,57 @@ def prepare_life(out_dir, budget_tokens, n_lives, seed=0,
     return out_dir
 
 
+def smoltalk2_source(paths, en_only=True):
+    """Conversations from SmolTalk2-format parquet (messages =
+    [{content, role}]). Serves both the SmolTalk2 no_think subsets
+    and Smol-Magpie-Ultra (smoltalk2's newest curation of it).
+    Convs containing system/tool roles are dropped WHOLE (a being
+    with no tools and no system channel); EN gate = deterministic
+    heuristic (ascii ratio + judge stopword rate) on the first
+    exchange. Yields alternating [u, a, u, a, ...]."""
+    import pyarrow.parquet as pq
+
+    def _en(text):
+        if not text:
+            return False
+        ascii_r = sum(1 for c in text if ord(c) < 128) / len(text)
+        w = J._words(text)
+        stop = (sum(1 for x in w if x in J.STOPWORDS) / len(w)) \
+            if w else 0.0
+        return ascii_r >= 0.9 and stop >= 0.12
+
+    def gen():
+        for path in paths:
+            pf = pq.ParquetFile(path)
+            for batch in pf.iter_batches(batch_size=256,
+                                         columns=["messages"]):
+                for msgs in batch.to_pydict()["messages"]:
+                    roles = [m["role"] for m in msgs]
+                    if any(r not in ("user", "assistant")
+                           for r in roles):
+                        continue
+                    if not msgs or roles[0] != "user":
+                        continue
+                    texts = [m["content"] or "" for m in msgs]
+                    if en_only and not _en(" ".join(texts[:2])):
+                        continue
+                    n = len(texts) - len(texts) % 2
+                    if n >= 2:
+                        yield texts[:n]
+    return gen()
+
+
+def simple_only(src, max_words=80):
+    """Infancy filter: only the spine's shortest, simplest
+    exchanges (every turn under max_words) — 'least to best, like
+    learning' starts with the simplest conversations."""
+    def gen():
+        for turns in src:
+            if all(len(t.split()) <= max_words for t in turns):
+                yield turns
+    return gen()
+
+
 def ultrachat_source(path, skip=0):
     """Conversations (lists of alternating turn strings, human
     first) from a local UltraChat jsonl."""
@@ -491,9 +542,26 @@ if __name__ == "__main__":
     ap.add_argument("--ultrachat", default="data/ultrachat_raw.jsonl")
     ap.add_argument("--skip", type=int, default=0)
     ap.add_argument("--shuffle-sessions", action="store_true")
+    ap.add_argument("--st2-dir", default=None,
+                    help="dir of SmolTalk2 no_think parquet files "
+                         "(adolescence); magpie files excluded")
+    ap.add_argument("--magpie-dir", default=None,
+                    help="dir holding smol_magpie_ultra parquet "
+                         "(the tail)")
     a = ap.parse_args()
+    import glob as _glob
     src = {"default": ultrachat_source(a.ultrachat, a.skip),
-           "tokenizer": ultrachat_source(a.ultrachat, a.skip)}
+           "tokenizer": ultrachat_source(a.ultrachat, a.skip),
+           "infancy": simple_only(
+               ultrachat_source(a.ultrachat, a.skip)),
+           "childhood": ultrachat_source(a.ultrachat, a.skip + 40)}
+    if a.st2_dir:
+        st2 = sorted(f for f in _glob.glob(f"{a.st2_dir}/*.parquet")
+                     if "magpie" not in f)
+        src["adolescence"] = smoltalk2_source(st2)
+    if a.magpie_dir:
+        mag = sorted(_glob.glob(f"{a.magpie_dir}/*magpie*.parquet"))
+        src["tail"] = smoltalk2_source(mag)
     prepare_life(a.out, a.budget, a.lives, seed=a.seed,
                  world_seed=a.world_seed, vocab=a.vocab,
                  tokenizer_path=a.tokenizer, sources=src,

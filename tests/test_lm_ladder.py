@@ -1920,6 +1920,135 @@ class TestPressPlumbing(unittest.TestCase):
                          ["<pad>", "<eot_human>", "<eot_model>"])
 
 
+class TestSleepOrgans(unittest.TestCase):
+    """v10 organ program, sleep quartet: A72 hot-pair guarantee,
+    A73 splice provenance, A74 surprise weighting, A76 homeostasis.
+    Defaults-off bit-parity is proven against the pre-change
+    training fingerprint at build time; these are the on-laws."""
+
+    _Tok = TestServeLaws._Tok
+    EOT_H, EOT_M = 1, 2
+
+    def _session(self, **kw):
+        import torch as t
+        from iga.lm_hybrid import HybridLM
+        from iga.lm_serve import ServeSession
+        from iga.lm_sleep import Sleeper
+        t.manual_seed(0)
+        m = HybridLM(64, d=32, n_layers=2, n_heads=2, max_T=64,
+                     store="matrix", keyed="logit", norm_mix=True,
+                     aux_trunk=0.2, use_xl=False)
+        sl = Sleeper(arm="C", every=1, block_chunks=2, seed=3, **kw)
+        s = ServeSession(m, self._Tok(), T=64, device="cpu",
+                         sleeper=sl, seed=0)
+        return s, sl, m
+
+    def _hot_stream(self, s, v_neg):
+        import torch as t
+        t.manual_seed(11)
+        s._append(t.randint(3, 60, (91,)).tolist())
+        s._append([self.EOT_H])
+        s._append([7] * 8)
+        s._append([self.EOT_M])
+        s.drive.step_t = 101
+        s.drive.button(0, v_neg)
+        s._append([62])
+        s._append([9] * 8)
+        s._append([self.EOT_H])
+        s._append([11] * 3)
+        s._append([self.EOT_M])
+        s.drive.step_t = 115
+        s.drive.button(0, 2)
+        s._append([61])
+        s._flush()
+
+    def _arm(self, s, sl):
+        import torch as t
+        sl.pair_tokens = {"eot_h": self.EOT_H, "eot_m": self.EOT_M,
+                          "marks": (60, 61, 62, 63)}
+        # a fat paid span the lottery would all but surely pick
+        s.drive.ledger.append({"lane": 0, "t0": 0, "t1": 90,
+                               "pay": 1e6})
+        return t.optim.AdamW(s.m.parameters(), lr=1e-4)
+
+    def test_A72_hot_pair_skips_lottery(self):
+        s, sl, m = self._session()
+        self._hot_stream(s, -2)                    # HOT
+        opt = self._arm(s, sl)
+        row = sl.maybe_sleep(m, opt, s.drive, step=1)
+        self.assertIsNotNone(row)
+        self.assertIn("pair", row, "hot pair must be guaranteed")
+        self.assertTrue(sl.pairs[0]["hot"])
+        # same stream, ordinary -1: the fat span wins the lottery
+        s2, sl2, m2 = self._session()
+        self._hot_stream(s2, -1)
+        opt2 = self._arm(s2, sl2)
+        row2 = sl2.maybe_sleep(m2, opt2, s2.drive, step=1)
+        self.assertIsNotNone(row2)
+        self.assertIn("span", row2)
+        self.assertFalse(sl2.pairs[0]["hot"])
+
+    def test_A73_splice_provenance_only_paid(self):
+        import torch as t
+        s, sl, m = self._session(splice=1.0)
+        sl.arm = "A"
+        t.manual_seed(5)
+        s._append(t.randint(3, 60, (600,)).tolist())
+        s._flush()
+        s.drive.ledger.append({"lane": 0, "t0": 10, "t1": 120,
+                               "pay": 1.0})
+        s.drive.ledger.append({"lane": 0, "t0": 300, "t1": 420,
+                               "pay": 1.0})
+        opt = t.optim.AdamW(m.parameters(), lr=1e-4)
+        row = sl.maybe_sleep(m, opt, s.drive, step=1)
+        self.assertIsNotNone(row)
+        self.assertIsNotNone(row["splice"], "splice=1.0 must splice")
+        self.assertTrue(sl.audit()["only_paid"],
+                        "each spliced part carries its OWN span")
+        spans_hit = {r["t0"] for r in sl.replayed}
+        self.assertEqual(len(spans_hit), 2,
+                         "two different episodes in one block")
+
+    def test_A74_surprise_weights(self):
+        from iga.lm_sleep import Sleeper
+        sl = Sleeper(arm="A", every=1, novelty=1.0, seed=0)
+        sl.spans = [{"lane": 0, "t0": 0, "t1": 100, "pay": 1.0,
+                     "i": 0},
+                    {"lane": 0, "t0": 200, "t1": 300, "pay": 1.0,
+                     "i": 1}]
+        sl.note_ce(8.0, 200, 300)      # span 2 is surprising
+        sl.note_ce(0.1, 0, 100)        # span 1 is mastered
+        w = sl._span_weights()
+        self.assertGreater(w[1], w[0])
+        sl.novelty = 0.0
+        self.assertEqual(sl._span_weights(), [1.0, 1.0],
+                         "novelty=0 is the certified pay lottery")
+
+    def test_A76_downscale_surface(self):
+        import torch as t
+        from iga.lm_sleep import (FREEZE_EXACT, FREEZE_PREFIXES,
+                                  Sleeper)
+        s, sl, m = self._session(homeostasis=0.01)
+        before = {n: p.detach().clone()
+                  for n, p in m.named_parameters()}
+        sl._downscale(m)
+        for n, p in m.named_parameters():
+            if n.startswith(FREEZE_PREFIXES) or n in FREEZE_EXACT:
+                self.assertTrue(t.equal(before[n], p),
+                                f"frozen surface touched: {n}")
+            else:
+                self.assertTrue(
+                    t.allclose(before[n] * 0.99, p),
+                    f"unfrozen param not downscaled: {n}")
+        # and h=0 is a no-op
+        sl.homeostasis = 0.0
+        snap = {n: p.detach().clone()
+                for n, p in m.named_parameters()}
+        sl._downscale(m)
+        for n, p in m.named_parameters():
+            self.assertTrue(t.equal(snap[n], p))
+
+
 class TestLifeBuilder(unittest.TestCase):
     """v10 biography builder laws — equal lives (the lane-boundary
     law), exact budgets, the certified correction grammar in real

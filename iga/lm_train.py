@@ -398,6 +398,9 @@ def train(d=64, lanes=4, T=256, steps=40, seed=0, device="cpu",
         ce, loss = process_chunk(model, drive, conveyor, T, device,
                                  opt, bf16=bf16)
         if sleep is not None:
+            # A74: stamp the wake step's CE over its token range —
+            # append-only, no RNG, no graph; only novelty>0 reads it
+            sleep.note_ce(ce, drive.step_t - T, drive.step_t)
             sleep.maybe_sleep(model, opt, drive, step)
         if prophet is not None:
             prophet.observe(model, drive)   # A64 spectator (B5)
