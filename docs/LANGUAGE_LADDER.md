@@ -3929,6 +3929,38 @@ scale, not blocking this one. Target cost: $15–40 total.
   executed: 2 of 7 organs ship on evidence; 5 stay out with
   numbers attached.
 
+- **V10 GATE PROGRAM CLOSES (2026-08-20; 12k one-epoch run,
+  fresh 15.4M shards; evidence v10_g1_12k.json + v10_a77.json).**
+  THE HONEST REVISIONS, stated against my own run-1 headline:
+  (1) **the ordering CE advantage is an early-training transient**
+  — 0.39 nats at 4k steps decays to 0.02 nats at 12k one-epoch;
+  the QUAD's CE rows (4k) inherit this. What PERSISTS is the
+  recall advantage: +13% cross-day hits at 12k (332 vs 295,
+  n=1141) after +37% at 4k. (2) **the shuffled control carries a
+  press-density confound**: uniform gap menus fire far fewer cast
+  asks (bio 1018 corrections/11392 +2s vs ctrl 78/2857), so G2
+  measures the biography REGIME (ordering + the rehearsal density
+  that staged recurrence intrinsically produces) rather than pure
+  ordering — partially intrinsic (spaced recurrence IS more
+  rehearsal), named rather than hidden. A density-matched control
+  (permuted gap assignment at fixed ask count) is the v10.1
+  instrument. (3) **G1 stays unarmed at debug tier**: in-ctx flat
+  (.254 -> .247 -> .260) across 4k/8k-wrapped/12k — the
+  real-corpus binder does not emerge at d=128 regardless of steps;
+  the closed-set 2x bar is also inflated by color-marginal priors.
+  DISPOSITION: G1 moves to the 500M growth chart (childhood-end
+  milestone: binder armed), enforced by the kill protocol — the
+  honest scale-aware handling, since capacity was the binder's
+  bottleneck at every tier we've measured (A69-R1).
+  (4) **A77 OUT for the flash** (dreams ran — 60 judge-selected
+  steps — and hurt recall in every bin at d=128; "dreams need a
+  bigger brain," the pre-registered path: defers to the served
+  life). (5) The 8k run WRAPPED its shard (one-epoch law violated
+  by my own driver — now hard-asserted, shards auto-sized 1.25x).
+  FINAL SCOREBOARD: A72 + A76 ship; A71/A73/A74/A75/A77 out with
+  numbers, on the relaunch-playbook shelf. Gates G2/G3 pass; G1
+  owned by the 500M growth chart. Pre-flight code complete.
+
 ## Status
 
 **(2026-08-19, post-v9.4)** The substrate campaign is complete:

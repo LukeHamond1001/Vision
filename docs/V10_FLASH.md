@@ -391,15 +391,19 @@ instrument law with instruments anyone can check.
 ## 6. Gates and the run protocol (user-specified: probes,
 heartbeats, kill, fix, relaunch)
 
-Pre-flight (debug, $0): binder precondition (in-ctx recall >= 2x
-chance — A69-R1's law), G1-G4 life gates on PREPARED real-corpus
-mini-shards (G2 control = shuffle-sessions-KEEP-WORLD, per
-A69-R4's own confound note — never cross_days=False), the organ
-gates A71-A77 (section 1c), THE QUAD (hybrid-vs-transformer x
-ordered-vs-shuffled — answering A50's cancelled twin at debug
-scale) + a pre-registered written rebuttal of the
-nightly-SFT-on-pressed-spans skeptic baseline, and the pair laws
-suite (85/85 at A70).
+Pre-flight (debug, $0) — CLOSED 2026-08-20 (ledger: "V10 GATE
+PROGRAM CLOSES"): G2 ordering PASS (+13% cross-day recall at 12k
+one-epoch; the CE component is an early-training transient, and
+the control carries a named press-density confound — a density-
+matched control is the v10.1 instrument); G3 pairs PASS; G1
+binder unarmed at debug tier -> moves to the 500M GROWTH CHART
+(childhood-end milestone, kill-enforced); THE QUAD measured
+(ordering helps the plain twin equally at flash time; the organs'
+value is the served life, per the division-of-labor law; hybrid's
+flash edge = cross-day recall, thin n); organ verdicts per 1c.
+Suite 107/107. Remaining before launch: pod driver, judge freeze
+on real stage mixes, demo protocol pre-registration + skeptic
+rebuttal docs.
 
 In-flight heartbeats (500M, on checkpoints + live guard log):
 - CE trajectory vs reference curve

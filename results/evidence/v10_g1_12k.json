@@ -1,0 +1,90 @@
+{
+ "steps": 12000,
+ "d": 128,
+ "arms": {
+  "bio": {
+   "train": {
+    "ce_first": 9.31985855102539,
+    "ce_last": 4.376961708068848,
+    "secs": 2015,
+    "params": 5290629,
+    "pairs": 5,
+    "pair_law": true,
+    "sleep_steps": 750,
+    "only_paid": true
+   },
+   "eval": {
+    "ce": 4.9592,
+    "recall": {
+     "in-ctx": {
+      "acc": 0.26,
+      "n": 1359
+     },
+     "short": {
+      "acc": 0.267,
+      "n": 4131
+     },
+     "b3": {
+      "acc": 0.302,
+      "n": 623
+     },
+     "b4": {
+      "acc": 0.281,
+      "n": 487
+     },
+     "b5+": {
+      "acc": 0.226,
+      "n": 31
+     }
+    }
+   }
+  },
+  "ctrl": {
+   "train": {
+    "ce_first": 9.31985855102539,
+    "ce_last": 4.482120513916016,
+    "secs": 1735,
+    "params": 5290629,
+    "pairs": 2,
+    "pair_law": true,
+    "sleep_steps": 750,
+    "only_paid": true
+   },
+   "eval": {
+    "ce": 4.9794,
+    "recall": {
+     "in-ctx": {
+      "acc": 0.245,
+      "n": 1359
+     },
+     "short": {
+      "acc": 0.251,
+      "n": 4131
+     },
+     "b3": {
+      "acc": 0.247,
+      "n": 623
+     },
+     "b4": {
+      "acc": 0.271,
+      "n": 487
+     },
+     "b5+": {
+      "acc": 0.29,
+      "n": 31
+     }
+    }
+   }
+  }
+ },
+ "verdicts": {
+  "G1_binder": false,
+  "G3_pairs": true,
+  "G2_ordering": true,
+  "G2_detail": {
+   "bio_hits": 332.0,
+   "ctrl_hits": 294.8,
+   "n": 1141
+  }
+ }
+}
