@@ -4060,3 +4060,29 @@ bearing. Pod sequence: prep (CPU) -> paid smoke over lanes {8,12}
 at exact 20L shapes -> full build at the smoke's lane pick -> the
 flash, GO-gated, watchdogged, killable. The next entry should be
 written by the heartbeats.
+
+THE DEAD-INSTRUMENT CAVEAT, LEDGERED BEFORE THE FLASH (2026-08-20).
+The user asked the right question: are the debug-tier organ
+exclusions scale-safe? Audit answer: A75 (mechanical break) and A71
+(twice-lost, two substrates) are solid; A77's exclusion is
+scale-AWARE by pre-registration (harm at d=128, defers to the
+served life); but A73/A74 are NULLS measured through integration/
+recall probes that route through the binder — and THE BINDER NEVER
+ARMED AT DEBUG SCALE. A null read on a dead instrument is weak
+evidence squared. Named honestly: the flash may be leaving
+splice-replay/novelty-lottery value on the table. The user chose
+(recorded verbatim intent): full run, no pre-gate — dense probes,
+watch everything contributes/trains/remembers, kill-fix-relaunch
+on anything wrong. What covers the caveat in-flight: the binder is
+a kill-enforced childhood-end growth milestone, so the instrument
+ARMS mid-run; if it arms while cross-episode integration lags, A73/
+A74 are one flag away at a stage boundary under the relaunch
+playbook. The single-phase night carries the same caveat and the
+same remedy. Also this hour: the GPU shop — nobody stocks A100 and
+H100 in one volume DC, so shards ride the results branch to a
+volume-less H100 shopper; A100 ($1.39) vs H100 SXM ($3.29,
+breakeven 2.37x) vs RTX PRO 6000 ($2.09, breakeven 1.5x) settle on
+MEASURED tok/s per dollar, not spec sheets. 5090 priced out: 32GB
+cannot hold the certified fp32 config. Probe density raised
+(heartbeats 6k steps, lesions every 2nd beat, economy/sleep vitals
+in the driver trace).
