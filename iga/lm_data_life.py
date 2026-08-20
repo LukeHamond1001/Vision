@@ -70,6 +70,103 @@ STAGES_V10 = (
 )
 
 
+# The FLASH stage table (2026-08-20, user-chosen budget path): the
+# measured spine is UC 1.9B + curated ST2 1.04B + Magpie 0.76B, so
+# with one-epoch UltraChat (infancy carved from its simplest slice
+# by split_ultrachat) and TWO epochs of the late stages (the plan's
+# pre-named Muennighoff fallback), the feasible flash is ~5.2B and
+# the shares shift to {.08/.27/.38/.27} — order and least->best
+# unchanged; the fatter tail puts MORE of the highest-pedigree
+# material on the cosine tail (rising-pedigree law). Gap menus, day
+# shapes, and correction rates carry over per stage name.
+STAGES_V10_FLASH = (
+    Stage("infancy", 0.08, (4, 8), 0.00,
+          ((96, 4), (700, 3)), 3),
+    Stage("childhood", 0.27, (6, 14), 0.05,
+          ((96, 3), (700, 3), (5000, 2), (24000, 2)), 4),
+    Stage("adolescence", 0.38, (10, 22), 0.06,
+          ((700, 2), (5000, 3), (24000, 3), (131072, 2),
+           (1048576, 1)), 5),
+    Stage("tail", 0.27, (8, 16), 0.04,
+          ((5000, 2), (24000, 2), (131072, 2), (1048576, 1)), 4),
+)
+
+
+def epochs(factory, n=1):
+    """n passes over a source, each from a FRESH generator (the
+    Muennighoff <=4-epoch repetition fallback; n=1 = one-epoch law
+    unchanged)."""
+    def gen():
+        for _ in range(max(1, int(n))):
+            for x in factory():
+                yield x
+    return gen()
+
+
+def split_ultrachat(path, out_simple, out_rest, infancy_words,
+                    skip=0):
+    """ONE pass over the shared UltraChat file -> two disjoint
+    files: the SIMPLEST conversations (smallest per-conv max turn
+    length, by an adaptive threshold that just covers the infancy
+    word budget) and everything else. Fixes the flash-scale A12
+    violation where infancy and childhood re-read the same rows,
+    and replaces the fixed 80-word filter that passed only ~1% of
+    UltraChat (the 44M-budget collapse, 2026-08-20).
+
+    Two passes over the jsonl (cheap line streams): pass 1 builds a
+    histogram of per-conv max-turn-words vs words; pass 2 routes.
+    Returns {"threshold": T, "simple_words": w, "rest_words": w2,
+    "simple_convs": n, "rest_convs": n2}."""
+    hist = {}
+    for turns in ultrachat_source(path, skip):
+        mx = max(len(t.split()) for t in turns)
+        w = sum(len(t.split()) for t in turns)
+        b = min(mx // 20, 400)          # 20-word bins, cap 8k words
+        c, ww = hist.get(b, (0, 0))
+        hist[b] = (c + 1, ww + w)
+    acc = 0
+    thr_bin = max(hist)
+    for b in sorted(hist):
+        acc += hist[b][1]
+        if acc >= infancy_words:
+            thr_bin = b
+            break
+    T = (thr_bin + 1) * 20
+    res = {"threshold": T, "simple_words": 0, "rest_words": 0,
+           "simple_convs": 0, "rest_convs": 0}
+    with open(out_simple, "w") as fs, open(out_rest, "w") as fr:
+        for turns in ultrachat_source(path, skip):
+            mx = max(len(t.split()) for t in turns)
+            w = sum(len(t.split()) for t in turns)
+            simple = mx <= T and \
+                res["simple_words"] + w <= infancy_words * 1.05
+            f = fs if simple else fr
+            k = "simple" if simple else "rest"
+            f.write(json.dumps({"data": turns}) + "\n")
+            res[k + "_words"] += w
+            res[k + "_convs"] += 1
+    return res
+
+
+def feasible_budget(rep, stages, st2_epochs=1, magpie_epochs=1,
+                    margin=0.94):
+    """The honest flash budget from a measure report: UltraChat is
+    ONE shared pool feeding infancy+childhood (the measure's
+    'childhood' row counts the full file; 'infancy' is a subset of
+    it, never additive), and the late stages scale by their epoch
+    counts."""
+    f = {s.name: s.frac for s in stages}
+    uc = rep["childhood"]["est_tokens"]
+    caps = [uc / (f["infancy"] + f["childhood"])]
+    if "adolescence" in rep:
+        caps.append(rep["adolescence"]["est_tokens"] * st2_epochs
+                    / f["adolescence"])
+    if "tail" in rep:
+        caps.append(rep["tail"]["est_tokens"] * magpie_epochs
+                    / f["tail"])
+    return int(min(caps) * margin)
+
+
 class StageScheduler:
     def __init__(self, life_budget, stages=STAGES_V10):
         assert abs(sum(s.frac for s in stages) - 1.0) < 1e-6
@@ -601,9 +698,21 @@ if __name__ == "__main__":
     import argparse
     ap = argparse.ArgumentParser()
     ap.add_argument("mode", choices=["prepare", "measure",
-                                     "freeze-judge"])
+                                     "freeze-judge", "split-uc"])
     ap.add_argument("--out", required=True)
     ap.add_argument("--budget", type=int, default=0)
+    ap.add_argument("--stages", default="gate",
+                    choices=["gate", "flash"],
+                    help="gate=STAGES_V10 (parity), flash=the "
+                         "supply-fitted 5.2B table")
+    ap.add_argument("--st2-epochs", type=int, default=1)
+    ap.add_argument("--magpie-epochs", type=int, default=1)
+    ap.add_argument("--ultrachat-simple", default=None,
+                    help="split-uc output: pre-filtered infancy file")
+    ap.add_argument("--ultrachat-rest", default=None,
+                    help="split-uc output: childhood file")
+    ap.add_argument("--infancy-tokens", type=int, default=0,
+                    help="split-uc: infancy token budget to cover")
     ap.add_argument("--lives", type=int, default=4)
     ap.add_argument("--seed", type=int, default=0)
     ap.add_argument("--world-seed", type=int, default=None)
@@ -627,22 +736,38 @@ if __name__ == "__main__":
     a = ap.parse_args()
     import glob as _glob
 
-    def _src():
-        s = {"default": ultrachat_source(a.ultrachat, a.skip),
-             "tokenizer": ultrachat_source(a.ultrachat, a.skip),
-             "infancy": simple_only(
-                 ultrachat_source(a.ultrachat, a.skip)),
-             "childhood": ultrachat_source(a.ultrachat, a.skip + 40)}
+    def _src(ep=True):
+        if a.ultrachat_simple and a.ultrachat_rest:
+            # split-uc products: disjoint files, one shared pass
+            # already done — no filter, no double consumption
+            s = {"default": ultrachat_source(a.ultrachat_rest),
+                 "tokenizer": ultrachat_source(a.ultrachat_rest),
+                 "infancy": ultrachat_source(a.ultrachat_simple),
+                 "childhood": ultrachat_source(a.ultrachat_rest)}
+        else:
+            s = {"default": ultrachat_source(a.ultrachat, a.skip),
+                 "tokenizer": ultrachat_source(a.ultrachat, a.skip),
+                 "infancy": simple_only(
+                     ultrachat_source(a.ultrachat, a.skip)),
+                 "childhood": ultrachat_source(a.ultrachat,
+                                               a.skip + 40)}
         if a.st2_dir:
             st2 = sorted(f for f in
                          _glob.glob(f"{a.st2_dir}/*.parquet")
                          if "magpie" not in f)
-            s["adolescence"] = smoltalk2_source(st2)
+            s["adolescence"] = epochs(
+                lambda: smoltalk2_source(st2),
+                a.st2_epochs if ep else 1)
         if a.magpie_dir:
             mag = sorted(
                 _glob.glob(f"{a.magpie_dir}/*magpie*.parquet"))
-            s["tail"] = smoltalk2_source(mag)
+            s["tail"] = epochs(
+                lambda: smoltalk2_source(mag),
+                a.magpie_epochs if ep else 1)
         return s
+
+    stages_sel = STAGES_V10_FLASH if a.stages == "flash" \
+        else STAGES_V10
 
     if a.mode == "measure":
         if a.tokenizer:
@@ -658,17 +783,37 @@ if __name__ == "__main__":
                     break
             tok = train_tokenizer(iter(sample), a.out + ".tok.json",
                                   a.vocab, specials=SPECIALS_LIFE)
-        rep = _measure(_src(), STAGES_V10, tok=tok)
+        rep = _measure(_src(ep=False), stages_sel, tok=tok)
+        # the honest ceiling: UltraChat is one shared pool for
+        # infancy+childhood; late stages scale by their epochs
+        rep["_max_budget"] = feasible_budget(
+            rep, stages_sel, a.st2_epochs, a.magpie_epochs)
+        rep["_epochs"] = {"st2": a.st2_epochs,
+                          "magpie": a.magpie_epochs}
+        rep["_stages"] = a.stages
         os.makedirs(os.path.dirname(a.out) or ".", exist_ok=True)
         with open(a.out, "w") as f:
             json.dump(rep, f, indent=1)
         print(json.dumps(rep, indent=1))
     elif a.mode == "freeze-judge":
-        t = _freeze_judge(_src(), STAGES_V10, per_stage=a.per_stage)
+        t = _freeze_judge(_src(ep=False), stages_sel,
+                          per_stage=a.per_stage)
         os.makedirs(os.path.dirname(a.out) or ".", exist_ok=True)
         with open(a.out, "w") as f:
             json.dump(t, f, indent=1)
         print(json.dumps(t, indent=1))
+    elif a.mode == "split-uc":
+        assert a.infancy_tokens > 0, "split-uc needs --infancy-tokens"
+        assert a.ultrachat_simple and a.ultrachat_rest, \
+            "split-uc needs --ultrachat-simple/--ultrachat-rest"
+        # words needed ~ tokens / (tok/word of simple text, ~1.6)
+        res = split_ultrachat(a.ultrachat, a.ultrachat_simple,
+                              a.ultrachat_rest,
+                              int(a.infancy_tokens / 1.55),
+                              skip=a.skip)
+        with open(a.out, "w") as f:
+            json.dump(res, f, indent=1)
+        print(json.dumps(res, indent=1))
     else:
         assert a.budget > 0, "prepare needs --budget"
         if a.judge_thresholds:
@@ -676,5 +821,6 @@ if __name__ == "__main__":
         prepare_life(a.out, a.budget, a.lives, seed=a.seed,
                      world_seed=a.world_seed, vocab=a.vocab,
                      tokenizer_path=a.tokenizer, sources=_src(),
+                     stages=stages_sel,
                      tok_sample=a.tok_sample,
                      shuffle_sessions=a.shuffle_sessions)

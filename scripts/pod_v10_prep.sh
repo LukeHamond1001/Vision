@@ -44,6 +44,22 @@ hb "deps ready"
 RAW=$DATA/raw
 UC_ALL=$RAW/ultrachat_all.jsonl
 UC_EVAL=$RAW/ultrachat_train_9.jsonl
+UC_SIMPLE=$DATA/uc_simple.jsonl
+UC_REST=$DATA/uc_rest.jsonl
+STG="--stages flash --st2-epochs 2 --magpie-epochs 2"
+
+# generation sentinel: derived artifacts from an older prep design
+# are poison (the 44M-budget corpus, 2026-08-20) — wipe everything
+# DERIVED once per generation tag; raw fetches survive.
+GEN=b2
+if [ ! -f "$DATA/.gen_$GEN" ]; then
+  rm -rf "$DATA/flash" "$DATA/flash_eval" "$DATA"/smoke_l* \
+    "$DATA/measure.json" "$DATA/judge_freeze.json" \
+    "$UC_SIMPLE" "$UC_REST" "$DATA/split.json" \
+    /workspace/v10_ship.tar /workspace/v10_out 2>/dev/null || true
+  touch "$DATA/.gen_$GEN"
+  hb "generation wipe -> $GEN"
+fi
 
 # ---- 1. fetch ----
 if [ ! -f "$RAW/.fetch_done" ]; then
@@ -61,20 +77,44 @@ if [ ! -f "$UC_ALL" ]; then
   hb "uc concat $(du -BG "$UC_ALL" | cut -f1)"
 fi
 
-# ---- 3. measure one-epoch yield ----
+# ---- 3. measure the honest feasible budget (shared UC pool,
+# late-stage epochs, flash fracs) ----
 if [ ! -f "$DATA/measure.json" ]; then
+  # shellcheck disable=SC2086
   python -m iga.lm_data_life measure --out "$DATA/measure.json" \
-    --ultrachat "$UC_ALL" --st2-dir "$RAW" --magpie-dir "$RAW" \
+    $STG --ultrachat "$UC_ALL" --st2-dir "$RAW" --magpie-dir "$RAW" \
     >> prep.log 2>&1
   cp "$DATA/measure.json" measure.json 2>/dev/null || true
   hb "measure: $(python -c "import json;print(json.load(open('$DATA/measure.json'))['_max_budget'])" 2>/dev/null || echo FAILED)"
 fi
+[ -f "$DATA/measure.json" ] || { hb "ABORT no measure"; exit 1; }
+BUDGET=$(python - <<'P'
+import json
+m = json.load(open("/workspace/v10/measure.json"))
+print(min(m["_max_budget"], 10_000_000_000))
+P
+)
 
-# ---- 4. freeze judge on the real stage mixes ----
+# ---- 3b. split UltraChat: simplest slice -> infancy (one shared
+# pass; infancy and childhood never re-read the same rows) ----
+if [ ! -f "$DATA/split.json" ]; then
+  python -m iga.lm_data_life split-uc --out "$DATA/split.json" \
+    --ultrachat "$UC_ALL" \
+    --ultrachat-simple "$UC_SIMPLE" --ultrachat-rest "$UC_REST" \
+    --infancy-tokens $((BUDGET * 8 / 100 * 105 / 100)) \
+    >> prep.log 2>&1
+  hb "uc split: $(head -c 200 "$DATA/split.json" 2>/dev/null | tr -d '\n ' || echo FAILED)"
+fi
+[ -f "$UC_SIMPLE" ] || { hb "ABORT no uc split"; exit 1; }
+UCARGS="--ultrachat $UC_ALL --ultrachat-simple $UC_SIMPLE --ultrachat-rest $UC_REST"
+
+# ---- 4. freeze judge on the real stage mixes (infancy graded on
+# the real simple slice) ----
 if [ ! -f "$DATA/judge_freeze.json" ]; then
+  # shellcheck disable=SC2086
   python -m iga.lm_data_life freeze-judge \
     --out "$DATA/judge_freeze.json" \
-    --ultrachat "$UC_ALL" --st2-dir "$RAW" --magpie-dir "$RAW" \
+    $STG $UCARGS --st2-dir "$RAW" --magpie-dir "$RAW" \
     >> prep.log 2>&1
   cp "$DATA/judge_freeze.json" judge_freeze.json 2>/dev/null || true
   hb "judge freeze $( [ -f "$DATA/judge_freeze.json" ] && echo ok || echo FAILED)"
@@ -84,9 +124,10 @@ fi
 # ---- 5. paid-smoke shards (exact-shape minis) ----
 for L in ${SMOKE_LANES:-8 12}; do
   if [ ! -f "$DATA/smoke_l$L/manifest.json" ]; then
+    # shellcheck disable=SC2086
     python -m iga.lm_data_life prepare --out "$DATA/smoke_l$L" \
       --budget $((L * 2000000)) --lives $L --seed 10 \
-      --ultrachat "$UC_ALL" \
+      $STG $UCARGS \
       --st2-dir "$RAW" --magpie-dir "$RAW" \
       --judge-thresholds "$DATA/judge_freeze.json" \
       >> prep.log 2>&1
@@ -121,25 +162,24 @@ if [ -z "${FULL_LIVES:-}" ]; then
   done
 fi
 if [ -n "${FULL_LIVES:-}" ] && [ ! -f "$DATA/flash/manifest.json" ]; then
-  BUDGET=$(python - <<'P'
-import json
-m = json.load(open("/workspace/v10/measure.json"))
-print(min(m["_max_budget"], 10_000_000_000))
-P
-)
   hb "full build starts: lives=$FULL_LIVES budget=$BUDGET"
+  # shellcheck disable=SC2086
   python -m iga.lm_data_life prepare --out "$DATA/flash" \
     --budget "$BUDGET" --lives "$FULL_LIVES" --seed 10 \
-    --ultrachat "$UC_ALL" --st2-dir "$RAW" --magpie-dir "$RAW" \
+    $STG $UCARGS --st2-dir "$RAW" --magpie-dir "$RAW" \
     --judge-thresholds "$DATA/judge_freeze.json" \
     --tok-sample 20000 > build.log 2>&1
   tail -40 build.log > build_tail.log
   hb "full build $( [ -f "$DATA/flash/manifest.json" ] && echo ok || echo FAILED)"
   if [ -f "$DATA/flash/manifest.json" ]; then
+    # eval shard: UltraChat train_9 ONLY (reserved file). The old
+    # draft drew adolescence/tail from the SAME ST2/Magpie parquets
+    # as training — eval contamination; a UC-only eval mix is a
+    # clean, consistent CE reference and the cast probes are
+    # synthetic-world anyway.
     python -m iga.lm_data_life prepare --out "$DATA/flash_eval" \
       --budget 40000000 --lives 2 --seed 999 --world-seed 999 \
-      --ultrachat "$UC_EVAL" \
-      --st2-dir "$RAW" --magpie-dir "$RAW" \
+      --stages flash --ultrachat "$UC_EVAL" \
       --judge-thresholds "$DATA/judge_freeze.json" \
       --tokenizer "$DATA/flash/tokenizer.json" >> build.log 2>&1
     hb "eval shard $( [ -f "$DATA/flash_eval/manifest.json" ] && echo ok || echo FAILED)"

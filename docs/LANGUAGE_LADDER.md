@@ -4086,3 +4086,31 @@ MEASURED tok/s per dollar, not spec sheets. 5090 priced out: 32GB
 cannot hold the certified fp32 config. Probe density raised
 (heartbeats 6k steps, lesions every 2nd beat, economy/sleep vitals
 in the driver trace).
+
+THE 44M CORPUS THAT ALMOST SHIPPED (2026-08-20, caught by reading
+the mule's own logs). First real prep run measured the spine and
+started building a 44-MILLION-token flash — 100x under intent. Root
+cause chain, all three real: (1) infancy's fixed 80-word filter
+passes ~1% of UltraChat (13,868 of 1.35M convs), and the budget
+formula divides that by infancy's frac — 5.2M/0.10 = the 44M
+collapse; (2) infancy and childhood were re-reading THE SAME
+UltraChat file (a latent A12 duplicate-consumption violation,
+negligible at gate scale, material at flash scale); (3) the honest
+one-epoch spine is 3.7B (UC 1.90B + curated ST2 1.04B + Magpie
+0.76B), not the 5-7B I projected — curation cuts harder than
+estimates. Fixes, all tested end-to-end locally before relaunch:
+split_ultrachat (ONE pass, adaptive threshold covering exactly the
+infancy budget with the SIMPLEST convs — least-to-best preserved,
+disjoint files kill the duplicate read), epochs() (Muennighoff
+<=4-epoch late-stage repetition, the plan's pre-named fallback),
+feasible_budget() (UltraChat counted as ONE shared pool),
+STAGES_V10_FLASH {.08/.27/.38/.27} fitted to measured supply (the
+fatter tail = more of the highest-pedigree material on the cosine
+tail), and the eval shard de-contaminated (it was drawing ST2/
+Magpie from the SAME parquets as training; now UC train_9 only).
+USER DECISION recorded: ~5.2B budget via 2-epoch late stages
+(chosen over pure-one-epoch 3.4B and 2x-everything 7.4B); my "6B"
+label on that option was sloppy — the exact ceiling is 5.1-5.2B
+(UC binds at fracs .08+.27), corrected in the same hour. Suite
+116/116. The measure phase existing at all is what caught this
+before a dollar of H100 time burned.

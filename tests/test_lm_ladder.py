@@ -2608,6 +2608,66 @@ class TestFlashDriverLaws(unittest.TestCase):
             self.assertGreater(rep[s.name]["est_tokens"], 0)
         self.assertGreater(rep["_max_budget"], 0)
 
+    def test_flash_stages_and_feasible_budget(self):
+        from iga.lm_data_life import (STAGES_V10_FLASH, epochs,
+                                      feasible_budget)
+        self.assertAlmostEqual(
+            sum(s.frac for s in STAGES_V10_FLASH), 1.0, places=6)
+        self.assertEqual([s.name for s in STAGES_V10_FLASH],
+                         ["infancy", "childhood", "adolescence",
+                          "tail"])
+        # the measured 2026-08-20 spine: the budget must respect the
+        # SHARED UltraChat pool and the late-stage epoch multipliers
+        rep = {"infancy": {"est_tokens": 5_178_952},
+               "childhood": {"est_tokens": 1_899_720_498},
+               "adolescence": {"est_tokens": 1_043_411_509},
+               "tail": {"est_tokens": 763_416_635}}
+        b1 = feasible_budget(rep, STAGES_V10_FLASH, 1, 1)
+        b2 = feasible_budget(rep, STAGES_V10_FLASH, 2, 2)
+        self.assertGreater(b2, 4_800_000_000)
+        self.assertLess(b2, 5_500_000_000)
+        self.assertLess(b1, b2)          # epochs raise the ceiling
+        # infancy must never be counted as extra supply
+        rep2 = dict(rep, infancy={"est_tokens": 10 ** 12})
+        self.assertEqual(feasible_budget(rep2, STAGES_V10_FLASH,
+                                         2, 2), b2)
+        n = sum(1 for _ in epochs(lambda: iter([1, 2, 3]), 2))
+        self.assertEqual(n, 6)
+
+    def test_split_ultrachat_partition_laws(self):
+        import json
+        import os
+        import tempfile
+        from iga.lm_data_life import split_ultrachat
+        with tempfile.TemporaryDirectory() as td:
+            src = os.path.join(td, "uc.jsonl")
+            with open(src, "w") as f:
+                for i in range(200):
+                    ln = 5 + (i % 40) * 10     # max turn 5..395 words
+                    turns = ["hello there .", " ".join(["w"] * ln)]
+                    f.write(json.dumps({"data": turns}) + "\n")
+            simple = os.path.join(td, "s.jsonl")
+            rest = os.path.join(td, "r.jsonl")
+            res = split_ultrachat(src, simple, rest,
+                                  infancy_words=3000)
+            # partition: nothing lost, nothing duplicated
+            self.assertEqual(res["simple_convs"] + res["rest_convs"],
+                             200)
+            self.assertGreaterEqual(res["simple_words"], 2000)
+            # the simple file holds the SHORTEST convs (threshold cut)
+            mx = []
+            for ln_ in open(simple):
+                turns = json.loads(ln_)["data"]
+                mx.append(max(len(t.split()) for t in turns))
+            self.assertLessEqual(max(mx), res["threshold"])
+            mn_rest = []
+            for ln_ in open(rest):
+                turns = json.loads(ln_)["data"]
+                mn_rest.append(max(len(t.split()) for t in turns))
+            # rest is entirely above threshold OR overflow-routed
+            self.assertGreater(sum(1 for m in mn_rest
+                                   if m > res["threshold"]), 0)
+
     def test_driver_dry_plan_obeys_one_epoch(self):
         import json as _json
         import os
