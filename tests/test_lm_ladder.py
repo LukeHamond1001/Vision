@@ -1920,6 +1920,53 @@ class TestPressPlumbing(unittest.TestCase):
                          ["<pad>", "<eot_human>", "<eot_model>"])
 
 
+class TestLedgerPruning(unittest.TestCase):
+    """A54e F6 (v10): the drive ledger is bounded by ledger_cap;
+    ledger_base keeps sleep's absolute indices valid across prunes,
+    so a capped run harvests the same spans as an uncapped one."""
+
+    def _drive(self, cap):
+        d = Drive(1, seed=0, ledger_cap=cap)
+        return d
+
+    def _settle_n(self, d, n, start=0):
+        for i in range(start, start + n):
+            d.step_t = i * 100 + 60
+            d._settle({"lane": 0, "band": 3, "key": "recall:b0",
+                       "phi0": 0.0, "w": 1.0, "t0": i * 100},
+                      0.5, 0.5)
+
+    def test_cap_bounds_and_base_advances(self):
+        d = self._drive(cap=10)
+        self._settle_n(d, 25)
+        self.assertEqual(len(d.ledger), 10)
+        self.assertEqual(d.ledger_base, 15)
+        self.assertIsNone(Drive(1, seed=0).ledger_cap)
+
+    def test_harvest_equivalent_across_prune(self):
+        from iga.lm_sleep import Sleeper
+        spans, sleepers = {}, {}
+        for cap in (None, 25, 12):
+            d = self._drive(cap)
+            sl = Sleeper(arm="A", every=0, seed=1)
+            sl.buffers = [[0] * 5000]
+            sl.start, sl.cap = 0, 10 ** 9
+            self._settle_n(d, 8)
+            sl.harvest(d)              # mid-stream harvest
+            self._settle_n(d, 22, start=8)
+            sl.harvest(d)              # across the prune boundary
+            spans[cap] = [(s["t0"], s["t1"], s["pay"], s["i"])
+                          for s in sl.spans]
+            sleepers[cap] = sl
+        # adequately sized cap (>= inter-harvest accrual): identical
+        self.assertEqual(spans[None], spans[25],
+                         "sized cap must harvest like uncapped")
+        self.assertEqual(getattr(sleepers[25],
+                                 "pruned_unharvested", 0), 0)
+        # undersized cap: loss happens but is COUNTED, never silent
+        self.assertGreater(sleepers[12].pruned_unharvested, 0)
+
+
 class TestBandWidthsAndTie(unittest.TestCase):
     """A71/A75 structural laws: default = certified shapes and RNG
     bit-exactly (proven vs pre-change fingerprints at build time);

@@ -53,7 +53,7 @@ def horizon(band):
 class Drive:
     def __init__(self, n_lanes, lam=0.25, seed=0, constants=None,
                  imagination_absent=False, absent_bands=(),
-                 hold_cap=None):
+                 hold_cap=None, ledger_cap=None):
         """constants: dict (or path to results/lm_constants.json) from
         iga.lm_calibrate — horizons and fid floors become data-set;
         absent, the scaffold defaults apply (debug only).
@@ -106,6 +106,19 @@ class Drive:
         self.readings = {}             # (lane, key) -> [(t, tensor)]
         self.last_key = [None] * n_lanes
         self.ledger = []
+        # A54e F6 (v10): the append-only ledger costs 2-4GB host RAM
+        # by 488k steps; an ~800k-step flash must prune. ledger_base
+        # counts dropped rows so sleep's absolute indices stay valid.
+        # None = certified unbounded behavior exactly. SIZING RULE:
+        # the cap must comfortably exceed settles-per-harvest-
+        # interval (~13/step x sleep every -> hundreds; 500M plan:
+        # 200_000 ~ 50MB) or rows die unharvested — the sleeper
+        # counts that as pruned_unharvested and the heartbeat
+        # watches it. The sleep window itself is recency-capped far
+        # below any sane cap (MAX_SPANS), so pruning old rows
+        # changes no replay.
+        self.ledger_cap = ledger_cap
+        self.ledger_base = 0
         self.progress = {}             # key -> |d ema| EMA
         self.vetoes = 0
         self.proposed = 0
@@ -301,6 +314,10 @@ class Drive:
         self.ledger.append({**{k: h[k] for k in
                                ("lane", "band", "key", "phi0", "w", "t0")},
                             "phi1": phi1, "pay": pay, "t1": self.step_t})
+        if self.ledger_cap and len(self.ledger) > self.ledger_cap:
+            drop = len(self.ledger) - self.ledger_cap
+            del self.ledger[:drop]
+            self.ledger_base += drop
 
     def detach_readings(self):
         self.readings = {k: [(t, r.detach()) for (t, r) in v]

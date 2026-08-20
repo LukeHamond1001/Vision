@@ -258,13 +258,23 @@ class Sleeper:
 
     # ---------- span working set (L1's source of truth) ----------
     def harvest(self, drive):
-        for i in range(self._ledger_i, len(drive.ledger)):
-            e = drive.ledger[i]
+        # v10: base-aware — a pruned ledger (ledger_cap) drops old
+        # rows and advances ledger_base; absolute indices stay valid
+        base = getattr(drive, "ledger_base", 0)
+        if base > self._ledger_i:
+            # rows pruned before this sleeper ever harvested them —
+            # the cap is undersized for the harvest cadence. Counted,
+            # never silent (heartbeat watches this).
+            self.pruned_unharvested = getattr(
+                self, "pruned_unharvested", 0) + (base - self._ledger_i)
+        for i in range(max(self._ledger_i, base),
+                       base + len(drive.ledger)):
+            e = drive.ledger[i - base]
             if e["pay"] > 0 and e["t1"] - e["t0"] >= MIN_REPLAY:
                 self.spans.append(
                     {"lane": e["lane"], "t0": e["t0"], "t1": e["t1"],
                      "pay": float(e["pay"]), "i": i})
-        self._ledger_i = len(drive.ledger)
+        self._ledger_i = base + len(drive.ledger)
         self.spans = [s for s in self.spans
                       if min(s["t1"], self.end)
                       - max(s["t0"], self.start)
