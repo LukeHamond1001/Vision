@@ -3732,6 +3732,38 @@ scale, not blocking this one. Target cost: $15–40 total.
   weight channel is the organ. Cells beyond the primary
   gates read as exploratory, not confirmatory.
 
+- **A69-R4 VERDICT — gates G1'/G2' FAIL; and the biography arm
+  binds 2.3x BETTER on 5x FEWER asks** (2026-08-19; evidence
+  a69_bio_ablation.json). Weight recall of individual facts:
+  CHANCE in both arms, every cell (bio pos/old .075 n=200;
+  ctrl pos/old .059 n=187) — fact-level consolidation did NOT
+  happen in the training night. DIAGNOSIS: training sleep pays
+  HOLD-SETTLEMENT spans — diffuse, band-horizon-sized — while
+  the raised life's serve nights pay the EXACT spans presses
+  name (harvest_presses), and the life provably banks facts
+  into weights nightly. The organ exists; pretraining wasn't
+  using it. THE UNEXPECTED RESULT: ctrl trained on 54,900
+  asks vs bio's 11,159 — five times the practice — and its
+  in-context binder came out 2.3x WORSE (.364 vs .846, n=5,495
+  each; CE .790 vs .726). Massed short-gap drilling lost to
+  sparse spaced biography structure despite a 5x practice
+  advantage — the spacing effect at pretraining scale.
+  Entanglement noted honestly: cross=False also churns the
+  fact-world faster (roster recycles -> re-colored pairs), so
+  ordering and world-stability are mixed here; the v10 corpus
+  builder separates them (shuffle sessions, keep the world).
+  G3' confirmed again (full == fresh both arms). A69-R5
+  PRE-REGISTERED (in flight before readout): bio arm with
+  press_pay — serve-style harvest_presses(span_w=T, void_w=64)
+  as the training night's pay source (Sleeper.press_pay;
+  pairs skip their members; certified ledger harvest
+  bit-exact when None; 79/79 green). GATE R5-G1: pos-class
+  weight recall clears 2x chance (>=.17) AND beats none-class
+  by >=2x — A66's selectivity, finally at pretraining. If R5
+  arms, the flash design is complete at debug tier; if null,
+  fact-level consolidation at pretraining needs the v-scale
+  regime and the gate rides the 500M kill protocol.
+
 ## Status
 
 **(2026-08-19, post-v9.4)** The substrate campaign is complete:

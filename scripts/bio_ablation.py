@@ -65,20 +65,31 @@ def train_arm(life, tag):
     t0 = time.time()
     buttons = dict(BUTTONS)
     buttons["log"] = []
-    model, drive, vocab, ce0, ce1 = train(
-        d=D, lanes=LANES, T=T, steps=STEPS, seed=SEED, device="cpu",
-        arch="hybrid", store="matrix", keyed="logit", norm_mix=True,
-        aux_trunk=0.2, use_xl=False, gate_init=-2.0,
-        lam=0.02,   # A69-R3: the certified v9.4 economy weight —
-        # the debug default 0.25 was never the store-cure regime
-        log_every=max(STEPS // 4, 1), buttons=buttons,
-        life=dict(life),
-        sleep=Sleeper(arm="C", every=16, block_chunks=2, seed=1))
+    sl = Sleeper(arm="C", every=16, block_chunks=2, seed=1)
+    if os.environ.get("PRESS_PAY"):
+        # A69-R5: serve-style press-targeted pay in the training
+        # night (span_w=T, void_w=64) — the organ the raised life
+        # uses to put facts into weights
+        sl.press_pay = (T, 64)
+    model, drive, vocab, ce0, ce1 = _train_call(
+        life, buttons, sl)
     print(f"[{tag}] trained {STEPS} steps  ce {ce0:.3f}->{ce1:.3f} "
           f" {time.time() - t0:.0f}s", flush=True)
     return model, vocab, {"ce_first": ce0, "ce_last": ce1,
-                          "n_items": len(buttons["log"])}, \
+                          "n_items": len(buttons["log"]),
+                          "press_pay": bool(sl.press_pay),
+                          "sleep_steps": sl.steps_taken}, \
         buttons["log"]
+
+
+def _train_call(life, buttons, sl):
+    return train(
+        d=D, lanes=LANES, T=T, steps=STEPS, seed=SEED, device="cpu",
+        arch="hybrid", store="matrix", keyed="logit", norm_mix=True,
+        aux_trunk=0.2, use_xl=False, gate_init=-2.0,
+        lam=0.02,
+        log_every=max(STEPS // 4, 1), buttons=buttons,
+        life=dict(life), sleep=sl)
 
 
 @torch.no_grad()

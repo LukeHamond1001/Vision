@@ -127,6 +127,14 @@ class Sleeper:
         # targets ({"eot_h", "eot_m", "marks"}); None degrades arm C
         # to arm A in maybe_sleep (serve passes ids per-call instead).
         self.pair_tokens = None
+        # A69-R5: press-targeted pay in the TRAINING night. The R4
+        # null said it plainly: hold-settlement spans are diffuse
+        # (band-horizon-sized) and consolidate no individual fact,
+        # while the raised life's serve nights — which pay the exact
+        # spans presses name — put facts into weights daily. (w, v)
+        # = (span_w, void_w); None keeps the certified ledger
+        # harvest bit-exactly.
+        self.press_pay = None
         self.every = every
         self.block_chunks = block_chunks
         # A65: no disagreement, no update — a chunk whose loss sits
@@ -405,22 +413,30 @@ class Sleeper:
         if not self.every or step % self.every \
                 or self.buffers is None:
             return None
-        self.harvest(drive)
+        # A69: correction pairs harvest FIRST so press-pay can skip
+        # their member presses (the ARM C exclusion law). Arms A/B
+        # never enter these branches and draw no extra RNG — L2
+        # parity holds.
+        skip = None
         if self.arm == "C" and self.pair_tokens:
-            # A69: correction pairs ride the training night too. The
-            # ledger spans stay untouched (wake CE already trains on
-            # every token; the pair adds the contrastive signal CE
-            # cannot express). Arms A/B never reach this branch and
-            # draw no extra RNG — L2 parity holds.
             pt = self.pair_tokens
-            self.harvest_pairs(drive, eot_h=pt["eot_h"],
-                               eot_m=pt["eot_m"],
-                               marks=pt.get("marks", ()))
-            if self.pairs:
-                wp = sum(p["pay"] for p in self.pairs)
-                ws = sum(s["pay"] for s in self.spans)
-                if not ws or self.rng.random() < wp / (wp + ws):
-                    return self._pair_block(model, opt, step)
+            skip = self.harvest_pairs(drive, eot_h=pt["eot_h"],
+                                      eot_m=pt["eot_m"],
+                                      marks=pt.get("marks", ()))
+        if self.press_pay is not None:
+            self.harvest_presses(drive, self.press_pay[0],
+                                 void_w=self.press_pay[1],
+                                 skip=skip)
+        else:
+            # certified ledger harvest; pairs coexist with ledger
+            # spans (wake CE already trains on every token — the
+            # pair adds the contrastive signal CE cannot express)
+            self.harvest(drive)
+        if self.arm == "C" and self.pairs:
+            wp = sum(p["pay"] for p in self.pairs)
+            ws = sum(s["pay"] for s in self.spans)
+            if not ws or self.rng.random() < wp / (wp + ws):
+                return self._pair_block(model, opt, step)
         if not self.spans:
             return None
         return self._block(model, opt, step)
