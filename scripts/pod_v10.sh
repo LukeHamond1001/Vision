@@ -227,12 +227,24 @@ WATCHPID=$!
 RC=1
 for ATTEMPT in 1 2 3 4 5 6; do
   hb "flash attempt $ATTEMPT"
+  # in-flight publisher: the driver's probe rows land in LOCAL jsonls;
+  # without this loop the branch sees nothing until exit — the watcher
+  # (and the kill-fix-relaunch protocol) needs them DURING the run
+  ( while true; do sleep 1500
+      tail -100 v10_train.log > train_tail.log 2>/dev/null || true
+      LASTHB=$(tail -1 hb_v10.jsonl 2>/dev/null | head -c 300)
+      echo "$(date -u +%H:%M:%S) inflight ${LASTHB:-no-hb-row-yet}" >> HEARTBEAT.log
+      git add -f HEARTBEAT.log hb_v10.jsonl v10_driver.jsonl train_tail.log 2>/dev/null
+      git commit -qm "inflight" 2>/dev/null
+      git push -qf "$PUSH" results-v10 2>/dev/null || true
+    done ) & PUBPID=$!
   python scripts/v10_driver.py \
     --data "$DATA/flash" --eval-data "$DATA/flash_eval" \
     --ckpt "$CKPT" --smoke "$OUT/smoke.json" \
     --hb-out hb_v10.jsonl --trace v10_driver.jsonl \
     >> v10_train.log 2>&1
   RC=$?
+  kill $PUBPID 2>/dev/null || true
   tail -80 v10_train.log > train_tail.log
   hb "driver exit rc=$RC (attempt $ATTEMPT)"
   [ $RC -eq 0 ] && break
