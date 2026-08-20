@@ -73,6 +73,20 @@ Baguettotron, 321M trained on SYNTH alone, approaches Qwen-0.6B).
 Selection is the quality mechanism: ~6B needed from >100B
 available means we take roughly the top 5% slice of everything.
 
+**The conversational-spine order (user-set, 2026-08-19): flat
+floor, rising ceiling.** Every source passes the same judge
+floor (no bad data ever enters), and teacher PEDIGREE rises
+across the flash: UltraChat is the FILL (childhood — volume and
+long-thread faculty; gpt-3.5-era teacher), then COMPLETE
+SmolTalk2 (adolescence — English subsets only, tool-calling
+traces excluded: a being with no tools gets no tool syntax in
+its life), then COMPLETE Smol-Magpie-Ultra last (the tail —
+405B-distilled, ArmoRM-filtered, press-worthy by construction,
+riding the cosine tail where imprint is hardest; topped up with
+SmolTalk2's judge-best to fill ~0.6B). Magpie's 3-turn shape is
+fine last: day/session length and band-horizon recurrence are
+BUILDER parameters, not source properties.
+
 | source | size | role in the flash |
 |---|---|---|
 | TinyStories (HF: roneneldan) | ~0.5B tok | infancy — synthetic, immaculate, simple |
@@ -202,9 +216,9 @@ at every day boundary, press-pay on, ARM C native):
 | stage | tokens | shape + material (all top-slice, per 2b) | economy |
 |---|---|---|---|
 | infancy | ~0.6B (10%) | short days, short exchanges, tight recurrence gaps — TinyStories | dense +1/+2, no corrections |
-| childhood | ~2.4B (40%) | biography days; facts/characters recur at gaps spanning band 3/4 clocks — UltraChat/SmolTalk2 lives + Cosmopedia middle-school study days | presses annealing down; corrections begin (~3-8%) |
-| adolescence | ~2.4B (40%) | long threads, multi-session projects reaching band-5/6 horizons — SYNTH + Cosmopedia college-tier, still one ordered life | sparse presses; prophets predicting |
-| the tail | ~0.6B (10%) | same flat-max quality, most on-role conversational slice, on the cosine tail | strictest judge audit; audit failure = kill |
+| childhood | ~2.4B (40%) | biography days; facts/characters recur at gaps spanning band 3/4 clocks — UltraChat top-slice (the fill) + Cosmopedia middle-school study days | presses annealing down; corrections begin (~3-8%) |
+| adolescence | ~2.4B (40%) | long threads, multi-session projects reaching band-5/6 horizons — complete SmolTalk2 (EN, no tool traces) + SYNTH + Cosmopedia college-tier, still one ordered life | sparse presses; prophets predicting |
+| the tail | ~0.6B (10%) | complete Smol-Magpie-Ultra + SmolTalk2's judge-best — the highest-pedigree exchanges, on the cosine tail | strictest judge audit; audit failure = kill |
 
 **The data manifest (public sets, pinned before launch):**
 
