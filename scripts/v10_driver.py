@@ -58,8 +58,8 @@ from iga.lm_train import train                  # noqa: E402
 LADDER = {"infancy": 0, "childhood": 32, "adolescence": 16,
           "tail": 16}
 CKPT_CADENCE = 500          # lm_train saves at step % 500 == 0
-HB_EVERY = 8000             # heartbeat cadence in steps
-LESION_EVERY = 4            # full band-lesion pass every Nth beat
+HB_EVERY = 6000             # heartbeat cadence in steps (~2.7h)
+LESION_EVERY = 2            # full band-lesion pass every Nth beat
 HB_CRASH_TOL = 3            # consecutive dead heartbeats = abort
 
 
@@ -101,7 +101,7 @@ def run_heartbeat(a, step, tokens, total_tokens, beat_i):
            "--d", str(a.d), "--n-layers", str(a.n_layers),
            "--T", str(a.T), "--device", a.device,
            "--chunks", str(a.hb_chunks)]
-    if beat_i % LESION_EVERY:
+    if beat_i % a.lesion_every:
         cmd.append("--skip-lesions")
     r = subprocess.run(cmd)
     return r.returncode
@@ -124,6 +124,7 @@ def main():
     ap.add_argument("--ledger-cap", type=int, default=200_000)
     ap.add_argument("--device", default="cuda")
     ap.add_argument("--hb-every", type=int, default=HB_EVERY)
+    ap.add_argument("--lesion-every", type=int, default=LESION_EVERY)
     ap.add_argument("--hb-chunks", type=int, default=400)
     ap.add_argument("--hb-out", default="results/hb_v10.jsonl")
     ap.add_argument("--trace", default="results/v10_driver.jsonl")
@@ -209,6 +210,15 @@ def main():
                "every": sl.every, "ce_first": round(ce0 or 0, 4),
                "ce_last": round(ce1 or 0, 4),
                "pairs": len(sl.pairs), "sleep_steps": sl.steps_taken,
+               # "everything contributing" vitals: the pair law, the
+               # amygdala tag actually replaying, the economy alive
+               "pair_law_ok": all(p.get("w1") == p.get("tw")
+                                  for p in sl.pairs),
+               "hot_pairs": sum(1 for p in sl.pairs
+                                if p.get("hot")),
+               "minted": len(drive.minted),
+               "vetoes": drive.vetoes,
+               "ledger": len(drive.ledger),
                "prophet_auc": aucs,
                "secs": round(time.time() - t0)}
         with open(a.trace, "a") as f:

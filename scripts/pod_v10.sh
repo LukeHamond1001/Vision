@@ -59,8 +59,27 @@ EOF
 [ $? -eq 0 ] || { hb "ABORT canary failed"; runpodctl remove pod "$RUNPOD_POD_ID"; exit 1; }
 hb "canary ok"
 
-# ---------- SMOKE stage ----------
-if [ ! -f "$OUT/smoke.json" ]; then
+# ---------- SMOKE stage (per-GPU tagged: the GPU shop) ----------
+# Shopper pods (GO=0) each write smoke_<gpu>.json; the flash pod
+# (GO=1) skips smoking when a chosen config exists (smoke.json on
+# the volume, or smoke_choice.json committed to main after the
+# shop), else falls back to smoking itself.
+GPUTAG=$(nvidia-smi --query-gpu=name --format=csv,noheader | head -1 \
+  | tr -cd 'A-Za-z0-9' | tr '[:upper:]' '[:lower:]')
+NEED_SMOKE=0
+if [ "${GO:-0}" = "1" ]; then
+  { [ -f "$OUT/smoke.json" ] || [ -f smoke_choice.json ]; } || NEED_SMOKE=1
+else
+  [ -f "$OUT/smoke_$GPUTAG.json" ] || NEED_SMOKE=1
+fi
+if [ "$NEED_SMOKE" = "1" ]; then
+  if [ ! -f "$DATA/smoke_l8/manifest.json" ] && \
+     [ "${SMOKE_FROM_BRANCH:-0}" = "1" ]; then
+    # volume-less shopper pod: shards ride the results branch
+    git fetch -q origin results-v10 && \
+      git checkout -q origin/results-v10 -- smoke_shards.tar.gz && \
+      mkdir -p "$DATA" && tar xzf smoke_shards.tar.gz -C "$DATA"
+  fi
   for L in 8 12; do
     [ -f "$DATA/smoke_l$L/manifest.json" ] || \
       { hb "ABORT smoke shard l$L missing (run pod_v10_prep.sh)"; \
@@ -109,16 +128,20 @@ for r in ok[1:]:
         best = r
 assert best["tok_s"] > 8000, "throughput floor 8k tok/s"
 lam = min(0.25, 0.25 / max(best["holds"], 1))   # A60f pairing
-out = {"lanes": best["lanes"], "lam": round(lam, 5),
+out = {"gpu": "$GPUTAG", "lanes": best["lanes"],
+       "lam": round(lam, 5),
        "tok_s": best["tok_s"], "holds": best["holds"],
        "peak_gib": best["peak_gib"], "rows": rows}
-json.dump(out, open("$OUT/smoke.json", "w"), indent=1)
+json.dump(out, open("$OUT/smoke_$GPUTAG.json", "w"), indent=1)
+if "${GO:-0}" == "1":
+    json.dump(out, open("$OUT/smoke.json", "w"), indent=1)
 print("SMOKE", json.dumps(out))
 EOF
   RC=$?
-  cp "$OUT/smoke.json" smoke.json 2>/dev/null || true
+  cp "$OUT/smoke_$GPUTAG.json" "smoke_$GPUTAG.json" 2>/dev/null || true
   tail -30 smoke_run.log >> HEARTBEAT.log
-  hb "smoke rc=$RC $(cat "$OUT/smoke.json" 2>/dev/null | head -c 300)"
+  git add -f "smoke_$GPUTAG.json" 2>/dev/null || true
+  hb "smoke[$GPUTAG] rc=$RC $(cat "$OUT/smoke_$GPUTAG.json" 2>/dev/null | head -c 300)"
   [ $RC -eq 0 ] || { runpodctl remove pod "$RUNPOD_POD_ID"; exit 1; }
 fi
 
@@ -135,6 +158,12 @@ for need in "$DATA/flash/manifest.json" "$DATA/flash_eval/manifest.json"; do
   [ -f "$need" ] || { hb "ABORT missing $need"; \
     runpodctl remove pod "$RUNPOD_POD_ID"; exit 1; }
 done
+# the GPU shop's verdict, committed to main as smoke_choice.json,
+# seeds the volume's chosen config on first flash boot
+[ -f "$OUT/smoke.json" ] || { [ -f smoke_choice.json ] && \
+  cp smoke_choice.json "$OUT/smoke.json" && hb "smoke.json <- smoke_choice.json"; }
+[ -f "$OUT/smoke.json" ] || { hb "ABORT no smoke config"; \
+  runpodctl remove pod "$RUNPOD_POD_ID"; exit 1; }
 
 CKPT=$OUT/v10.pt
 # false-start guard (A54d): a sub-5k-step stub from a crashed first

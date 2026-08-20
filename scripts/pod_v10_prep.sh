@@ -94,6 +94,22 @@ for L in 8 12; do
   fi
 done
 
+# ---- 5b. shard export for volume-less shopper pods (the GPU
+# shop smokes on other DCs; ~50-80MB rides the results branch) ----
+if [ -f "$DATA/smoke_l8/manifest.json" ] && \
+   [ -f "$DATA/smoke_l12/manifest.json" ] && \
+   [ ! -f smoke_shards.tar.gz ]; then
+  tar czf smoke_shards.tar.gz -C "$DATA" smoke_l8 smoke_l12
+  SZ=$(du -m smoke_shards.tar.gz | cut -f1)
+  if [ "$SZ" -lt 95 ]; then
+    git add -f smoke_shards.tar.gz
+    hb "smoke shards exported (${SZ}MB)"
+  else
+    rm -f smoke_shards.tar.gz
+    hb "smoke shards too big to export (${SZ}MB) — shoppers need a volume"
+  fi
+fi
+
 # ---- 6. the full corpus (gated on the paid smoke's lane pick;
 # FULL_LIVES env, else read from the smoke verdict on the volume) --
 if [ -z "${FULL_LIVES:-}" ] && [ -f /workspace/v10_out/smoke.json ]; then
