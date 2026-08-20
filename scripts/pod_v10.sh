@@ -59,6 +59,32 @@ EOF
 [ $? -eq 0 ] || { hb "ABORT canary failed"; runpodctl remove pod "$RUNPOD_POD_ID"; exit 1; }
 hb "canary ok"
 
+# ---------- cross-DC RECEIVE (GO=1, BEFORE smoke) ----------
+# The prep mule's ship tar carries the corpus AND the smoke shards, so
+# it must land before the smoke stage looks for them (the 20:14 abort:
+# smoke-shard check ran first and killed the pod). The code comes from
+# env SHIP_CODE — this pod's own boot force-pushes the results branch
+# and WIPES ship_code.txt, so the branch copy is only a fallback for
+# same-DC relights that boot before any prep mule re-post.
+if [ "${GO:-0}" = "1" ] && [ ! -f "$DATA/flash/manifest.json" ]; then
+  CODE="${SHIP_CODE:-}"
+  if [ -z "$CODE" ]; then
+    git fetch -q origin results-v10 2>/dev/null && \
+      git checkout -q origin/results-v10 -- ship_code.txt 2>/dev/null || true
+    [ -f ship_code.txt ] && CODE=$(tr -d '[:space:]' < ship_code.txt)
+  fi
+  if [ -n "$CODE" ]; then
+    hb "receiving corpus (code $CODE)"
+    ( cd /workspace && runpodctl receive "$CODE" ) \
+      > receive.log 2>&1 || true
+    if [ -f /workspace/v10_ship.tar ]; then
+      tar xf /workspace/v10_ship.tar -C /workspace && \
+        rm -f /workspace/v10_ship.tar
+    fi
+    hb "receive $( [ -f "$DATA/flash/manifest.json" ] && echo ok || echo "FAILED $(tail -1 receive.log 2>/dev/null | head -c 120)")"
+  fi
+fi
+
 # ---------- SMOKE stage (per-GPU tagged: the GPU shop) ----------
 # Shopper pods (GO=0) each write smoke_<gpu>.json; the flash pod
 # (GO=1) skips smoking when a chosen config exists (smoke.json on
@@ -154,24 +180,7 @@ if [ "${GO:-0}" != "1" ]; then
   fi
   exit 0
 fi
-# cross-DC RECEIVE: a prep mule in another DC built the corpus and
-# posted a runpodctl transfer code to the results branch — pull the
-# ~13GB tar straight onto this volume before the corpus check
-if [ ! -f "$DATA/flash/manifest.json" ]; then
-  git fetch -q origin results-v10 2>/dev/null && \
-    git checkout -q origin/results-v10 -- ship_code.txt 2>/dev/null || true
-  if [ -f ship_code.txt ]; then
-    CODE=$(tr -d '[:space:]' < ship_code.txt)
-    hb "receiving corpus (code $CODE)"
-    ( cd /workspace && runpodctl receive "$CODE" ) \
-      > receive.log 2>&1 || true
-    if [ -f /workspace/v10_ship.tar ]; then
-      tar xf /workspace/v10_ship.tar -C /workspace && \
-        rm -f /workspace/v10_ship.tar
-    fi
-    hb "receive $( [ -f "$DATA/flash/manifest.json" ] && echo ok || echo "FAILED $(tail -1 receive.log 2>/dev/null | head -c 120)")"
-  fi
-fi
+# (cross-DC receive happens pre-smoke now — see above)
 for need in "$DATA/flash/manifest.json" "$DATA/flash_eval/manifest.json"; do
   [ -f "$need" ] || { hb "ABORT missing $need"; \
     runpodctl remove pod "$RUNPOD_POD_ID"; exit 1; }
