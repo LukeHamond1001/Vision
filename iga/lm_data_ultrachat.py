@@ -82,11 +82,16 @@ def iter_convos(limit, skip=0):
             return
 
 
-def train_tokenizer(texts, out_path, vocab=16384):
+def train_tokenizer(texts, out_path, vocab=16384, specials=None):
+    """specials (v10): the life shards reserve the four press marks
+    in the tokenizer from day one (closes the act-3a press-token
+    wake-exposure warning); None = the original three, so existing
+    shards rebuild identically."""
     from tokenizers import ByteLevelBPETokenizer
     tok = ByteLevelBPETokenizer()
     tok.train_from_iterator(texts, vocab_size=vocab, min_frequency=2,
-                            special_tokens=SPECIALS)
+                            special_tokens=(SPECIALS if specials is None
+                                            else list(specials)))
     tok.save(out_path)
     return tok
 

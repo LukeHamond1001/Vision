@@ -168,8 +168,12 @@ def process_chunk(model, drive, conveyor, T, device, opt=None,
                 drive.earned(lane, d["ok"])
             elif kind == "button":
                 # A64 primary reinforcer; at= stamps the press's true
-                # token position (step_t is still chunk-start here)
-                drive.button(lane, d["v"], at=drive.step_t + p)
+                # token position (step_t is still chunk-start here).
+                # attr=false (v10 shards): judge presses on ordinary
+                # exchanges — recorded, never economy-attributed;
+                # absent field = certified weaver path bit-exactly
+                drive.button(lane, d["v"], at=drive.step_t + p,
+                             attribute=d.get("attr", True))
     drive.step_t += T
     drive.sweep(losses)
     loss = torch.stack([(l if l.dim() == 0 else l.mean()).float()

@@ -135,7 +135,7 @@ class Drive:
         old = self.ema.get(key, v)
         self.ema[key] = (1 - EMA) * old + EMA * v
 
-    def button(self, lane, v, at=None):
+    def button(self, lane, v, at=None, attribute=True):
         """A64: the graded-press primary reinforcer. labels select,
         the world pays — a press NEVER pays or injects gradient.
         +v mints the channel it followed and sets w=v on the holds
@@ -151,12 +151,18 @@ class Drive:
         chunk-relative presses would all stamp the chunk start and
         break arm C's turn-scoped pair targets. Every economic
         effect (mint/void/veto) still runs on step_t; at=None is
-        bit-exact prior behavior."""
+        bit-exact prior behavior.
+        attribute (v10 builder): False records the press (sleep
+        press-pay, arm C pairs, and the prophet all read
+        drive.presses) but SKIPS mint/void/veto — a judge press on
+        an ordinary corpus exchange must not credit or veto the
+        stale last recall channel it happens to follow. Default
+        True is the certified parenting economy bit-exactly."""
         key = self.last_key[lane]
         self.presses.append({"lane": lane, "v": int(v),
                              "t": self.step_t if at is None else int(at),
                              "key": key})
-        if key is None:
+        if key is None or not attribute:
             return
         if v > 0:
             self.minted.add(key)

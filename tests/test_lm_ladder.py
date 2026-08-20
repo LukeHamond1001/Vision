@@ -1879,6 +1879,47 @@ class TestLifeLaws(unittest.TestCase):
             self.assertEqual(pr["w1"], pr["tw"])
 
 
+class TestPressPlumbing(unittest.TestCase):
+    """v10 builder plumbing — attribute=False records a press for
+    sleep/pairs/prophet but never touches the economy (mint/void/
+    veto); the default is the certified parenting path bit-exactly
+    (proven against a pre-change training fingerprint at build
+    time; guarded structurally here)."""
+
+    def _drive(self):
+        d = Drive(1, seed=0)
+        d.last_key[0] = "recall:b0"
+        return d
+
+    def test_unattributed_press_recorded_not_economized(self):
+        d = self._drive()
+        d.button(0, 2, at=123, attribute=False)
+        self.assertEqual(len(d.presses), 1)
+        self.assertEqual(d.presses[0]["t"], 123)
+        self.assertNotIn("recall:b0", d.minted)
+        # negatives never accumulate toward a veto either
+        for _ in range(5):
+            d.button(0, -1, attribute=False)
+        self.assertEqual(d.neg_count.get("recall:b0", 0), 0)
+        self.assertEqual(len(d.presses), 6)
+
+    def test_attributed_default_unchanged(self):
+        d = self._drive()
+        d.button(0, 2)
+        self.assertIn("recall:b0", d.minted)
+        d2 = self._drive()
+        for _ in range(3):
+            d2.button(0, -1)
+        self.assertEqual(d2.neg_count.get("recall:b0", 0), 0,
+                         "third consecutive negative fires the veto "
+                         "and resets the count (B3')")
+
+    def test_tokenizer_specials_default_preserved(self):
+        from iga.lm_data_ultrachat import SPECIALS
+        self.assertEqual(SPECIALS,
+                         ["<pad>", "<eot_human>", "<eot_model>"])
+
+
 class TestJudgeFrozen(unittest.TestCase):
     """v10 judge — the frozen public instrument. The fixture locks
     featurize + grade_dialogue to 6 decimals (A64 frozen-instrument
