@@ -125,8 +125,11 @@ fi
 # ---------- FLASH stage (GO-gated) ----------
 if [ "${GO:-0}" != "1" ]; then
   hb "smoke done; flash awaits GO=1 + full corpus"
-  runpodctl remove pod "$RUNPOD_POD_ID" 2>/dev/null || true
-  sleep 60; exit 0
+  if [ "${SKIP_TERMINATE:-0}" != "1" ]; then
+    runpodctl remove pod "$RUNPOD_POD_ID" 2>/dev/null || true
+    sleep 60
+  fi
+  exit 0
 fi
 for need in "$DATA/flash/manifest.json" "$DATA/flash_eval/manifest.json"; do
   [ -f "$need" ] || { hb "ABORT missing $need"; \

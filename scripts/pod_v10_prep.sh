@@ -94,7 +94,11 @@ for L in 8 12; do
   fi
 done
 
-# ---- 6. the full corpus (gated on the paid smoke's lane pick) ----
+# ---- 6. the full corpus (gated on the paid smoke's lane pick;
+# FULL_LIVES env, else read from the smoke verdict on the volume) --
+if [ -z "${FULL_LIVES:-}" ] && [ -f /workspace/v10_out/smoke.json ]; then
+  FULL_LIVES=$(python -c "import json;print(json.load(open('/workspace/v10_out/smoke.json'))['lanes'])" 2>/dev/null || true)
+fi
 if [ -n "${FULL_LIVES:-}" ] && [ ! -f "$DATA/flash/manifest.json" ]; then
   BUDGET=$(python - <<'P'
 import json
@@ -130,5 +134,7 @@ P
 fi
 
 hb "prep phases complete"
-runpodctl remove pod "$RUNPOD_POD_ID" 2>/dev/null || true
-sleep 60
+if [ "${SKIP_TERMINATE:-0}" != "1" ]; then
+  runpodctl remove pod "$RUNPOD_POD_ID" 2>/dev/null || true
+  sleep 60
+fi
