@@ -1,0 +1,77 @@
+{
+ "version": "v10.0",
+ "rows": [
+  {
+   "h": "what color was the coin ?",
+   "m": "the coin was golden . it sat in the cellar all winter .",
+   "q": 0.615314,
+   "f0": 2.484907
+  },
+  {
+   "h": "how do i sort a list in python ?",
+   "m": "use the built-in sorted function :\n\n1. sorted(xs) returns a new list\n2. xs.sort() sorts in place\n\nboth take key= and reverse= arguments .",
+   "q": 0.657114,
+   "f0": 3.258097
+  },
+  {
+   "h": "can you help me plan a garden ?",
+   "m": "i cannot help with that request .",
+   "q": 0.565941,
+   "f0": 1.94591
+  },
+  {
+   "h": "tell me about rivers .",
+   "m": "rivers rivers rivers rivers rivers rivers rivers rivers rivers rivers rivers rivers",
+   "q": 0.315305,
+   "f0": 2.564949
+  },
+  {
+   "h": "why is the sky blue ?",
+   "m": "because of rayleigh scattering : shorter wavelengths scatter more strongly in the atmosphere , so blue light reaches your eyes from every direction .",
+   "q": 0.70711,
+   "f0": 3.091042
+  },
+  {
+   "h": "what is 2 + 2 ?",
+   "m": "4",
+   "q": 0.0,
+   "f0": 0.693147
+  },
+  {
+   "h": "describe your morning routine .",
+   "m": "well , maybe i think perhaps it might possibly depend on many things , not sure really , perhaps .",
+   "q": 0.0,
+   "f0": 2.833213
+  },
+  {
+   "h": "explain photosynthesis simply .",
+   "m": "plants take in sunlight , water , and carbon dioxide , and turn them into sugar and oxygen . the green pigment chlorophyll captures the light energy .",
+   "q": 0.668759,
+   "f0": 3.178054
+  },
+  {
+   "h": "what did nedra keep in the cellar ?",
+   "m": "the weather is nice today and i like trains .",
+   "q": 0.634874,
+   "f0": 2.302585
+  },
+  {
+   "h": "give me a long detailed essay on tea .",
+   "m": "tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea tea ",
+   "q": 0.074138,
+   "f0": 6.857514
+  },
+  {
+   "h": "bonjour, comment \u00e7a va ?",
+   "m": "tr\u00e8s bien merci \u2014 \u2600\ufe0f\ud83c\udf0a \u00e7\u00e7\u00e7\u00e7 \u00fcn\u00efc\u00f6d\u00e9",
+   "q": 0.582364,
+   "f0": 2.079442
+  },
+  {
+   "h": "list three fruits .",
+   "m": "- apple\n- pear\n- plum",
+   "q": 0.623527,
+   "f0": 1.386294
+  }
+ ]
+}

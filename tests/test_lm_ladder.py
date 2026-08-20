@@ -1879,6 +1879,52 @@ class TestLifeLaws(unittest.TestCase):
             self.assertEqual(pr["w1"], pr["tw"])
 
 
+class TestJudgeFrozen(unittest.TestCase):
+    """v10 judge — the frozen public instrument. The fixture locks
+    featurize + grade_dialogue to 6 decimals (A64 frozen-instrument
+    law: any drift in the scorer fails the suite)."""
+
+    def test_fixture_locked(self):
+        import json as _json
+        import os as _os
+        from iga import lm_judge as J
+        path = _os.path.join(_os.path.dirname(__file__), "fixtures",
+                             "judge_fixture.json")
+        with open(path) as f:
+            fx = _json.load(f)
+        self.assertEqual(fx["version"], J.JUDGE_VERSION)
+        for r in fx["rows"]:
+            self.assertAlmostEqual(
+                J.grade_dialogue(r["h"], r["m"]), r["q"], places=6)
+            self.assertAlmostEqual(
+                J.featurize(r["h"], r["m"])[0], r["f0"], places=6)
+
+    def test_press_and_floor_laws(self):
+        from iga import lm_judge as J
+        for stage in ("infancy", "childhood", "adolescence", "tail"):
+            q1, q2 = J.JUDGE["q1"][stage], J.JUDGE["q2"][stage]
+            self.assertLess(q1, q2)
+            self.assertEqual(J.press_for(q2 + 0.01, stage), 2)
+            self.assertEqual(J.press_for((q1 + q2) / 2, stage), 1)
+            self.assertEqual(J.press_for(q1 - 0.01, stage), 0)
+        # density anneals: thresholds rise monotonically with stage
+        order = ("infancy", "childhood", "adolescence", "tail")
+        for a, b in zip(order, order[1:]):
+            self.assertLessEqual(J.JUDGE["q1"][a], J.JUDGE["q1"][b])
+            self.assertLessEqual(J.JUDGE["q2"][a], J.JUDGE["q2"][b])
+        self.assertFalse(J.passes_floor(J.JUDGE["floor"] - 1e-9))
+        self.assertTrue(J.passes_floor(J.JUDGE["floor"]))
+        self.assertEqual(J.grade_doc(5), 1.0)
+        self.assertEqual(J.grade_doc(0), 0.0)
+        self.assertEqual(J.grade_doc(9), 1.0)   # clipped
+
+    def test_determinism(self):
+        from iga import lm_judge as J
+        h, m = "what color was the drum ?", "the drum was violet ."
+        self.assertEqual(J.grade_dialogue(h, m),
+                         J.grade_dialogue(h, m))
+
+
 class TestBand6Laws(unittest.TestCase):
     """A70 — the ladder is band-count-parametric; band 6 (x8 again,
     512 chunks) certifies at debug tier before any 500M money moves.
