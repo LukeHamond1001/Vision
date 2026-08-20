@@ -161,19 +161,28 @@ synthetic-first, not 10B-is-plenty; our demo is delta-not-absolute
 by design). Selection is the quality mechanism: ~10B needed from
 >100B available means we take roughly the top 10% of everything.
 
-**THE manifest (reconciled 2026-08-19 — supersedes all earlier
-share tables; user spine ratified, two hedges restored):**
+**THE manifest (user-final 2026-08-19 — supersedes ALL earlier
+share tables: the spine IS the corpus):**
 
-| role | share | sources |
-|---|---|---|
-| conversational spine (the life) | ~45% | UltraChat fill (childhood) -> complete SmolTalk2 EN/no-tools (adolescence) -> complete Smol-Magpie-Ultra (tail) |
-| study days | ~23% | Cosmopedia-v2 (audience-tiered) + SYNTH via doc_to_turns |
-| infancy | ~7% | TinyStories, diluted with Cosmopedia's simplest tier (TinyStories alone is ~0.5B < the 1B infancy budget; one-epoch law) |
-| grounding hedge | ~15% | FineWeb-Edu top classifier decile (synthetic-narrowing hedge; ships its own precomputed scores) |
-| long-document band food | ~10% | peS2o + Gutenberg — documents LONGER than the band-4/5 clocks, so bands get within-doc education, not only life structure |
+| role | sources |
+|---|---|
+| infancy | the SHORTEST, SIMPLEST exchanges of the spine, sorted to the front (conversational infancy — no TinyStories) |
+| childhood | UltraChat top-slice — the FILL, sized to whatever the spine needs |
+| adolescence | complete SmolTalk2 (EN subsets, tool traces excluded) |
+| the tail | complete Smol-Magpie-Ultra + SmolTalk2's judge-best top-up |
 
-(DCLM-heavy web spine and WildChat: dropped, superseded by the
-user's synthetic-first directive — ledgered.)
+Everything else — TinyStories, Cosmopedia, SYNTH study days,
+FineWeb-Edu grounding, peS2o/Gutenberg long documents, DCLM,
+WildChat — is OUT (user directive: the life is conversations;
+the role invariant gets the densest possible signal). Ledgered
+consequences, eyes open: (a) budget = what ONE EPOCH of the spine
+yields, ~5-7B tokens measured at download (cost ~$200-300; if the
+user still wants 10B, <=2-epoch repetition is the named fallback);
+(b) knowledge breadth narrows — acceptable: the demo is
+delta-not-absolute and the claim is the architecture, not trivia;
+(c) within-doc long-range food is gone — the bands feed ENTIRELY
+on life structure (recurrence at band-clock gaps), which is the
+architecture's own claim anyway (A69-R4), now undiluted.
 
 **The conversational-spine order (user-set, 2026-08-19): flat
 floor, rising ceiling.** Every source passes the same judge
@@ -189,23 +198,19 @@ SmolTalk2's judge-best to fill ~1B). Magpie's 3-turn shape is
 fine last: day/session length and band-horizon recurrence are
 BUILDER parameters, not source properties.
 
-| source | size | role in the flash |
+| source | size | role in the flash (LEAST -> BEST, like learning) |
 |---|---|---|
-| TinyStories (HF: roneneldan) | ~0.5B tok | infancy — synthetic, immaculate, simple |
-| Smol-Magpie-Ultra, core of SmolTalk (HF: HuggingFaceTB) | 400K three-turn convs | the PREMIUM exchanges: Llama-3.1-405B-distilled, ArmoRM reward-model filtered, safety-screened, semantically deduped — press-worthy by construction |
-| UltraChat (HF: stingning) | ~2.2B tok (1.5M dialogues x ~1.5k) | the volume + long-multi-turn spine — biography builder rebuilds these into recurring days and characters; gpt-3.5-era generation, so the judge takes its top slice only |
-| SmolTalk2 (HF: HuggingFaceTB) | ~3.4M multi-turn samples | more spine: tool traces, long-context threads for band-5/6 horizons |
-| SYNTH (HF: PleIAs) | ~75B tok | "study days" — reasoning-dense, formally verified synthetic playgrounds; the being reads and discusses |
-| Cosmopedia-v2 (HF: HuggingFaceTB) | 28B tok | textbooks/stories; audience tiers (middle-school early, college late) give complexity staging at flat quality |
-| FineWeb-Edu dedup (HF) | 220B tok | ~10-15% grounding blend, top classifier decile only — synthetic-purity hedge against distributional narrowing |
+| UltraChat (HF: stingning) | ~2.2B tok (1.5M dialogues x ~1.5k) | FIRST — infancy's simplest slices + the childhood fill; volume and long-multi-turn faculty; gpt-3.5-era teacher, judge top-slice only |
+| SmolTalk2 (HF: HuggingFaceTB) | ~3.4M multi-turn samples | SECOND — complete (EN subsets, tool traces excluded); adolescence's long threads for band-5/6 horizons |
+| Smol-Magpie-Ultra, core of SmolTalk (HF: HuggingFaceTB) | 400K three-turn convs | LAST — the tail: Llama-3.1-405B-distilled, ArmoRM reward-model filtered, press-worthy by construction, on the cosine tail where imprint is hardest |
 
 Corrections (~3-8%) remain synthesized by us (section 3). All
-sources are open (smollm-corpus ODC-By; SYNTH released fully open
-with the AI Alliance). Nothing is repeated: at 10B from >100B the
-flash never sees the same day twice — like a life. (Named fallback
-if a stage's sources ever bind: <=4-epoch repetition is near-fresh
-per Muennighoff's data-constrained scaling — but the manifest's
-dilution rules should make it unnecessary.)
+sources are open (smollm-corpus/smoltalk ODC-By/Apache; UltraChat
+MIT). Nothing is repeated within one epoch — the flash never sees
+the same day twice, like a life. (If the user opts into a bigger
+budget than one epoch yields, <=2-epoch repetition is near-fresh
+per Muennighoff's data-constrained scaling — an explicit opt-in,
+not a default.)
 
 **Sleep and context (design clause):** the being's wake state —
 bands, pending window — persists through every sleep untouched
@@ -335,23 +340,30 @@ on and ARM C native once sleeping. One complete staged life per
 LANE — lanes consume the shard in parallel, so every lane lives
 infancy->tail across training time):
 
-| stage | tokens | shape + material (all top-slice, per 2b) | economy |
+| stage | share | shape + material (all conversations, per 2b) | economy |
 |---|---|---|---|
-| infancy | ~1B (10%) | short days, short exchanges, tight recurrence gaps — TinyStories + Cosmopedia-simplest dilution | dense +1/+2, no corrections, NO SLEEP |
-| childhood | ~4B (40%) | biography days; facts/characters recur at gaps spanning band 3/4 clocks — UltraChat top-slice (the fill) + Cosmopedia middle-school study days + grounding/long-doc weave | presses annealing down; corrections begin (~3-8%); sleep ramps in |
-| adolescence | ~4B (40%) | long threads, multi-session projects reaching band-5/6 horizons — complete SmolTalk2 (EN, no tool traces) + SYNTH + Cosmopedia college-tier, still one ordered life | sparse presses; prophets predicting |
-| the tail | ~1B (10%) | complete Smol-Magpie-Ultra + SmolTalk2/Cosmo judge-best — the highest-pedigree exchanges, on the cosine tail | strictest judge audit; audit failure = kill |
+| infancy | 10% | short days, the spine's shortest/simplest exchanges, tight recurrence gaps | dense +1/+2, no corrections, NO SLEEP |
+| childhood | 40% | biography days; facts/characters recur at gaps spanning band 3/4 clocks — UltraChat top-slice (the fill) | presses annealing down; corrections begin (~3-8%); sleep ramps in |
+| adolescence | 40% | long threads, multi-session projects reaching band-5/6 horizons — complete SmolTalk2 (EN, no tool traces), one ordered life | sparse presses; prophets predicting |
+| the tail | 10% | complete Smol-Magpie-Ultra + SmolTalk2's judge-best — the highest-pedigree exchanges, on the cosine tail | strictest judge audit; audit failure = kill |
+
+(Token budget: one epoch of the spine, measured at download —
+~5-7B expected; the 10B figure stands only if the user opts into
+<=2-epoch repetition after seeing the measured number.)
 
 Human mapping (user framing): ~0-2 / 2-8 / 8-12 / 12-13 years —
-one 13-year role-played upbringing at ~50x the linguistic volume.
+one 13-year role-played upbringing at ~30-50x the linguistic
+volume.
 
-**Judge grounding (public frozen instruments):** reading days are
-graded by the released FineWeb-Edu educational classifier (its
-0-5 score maps to silence/+1/+2) and dialogue days by a small
-frozen grader calibrated on HelpSteer2's human helpfulness
-ratings. Both are public and auditable — the A64 frozen-
-instrument law with instruments anyone can check, instead of a
-homemade heuristic.
+**Judge grounding (public frozen instruments):** every exchange is
+graded by the small frozen grader calibrated on HelpSteer2's
+public human helpfulness ratings (iga/lm_judge, coefficients
+frozen in-file, fixture-locked, re-derivable by anyone via its
+calibrate CLI). Upstream public quality columns are honored where
+a source ships them (Magpie-Ultra's ArmoRM scores); the
+FineWeb-Edu classifier mapping stays in the module as dormant
+machinery for any future document source. The A64 frozen-
+instrument law with instruments anyone can check.
 
 ## 6. Gates and the run protocol (user-specified: probes,
 heartbeats, kill, fix, relaunch)
