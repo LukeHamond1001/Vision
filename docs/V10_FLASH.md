@@ -19,6 +19,38 @@ mechanism — v10 fixes the CONTENT of what is resumed).
 | slow cortex (integration) | bands 3/4/5, clocks 1/8/64 chunks | 2k/16k/131k tok | built; UNEDUCATED — v10's target |
 | selfhood | A67 full persistence | lifetime | certified |
 
+## 1b. Fidelity audit — brain vs this architecture (2026-08-19)
+
+In ORGANIZATION: every major memory/reward system has a working
+counterpart, several with the brain's own phenomena reproduced
+(CLS wipe-survival, spacing curves, unrehearsed erosion, reward-
+tagged decontextualized replay, a developmental pathology). In
+PROPORTION and fine detail: known divergences, named here.
+
+**Band count is principled by COVERAGE, not neuroanatomy** — the
+cortex is a continuous log-spaced timescale gradient, so any
+geometric ladder discretizes it; "right" = (a) no gap between
+attention's reach and the first rung (band 3 = 1 chunk: exact),
+(b) sane ratio (x8), (c) top rung slow enough for identity yet
+ticking often enough to learn (band 6: ~5.7k ticks / 6B flash).
+The count is a function of lifetime length, as in humans; a
+longer flash earns band 7.
+
+Honest divergences, in priority order:
+1. PROPORTIONS — bands ~8% of params vs the brain's ~half-of-
+   cortex association areas; deliberately mouth-heavy for
+   legibility at 500M. Instrumented: in-flight lesion probes
+   measure real per-band load; v10.1 reallocates from data.
+2. Band states are single d-vectors, not maps — the thinnest
+   part of the analogy (KD stores thicken it). Params buy this
+   down as we climb.
+3. No instant aversive path (amygdala) — negatives act at night
+   (ARM C), not in the moment. v11.
+4. NREM only — replay without REM-like generative recombination
+   (imagination gate exists, ungraduated). v11.
+5. One neuromodulator (dopamine=press) — no ACh novelty gating
+   or arousal channel. v11.
+
 ## 2. Order is a first-class variable — four layers
 
 Standard LM pretraining SHUFFLES deliberately: a stateless trunk
