@@ -11,7 +11,7 @@
 #   3. prep phase 6 (full corpus at the smoke's lane pick)
 #   4. the flash (GO from pod env; kill-fix-relaunch inside)
 set -uo pipefail
-RAW=https://raw.githubusercontent.com/LukeHamond1001/iga-scale/main/scripts
+RAW=https://raw.githubusercontent.com/LukeHamond1001/Vision/main/scripts
 curl -sSL "$RAW/pod_v10_prep.sh" | SKIP_TERMINATE=1 bash
 curl -sSL "$RAW/pod_v10.sh"      | SKIP_TERMINATE=1 GO=0 bash
 curl -sSL "$RAW/pod_v10_prep.sh" | SKIP_TERMINATE=1 bash

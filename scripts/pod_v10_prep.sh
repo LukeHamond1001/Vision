@@ -16,12 +16,12 @@ set -uo pipefail
 W=/workspace/w-v10prep
 DATA=/workspace/v10
 mkdir -p "$W" "$DATA" && cd "$W"
-[ -d iga-scale ] || git clone --depth 1 \
-  https://github.com/LukeHamond1001/iga-scale.git
-cd iga-scale
+[ -d Vision ] || git clone --depth 1 \
+  https://github.com/LukeHamond1001/Vision.git
+cd Vision
 git fetch -q origin main && git reset --hard -q origin/main
-PUSH="https://x-access-token:${GIT_TOKEN}@github.com/LukeHamond1001/iga-scale.git"
-git config user.email "pod@iga-scale"; git config user.name "iga-pod"
+PUSH="https://x-access-token:${GIT_TOKEN}@github.com/LukeHamond1001/Vision.git"
+git config user.email "pod@Vision"; git config user.name "iga-pod"
 git checkout -B results-v10
 
 hb() {
