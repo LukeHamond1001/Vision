@@ -3798,6 +3798,32 @@ scale, not blocking this one. Target cost: $15–40 total.
   at debug scale. The 500M launch decision is now purely a
   budget decision.
 
+- **A70 — BAND 6 CERTIFIED: the ladder is band-count-parametric**
+  (2026-08-19; pre-flight item 1 of the 500M protocol). HybridLM
+  takes clocks=None (default = certified 3-band machine, proven
+  BIT-EXACT against pre-change fingerprints: strict a69_bio.pt
+  load, two chained forwards identical, init RNG draw order
+  identical, KD {512,1024,2048} unchanged) or BAND6_CLOCKS
+  {3:1, 4:8, 5:64, 6:512} — the x8 rule continued: ~1M tokens
+  per tick at T=2048, ~6k ticks across a 6B-token flash. KD
+  doubles per rung (band 6: 4096*kd_base); horizon(6) extrapolates
+  the x8 ladder to 1,048,576 tokens; sleep's replay cap extends
+  only when the drive registers a band-6 horizon (train() does
+  this automatically for clocks with bands >= 6); PressProphet
+  opts in via its own clocks kwarg (a 3-band prophet beside a
+  4-band model is safe: it just doesn't watch band 6). Six laws
+  in TestBand6Laws, suite 85/85: default structure unchanged;
+  band-6 structure (params, KD, pos rows); the tick law at the
+  REAL 512-chunk ratio (state moves at 512 and not before; the
+  tick lands after its chunk's logits, so the read route first
+  shows at 513; lesion = read amputation, state advances
+  underneath); gate-gradient flow on the tick chunk (z via write
+  cost — cand still learns only through longer routes, the
+  uneducated-bands fact the flash exists to change); horizon +
+  sleep-cap extension; train() threading end-to-end with a
+  band-6 prophet. Remaining pre-flight: corpus biography builder
+  + frozen judge; the 500M heartbeat/probe pack.
+
 ## Status
 
 **(2026-08-19, post-v9.4)** The substrate campaign is complete:

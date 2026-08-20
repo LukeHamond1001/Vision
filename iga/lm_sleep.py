@@ -169,8 +169,12 @@ class Sleeper:
 
     def bind(self, drive):
         self.start = drive.step_t
-        self.cap = max(drive.horizon_for(b)
-                       for b in range(1, N_BANDS)) + 8192
+        # A70: the replay-reach cap covers every band the drive knows
+        # a horizon for (band 6 arrives via drive._horizons); default
+        # runs see exactly the old 1..5 computation.
+        bands = set(range(1, N_BANDS)) | \
+            {b for b in getattr(drive, "_horizons", {}) if b >= 1}
+        self.cap = max(drive.horizon_for(b) for b in bands) + 8192
 
     @property
     def end(self):

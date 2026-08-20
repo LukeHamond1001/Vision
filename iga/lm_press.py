@@ -26,8 +26,10 @@ CAP = 4096          # metric/report cap guard
 
 
 class PressProphet:
-    def __init__(self, d, lr=1e-3, device="cpu"):
-        self.bands = sorted(HYBRID_CLOCKS)
+    def __init__(self, d, lr=1e-3, device="cpu", clocks=None):
+        # A70: clocks=None keeps the certified 3-band prophet exact
+        self.clocks = dict(HYBRID_CLOCKS if clocks is None else clocks)
+        self.bands = sorted(self.clocks)
         self.heads = nn.ModuleDict(
             {str(k): nn.Linear(d, 1) for k in self.bands}).to(device)
         self.opt = torch.optim.Adam(self.heads.parameters(), lr=lr)
@@ -46,7 +48,7 @@ class PressProphet:
             return
         now = drive.step_t
         for k in self.bands:
-            if st["chunk"] % HYBRID_CLOCKS[k] == 0:
+            if st["chunk"] % self.clocks[k] == 0:
                 self.rings[k].append((now, st["h"][k].detach().clone()))
         for p in drive.presses[self._press_i:]:
             for k in self.bands:

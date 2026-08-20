@@ -43,7 +43,11 @@ def gap_bin(gap):
 
 
 def horizon(band):
-    return max(4 * CLOCKS[band], 512)
+    # A70: bands beyond the original six extrapolate the x8 ladder
+    # (band 6 -> 4 * 262144 ~ 1M tokens); 0..5 unchanged, exact.
+    if band < len(CLOCKS):
+        return max(4 * CLOCKS[band], 512)
+    return max(4 * CLOCKS[-1] * 8 ** (band - len(CLOCKS) + 1), 512)
 
 
 class Drive:

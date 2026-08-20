@@ -1879,5 +1879,131 @@ class TestLifeLaws(unittest.TestCase):
             self.assertEqual(pr["w1"], pr["tw"])
 
 
+class TestBand6Laws(unittest.TestCase):
+    """A70 — the ladder is band-count-parametric; band 6 (x8 again,
+    512 chunks) certifies at debug tier before any 500M money moves.
+    Default clocks=None stays the certified 3-band machine bit-exactly
+    (proven against pre-change fingerprints at cert time; guarded here
+    structurally)."""
+
+    CFG = dict(store="matrix", keyed="logit", norm_mix=True,
+               aux_trunk=0.2, use_xl=False, gate_init=-2.0)
+
+    def test_default_structure_unchanged(self):
+        from iga.lm_hybrid import HybridLM
+        m = HybridLM(64, d=32, n_layers=2, n_heads=2, max_T=64,
+                     **self.CFG)
+        self.assertEqual(m.bands, [3, 4, 5])
+        self.assertEqual(m.KD, {3: 512, 4: 1024, 5: 2048})
+        self.assertEqual(m.pos.num_embeddings, 64 + 3)
+        self.assertNotIn("6", m.cells)
+
+    def test_band6_structure(self):
+        from iga.lm_hybrid import BAND6_CLOCKS, HybridLM
+        m = HybridLM(64, d=32, n_layers=2, n_heads=2, max_T=64,
+                     clocks=BAND6_CLOCKS, **self.CFG)
+        self.assertEqual(m.bands, [3, 4, 5, 6])
+        self.assertEqual(m.KD[6], 4096)          # doubling per rung
+        self.assertEqual(m.KD[5], 2048)          # old rungs untouched
+        self.assertEqual(m.pos.num_embeddings, 64 + 4)
+        for mod in (m.cells, m.stores, m.mats):
+            self.assertIn("6", mod)
+        sd = m.state_dict()
+        self.assertTrue(any(k.startswith("cells.6") for k in sd))
+
+    def _run(self, m, chunks, lesion=()):
+        torch.manual_seed(9)
+        g = torch.Generator().manual_seed(9)
+        m.eval()
+        m.lesioned = set(lesion)
+        st = m.init_state(1, "cpu")
+        out = {}
+        with torch.no_grad():
+            for c in range(1, chunks + 1):
+                x = torch.randint(0, 64, (1, 8), generator=g)
+                lg, st, _ = m(x, st, None)
+                m.pop_write_cost()
+                m.pop_recon()
+                if c in (511, 512, 513):
+                    out[c] = lg.clone()
+        m.lesioned = set()
+        return out, st
+
+    def test_band6_tick_law_and_pretick_inertness(self):
+        # band 6 must NOT touch output before its first tick lands
+        # (chunk 512, the x8 law at the real ratio) — and because the
+        # tick fires AFTER a chunk's logits, the read route (mem
+        # token) first shows at chunk 513. Lesion semantics are read
+        # amputation: state still advances underneath (certified).
+        from iga.lm_hybrid import BAND6_CLOCKS, HybridLM
+        torch.manual_seed(4)
+        m = HybridLM(64, d=32, n_layers=2, n_heads=2, max_T=8,
+                     clocks=BAND6_CLOCKS, **self.CFG)
+        full, st = self._run(m, 513)
+        self.assertTrue(torch.any(st["h"][6] != 0).item(),
+                        "band 6 ticked at chunk 512: state moved")
+        self.assertIsNotNone(st["pend"][6])
+        les, st_l = self._run(m, 513, lesion=(6,))
+        self.assertTrue(torch.equal(full[511], les[511]),
+                        "pre-tick: band-6 lesion must be bit-invisible")
+        self.assertTrue(torch.equal(full[512], les[512]),
+                        "tick chunk's own logits precede the tick")
+        self.assertFalse(torch.equal(full[513], les[513]),
+                         "post-tick: the live band must reach output")
+        # lesion never freezes the organ, it only mutes the read
+        self.assertTrue(torch.any(st_l["h"][6] != 0).item())
+
+    def test_band6_grad_flow(self):
+        from iga.lm_hybrid import BAND6_CLOCKS, HybridLM
+        torch.manual_seed(4)
+        m = HybridLM(64, d=32, n_layers=2, n_heads=2, max_T=8,
+                     clocks=BAND6_CLOCKS, **self.CFG)
+        _, st = self._run(m, 511)
+        m.train()
+        g = torch.Generator().manual_seed(99)
+        x = torch.randint(0, 64, (1, 8), generator=g)
+        lg, st, _ = m(x, st, None)          # chunk 512: band 6 ticks
+        loss = lg.float().mean() + m.pop_write_cost()
+        m.pop_recon()
+        loss.backward()
+        # the tick's write cost (z.mean) trains the gate on the tick
+        # chunk — same education route bands 3/4/5 have; cand learns
+        # only via longer routes (the uneducated-bands fact v10's
+        # flash exists to change)
+        gr = m.cells["6"].z.weight.grad
+        self.assertIsNotNone(gr)
+        self.assertTrue(torch.isfinite(gr).all().item())
+        self.assertGreater(float(gr.abs().sum()), 0.0)
+
+    def test_horizon_extrapolates_and_sleep_cap_extends(self):
+        from iga.lm_sleep import Sleeper
+        self.assertEqual(horizon(5), 131072)     # old rungs exact
+        self.assertEqual(horizon(6), 4 * 262144)
+        d = Drive(1, seed=0)
+        sl = Sleeper(arm="A", every=0, seed=1)
+        sl.bind(d)
+        base_cap = sl.cap
+        d._horizons[6] = horizon(6)
+        sl.bind(d)
+        self.assertEqual(sl.cap, horizon(6) + 8192)
+        self.assertGreater(sl.cap, base_cap)
+
+    def test_train_threads_clocks_and_prophet_opts_in(self):
+        from iga.lm_hybrid import BAND6_CLOCKS
+        from iga.lm_press import PressProphet
+        pr = PressProphet(d=32, clocks=BAND6_CLOCKS)
+        self.assertIn("6", pr.heads)
+        self.assertIn(6, pr.rings)
+        model, drive, vocab, ce0, ce1 = train(
+            d=32, lanes=2, T=64, steps=6, seed=0, device="cpu",
+            arch="hybrid", store="matrix", keyed="logit",
+            norm_mix=True, aux_trunk=0.2, use_xl=False,
+            gate_init=-2.0, log_every=100, clocks=BAND6_CLOCKS,
+            prophet=pr)
+        self.assertEqual(model.bands, [3, 4, 5, 6])
+        self.assertEqual(drive._horizons.get(6), horizon(6))
+        self.assertTrue(torch.isfinite(torch.tensor(ce1)).item())
+
+
 if __name__ == "__main__":
     unittest.main()

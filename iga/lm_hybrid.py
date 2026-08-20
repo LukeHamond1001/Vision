@@ -30,6 +30,10 @@ from .lm_bands import N_BANDS
 from .lm_transformer import Block
 
 HYBRID_CLOCKS = {3: 1, 4: 8, 5: 64}   # band idx -> tick every N chunks
+# A70 (v10): the ladder is band-count-parametric. Band 6 keeps the
+# x8 rule (512 chunks ~ 1M tokens at T=2048) — the "who I am across
+# everything" slot; ~6k ticks across a 6B-token flash.
+BAND6_CLOCKS = {3: 1, 4: 8, 5: 64, 6: 512}
                                        # (chunks of 512 -> 512/4k/32k)
 
 
@@ -217,7 +221,7 @@ class HybridLM(nn.Module):
                  max_T=512, talk=None, widths=None, store="vector",
                  use_xl=True, gate_init=-4.0, read_drop=0.5,
                  gate_mode="scalar", keyed=None, norm_mix=False,
-                 aux_trunk=0.0):
+                 aux_trunk=0.0, clocks=None):
         super().__init__()
         self.d = d
         self.vocab_size = vocab_size
@@ -245,7 +249,10 @@ class HybridLM(nn.Module):
                                # reach (A33) but unresolved held-out cost
                                # and large run-variance; revisit at scale
         self.mid = n_layers // 2                    # read injection depth
-        self.bands = sorted(HYBRID_CLOCKS)          # [3, 4, 5]
+        # A70: clocks=None reproduces the certified 3-band ladder
+        # bit-exactly (param names, shapes, RNG draw order, forward).
+        self.clocks = dict(HYBRID_CLOCKS if clocks is None else clocks)
+        self.bands = sorted(self.clocks)            # default [3, 4, 5]
         self.embed = nn.Embedding(vocab_size, d)
         self.pos = nn.Embedding(max_T + len(self.bands), d)
         self.blocks = nn.ModuleList(
@@ -264,7 +271,7 @@ class HybridLM(nn.Module):
         if store == "matrix":
             # half-life = the band's clock, in chunks
             self.mats = nn.ModuleDict(
-                {str(k): BandMatrix(d, 1 - 0.5 ** (1 / HYBRID_CLOCKS[k]))
+                {str(k): BandMatrix(d, 1 - 0.5 ** (1 / self.clocks[k]))
                  for k in self.bands})
             self.write_q = nn.ParameterDict(
                 {str(k): nn.Parameter(torch.randn(d) / d ** 0.5)
@@ -301,14 +308,17 @@ class HybridLM(nn.Module):
                 # scales with max_T (T=1024 reproduces R5 exactly;
                 # T=2048 doubles every band's store).
                 kd_base = max(1, max_T // 1024)
-                self.KD = {3: 512 * kd_base, 4: 1024 * kd_base,
-                           5: 2048 * kd_base}
+                # doubling per rung (load = writes x pair lifetime);
+                # default bands [3,4,5] -> {512,1024,2048}*kd_base
+                # exactly as before; band 6 gets 4096*kd_base
+                self.KD = {k: 512 * (2 ** i) * kd_base
+                           for i, k in enumerate(self.bands)}
                 self.tok_u = nn.Parameter(torch.zeros(vocab_size))
                 self.qmix = nn.Parameter(torch.zeros(self.QR))
                 self.stores = nn.ModuleDict(
                     {str(k): LogitStore(
                         d, self.KD[k],
-                        1 - 0.5 ** (1 / HYBRID_CLOCKS[k]),
+                        1 - 0.5 ** (1 / self.clocks[k]),
                         seed=1000 + k)
                      for k in self.bands})
                 self.alpha = nn.ParameterDict(
@@ -574,7 +584,7 @@ class HybridLM(nn.Module):
                     logits = logits + rsum @ lg_E.t()
         # band updates: each band SELECTS from the window with its own
         # query (A24) instead of receiving the window mean
-        ticks = [[] for _ in range(N_BANDS)]
+        ticks = [[] for _ in range(max(N_BANDS, max(self.bands) + 1))]
         st["chunk"] += 1
         wcost = []
         for k in self.bands:
@@ -583,7 +593,7 @@ class HybridLM(nn.Module):
             read = torch.einsum("bt,btd->bd", w, hidden)
             st["acc"][k] = st["acc"][k] + read
             st["cnt"][k] += 1
-            if st["chunk"] % HYBRID_CLOCKS[k] == 0:
+            if st["chunk"] % self.clocks[k] == 0:
                 pooled = st["acc"][k] / max(st["cnt"][k], 1)
                 if st["pend"][k] is not None:
                     fid = nn.functional.cosine_similarity(
