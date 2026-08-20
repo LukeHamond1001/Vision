@@ -65,6 +65,14 @@ FUNCTION, not anatomy).
 ## 1c. The v10 organ program (A71-A77) — all debug-gated, $0;
 winners ship, nulls stay out with evidence
 
+**GATE VERDICTS (2026-08-20, run 1 + A76 gate; ledger entry "V10
+GATE RUN 1"): SHIP = A72 (mechanism, law-tested) and A76 (H=1e-3:
+conviction damped 14.6%, memory 1.07x and CE 14.5% BETTER). OUT
+with numbers = A71 (noise CE, cross-day regression — slowheavy's
+second loss), A73 (b5+ crashed 0.129: splice steals long-span
+replay), A74 (noise), A75 (+18% CE, binder dead). A77 pending its
+arm. The 500M flash config carries ONLY the shippers.**
+
 - **A71 slow-band capacity**: per-band widths (bands 5/6 at
   1.5-2x d) + KD boost, targeting ~15-18% of params in bands.
   Gate: must beat MATCHED-PARAM uniform on the hybrid substrate

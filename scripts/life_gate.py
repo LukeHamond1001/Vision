@@ -177,6 +177,9 @@ def main():
         "a73": dict(data="data/life_gate_bio", splice=0.35),
         "a74": dict(data="data/life_gate_bio", novelty=0.5),
         "a75": dict(data="data/life_gate_bio", tie_embed=True),
+        "a77": dict(data="data/life_gate_bio",
+                    dream={"every_nights": 4, "n": 4, "max_new": 48,
+                           "min_q": 0.55}),
         "tf_bio": dict(data="data/life_gate_bio",
                        arch="transformer"),
         "tf_ctrl": dict(data="data/life_gate_ctrl",
@@ -219,17 +222,26 @@ def main():
         verdicts["G2_detail"] = {"bio_hits": round(bio_h, 1),
                                  "ctrl_hits": round(ctl_h, 1),
                                  "n": nb}
-    for organ, better_needed in (("a71", True), ("a73", True),
-                                 ("a74", True), ("a75", True)):
+    # shipping rules, amended after the first run exposed two
+    # holes: (1) CE "better" must clear a 1% NOISE FLOOR — seed
+    # variance is unmeasured (A35/A37) and the single-run
+    # attribution ban applies to organ deltas too; (2) the
+    # cross-day bin (b5+) is IN the regression check — it is the
+    # architecture's load-bearing bin, not an optional extra.
+    for organ in ("a71", "a73", "a74", "a75"):
         if organ in a and "bio" in a:
-            ce_ok = a[organ]["eval"]["ce"] < a["bio"]["eval"]["ce"]
+            ce_o, ce_b = a[organ]["eval"]["ce"], a["bio"]["eval"]["ce"]
+            ce_win = ce_o < ce_b * 0.99
             rec_o = a[organ]["eval"]["recall"]
             rec_b = a["bio"]["eval"]["recall"]
             rec_ok = all(
                 (rec_o[k]["acc"] or 0) >= (rec_b[k]["acc"] or 0) - .05
-                for k in ("in-ctx", "b3", "b4"))
-            verdicts[f"{organ.upper()}_ships"] = bool(ce_ok and
+                for k in ("in-ctx", "b3", "b4", "b5+"))
+            verdicts[f"{organ.upper()}_ships"] = bool(ce_win and
                                                       rec_ok)
+            verdicts[f"{organ.upper()}_detail"] = {
+                "ce_delta_pct": round((ce_o / ce_b - 1) * 100, 2),
+                "rec_ok": rec_ok}
     if "tf_bio" in a and "bio" in a:
         verdicts["QUAD"] = {
             "hybrid_bio_ce": a["bio"]["eval"]["ce"],

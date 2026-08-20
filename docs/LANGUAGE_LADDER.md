@@ -3886,6 +3886,49 @@ scale, not blocking this one. Target cost: $15–40 total.
   b5+ cross-day recall 0.355 ALREADY TOPS every shorter bin at
   n=31 — the biography structure showing through early.
 
+- **V10 GATE RUN 1 (2026-08-20, 8 arms x 4k steps x d=128 on
+  real-corpus life shards; evidence v10_gates_run1.json):**
+  **G2 ORDERING — PASS, the headline:** biography beats
+  shuffle-sessions-KEEP-WORLD 332 vs 242 cross-day hits (n=1141,
+  +37%) AND 0.39 nats of general CE (5.381 vs 5.774) — A69-R4
+  replicated on REAL corpus with the world-churn confound removed.
+  **G3 PAIRS — PASS** (10 lawful pairs through real training,
+  only_paid, margins rising). **G1 BINDER — not armed at 4k**
+  (in-ctx .254 vs the .40 bar; above chance, below precondition;
+  8k emergence run queued — the R2 pattern). **THE QUAD (A50's
+  cancelled twin, finally measured):** (a) the ordering advantage
+  is ARCHITECTURE-INDEPENDENT at flash time — a plain transformer
+  gains the same ~0.39 nats from biography order (5.391 vs 5.776);
+  the ordered life is better curriculum for ANY model, and flash
+  CE is NOT where the organs pay (consistent with the division-of-
+  labor law: the organs pay at SERVE — wipe-survival, selective
+  consolidation, correction — proven elsewhere); (b) hybrid vs
+  transformer flash CE: parity (5.381 vs 5.391) at +47% params
+  and ~2.8x wall-clock — per-param the twin wins pretraining CE,
+  ledgered without cosmetics; (c) the one flash-time hybrid edge:
+  cross-day recall b5+ 0.355 vs transformer 0.161 (2.2x, n=31 —
+  thin, longer runs owed). INSTRUMENT NOTE: closed-set probe
+  accuracy partially measures color-marginal exploitation (all
+  bins inflated symmetrically; G2's contrast stays valid, G1's
+  bar partially soft — the 500M heartbeat should report margin
+  over the manifest's marginal-prior baseline).
+  **ORGAN VERDICTS (amended rules: 1% CE noise floor per the
+  single-run-attribution ban; b5+ IN the regression check — the
+  first coded rule had a hole, owned):** A71 slowheavy OUT
+  (-0.07% CE = noise; b5+ 0.29 vs 0.355) — slowheavy loses its
+  second A/B on a second substrate; capacity goes to KD. A73
+  splice OUT (-0.17% CE noise; b5+ CRASHED to 0.129 — splicing
+  steals long-span replay and teaches false adjacency; the SWS
+  metaphor did not survive contact with the measurement). A74
+  novelty OUT (-0.08% = noise, nothing gained). A75 tie OUT
+  (+18% CE, binder dead at chance; tied init also needs logit
+  rescaling this substrate never had). A72 SHIPS as mechanism
+  (scheduling guarantee, law-tested; no learning-rule risk).
+  A76 SHIPS (its own gate: 14.6% damping, memory and CE better).
+  A77 arm in flight. The user's "only stuff that works" rule,
+  executed: 2 of 7 organs ship on evidence; 5 stay out with
+  numbers attached.
+
 ## Status
 
 **(2026-08-19, post-v9.4)** The substrate campaign is complete:
