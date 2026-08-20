@@ -121,6 +121,23 @@ hours, not the run): recall-by-gap flat after N tokens; prophet
 AUC ~0.5 late; CE divergence; incumbent mass above threshold;
 judge audit failure.
 
+## 6b. The division-of-labor law (Phase A's closing result,
+A69-R1..R6)
+
+The FLASH builds faculties; the LIFE writes biography. Measured
+at debug tier, $0: fact-level weight consolidation cannot happen
+in pretraining (replay dilution: ~0.1 replays/fact vs the life's
+dozens) and does not need to — the flash-born creature, placed in
+a serve room, banked a pressed fact 9.9x across four spaced
+nights with perfect selectivity while the unpressed control
+eroded 0.6x, reproducing the 78M raised-life laws on a new
+substrate. Consequences for the 500M flash: keep press-pay sleep
+(it improved general CE 7%) but expect NO planted-fact recall
+from pretraining — the flash's gates are faculty gates (binder,
+ordering advantage, prophet AUC, correction reflex), and the
+biography demo happens in the served life afterward, where it is
+already proven end-to-end.
+
 ## 7. Open items
 
 - A69-R2 binder-emergence sweep (in flight) -> re-run twin
