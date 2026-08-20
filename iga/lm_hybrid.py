@@ -201,12 +201,16 @@ class LogitStore(nn.Module):
 class SlowCell(nn.Module):
     """Gated delta-write with the update gate biased closed at init:
     h' = (1-z)*h + z*cand. At init z ~ sigmoid(gate_bias) so the
-    state barely moves until training earns the right to write."""
+    state barely moves until training earns the right to write.
+    A71: d_h widens the band's STATE independently of the input
+    width (slow bands earn capacity); d_h=None = the certified
+    square cell with identical param names, shapes, and RNG draws."""
 
-    def __init__(self, d, gate_bias=-2.0):
+    def __init__(self, d, gate_bias=-2.0, d_h=None):
         super().__init__()
-        self.z = nn.Linear(2 * d, d)
-        self.cand = nn.Linear(2 * d, d)
+        d_h = d if d_h is None else int(d_h)
+        self.z = nn.Linear(d_h + d, d_h)
+        self.cand = nn.Linear(d_h + d, d_h)
         nn.init.constant_(self.z.bias, gate_bias)
 
     def forward(self, x, h):
@@ -221,7 +225,8 @@ class HybridLM(nn.Module):
                  max_T=512, talk=None, widths=None, store="vector",
                  use_xl=True, gate_init=-4.0, read_drop=0.5,
                  gate_mode="scalar", keyed=None, norm_mix=False,
-                 aux_trunk=0.0, clocks=None):
+                 aux_trunk=0.0, clocks=None, band_widths=None,
+                 tie_embed=False):
         super().__init__()
         self.d = d
         self.vocab_size = vocab_size
@@ -253,21 +258,41 @@ class HybridLM(nn.Module):
         # bit-exactly (param names, shapes, RNG draw order, forward).
         self.clocks = dict(HYBRID_CLOCKS if clocks is None else clocks)
         self.bands = sorted(self.clocks)            # default [3, 4, 5]
+        # A71 (gated): per-band STATE widths — slow bands earn
+        # capacity (cell state, its pred and mem projections widen;
+        # the window read stays d). None = every band at d with the
+        # certified param names/shapes/RNG draw order bit-exactly.
+        self.band_w = {k: d for k in self.bands}
+        if band_widths:
+            self.band_w.update({int(k): int(v)
+                                for k, v in band_widths.items()})
         self.embed = nn.Embedding(vocab_size, d)
         self.pos = nn.Embedding(max_T + len(self.bands), d)
         self.blocks = nn.ModuleList(
             [Block(d, n_heads) for _ in range(n_layers)])
         self.lnf = nn.LayerNorm(d)
         self.head = nn.Linear(d, vocab_size)
+        # A75 (gated): weight tying — head shares the embedding
+        # matrix (standard sub-1B practice; the logit store's value
+        # space lg_E is ALREADY the embedding, so tying unifies the
+        # store, head, and input geometry). False = certified
+        # untied model bit-exactly.
+        if tie_embed:
+            self.head.weight = self.embed.weight
         self.cells = nn.ModuleDict(
-            {str(k): SlowCell(d) for k in self.bands})
+            {str(k): SlowCell(d, d_h=(None if self.band_w[k] == d
+                                      else self.band_w[k]))
+             for k in self.bands})
         self.read_q = nn.ParameterDict(
             {str(k): nn.Parameter(torch.randn(d) / d ** 0.5)
              for k in self.bands})
         self.pred = nn.ModuleDict(
-            {str(k): nn.Linear(d, d) for k in self.bands})
+            {str(k): nn.Linear(self.band_w[k], d) if
+             self.band_w[k] != d else nn.Linear(d, d)
+             for k in self.bands})
         self.mem_proj = nn.ModuleDict(
-            {str(k): nn.Linear(d, d, bias=False) for k in self.bands})
+            {str(k): nn.Linear(self.band_w[k], d, bias=False)
+             for k in self.bands})
         if store == "matrix":
             # half-life = the band's clock, in chunks
             self.mats = nn.ModuleDict(
@@ -378,7 +403,7 @@ class HybridLM(nn.Module):
         self._recon = None
 
     def init_state(self, B, device):
-        st = {"h": {k: torch.zeros(B, self.d, device=device)
+        st = {"h": {k: torch.zeros(B, self.band_w[k], device=device)
                     for k in self.bands},
               "acc": {k: torch.zeros(B, self.d, device=device)
                       for k in self.bands},

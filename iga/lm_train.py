@@ -252,7 +252,8 @@ def train(d=64, lanes=4, T=256, steps=40, seed=0, device="cpu",
           bf16=False, lam=0.25, keyed=None, lr_decay="none",
           lr_total_steps=None, norm_mix=False, aux_trunk=0.0,
           hold_cap=None, sleep=None, buttons=None, prophet=None,
-          life=None, clocks=None):
+          life=None, clocks=None, band_widths=None,
+          tie_embed=False):
     """resume (A26): path to a checkpoint — model + optimizer + drive
     EMAs/records/minted/vetoes continue; step numbering continues.
     sleep (A62): a lm_sleep.Sleeper — wake/sleep alternation; the
@@ -312,7 +313,9 @@ def train(d=64, lanes=4, T=256, steps=40, seed=0, device="cpu",
                          norm_mix=norm_mix, aux_trunk=aux_trunk,
                          use_xl=use_xl, gate_init=gate_init,
                          read_drop=read_drop, gate_mode=gate_mode,
-                         keyed=keyed, clocks=clocks).to(device)
+                         keyed=keyed, clocks=clocks,
+                         band_widths=band_widths,
+                         tie_embed=tie_embed).to(device)
         drive.bin_band = {0: 3, 1: 3, 2: 4, 3: 5}  # carry bands (A19)
         # A70: bands beyond the original ladder (6+) register their
         # horizons so sleep's replay cap and the prophet see them;

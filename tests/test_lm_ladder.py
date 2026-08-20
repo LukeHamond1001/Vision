@@ -1920,6 +1920,66 @@ class TestPressPlumbing(unittest.TestCase):
                          ["<pad>", "<eot_human>", "<eot_model>"])
 
 
+class TestBandWidthsAndTie(unittest.TestCase):
+    """A71/A75 structural laws: default = certified shapes and RNG
+    bit-exactly (proven vs pre-change fingerprints at build time);
+    widened bands carry their own state widths with d-space
+    projections; tying makes head and embedding one matrix."""
+
+    CFG = dict(store="matrix", keyed="logit", norm_mix=True,
+               aux_trunk=0.2, use_xl=False, gate_init=-2.0)
+
+    def test_default_shapes_unchanged(self):
+        from iga.lm_hybrid import HybridLM
+        m = HybridLM(64, d=32, n_layers=2, n_heads=2, max_T=64,
+                     **self.CFG)
+        self.assertEqual(m.band_w, {3: 32, 4: 32, 5: 32})
+        sd = m.state_dict()
+        self.assertEqual(sd["cells.3.z.weight"].shape, (32, 64))
+        self.assertEqual(sd["mem_proj.5.weight"].shape, (32, 32))
+        self.assertFalse(m.head.weight is m.embed.weight)
+
+    def test_widened_band_state_and_projections(self):
+        import torch as t
+        from iga.lm_hybrid import BAND6_CLOCKS, HybridLM
+        t.manual_seed(0)
+        m = HybridLM(64, d=32, n_layers=2, n_heads=2, max_T=16,
+                     clocks=BAND6_CLOCKS, band_widths={5: 64, 6: 48},
+                     **self.CFG)
+        st = m.init_state(1, "cpu")
+        self.assertEqual(st["h"][5].shape, (1, 64))
+        self.assertEqual(st["h"][6].shape, (1, 48))
+        self.assertEqual(st["h"][3].shape, (1, 32))
+        sd = m.state_dict()
+        self.assertEqual(sd["cells.5.z.weight"].shape, (64, 96))
+        self.assertEqual(sd["pred.5.weight"].shape, (32, 64))
+        self.assertEqual(sd["mem_proj.6.weight"].shape, (32, 48))
+        # run past a band-5 tick (clock 64 at T=16 -> 64 chunks is
+        # too slow for a unit test; band 4 ticks at 8): state moves
+        x = t.randint(0, 64, (1, 16))
+        with t.no_grad():
+            for _ in range(9):
+                _, st, _ = m(x, st, None)
+                m.pop_write_cost()
+                m.pop_recon()
+        self.assertTrue(t.any(st["h"][4] != 0).item())
+
+    def test_tied_head_is_embedding(self):
+        import torch as t
+        from iga.lm_hybrid import HybridLM
+        t.manual_seed(0)
+        m = HybridLM(64, d=32, n_layers=2, n_heads=2, max_T=16,
+                     tie_embed=True, **self.CFG)
+        self.assertTrue(m.head.weight is m.embed.weight)
+        x = t.randint(0, 64, (1, 16))
+        st = m.init_state(1, "cpu")
+        lg, st, _ = m(x, st, None)
+        m.pop_write_cost()
+        m.pop_recon()
+        lg.float().mean().backward()
+        self.assertIsNotNone(m.embed.weight.grad)
+
+
 class TestSleepOrgans(unittest.TestCase):
     """v10 organ program, sleep quartet: A72 hot-pair guarantee,
     A73 splice provenance, A74 surprise weighting, A76 homeostasis.
