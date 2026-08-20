@@ -73,6 +73,21 @@ second loss), A73 (b5+ crashed 0.129: splice steals long-span
 replay), A74 (noise), A75 (+18% CE, binder dead). A77 pending its
 arm. The 500M flash config carries ONLY the shippers.**
 
+**Nothing is lost — the relaunch playbook (scale insurance).**
+Small-scale HARMS are trustworthy (mechanistic); small-scale
+NULLS are weak evidence — so every out-organ stays implemented,
+law-tested, one flag away, indexed by the disease it treats. On
+a heartbeat KILL or warn, the fix step consults this table:
+
+| disease seen at 500M | remedy on the shelf |
+|---|---|
+| band-5/6 lesion deltas ~0 (bands underloaded) | A71 widths per MEASURED lesion load (v10.1 reallocation — the principled path the gate returned us to) |
+| recall-by-gap flat while CE healthy | A74 novelty=0.5 (its null was at debug; flip and relaunch) |
+| incumbent mass rising despite H=1e-3 | A76 dose up the mapped window (<3e-3 — memory cliff) |
+| corrections not landing (pair margins flat) | A72 hot-press corrections (-2 in builder) already ON; widen pair gap / beta |
+| cross-episode integration weak in the served life | A77 dreams there (its natural home), never mid-flash |
+| A73 splice | NO known disease it treats — its gate showed harm; stays out absent new evidence |
+
 - **A71 slow-band capacity**: per-band widths (bands 5/6 at
   1.5-2x d) + KD boost, targeting ~15-18% of params in bands.
   Gate: must beat MATCHED-PARAM uniform on the hybrid substrate
