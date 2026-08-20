@@ -253,7 +253,7 @@ def train(d=64, lanes=4, T=256, steps=40, seed=0, device="cpu",
           lr_total_steps=None, norm_mix=False, aux_trunk=0.0,
           hold_cap=None, sleep=None, buttons=None, prophet=None,
           life=None, clocks=None, band_widths=None,
-          tie_embed=False):
+          tie_embed=False, dream=None):
     """resume (A26): path to a checkpoint — model + optimizer + drive
     EMAs/records/minted/vetoes continue; step numbering continues.
     sleep (A62): a lm_sleep.Sleeper — wake/sleep alternation; the
@@ -404,7 +404,21 @@ def train(d=64, lanes=4, T=256, steps=40, seed=0, device="cpu",
             # A74: stamp the wake step's CE over its token range —
             # append-only, no RNG, no graph; only novelty>0 reads it
             sleep.note_ce(ce, drive.step_t - T, drive.step_t)
-            sleep.maybe_sleep(model, opt, drive, step)
+            slept = sleep.maybe_sleep(model, opt, drive, step)
+            if dream is not None and slept is not None \
+                    and hasattr(vocab, "decode"):
+                # A77 (gated): a leashed dream rides every Nth night
+                _dn = dream.setdefault("_nights", 0) + 1
+                dream["_nights"] = _dn
+                if _dn % dream.get("every_nights", 4) == 0:
+                    from .lm_dream import dream_block
+                    from .lm_judge import grade_dialogue
+                    dream_block(
+                        model, opt, sleep, vocab, grade_dialogue,
+                        step, fact_check=dream.get("fact_check"),
+                        n=dream.get("n", 4), tau=dream.get("tau", .8),
+                        max_new=dream.get("max_new", 48),
+                        min_q=dream.get("min_q"))
         if prophet is not None:
             prophet.observe(model, drive)   # A64 spectator (B5)
         ce_first = ce_first or ce

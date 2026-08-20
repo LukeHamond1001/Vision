@@ -1920,6 +1920,85 @@ class TestPressPlumbing(unittest.TestCase):
                          ["<pad>", "<eot_human>", "<eot_model>"])
 
 
+class TestDreamLeash(unittest.TestCase):
+    """A77 laws: a dream trains ONLY when the external judge passes
+    its best candidate (rejection is a feature); the freeze surface
+    holds; the collapse signature is logged on every block; and a
+    fact-check veto beats a passing judge score."""
+
+    class _Tok:
+        def decode(self, ids, skip_special_tokens=False):
+            return " ".join(f"w{i}" for i in ids)
+
+    def _fixture(self, **kw):
+        import torch as t
+        from iga.lm_hybrid import HybridLM
+        from iga.lm_sleep import Sleeper
+        t.manual_seed(0)
+        m = HybridLM(64, d=32, n_layers=2, n_heads=2, max_T=64,
+                     store="matrix", keyed="logit", norm_mix=True,
+                     aux_trunk=0.2, use_xl=False)
+        sl = Sleeper(arm="A", every=1, seed=3, **kw)
+        t.manual_seed(9)
+        sl.buffers = [t.randint(3, 60, (400,)).tolist()]
+        sl.start, sl.cap, sl.T = 0, 10 ** 9, 64
+        sl.spans = [{"lane": 0, "t0": 40, "t1": 160, "pay": 2.0,
+                     "i": 0}]
+        opt = t.optim.AdamW(m.parameters(), lr=1e-3)
+        return m, sl, opt
+
+    def test_rejection_trains_nothing(self):
+        import torch as t
+        from iga.lm_dream import dream_block
+        m, sl, opt = self._fixture()
+        before = {n: p.detach().clone()
+                  for n, p in m.named_parameters()}
+        row = dream_block(m, opt, sl, self._Tok(),
+                          judge_fn=lambda h, mm: 0.0, step=1,
+                          n=2, max_new=8, min_q=0.5, gen_seed=1)
+        self.assertIsNotNone(row)
+        self.assertFalse(row["stepped"])
+        self.assertIn("distinct3", row)
+        for n, p in m.named_parameters():
+            self.assertTrue(t.equal(before[n], p),
+                            f"rejected dream moved {n}")
+
+    def test_acceptance_steps_freeze_holds(self):
+        import torch as t
+        from iga.lm_dream import dream_block
+        from iga.lm_sleep import FREEZE_EXACT, FREEZE_PREFIXES
+        m, sl, opt = self._fixture()
+        before = {n: p.detach().clone()
+                  for n, p in m.named_parameters()}
+        row = dream_block(m, opt, sl, self._Tok(),
+                          judge_fn=lambda h, mm: 1.0, step=1,
+                          n=2, max_new=8, min_q=0.5, gen_seed=1)
+        self.assertTrue(row["stepped"])
+        moved = 0
+        for n, p in m.named_parameters():
+            if n.startswith(FREEZE_PREFIXES) or n in FREEZE_EXACT:
+                self.assertTrue(t.equal(before[n], p),
+                                f"dream touched frozen {n}")
+            elif not t.equal(before[n], p):
+                moved += 1
+        self.assertGreater(moved, 0)
+
+    def test_fact_check_vetoes_passing_judge(self):
+        import torch as t
+        from iga.lm_dream import dream_block
+        m, sl, opt = self._fixture()
+        before = {n: p.detach().clone()
+                  for n, p in m.named_parameters()}
+        row = dream_block(m, opt, sl, self._Tok(),
+                          judge_fn=lambda h, mm: 1.0, step=1,
+                          fact_check=lambda txt: False,
+                          n=2, max_new=8, min_q=0.5, gen_seed=1)
+        self.assertFalse(row["stepped"],
+                         "the consistency veto is load-bearing")
+        for n, p in m.named_parameters():
+            self.assertTrue(t.equal(before[n], p))
+
+
 class TestLedgerPruning(unittest.TestCase):
     """A54e F6 (v10): the drive ledger is bounded by ledger_cap;
     ledger_base keeps sleep's absolute indices valid across prunes,
