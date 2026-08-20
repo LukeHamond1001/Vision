@@ -3824,6 +3824,68 @@ scale, not blocking this one. Target cost: $15–40 total.
   band-6 prophet. Remaining pre-flight: corpus biography builder
   + frozen judge; the 500M heartbeat/probe pack.
 
+- **V10 PRE-FLIGHT DAY (2026-08-19, one sitting): judge, builder,
+  plumbing, the organ program A71-A77, pruning, heartbeats.** The
+  approved plan executed through build order 1-7 (+9 drafted):
+  (1) JUDGE (iga/lm_judge): public instruments — HelpSteer2-
+  calibrated dialogue grader (20 deterministic features, ridge,
+  frozen coefficients; honest card: val r .248 weak ranker,
+  top-10% precision .835 vs .717 usable selector), upstream score
+  mapping, per-stage thresholds quantile-calibrated (placeholder
+  thresholds pressed 94% of exchanges — sparsity law violation
+  caught by the first smoke; now ~20%), fixture-locked.
+  (2) PLUMBING: Drive.button(attribute=) — judge presses recorded
+  for sleep/pairs/prophet, never economy-attributed (the stale-
+  channel mint/veto bug found by the design agent); tokenizer
+  specials kwarg; certified path fingerprint-exact.
+  (3) BUILDER (iga/lm_data_life): one staged life PER LANE (lane
+  segment == life boundary, exact budgets), LifeCast with era
+  facts, exact weaver plant/ask/correction grammar, judged real
+  conversations (floor-truncate; graded press turns attr=false,
+  stage-stamped), day rituals/events, shuffle-sessions-KEEP-WORLD
+  control (A69-R4's confound note honored). TRUE-GAP LAW: probe
+  gaps measure from LAST EXPOSURE, not plant — every correct ask
+  restates the fact, so plant-relative gaps overstate demand (A47
+  reborn; the b5/b6-rich distribution was an illusion, honest bins
+  now). Integration proven: ARM C pairs form on a real-corpus
+  shard through train(), margins rising on re-dose.
+  (4) THE SPINE IS THE CORPUS (user-final): UltraChat (simplest
+  slices = infancy, rest = childhood fill) -> complete SmolTalk2
+  (EN; think/tool/system/multilingual subsets excluded, ledgered)
+  -> complete Smol-Magpie-Ultra (via smoltalk2's curation) last.
+  Budget = one-epoch yield, measured at the pod build.
+  (5) ORGANS, all default-off, all fingerprint-parity: A71
+  per-band state widths + A75 tie_embed (lm_hybrid); A72 hot-press
+  pair guarantee, A73 splice replay (per-part provenance — the
+  first cut wore span A's identity on part B, caught by its own
+  law test), A74 surprise-weighted lottery (trainer-stamped CE),
+  A76 sleep homeostasis (lm_sleep); A77 dream-on-a-leash
+  (lm_dream: real seed, external-judge selection, fact-consistency
+  veto proven to beat a passing judge, distinct-3gram logged).
+  (6) **A76 GATE — SHIPS at H=1e-3**: mini-incumbent protocol on
+  the flash-born creature; conviction damped 14.6%, fresh-fact
+  memory 1.07x BETTER, CE 14.5% BETTER; dose window mapped (3e-4
+  under-doses at 4.2%; 3e-3 overdoses — 64% damping but fresh
+  memory 0.69x). The homeostat treats exactly the over-drilling
+  disease it was built for.
+  (7) LEDGER PRUNING (A54e F6 closed): Drive.ledger_cap +
+  ledger_base; capped harvest proven equal to uncapped at adequate
+  sizing; undersized caps COUNT unharvested loss (heartbeat row).
+  (8) HEARTBEAT PACK (scripts/heartbeat_v10.py): pre-registered
+  KILL constants; CE/recall-by-gap (b6 bin), collapse detector
+  (armed post-infancy — every infant babbles), cast incumbent +
+  selectivity + collateral, stage-stamped tail audit (27.5% -> 0.0%
+  mismatch once presses carry their grading stage — boundary blur,
+  not plumbing), band lesions, prophet holdout AUC ring (spectator
+  law intact), pruned_unharvested. Suite 107/107.
+  IN FLIGHT at entry time: life_gate.py (G1-G3 + QUAD + A71/A73/
+  A74/A75 arms, 8 runs at d=128 on real-corpus shards). First arm
+  (bio): G3 shape green (10 lawful pairs, only_paid); G1 binder
+  0.254 vs 0.40 bar at 4k steps (learning, not yet armed — the
+  R2 emergence pattern; more steps queued if the sweep says so);
+  b5+ cross-day recall 0.355 ALREADY TOPS every shorter bin at
+  n=31 — the biography structure showing through early.
+
 ## Status
 
 **(2026-08-19, post-v9.4)** The substrate campaign is complete:
