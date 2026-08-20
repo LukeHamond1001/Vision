@@ -164,6 +164,16 @@ done
   cp smoke_choice.json "$OUT/smoke.json" && hb "smoke.json <- smoke_choice.json"; }
 [ -f "$OUT/smoke.json" ] || { hb "ABORT no smoke config"; \
   runpodctl remove pod "$RUNPOD_POD_ID"; exit 1; }
+# cost bar: below MIN_TOKS tok/s this GPU prices the run out of the
+# ratified band — HOLD (bank everything, don't flash) unless forced
+if [ "${MIN_TOKS:-0}" -gt 0 ] && [ "${FORCE:-0}" != "1" ]; then
+  TOKS=$(python -c "import json;print(int(json.load(open('$OUT/smoke.json'))['tok_s']))" 2>/dev/null || echo 0)
+  if [ "$TOKS" -lt "${MIN_TOKS}" ]; then
+    hb "HOLD: measured $TOKS tok/s < $MIN_TOKS cost bar — flash NOT started"
+    runpodctl remove pod "$RUNPOD_POD_ID" 2>/dev/null || true
+    sleep 60; exit 0
+  fi
+fi
 
 CKPT=$OUT/v10.pt
 # false-start guard (A54d): a sub-5k-step stub from a crashed first
