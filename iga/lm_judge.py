@@ -31,15 +31,20 @@ import re
 JUDGE_VERSION = "v10.0"
 
 # press thresholds by stage: q >= q2 -> +2, q >= q1 -> +1, else
-# silence. Placeholders until the density calibration pass (build
-# step 8) hits the stage press-density targets; the SCORER below is
-# frozen independently of them.
+# silence. Quantile-calibrated on 4,004 UltraChat exchanges
+# (2026-08-19) to the stage press-density targets — infancy 35%
+# total (+2 15/+1 20; caregiver-dense), childhood 23% (8/15),
+# adolescence 12% (4/8; prophets must predict), tail 18% (8/10;
+# the highest-pedigree material earns MORE selection again, so the
+# anneal is dense -> sparse -> tail-rich, not monotone). The step-8
+# full-corpus calibration re-derives these per real stage mixes;
+# every shard manifest embeds the values it was built with.
 JUDGE = {
     "floor": 0.30,
-    "q1": {"infancy": 0.45, "childhood": 0.55,
-           "adolescence": 0.66, "tail": 0.74},
-    "q2": {"infancy": 0.62, "childhood": 0.74,
-           "adolescence": 0.83, "tail": 0.88},
+    "q1": {"infancy": 0.773, "childhood": 0.795,
+           "adolescence": 0.815, "tail": 0.804},
+    "q2": {"infancy": 0.810, "childhood": 0.823,
+           "adolescence": 0.835, "tail": 0.823},
     "doc_score_div": 5.0,          # FineWeb-Edu int_score 0-5 -> q
     "audit_every": 997,            # primes: no day-cadence aliasing
     "audit_every_tail": 101,

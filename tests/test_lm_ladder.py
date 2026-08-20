@@ -1920,6 +1920,108 @@ class TestPressPlumbing(unittest.TestCase):
                          ["<pad>", "<eot_human>", "<eot_model>"])
 
 
+class TestLifeBuilder(unittest.TestCase):
+    """v10 biography builder laws — equal lives (the lane-boundary
+    law), exact budgets, the certified correction grammar in real
+    token streams, true-gap probes, press events on mark tokens,
+    and the shuffle-sessions-keep-world control (A69-R4)."""
+
+    @staticmethod
+    def _source():
+        def gen():
+            i = 0
+            while True:
+                i += 1
+                yield [f"tell me about the harbor town number {i} ?",
+                       "the town sat by the water . boats came in "
+                       "the morning and the market opened late . "
+                       f"people liked place number {i} because the "
+                       "bread was warm and the streets were quiet ."]
+        return gen()
+
+    @classmethod
+    def setUpClass(cls):
+        import tempfile
+        from iga.lm_data_life import prepare_life
+        cls.dir = tempfile.mkdtemp(prefix="life_law_")
+        cls.ctrl = tempfile.mkdtemp(prefix="life_law_ctrl_")
+        src = {"default": cls._source(), "tokenizer": cls._source()}
+        prepare_life(cls.dir, 30000, 2, seed=3, world_seed=99,
+                     vocab=600, sources=src, tok_sample=60)
+        src2 = {"default": cls._source(), "tokenizer": cls._source()}
+        prepare_life(cls.ctrl, 30000, 2, seed=3, world_seed=99,
+                     vocab=600, sources=src2, tok_sample=60,
+                     shuffle_sessions=True)
+
+    def _load(self, d):
+        import json as _json
+        import numpy as _np
+        toks = _np.fromfile(f"{d}/tokens.bin", dtype=_np.uint16)
+        ev = [_json.loads(l) for l in open(f"{d}/events.jsonl")]
+        man = _json.load(open(f"{d}/manifest.json"))
+        return toks, ev, man
+
+    def test_equal_lives_and_lane_boundary(self):
+        from iga.lm_data_ultrachat import UltraConveyor
+        toks, ev, man = self._load(self.dir)
+        self.assertEqual(len(toks), 30000)
+        self.assertEqual(man["life_len"], 15000)
+        self.assertEqual(man["lives"][1]["start"], 15000)
+        conv = UltraConveyor(self.dir, n_lanes=man["n_lives"])
+        self.assertEqual(conv.seg, man["life_len"],
+                         "lane segment must BE the life boundary")
+
+    def test_correction_grammar_in_stream(self):
+        from iga.lm_data_ultrachat import load_tokenizer
+        toks, ev, man = self._load(self.dir)
+        tok = load_tokenizer(f"{self.dir}/tokenizer.json")
+        self.assertGreater(man["stats"]["corrections"], 0)
+        pos = man["correction_pos"][0]
+        seg = tok.decode(list(toks[max(0, pos - 90):pos]),
+                         skip_special_tokens=False)
+        self.assertIn("<-1>", seg)
+        self.assertIn("not right", seg)
+        self.assertIn("<+2>", seg)
+
+    def test_probes_and_presses(self):
+        from iga.lm_data_ultrachat import load_tokenizer
+        toks, ev, man = self._load(self.dir)
+        tok = load_tokenizer(f"{self.dir}/tokenizer.json")
+        marks = {tok.token_to_id(s)
+                 for s in ("<+1>", "<+2>", "<-1>", "<-2>")}
+        probes = [e for e in ev if e["kind"] == "probe"]
+        btns = [e for e in ev if e["kind"] == "button"]
+        days = [e for e in ev if e["kind"] == "day"]
+        self.assertGreater(len(probes), 0)
+        self.assertGreater(len(days), 2)
+        for e in probes:
+            self.assertGreaterEqual(e["gap"], 1)
+            self.assertGreaterEqual(len(e["distractors"]), 1)
+            self.assertNotIn(e["answer"], e["distractors"])
+            self.assertEqual(len(e["distractors"]),
+                             len(set(e["distractors"])))
+        for e in btns:
+            self.assertIn(int(toks[e["pos"]]), marks,
+                          "every button event sits on its mark token")
+        # cast presses attribute (no attr field); judge presses
+        # never do (attr False) — both shapes must exist or the
+        # economy hygiene split is untested
+        self.assertTrue(any("attr" not in e for e in btns))
+
+    def test_shuffle_keeps_world(self):
+        _, _, bio = self._load(self.dir)
+        _, _, ctrl = self._load(self.ctrl)
+        w_bio = [(c["name"], c["obj"], c["col"])
+                 for c in bio["lives"][0]["cast"]]
+        w_ctl = [(c["name"], c["obj"], c["col"])
+                 for c in ctrl["lives"][0]["cast"]]
+        self.assertEqual(w_bio, w_ctl,
+                         "the control must keep the WORLD identical")
+        self.assertTrue(ctrl["shuffle_sessions"])
+        self.assertFalse(any(c["era"] for c in
+                             ctrl["lives"][0]["cast"]))
+
+
 class TestJudgeFrozen(unittest.TestCase):
     """v10 judge — the frozen public instrument. The fixture locks
     featurize + grade_dialogue to 6 decimals (A64 frozen-instrument
@@ -1948,11 +2050,16 @@ class TestJudgeFrozen(unittest.TestCase):
             self.assertEqual(J.press_for(q2 + 0.01, stage), 2)
             self.assertEqual(J.press_for((q1 + q2) / 2, stage), 1)
             self.assertEqual(J.press_for(q1 - 0.01, stage), 0)
-        # density anneals: thresholds rise monotonically with stage
-        order = ("infancy", "childhood", "adolescence", "tail")
-        for a, b in zip(order, order[1:]):
-            self.assertLessEqual(J.JUDGE["q1"][a], J.JUDGE["q1"][b])
-            self.assertLessEqual(J.JUDGE["q2"][a], J.JUDGE["q2"][b])
+        # density: dense -> sparse -> tail-rich (the tail's better
+        # sources earn MORE selection again, so thresholds rise
+        # through adolescence then relax between childhood's and
+        # adolescence's for the tail)
+        for k in ("q1", "q2"):
+            t = J.JUDGE[k]
+            self.assertLess(t["infancy"], t["childhood"])
+            self.assertLess(t["childhood"], t["adolescence"])
+            self.assertLessEqual(t["childhood"], t["tail"])
+            self.assertLessEqual(t["tail"], t["adolescence"])
         self.assertFalse(J.passes_floor(J.JUDGE["floor"] - 1e-9))
         self.assertTrue(J.passes_floor(J.JUDGE["floor"]))
         self.assertEqual(J.grade_doc(5), 1.0)
