@@ -106,3 +106,33 @@ Launcher: scripts/launch_pod.sh (secrets read at run time from
   session restart — no result; iteration 1 replaces them.
 - the scratch launch scripts (launch_mule2.sh, swap_mule.sh) were
   wiped with the session; replaced by scripts/launch_pod.sh in-repo.
+
+## 6. Iteration 1 smoke (23:39 UTC) and the iteration-2 decision
+
+Pod affvbon31255ol (4090 secure, $0.74/hr — the $0.34 was the
+community-cloud quote; the volume's DC prices secure). Shard
+scan_epi_l32 built in 5 min: 200M tokens, 32 lives x 6.25M, 765k
+events, 19.9k corrections. Smoke at the exact config: **2166 tok/s,
+peak 17.9 GiB, 67.0M params**, holds 23.2 -> lam 0.0108, CE 9.84 ->
+6.81 in 40 steps. R3 FAILS at the smoke (bar 8k): ~25 h / ~$19 for
+the 200M run.
+
+Why: the per-token loop is kernel-launch bound and the 8-block
+neocortex runs inside it. In the user's order the neocortex is NOT on
+the recurrent path — band states depend only on the council outputs;
+the only feedback from the cortex is the hippocampus query (and the
+fidelity target, which is a loss term). So:
+
+Iteration 2 (pre-registered now, built while scan1 runs its first
+beat): the HIPPOCAMPUS IS A PFC ORGAN — keys, slot-refresh queries
+and logit-read queries all come from the council's token slot S'_t[0]
+(in cortex_first that is what c_out already was, so both orders
+agree) — and the NEOCORTEX RUNS ONCE PER CHUNK over the 64 bundles
+(batched B x T, same math, a parity law). The band fidelity targets
+are computed after the decoder from C's interval slices (carried
+partial sums across the boundary). Expected: ~2x fewer launches; the
+council loop (2 blocks + cells per token) is the remaining recurrent
+cost and the CUDA-graph candidate after that.
+
+scan1 keeps running until its first row (step 6000, 12.3M tokens —
+the R1 read) lands, then scan2 replaces it (one model at a time).
