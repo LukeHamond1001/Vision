@@ -11,6 +11,10 @@ mkdir -p "$W" "$DATA" && cd "$W"
   https://github.com/LukeHamond1001/Vision.git
 cd Vision
 KEEP=$DATA/keep_rebuild; mkdir -p "$KEEP"
+# MINI_TAG (2026-08-21): a second mini-flash on the same shards (a trunk
+# candidate: ATTN=rope QK_NORM=1 MLP=swiglu) writes mini_*<tag> files and
+# its own checkpoint dir, so the baseline's rows on results-v10 survive
+MT=${MINI_TAG:-}
 [ -f HEARTBEAT.log ] && cp -f HEARTBEAT.log "$KEEP/HEARTBEAT.log"
 git fetch -q origin main && git reset --hard -q origin/main
 [ -f "$KEEP/HEARTBEAT.log" ] && cp -f "$KEEP/HEARTBEAT.log" HEARTBEAT.log
@@ -20,9 +24,9 @@ git checkout -B results-v10
 
 hb() {
   echo "$(date -u '+%H:%M:%S') $1" >> HEARTBEAT.log
-  [ -f mini_train.log ] && tail -60 mini_train.log > mini_tail.log 2>/dev/null
+  [ -f mini_train$MT.log ] && tail -60 mini_train$MT.log > mini_tail$MT.log 2>/dev/null
   for f in HEARTBEAT.log rebuild.log build_tail.log flash_manifest.json \
-           mini_hb.jsonl mini_driver.jsonl mini_tail.log mini_smoke.json; do
+           mini_hb$MT.jsonl mini_driver$MT.jsonl mini_tail$MT.log mini_smoke$MT.json; do
     [ -f "$f" ] && git add -f "$f" 2>/dev/null
   done
   git commit -qm "hb: $1" 2>/dev/null || true
@@ -72,7 +76,7 @@ fi
 # dialogue diet (0.7M cast tokens vs A69-R2's 12M); 4 lives x 50M
 # tokens at d=512/8L gives the in-ctx-vs-tokens curve the launch
 # decision needs. Publishes mini_hb.jsonl every 10 min.
-OUTM=/workspace/v10_mini_out; mkdir -p "$OUTM"
+OUTM=/workspace/v10_mini_out$MT; mkdir -p "$OUTM"
 MINIPID=""
 if [ "${MINIGATE:-1}" = "1" ]; then
   if [ ! -f "$DATA/mini_epi/manifest.json" ]; then
@@ -94,8 +98,10 @@ if [ "${MINIGATE:-1}" = "1" ]; then
   fi
   if [ -f "$DATA/mini_eval_epi/manifest.json" ]; then
     # lam by the A60f pairing on THIS diet and shape (40-step smoke)
-    python - > mini_smoke.log 2>&1 <<'PY'
-import json, sys, time, torch
+    MINI_ATTN="${ATTN:-abs}" MINI_QK="${QK_NORM:-0}" MINI_MLP="${MLP:-gelu}" \
+    MINI_BLR="${BAND_LR_MULT:-1.0}" MINI_SMOKE_OUT="mini_smoke$MT.json" \
+    python - > mini_smoke$MT.log 2>&1 <<'PY'
+import json, os, sys, time, torch
 sys.path.insert(0, ".")
 from iga.lm_train import train
 from iga.lm_sleep import Sleeper
@@ -107,6 +113,8 @@ model, drive, vocab, ce0, ce1 = train(
     arch="hybrid", store="matrix", keyed="logit", norm_mix=True,
     aux_trunk=0.2, use_xl=False, gate_init=-2.0, lam=0.02,
     clocks={3: 1, 4: 8, 5: 64, 6: 512}, precision="bf16",
+    attn=os.environ["MINI_ATTN"], qk_norm=(os.environ["MINI_QK"] == "1"),
+    mlp=os.environ["MINI_MLP"], band_lr_mult=float(os.environ["MINI_BLR"]),
     data="/workspace/v10/mini_epi", sleep=sl, log_every=20)
 dt = time.time() - t0
 holds = len(drive.ledger) / 40
@@ -114,11 +122,11 @@ lam = min(0.25, 0.25 / max(holds, 1))
 out = {"tok_s": round(40 * 4 * 2048 / dt), "holds": round(holds, 2),
        "lam": round(lam, 5), "ce": [round(ce0, 3), round(ce1, 3)],
        "peak_gib": round(torch.cuda.max_memory_allocated() / 2**30, 1)}
-json.dump(out, open("mini_smoke.json", "w"))
+json.dump(out, open(os.environ["MINI_SMOKE_OUT"], "w"))
 print("MINISMOKE", json.dumps(out))
 PY
-    hb "mini smoke $(grep MINISMOKE mini_smoke.log | tail -1 | cut -c1-200)"
-    LAM=$(python -c "import json;print(json.load(open('mini_smoke.json'))['lam'])" 2>/dev/null || echo 0.03)
+    hb "mini smoke$MT $(grep MINISMOKE mini_smoke$MT.log | tail -1 | cut -c1-200)"
+    LAM=$(python -c "import json;print(json.load(open('mini_smoke$MT.json'))['lam'])" 2>/dev/null || echo 0.03)
     python scripts/v10_driver.py \
       --data "$DATA/mini_epi" --eval-data "$DATA/mini_eval_epi" \
       --ckpt "$OUTM/mini.pt" --lam "$LAM" \
@@ -126,11 +134,11 @@ PY
       --hb-every 3000 --hb-chunks 1000 --lesion-every 2 \
       --precision bf16 --attn "${ATTN:-abs}" --qk-norm "${QK_NORM:-0}" \
       --mlp "${MLP:-gelu}" --band-lr-mult "${BAND_LR_MULT:-1.0}" \
-      --device cuda --hb-out mini_hb.jsonl --trace mini_driver.jsonl \
-      --log-every 100 > mini_train.log 2>&1 &
+      --device cuda --hb-out mini_hb$MT.jsonl --trace mini_driver$MT.jsonl \
+      --log-every 100 > mini_train$MT.log 2>&1 &
     MINIPID=$!
-    hb "mini-flash started (pid $MINIPID, lam $LAM)"
-    ( while kill -0 $MINIPID 2>/dev/null; do sleep 600; hb "mini inflight $(tail -1 mini_hb.jsonl 2>/dev/null | head -c 240)"; done ) &
+    hb "mini-flash$MT started (pid $MINIPID, lam $LAM, attn ${ATTN:-abs} qk ${QK_NORM:-0} mlp ${MLP:-gelu} blr ${BAND_LR_MULT:-1.0})"
+    ( while kill -0 $MINIPID 2>/dev/null; do sleep 600; hb "mini$MT inflight $(tail -1 mini_hb$MT.jsonl 2>/dev/null | head -c 240)"; done ) &
   fi
 fi
 
@@ -206,8 +214,8 @@ fi
 if [ -n "$MINIPID" ]; then
   hb "waiting for the mini-flash (pid $MINIPID)"
   wait $MINIPID; MRC=$?
-  tail -60 mini_train.log > mini_tail.log
-  hb "mini-flash exit rc=$MRC; rows: $(grep -c . mini_hb.jsonl 2>/dev/null)"
+  tail -60 mini_train$MT.log > mini_tail$MT.log
+  hb "mini-flash$MT exit rc=$MRC; rows: $(grep -c . mini_hb$MT.jsonl 2>/dev/null)"
 fi
 hb "rebuild pod done; self-removing in 60s"
 sleep 60
