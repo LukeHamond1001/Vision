@@ -1,0 +1,47 @@
+{
+ "steps": 12000,
+ "d": 128,
+ "arms": {
+  "bio": {
+   "train": {
+    "ce_first": 9.344745635986328,
+    "ce_last": 3.332697629928589,
+    "secs": 2371,
+    "params": 5290629,
+    "pairs": 78,
+    "pair_law": true,
+    "sleep_steps": 749,
+    "only_paid": true
+   },
+   "eval": {
+    "ce": 5.0958,
+    "recall": {
+     "in-ctx": {
+      "acc": 0.199,
+      "n": 523
+     },
+     "short": {
+      "acc": 0.208,
+      "n": 1363
+     },
+     "b3": {
+      "acc": 0.204,
+      "n": 520
+     },
+     "b4": {
+      "acc": 0.232,
+      "n": 803
+     },
+     "b5+": {
+      "acc": 0.171,
+      "n": 105
+     }
+    }
+   }
+  }
+ },
+ "verdicts": {
+  "G1_binder": false,
+  "G3_pairs": true
+ }
+}
