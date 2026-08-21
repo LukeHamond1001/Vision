@@ -67,6 +67,10 @@ of novel facts, retired after use) and certifies bf16; its go/no-go is a
   gates, and the inventory of everything gated OUT with its evidence
   (A71 band widths, A73 splice replay, A74 novelty replay, A75 tied
   vocab, A77 dreaming — each lost its gate and stayed out).
+- [docs/MEMORY_MATH.md](docs/MEMORY_MATH.md) — the equations of the memory
+  organs as implemented and what they measurably do at 78M: the boundary
+  deficit (5% of CE) and the 0.4% of it the organs recover; why the store
+  became a bigram cache; why the bands go unread; what the math prescribes.
 - [docs/V10_FLASH.md](docs/V10_FLASH.md) — the design spec and the brain
   fidelity audit (what corresponds, what is named as divergent).
 - [docs/DEMO_PROTOCOL.md](docs/DEMO_PROTOCOL.md) — speech-gated,
