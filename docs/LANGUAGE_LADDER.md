@@ -4697,3 +4697,36 @@ decides whether V10.1 launches for the served-life claim alone
 content-keyed store. CE comparison caveat: the conveyor's eval runs
 at T=1024 — its CE is not on the others' scale; its recall bins and
 lesion deltas are.
+
+## 2026-08-21 — MEMORY MATH, MEASURED (user: "investigate math")
+
+docs/MEMORY_MATH.md, evidence results/evidence/memory_math_v94sp.json,
+script scripts/memory_math.py (local, CPU, 49k held-out tokens, the
+78M raised life's weights at step 296k). NECESSITY: CE by position in
+the chunk 5.06 / 4.27 / 3.90 / 3.80 / 3.51 (0-16 / 16-64 / 64-256 /
+256-1024 / 1024-2048) — a 1.55-nat boundary deficit on the first 16
+tokens, ~0.18 nats/token integrated = 5% of CE, present at every
+chunk boundary with no cast needed. RECOVERY: thread off −0.004 at
+0-16 (the band tokens are noise), stores off +0.006 (0.4% of the
+deficit), both +0.002. ABILITY, the store: qmix softmax [0.9992,
+0.0007, 0, ...], entropy 0.006 nats — the key is the single preceding
+token, a bigram cache; tok_u colours −0.86 vs mean −0.37 — the cast's
+answers actively suppressed (interference under a bigram key). The
+mechanism: one global positional key mix must serve induction
+(dense) and entity recall (sparse) at once; the dense job wins; the
+softmax Jacobian a(1−a) = 0.0008 then locks it. ABILITY, the bands:
+SlowCell gate biases −1.62 / −2.02 / −2.03 after 296k steps (init
+−2.0) — bands 4/5 received no effective gradient; the fixed point
+(constant token → unread → no gradient → constant), the fidelity
+target being a chunk MEAN (cos ≈ .97 is the anisotropy floor, and a
+mean cannot carry the boundary tail), and tick starvation (1/8,
+1/64, 1/512 of band 3's updates). XL carry was removed by evidence
+(A33 crowding-out); nothing took the boundary over. PRESCRIBED, in
+order: content-keyed store (key = lift(W_k h_t)); a tail organ for
+the boundary (band-3 read weighted to the chunk's end, or a tail
+memory token); band objectives that predict the next chunk's early
+hiddens; the boundary meter in the battery (built: probe "boundary",
+with store_health, sha 2b81d7d — tonight's minis report both).
+Consequence stated plainly: as certified, the two removal demos
+would be nulls at 500M on this diet; tonight's four minis are the
+test of whether diet/trunk/lr/window change that at 78M.
