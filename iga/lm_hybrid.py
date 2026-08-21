@@ -344,7 +344,7 @@ class HybridLM(nn.Module):
                 self.QR = 8
                 self.tok_u = nn.Parameter(torch.zeros(vocab_size))
                 self.qmix = nn.Parameter(torch.zeros(self.QR))
-            if keyed == "logit":
+            if keyed in ("logit", "hidden"):
                 # A53 (R5): decode-free capacity-sized stores.
                 # QR=64: bridge ceiling 30.2% (A52b curve). KD per
                 # band from load = writes/chunk x pair lifetime
@@ -364,7 +364,24 @@ class HybridLM(nn.Module):
                 self.KD = {k: 512 * (2 ** i) * kd_base
                            for i, k in enumerate(self.bands)}
                 self.tok_u = nn.Parameter(torch.zeros(vocab_size))
-                self.qmix = nn.Parameter(torch.zeros(self.QR))
+                if keyed == "logit":
+                    self.qmix = nn.Parameter(torch.zeros(self.QR))
+                else:
+                    # CONTENT KEYS (2026-08-21, docs/MEMORY_MATH.md 4):
+                    # the positional token mix collapsed into a bigram
+                    # cache (qmix softmax .9992 on the previous token;
+                    # one global mix cannot be an entity at a plant and
+                    # a bigram elsewhere). Here the write key at t is
+                    # the trunk's own hidden at t-1 (context strictly
+                    # before t) and the read query is the hidden at t,
+                    # each through a projection (identity at init), unit-
+                    # normalized for the RFF lift. Values, lift, delta
+                    # rule, alpha and the A38 two-pass credit unchanged;
+                    # tok_u keeps only its write-strength role.
+                    self.key_proj = nn.Linear(d, d, bias=False)
+                    self.query_proj = nn.Linear(d, d, bias=False)
+                    nn.init.eye_(self.key_proj.weight)
+                    nn.init.eye_(self.query_proj.weight)
                 self.stores = nn.ModuleDict(
                     {str(k): LogitStore(
                         d, self.KD[k],
@@ -441,7 +458,7 @@ class HybridLM(nn.Module):
               "pend": {k: None for k in self.bands},
               "chunk": 0}
         if self.store == "matrix":
-            if getattr(self, "keyed", None) == "logit":
+            if getattr(self, "keyed", None) in ("logit", "hidden"):
                 st["M"] = {k: torch.zeros(B, self.d, self.KD[k],
                                           device=device)
                            for k in self.bands}
@@ -528,7 +545,8 @@ class HybridLM(nn.Module):
             if self.store == "matrix" and i == self.mid - 1 \
                     and read_ok \
                     and not getattr(self, "store_read_off", False) \
-                    and getattr(self, "keyed", None) != "logit":
+                    and getattr(self, "keyed", None) not in ("logit",
+                                                             "hidden"):
                 # per-position associative reads from LAST chunks'
                 # matrices, gated shut at init (A30) + read-dropout
                 # (A36: the crowding-out law — half the chunks train
@@ -580,6 +598,32 @@ class HybridLM(nn.Module):
         logits = self.head(self.lnf(hidden))
         lg_E = lg_qd = lg_smask = None
         if self.store == "matrix" and \
+                getattr(self, "keyed", None) == "hidden":
+            # content-keyed read: the query is the trunk's hidden at t
+            # (attached — the trunk learns to ASK in the key space),
+            # matched against the vocabulary exactly as in logit mode
+            lg_E = nn.functional.normalize(
+                self.embed.weight, dim=-1).detach()
+            lg_qd = nn.functional.normalize(self.query_proj(hidden),
+                                            dim=-1)
+            lg_smask = torch.ones(1, tokens.shape[1], device=dev,
+                                  dtype=lg_qd.dtype)
+            lg_smask[:, 0] = 0.0          # position 0: no context before
+            self._aux_hidden = None
+            if read_ok and not getattr(self, "store_read_off", False):
+                rsum = None
+                for k in self.bands:
+                    if k in self.lesioned:
+                        continue
+                    stn = self.stores[str(k)]
+                    r = self.alpha[str(k)] * stn.read(
+                        st["M"][k], stn.lift(lg_qd))
+                    rsum = r if rsum is None else rsum + r
+                if rsum is not None:
+                    if self.aux_trunk > 0 and self.training:
+                        self._aux_hidden = hidden
+                    logits = logits + rsum @ lg_E.t()
+        elif self.store == "matrix" and \
                 getattr(self, "keyed", None) == "logit":
             # A53 read: query = mix of the last QR tokens' embeddings
             # (window includes the current token); the retrieved
@@ -699,6 +743,37 @@ class HybridLM(nn.Module):
                     # version-frozen exact (A38 safety preserved)
                     k_d = _ckpt(_mixq, qm, tu, wtokw, relw < 0,
                                 allw, use_reentrant=False)
+                    sv = torch.sigmoid(tu[tokens]) * lg_smask
+                    for k in self.bands:
+                        stn = self.stores[str(k)]
+                        M_in = st["M"][k].detach()
+                        if not pass2:
+                            _, rc = stn.write(M_in, stn.lift(k_d),
+                                              V_id, sv)
+                            recon.append(rc)
+                        else:
+                            st["M"][k], _ = stn.write(
+                                M_in, stn.lift(k_d), V_id, sv,
+                                stale_ok=True)
+            elif getattr(self, "keyed", None) == "hidden":
+                # content-keyed writes: key_t = proj(hidden_{t-1}) — the
+                # context strictly before t (the induction shape kept);
+                # value = the token's identity. Recon pass with LIVE
+                # params and the LIVE hidden: this chunk's backward
+                # teaches the trunk to write retrievable keys. Store
+                # pass with cloned params and the detached hidden: one
+                # write-op of graph rides into the next chunk (A38).
+                V_id = lg_E[tokens]
+                h_prev_live = torch.cat(
+                    [torch.zeros_like(hidden[:, :1]), hidden[:, :-1]],
+                    dim=1)
+                h_prev_det = h_prev_live.detach()
+                for pass2 in (False, True):
+                    tu = self.tok_u.clone() if pass2 else self.tok_u
+                    Wk = (self.key_proj.weight.clone() if pass2
+                          else self.key_proj.weight)
+                    hp = h_prev_det if pass2 else h_prev_live
+                    k_d = nn.functional.normalize(hp @ Wk.t(), dim=-1)
                     sv = torch.sigmoid(tu[tokens]) * lg_smask
                     for k in self.bands:
                         stn = self.stores[str(k)]

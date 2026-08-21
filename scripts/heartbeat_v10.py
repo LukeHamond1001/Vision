@@ -85,7 +85,7 @@ def load_model(a):
         tok.get_vocab_size(), d=cfg.get("d", a.d),
         n_layers=cfg.get("n_layers", a.n_layers),
         n_heads=cfg.get("n_heads", 8), max_T=cfg.get("T", a.T),
-        store="matrix", keyed="logit", norm_mix=True, aux_trunk=0.2,
+        store="matrix", keyed=cfg.get("keyed", "logit"), norm_mix=True, aux_trunk=0.2,
         use_xl=False, gate_init=-2.0,
         clocks=cfg.get("clocks", BAND6_CLOCKS),
         band_widths=cfg.get("band_widths"),

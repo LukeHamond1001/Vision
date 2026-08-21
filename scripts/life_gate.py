@@ -125,9 +125,10 @@ def train_arm(tag, data, arch="hybrid", **kw):
                         ("splice", "novelty", "homeostasis")
                         if k in kw})
         sl.press_pay = (T_arm, 64)
+    keyed_arm = kw.pop("keyed", "logit")
     model, drive, vocab, ce0, ce1 = train(
         d=D, lanes=LANES, T=T_arm, steps=steps_arm, seed=0, device="cpu",
-        arch=arch, store="matrix", keyed="logit", norm_mix=True,
+        arch=arch, store="matrix", keyed=keyed_arm, norm_mix=True,
         aux_trunk=0.2, use_xl=False, gate_init=-2.0, lam=0.02,
         log_every=max(steps_arm // 4, 1), data=data, sleep=sl, **kw)
     model._gate_T = T_arm
@@ -207,6 +208,9 @@ def main():
         "rope": dict(data=BIO, attn="rope", qk_norm=True),
         "modern": dict(data=BIO, attn="rope", qk_norm=True, mlp="swiglu"),
         "bandlr": dict(data=BIO, band_lr_mult=3.0),
+        # content-keyed store (docs/MEMORY_MATH.md 4): the write key is
+        # the trunk's hidden at t-1, the read query the hidden at t
+        "hidden": dict(data=BIO, keyed="hidden"),
         # the CONVEYOR (user hypothesis 2026-08-21): half the window,
         # clocks x2 (same token horizons), steps x2 (same tokens)
         "conveyor": dict(data=BIO, T=T // 2, steps=STEPS * 2,
@@ -229,6 +233,27 @@ def main():
         ev = evaluate(model, arch)
         out["arms"][tag] = {"train": meta, "eval": ev}
         print(f"[{tag}/eval] {json.dumps(ev)}", flush=True)
+        if arch == "hybrid":
+            # the two meters from docs/MEMORY_MATH.md: the boundary
+            # deficit and each removal's share of it; the store's key
+            # health (a collapsed key mix = a bigram cache)
+            try:
+                import importlib.util
+                spec = importlib.util.spec_from_file_location(
+                    "hb", os.path.join(os.path.dirname(
+                        os.path.abspath(__file__)), "heartbeat_v10.py"))
+                hb = importlib.util.module_from_spec(spec)
+                spec.loader.exec_module(hb)
+                Tm = getattr(model, "_gate_T", T)
+                meters = {"boundary": hb.probe_boundary(model, EVAL, Tm,
+                                                        chunks=64),
+                          "store_health": hb.probe_store_health(
+                              model, load_tokenizer(
+                                  os.path.join(EVAL, "tokenizer.json")))}
+                out["arms"][tag]["meters"] = meters
+                print(f"[{tag}/meters] {json.dumps(meters)}", flush=True)
+            except Exception as e:
+                print(f"[{tag}/meters] error {e!r}", flush=True)
         del model
 
     a = out["arms"]
@@ -266,7 +291,7 @@ def main():
     # cross-day bin (b5+) is IN the regression check — it is the
     # architecture's load-bearing bin, not an optional extra.
     for organ in ("a71", "a73", "a74", "a75", "rope", "modern", "bandlr",
-                  "conveyor"):
+                  "conveyor", "hidden"):
         if organ in a and "bio" in a:
             ce_o, ce_b = a[organ]["eval"]["ce"], a["bio"]["eval"]["ce"]
             ce_win = ce_o < ce_b * 0.99

@@ -200,7 +200,7 @@ for L in [int(x) for x in "${SMOKE_LANES:-8 12}".split()]:
         model, drive, vocab, ce0, ce1 = train(
             d=1280, n_layers=20, lanes=L, T=2048, steps=60, seed=0,
             device="cuda", arch="hybrid", store="matrix",
-            keyed="logit", norm_mix=True, aux_trunk=0.2,
+            keyed="${KEYED:-logit}", norm_mix=True, aux_trunk=0.2,
             use_xl=False, gate_init=-2.0, lam=0.02,
             clocks={3: 1, 4: 8, 5: 64, 6: 512},
             precision=prec,
@@ -239,7 +239,7 @@ out = {"gpu": "$GPUTAG", "lanes": best["lanes"],
        "precision": PREC, "attn": "${ATTN:-abs}",
        "qk_norm": "${QK_NORM:-0}" == "1",
        "band_lr_mult": float("${BAND_LR_MULT:-1.0}"),
-       "mlp": "${MLP:-gelu}",
+       "mlp": "${MLP:-gelu}", "keyed": "${KEYED:-logit}",
        "lam": round(lam, 5),
        "tok_s": best["tok_s"], "holds": best["holds"],
        "peak_gib": best["peak_gib"], "rows": rows}
@@ -340,7 +340,7 @@ for ATTEMPT in 1 2 3 4 5 6; do
     --lesion-every "${LESION_EVERY:-2}" \
     --precision "${PRECISION:-fp32}" --attn "${ATTN:-abs}" \
     --qk-norm "${QK_NORM:-0}" --band-lr-mult "${BAND_LR_MULT:-1.0}" \
-    --mlp "${MLP:-gelu}" \
+    --mlp "${MLP:-gelu}" --keyed "${KEYED:-logit}" \
     --hb-out hb_v10.jsonl --trace v10_driver.jsonl \
     >> v10_train.log 2>&1
   RC=$?

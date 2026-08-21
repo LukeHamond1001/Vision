@@ -142,6 +142,9 @@ def main():
     # less, the bands must carry more. --T 1024 --clock-mult 2 = half
     # window, same horizons; 1 = the certified clocks bit-exactly.
     ap.add_argument("--clock-mult", type=int, default=1)
+    # content-keyed store (2026-08-21, docs/MEMORY_MATH.md): "hidden" keys
+    # the store on the trunk's hidden; "logit" = the certified token mix
+    ap.add_argument("--keyed", default="logit", choices=["logit", "hidden"])
     ap.add_argument("--hb-out", default="results/hb_v10.jsonl")
     ap.add_argument("--trace", default="results/v10_driver.jsonl")
     ap.add_argument("--log-every", type=int, default=100)
@@ -177,7 +180,7 @@ def main():
             "segments": len(ends), "precision": a.precision,
             "attn": a.attn, "qk_norm": str(a.qk_norm) == "1",
             "band_lr_mult": a.band_lr_mult, "mlp": a.mlp,
-            "clock_mult": a.clock_mult, "clocks": clocks,
+            "clock_mult": a.clock_mult, "clocks": clocks, "keyed": a.keyed,
             "hb_every": a.hb_every,
             "hb_chunks": a.hb_chunks, "lesion_every": a.lesion_every}
     print("PLAN " + json.dumps(plan), flush=True)
@@ -209,7 +212,7 @@ def main():
         model, drive, vocab, ce0, ce1 = train(
             d=a.d, n_layers=a.n_layers, lanes=lanes, T=a.T,
             steps=end - cur, seed=1000 + seg_i, device=a.device,
-            arch="hybrid", store="matrix", keyed="logit",
+            arch="hybrid", store="matrix", keyed=a.keyed,
             norm_mix=True, aux_trunk=0.2, use_xl=False,
             gate_init=-2.0, clocks=clocks,
             data=a.data, eval_data=a.eval_data, ckpt=a.ckpt,
