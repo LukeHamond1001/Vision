@@ -4559,3 +4559,37 @@ results/; loose local gate logs filed under results/gate_v10/ and
 results/evidence/shakedown/. Ledger paths before this entry are
 pre-archive. Naming hazard recorded: results/v10_* files are the
 drive-layer v1.0 Crafter artifacts, not the V10 flash.
+
+## 2026-08-21 — TRUNK CANDIDATES AT d=128: ROPE −4.6%, MODERN −4.8% CE vs
+## BIO; SHIP ONLY AFTER THEIR OWN MINI-FLASH (rule predates the result)
+
+Episodic gate shards, d=128, 12k steps, T=256, 4 lives, params matched
+within 1.5%, same sleep schedule (749 steps), pair law and only-paid
+green in all arms (results/evidence/v10_gates_epi_trunk_arms.json;
+logs in results/gate_epi/). Eval CE: bio 5.096, rope (decoupled RoPE,
+memory rows unrotated) 4.860 = −4.6%, modern (rope + QK-norm + SwiGLU)
+4.849 = −4.8%; train CE 3.33 / 3.11 / 3.13. The floor was parity
+within 1%: both WIN. Binder bins at chance in every arm (the
+instrument is the mini-flash, not this scale). Two side readings:
+(1) ARM C pair margins — bio grows them to ~6.4 by the last quarter
+(max 9.95) while rope/modern sit ~0.3: with absolute positions the
+replayed pairs can be memorized BY POSITION (the replay window puts
+them at the same slots every night); rope has no absolute slot to
+key on. Large margins are not the goal — the served life's
+corrections must land at arbitrary positions — so this is a point
+against abs, not for it, but it is uncontrolled and stays a reading.
+(2) band-4 fidelity at 12k: bio .17, rope .31, modern .61 (band 5:
+−.02 / −.03 / +.07) — modern's bands read back their own writes far
+better at this scale; first hint that the modern trunk engages the
+bands more, which is the demos' organ. DECISION (the rule written in
+the previous entry, before these numbers): a trunk candidate enters
+the paid run only after ITS OWN 78M mini-flash (T=2048, bf16, the
+real driver and battery). That mini cannot run before the baseline
+mini finishes (~00:00 UTC; one GPU on the mule) — so the choice at
+launch time is: (a) launch V10.1 on the certified abs trunk on
+schedule and run the modern mini right after on the freed prep
+volume as v10.2 evidence ($1.5, ~6.5 h), or (b) hold the H100 ~7 h
+for the modern mini first (still inside the plan's own "Aug 22
+evening" launch window) and launch on modern if it holds at 78M.
+Default if the user says nothing: (a) — the centerpiece runs on the
+trunk every organ law was certified on. The user is asked.

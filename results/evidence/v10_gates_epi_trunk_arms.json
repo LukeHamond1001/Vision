@@ -1,0 +1,155 @@
+{
+ "steps": 12000,
+ "d": 128,
+ "T": 256,
+ "lanes": 4,
+ "shards": "episodic gate shards (GATE_EPI=1)",
+ "arms": {
+  "bio": {
+   "eval": {
+    "ce": 5.0958,
+    "recall": {
+     "in-ctx": {
+      "acc": 0.199,
+      "n": 523
+     },
+     "short": {
+      "acc": 0.208,
+      "n": 1363
+     },
+     "b3": {
+      "acc": 0.204,
+      "n": 520
+     },
+     "b4": {
+      "acc": 0.232,
+      "n": 803
+     },
+     "b5+": {
+      "acc": 0.171,
+      "n": 105
+     }
+    }
+   },
+   "train_ce_12000": 3.333,
+   "holds_12000": 9504,
+   "ema_12000": "fid:3=+0.971 fid:4=+0.172 fid:5=-0.020 b0=+0.005 b1=+0.006 b2=+0.009 b3=+0.005",
+   "pair_blocks": 130,
+   "pair_margin_quartile_means": [
+    1.431,
+    4.405,
+    6.189,
+    6.415
+   ],
+   "config": "abs positions, GELU",
+   "train": {
+    "params": 5290629,
+    "pairs": 78,
+    "pair_law": true,
+    "only_paid": true,
+    "sleep_steps": 749,
+    "secs": 2371
+   }
+  },
+  "rope": {
+   "eval": {
+    "ce": 4.8603,
+    "recall": {
+     "in-ctx": {
+      "acc": 0.229,
+      "n": 523
+     },
+     "short": {
+      "acc": 0.204,
+      "n": 1363
+     },
+     "b3": {
+      "acc": 0.179,
+      "n": 520
+     },
+     "b4": {
+      "acc": 0.153,
+      "n": 803
+     },
+     "b5+": {
+      "acc": 0.105,
+      "n": 105
+     }
+    }
+   },
+   "train_ce_12000": 3.114,
+   "holds_12000": 3052,
+   "ema_12000": "fid:3=+0.966 fid:4=+0.307 fid:5=-0.030 b0=+0.007 b1=+0.008 b2=+0.012 b3=+0.011",
+   "pair_blocks": 130,
+   "pair_margin_quartile_means": [
+    0.122,
+    0.285,
+    0.331,
+    0.308
+   ],
+   "config": "decoupled RoPE (rot_frac .5, memory rows unrotated)",
+   "ce_vs_bio": -0.0462,
+   "train": {
+    "params": 5258053,
+    "pairs": 78,
+    "pair_law": true,
+    "only_paid": true,
+    "sleep_steps": 749,
+    "secs": 3812
+   }
+  },
+  "modern": {
+   "eval": {
+    "ce": 4.8488,
+    "recall": {
+     "in-ctx": {
+      "acc": 0.214,
+      "n": 523
+     },
+     "short": {
+      "acc": 0.213,
+      "n": 1363
+     },
+     "b3": {
+      "acc": 0.187,
+      "n": 520
+     },
+     "b4": {
+      "acc": 0.167,
+      "n": 803
+     },
+     "b5+": {
+      "acc": 0.171,
+      "n": 105
+     }
+    }
+   },
+   "train_ce_12000": 3.135,
+   "holds_12000": 8116,
+   "ema_12000": "fid:3=+0.938 fid:4=+0.614 fid:5=+0.074 b0=+0.009 b1=+0.006 b2=+0.008 b3=+0.008",
+   "pair_blocks": 130,
+   "pair_margin_quartile_means": [
+    0.163,
+    0.327,
+    0.352,
+    0.391
+   ],
+   "config": "decoupled RoPE + QK-norm + SwiGLU (param-matched)",
+   "ce_vs_bio": -0.0485,
+   "train": {
+    "params": 5209669,
+    "pairs": 78,
+    "pair_law": true,
+    "only_paid": true,
+    "sleep_steps": 749,
+    "secs": 3797
+   }
+  }
+ },
+ "verdict": {
+  "trunk_ce_gate": "rope -4.6% / modern -4.8% vs bio (floor: parity within 1%) -> both WIN at d=128",
+  "binder": "all arms at chance (uninformative at this scale; the 78M mini-flash is the binder instrument)",
+  "note": "ARM C pair margins: bio grows to ~6.4 (absolute positions let replayed pairs be memorized by position); rope/modern ~0.3. fid:4 bio .17 / rope .31 / modern .61. Ships into a paid run only after its own mini-flash (rule ledgered before this result).",
+  "laws": "params matched within 1.5% (bio 5.29M / rope 5.26M / modern 5.21M); pair law, only-paid and sleep schedule identical across arms"
+ }
+}
