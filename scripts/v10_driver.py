@@ -125,7 +125,7 @@ def main():
     ap.add_argument("--device", default="cuda")
     ap.add_argument("--hb-every", type=int, default=HB_EVERY)
     ap.add_argument("--lesion-every", type=int, default=LESION_EVERY)
-    ap.add_argument("--hb-chunks", type=int, default=400)
+    ap.add_argument("--hb-chunks", type=int, default=2500)   # 2026-08-21: 400 = 819k tok/lane = eval-infancy only; bins b3-b6 structurally empty
     ap.add_argument("--hb-out", default="results/hb_v10.jsonl")
     ap.add_argument("--trace", default="results/v10_driver.jsonl")
     ap.add_argument("--log-every", type=int, default=100)

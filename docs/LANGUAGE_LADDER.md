@@ -4212,3 +4212,20 @@ differ + live carry wins. Suite 117/117. SCOPE: the Sleeper's replay
 buffers/spans/pairs are NOT serialized (a larger, riskier change);
 the unreplayed pool still drops on restart. Deploys at the next
 restart together with the kill demotion.
+
+## 2026-08-21 — THE SCANNER THAT NEVER LEFT INFANCY (hb_chunks 400 -> 2500)
+
+Audit finding: the battery's eval walk was 400 chunks x 2048 = 819k
+tokens per lane, while the eval lives' infancy alone spans 1.6M (40M
+budget / 2 lives x .08). Every battery measured CE and recall on the
+first half of eval-infancy; bins b3-b6 were empty by construction and
+would have stayed empty for the whole flash — the long-gap recall
+advantage (the run's headline) unmeasured by the clean instrument.
+Walk raised to 2500 chunks (5.1M tokens/lane: infancy + most of
+childhood's gap menu; deeper bins populate as the walk's reach
+permits). Cost ~+8 min per battery. Deployed with the kill demotion and
+warm restart at a single cold restart 15 min into a fresh pod — the
+cheapest moment; every later restart is warm.
+Also recorded: binder closed set = 5 candidates (4 distractors), so
+CHANCE = 20%; in-ctx 17.0% -> 22.2% at 24k/30k = unarmed, as the growth
+chart expects; the childhood-end milestone is 2x chance = 40%.
