@@ -271,6 +271,7 @@ def train(d=64, lanes=4, T=256, steps=40, seed=0, device="cpu",
           life=None, clocks=None, band_widths=None,
           tie_embed=False, dream=None, n_layers=6, ledger_cap=None,
           attn="abs", qk_norm=False, band_lr_mult=1.0, precision="fp32",
+          mlp="gelu",
           lr_warmup=0, carry_state=None):
     """resume (A26): path to a checkpoint — model + optimizer + drive
     EMAs/records/minted/vetoes continue; step numbering continues.
@@ -336,7 +337,7 @@ def train(d=64, lanes=4, T=256, steps=40, seed=0, device="cpu",
                          keyed=keyed, clocks=clocks,
                          band_widths=band_widths,
                          tie_embed=tie_embed, attn=attn,
-                         qk_norm=qk_norm).to(device)
+                         qk_norm=qk_norm, mlp=mlp).to(device)
         # bf16 autocast on the trunk blocks only (see HybridLM); fp32
         # master weights, fp32 band states/store/losses; no GradScaler
         model.autocast_bf16 = (precision == "bf16")
@@ -344,7 +345,8 @@ def train(d=64, lanes=4, T=256, steps=40, seed=0, device="cpu",
                      "precision": precision,
                      "clocks": clocks, "band_widths": band_widths,
                      "tie_embed": tie_embed, "attn": attn,
-                     "qk_norm": qk_norm, "store": store, "keyed": keyed,
+                     "qk_norm": qk_norm, "mlp": mlp,
+                     "store": store, "keyed": keyed,
                      "norm_mix": norm_mix, "aux_trunk": aux_trunk,
                      "use_xl": use_xl, "gate_init": gate_init}
         drive.bin_band = {0: 3, 1: 3, 2: 4, 3: 5}  # carry bands (A19)

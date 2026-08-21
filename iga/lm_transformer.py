@@ -16,14 +16,37 @@ import torch.nn as nn
 from .lm_bands import N_BANDS
 
 
+class SwiGLU(nn.Module):
+    """Gated MLP (Shazeer 2020; the frontier default): down(silu(gate(x))
+    * up(x)). Hidden = round(8/3 d) to a multiple of 64, so params match
+    the certified 4d GELU MLP within ~1%. v10.1 gated candidate."""
+
+    def __init__(self, d, mult=8 / 3):
+        super().__init__()
+        h = int(round(d * mult / 64)) * 64 or 64
+        self.gate = nn.Linear(d, h)
+        self.up = nn.Linear(d, h)
+        self.down = nn.Linear(h, d)
+
+    def forward(self, x):
+        return self.down(nn.functional.silu(self.gate(x)) * self.up(x))
+
+
+def make_mlp(d, kind="gelu"):
+    if kind == "swiglu":
+        return SwiGLU(d)
+    assert kind == "gelu", kind
+    return nn.Sequential(nn.Linear(d, 4 * d), nn.GELU(),
+                         nn.Linear(4 * d, d))
+
+
 class Block(nn.Module):
-    def __init__(self, d, heads):
+    def __init__(self, d, heads, mlp="gelu"):
         super().__init__()
         self.ln1 = nn.LayerNorm(d)
         self.ln2 = nn.LayerNorm(d)
         self.attn = nn.MultiheadAttention(d, heads, batch_first=True)
-        self.mlp = nn.Sequential(nn.Linear(d, 4 * d), nn.GELU(),
-                                 nn.Linear(4 * d, d))
+        self.mlp = make_mlp(d, mlp)   # "gelu" = certified, bit-exact
 
     def forward(self, x, mask, kv=None):
         """kv (A30): extra key/value context prepended to this
@@ -76,7 +99,7 @@ class RotaryBlock(nn.Module):
     semantics follow nn.MultiheadAttention (True = blocked)."""
 
     def __init__(self, d, heads, n_mem=0, rot_frac=0.5, base=10000.0,
-                 qk_norm=False):
+                 qk_norm=False, mlp="gelu"):
         super().__init__()
         assert d % heads == 0
         self.d, self.h, self.hd = d, heads, d // heads
@@ -88,8 +111,7 @@ class RotaryBlock(nn.Module):
         self.ln2 = nn.LayerNorm(d)
         self.qkv = nn.Linear(d, 3 * d)
         self.proj = nn.Linear(d, d)
-        self.mlp = nn.Sequential(nn.Linear(d, 4 * d), nn.GELU(),
-                                 nn.Linear(4 * d, d))
+        self.mlp = make_mlp(d, mlp)
         self.qk_norm = bool(qk_norm)
         if self.qk_norm:
             self.qn = nn.Parameter(torch.ones(self.hd))

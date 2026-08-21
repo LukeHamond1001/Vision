@@ -197,6 +197,7 @@ def main():
                     band_widths={5: 2 * D}),
         # v10.1 gated candidates (2026-08-21)
         "rope": dict(data=BIO, attn="rope", qk_norm=True),
+        "modern": dict(data=BIO, attn="rope", qk_norm=True, mlp="swiglu"),
         "bandlr": dict(data=BIO, band_lr_mult=3.0),
         "a73": dict(data=BIO, splice=0.35),
         "a74": dict(data=BIO, novelty=0.5),
@@ -252,7 +253,7 @@ def main():
     # attribution ban applies to organ deltas too; (2) the
     # cross-day bin (b5+) is IN the regression check — it is the
     # architecture's load-bearing bin, not an optional extra.
-    for organ in ("a71", "a73", "a74", "a75", "rope", "bandlr"):
+    for organ in ("a71", "a73", "a74", "a75", "rope", "modern", "bandlr"):
         if organ in a and "bio" in a:
             ce_o, ce_b = a[organ]["eval"]["ce"], a["bio"]["eval"]["ce"]
             ce_win = ce_o < ce_b * 0.99

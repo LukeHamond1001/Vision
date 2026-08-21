@@ -132,6 +132,7 @@ def main():
     ap.add_argument("--attn", default="abs", choices=["abs", "rope"])
     ap.add_argument("--qk-norm", default="0")
     ap.add_argument("--band-lr-mult", type=float, default=1.0)
+    ap.add_argument("--mlp", default="gelu", choices=["gelu", "swiglu"])
     ap.add_argument("--hb-out", default="results/hb_v10.jsonl")
     ap.add_argument("--trace", default="results/v10_driver.jsonl")
     ap.add_argument("--log-every", type=int, default=100)
@@ -165,7 +166,8 @@ def main():
             "bounds": bounds, "ladder": LADDER,
             "segments": len(ends), "precision": a.precision,
             "attn": a.attn, "qk_norm": str(a.qk_norm) == "1",
-            "band_lr_mult": a.band_lr_mult, "hb_every": a.hb_every,
+            "band_lr_mult": a.band_lr_mult, "mlp": a.mlp,
+            "hb_every": a.hb_every,
             "hb_chunks": a.hb_chunks, "lesion_every": a.lesion_every}
     print("PLAN " + json.dumps(plan), flush=True)
     if a.dry:
@@ -208,7 +210,7 @@ def main():
             log_every=a.log_every, carry_state=carry,
             precision=a.precision, attn=a.attn,
             qk_norm=(str(a.qk_norm) == "1"),
-            band_lr_mult=a.band_lr_mult)
+            band_lr_mult=a.band_lr_mult, mlp=a.mlp)
         carry = model._st
         aucs = {}
         for k in sorted(prophet.clocks):

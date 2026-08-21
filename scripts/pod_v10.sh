@@ -205,6 +205,7 @@ for L in [int(x) for x in "${SMOKE_LANES:-8 12}".split()]:
             precision=prec,
             attn="${ATTN:-abs}", qk_norm=("${QK_NORM:-0}" == "1"),
             band_lr_mult=float("${BAND_LR_MULT:-1.0}"),
+            mlp="${MLP:-gelu}",
             data="$DATA/smoke_l" + str(L), sleep=sl, log_every=20)
         dt = time.time() - t0
         toks = 60 * L * 2048
@@ -237,6 +238,7 @@ out = {"gpu": "$GPUTAG", "lanes": best["lanes"],
        "precision": PREC, "attn": "${ATTN:-abs}",
        "qk_norm": "${QK_NORM:-0}" == "1",
        "band_lr_mult": float("${BAND_LR_MULT:-1.0}"),
+       "mlp": "${MLP:-gelu}",
        "lam": round(lam, 5),
        "tok_s": best["tok_s"], "holds": best["holds"],
        "peak_gib": best["peak_gib"], "rows": rows}
@@ -337,6 +339,7 @@ for ATTEMPT in 1 2 3 4 5 6; do
     --lesion-every "${LESION_EVERY:-2}" \
     --precision "${PRECISION:-fp32}" --attn "${ATTN:-abs}" \
     --qk-norm "${QK_NORM:-0}" --band-lr-mult "${BAND_LR_MULT:-1.0}" \
+    --mlp "${MLP:-gelu}" \
     --hb-out hb_v10.jsonl --trace v10_driver.jsonl \
     >> v10_train.log 2>&1
   RC=$?

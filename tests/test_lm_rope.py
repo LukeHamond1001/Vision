@@ -141,3 +141,21 @@ def test_band_lr_mult_groups_and_schedule(tmp_path):
     for g in opt.param_groups:          # the schedule's per-group scaling
         g["lr"] = g.get("base_lr", 1e-3) * 0.5
     assert [round(g["lr"], 6) for g in opt.param_groups] == [0.0005, 0.0015]
+
+
+def test_swiglu_flag_param_matched_and_default_gelu():
+    import torch.nn as nn
+    from iga.lm_transformer import Block, SwiGLU
+    b_g = Block(256, 8)
+    b_s = Block(256, 8, mlp="swiglu")
+    assert isinstance(b_g.mlp, nn.Sequential) and isinstance(b_s.mlp, SwiGLU)
+    n_g = sum(p.numel() for p in b_g.mlp.parameters())
+    n_s = sum(p.numel() for p in b_s.mlp.parameters())
+    assert abs(n_s - n_g) / n_g < 0.05          # params matched within 5%
+    m = HybridLM(512, d=64, n_layers=1, n_heads=4, max_T=64, mlp="swiglu",
+                 **KW)
+    x = torch.randint(0, 512, (2, 16))
+    lg, _, _ = m(x, m.init_state(2, "cpu"), None)
+    assert lg.shape == (2, 16, 512)
+    assert type(HybridLM(512, d=64, n_layers=1, n_heads=4, max_T=64,
+                         **KW).blocks[0].mlp) is nn.Sequential

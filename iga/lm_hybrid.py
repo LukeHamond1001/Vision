@@ -226,7 +226,7 @@ class HybridLM(nn.Module):
                  use_xl=True, gate_init=-4.0, read_drop=0.5,
                  gate_mode="scalar", keyed=None, norm_mix=False,
                  aux_trunk=0.0, clocks=None, band_widths=None,
-                 tie_embed=False, attn="abs", qk_norm=False):
+                 tie_embed=False, attn="abs", qk_norm=False, mlp="gelu"):
         super().__init__()
         # v10.1 gated candidates (2026-08-21): attn="rope" = decoupled
         # rotary (text rows rotate by position, memory tokens stay
@@ -235,6 +235,7 @@ class HybridLM(nn.Module):
         # bit-exactly (same modules, names, RNG draw order).
         self.attn_kind = attn
         self.qk_norm = bool(qk_norm)
+        self.mlp_kind = mlp          # "gelu" certified | "swiglu" gated
         # bf16 MIXED PRECISION (v10.1, certified separately): when set by
         # the trainer, ONLY the trunk blocks (attention + MLP matmuls)
         # run under bf16 autocast. The residual stream, embeddings, band
@@ -287,13 +288,13 @@ class HybridLM(nn.Module):
             self.pos = nn.Embedding(len(self.bands), d)
             self.blocks = nn.ModuleList(
                 [RotaryBlock(d, n_heads, n_mem=len(self.bands),
-                             qk_norm=self.qk_norm)
+                             qk_norm=self.qk_norm, mlp=mlp)
                  for _ in range(n_layers)])
         else:
             assert not self.qk_norm, "qk_norm requires attn='rope'"
             self.pos = nn.Embedding(max_T + len(self.bands), d)
             self.blocks = nn.ModuleList(
-                [Block(d, n_heads) for _ in range(n_layers)])
+                [Block(d, n_heads, mlp=mlp) for _ in range(n_layers)])
         self.lnf = nn.LayerNorm(d)
         self.head = nn.Linear(d, vocab_size)
         # A75 (gated): weight tying — head shares the embedding
