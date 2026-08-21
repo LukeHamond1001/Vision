@@ -24,6 +24,7 @@ cd Vision
 KEEP=$DATA/keep_rebuild; mkdir -p "$KEEP"
 [ -f HEARTBEAT.log ] && cp -f HEARTBEAT.log "$KEEP/HEARTBEAT.log"
 git fetch -q origin main
+[ -n "${PIN_SHA:-}" ] && git fetch -q origin "$PIN_SHA" 2>/dev/null
 git reset --hard -q "${PIN_SHA:-origin/main}" || git reset --hard -q origin/main
 [ -f "$KEEP/HEARTBEAT.log" ] && cp -f "$KEEP/HEARTBEAT.log" HEARTBEAT.log
 PUSH="https://x-access-token:${GIT_TOKEN}@github.com/LukeHamond1001/Vision.git"

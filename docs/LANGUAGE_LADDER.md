@@ -4730,3 +4730,70 @@ with store_health, sha 2b81d7d — tonight's minis report both).
 Consequence stated plainly: as certified, the two removal demos
 would be nulls at 500M on this diet; tonight's four minis are the
 test of whether diet/trunk/lr/window change that at 78M.
+
+## 2026-08-21 NIGHT — THE ONE-TOKEN ORGANISM (user's design; the PFC order ratified)
+
+The user's instruction, in order: "only seeing the token that just
+came in ... between each token the whole bands talk to each other,
+veto, and get stuff from the hippocampus" (afternoon), then "all
+input going into the PFC with its different time bands, the PFC
+outputs one thing — a ton of embedding — those feed the rest of the
+neocortex to get the output token; one model at a time, one
+iteration; bf16 for the neocortex and 32-bit for the PFC; pod a2000
+or 4090" (night). The plan is docs/ONE_TOKEN_PLAN.md; the organism is
+iga/lm_scan.py (commit 7faee62 + tonight's f5dd81c and the fidelity
+follow-up); laws S1-S10 in tests/test_lm_scan.py (fp32 and bf16).
+
+DESIGN (order = pfc_first): x_t -> e_t -> PFC = council over the slots
+[e_t, hippocampus read r_t, band states m_3..m_8] (2 standard
+attention blocks, fp32) -> the bundle S'_t -> NEOCORTEX = 8 ScanBlocks
+whose query is S'_t[0] and whose key/value slots at every layer are
+the rest of the bundle (bf16 autocast) -> head (fp32) -> logits +
+hippocampus logit read. The neocortex never receives e_t. Between
+tokens: each band accumulates its council slot and ticks every
+clock_k tokens (3:1, 4:8, 5:64, 6:512, 7:4096, 8:32768) with the veto
+permission p = prod_{j!=k}(1 - sigmoid(S'_j . w_k + b_k)); the store
+(content-keyed identity LogitStore ladder) is written every 4 chunks
+and read into the PFC slot every 8 tokens. Full BPTT within T=64;
+A38 cloned carry across the boundary (h and pend on independent
+graphs; M's one write-op credited to exactly its first reader).
+
+THREE MEASUREMENTS FROM THE CPU SMOKES (d=64/2L, 8 lanes, T=64) THAT
+CHANGED THE CODE TONIGHT:
+1. The council shared the trunk's bf16 autocast — contrary to the
+   precision law. Fixed: council autocast enabled=False; S9 hooks
+   every Linear (trunk bf16, council/cells/pred/head fp32, both orders).
+2. pfc_first handed the trunk only the PFC's token slot (1-key
+   attention, degenerate). Fixed: the whole bundle; S7 captures what
+   the council returns and what the trunk receives, token by token.
+3. FIDELITY WAS BLIND. fid:3/4/5 saturated at +0.999 by step 100.
+   Cause 1: band_center subtracted the running mean of the CORTEX
+   output from a target that was the band's OWN council slot — a
+   per-band constant remained and the predictor was scoring a
+   constant. Per-band centring (a row per band, seeded by the first
+   tick) moved step-1 fid from +0.15 to +0.06 but fid:3 still rose to
+   +0.98 by step 200 — cause 2: a band's council slot is mostly an
+   echo of its own state (the slot attends to itself), so the target
+   was self-predictable. Fixed: the target is the NEOCORTEX OUTPUT
+   pooled over the band's interval (the certified hybrid's input-
+   driven target), centred per band; the band still LISTENS through
+   its council slot. S10 locks the per-band centring.
+
+OPS: mule-1 (4gzvaq7jrokt31) is gone — its last pushed beat was
+"ship tar ready 24G" at 22:17 UTC, its hybrid mini had OOM'd at step
+~1500 in the store read (T=2048, 16 GB; rows saved in
+results/evidence/mule1_2026-08-21/). The prep volume 2o9gtwzkhd
+(EU-RO-1) survives with the corpus, shards, sources and the tar. The
+local arms scan/scanpfc/win64 died at step ~120 with a session
+restart. Scratch launchers were wiped with it — the launcher now
+lives in the repo (scripts/launch_pod.sh: REST /v1/pods,
+dockerEntrypoint, SHA-pinned, secrets read at run time). Tonight's
+pod is a 4090 ($0.34/hr, medium stock; the RTX 2000 Ada is $0.50 and
+low) running scripts/pod_scan.sh: ONE run per pod lifetime, rows as
+scan_hb_<ITER>.jsonl on results-v10, self-removing. Reads R1-R4 are
+pre-registered in the plan: R1 eval CE at 12M tokens <= 6.2 (the
+hybrid mini's 5.91 at d=512/8L); R2 band-3/4 lesion deltas > +0.05 CE
+and store-read-off > 0 on in-ctx/short recall by 100M tokens; R3
+>= 8k tok/s at 32 lanes (else the next iteration is CUDA graphs);
+R4 health (no NaN, veto mean in (0.05, 0.95), fid moving — not at a
+floor or a ceiling).

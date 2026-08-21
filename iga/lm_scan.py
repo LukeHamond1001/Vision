@@ -29,7 +29,9 @@ decision):
     band k, every clock_k tokens: pooled = mean of its council slot
         over the interval; h_k <- (1-g)h_k + g tanh(W[h_k; pooled]),
         g = sigmoid(z) * prod_{j!=k}(1 - veto_{j->k});
-        pend_k = pred_k(h_k); fid_k = cos(pend_k(prev), pooled - mu)
+        pend_k = pred_k(h_k); fid_k = cos(pend_k(prev), pooled_C - mu_k)
+        (the band listens to its council slot; it predicts the cortex
+        stream C pooled over its interval, centred per band)
 order="pfc_first" (the user's design, ratified 2026-08-21: all input
 goes into the PFC; the PFC outputs one bundle of embeddings; the rest
 of the neocortex makes the decision): the council (PFC) runs on the
@@ -228,6 +230,7 @@ class ScanLM(nn.Module):
         z = lambda: torch.zeros(B, self.d, device=device)
         return {"h": {k: z() for k in self.bands},
                 "acc": {k: z() for k in self.bands},
+                "acc_c": {k: z() for k in self.bands},    # the cortex stream
                 "cnt": {k: 0 for k in self.bands},
                 "pend": {k: None for k in self.bands},
                 "fresh": {k: False for k in self.bands},
@@ -244,6 +247,7 @@ class ScanLM(nn.Module):
                    for k, v in st["h"].items()}
         st["fresh"] = {k: False for k in st["h"]}
         st["acc"] = {k: v.detach() for k, v in st["acc"].items()}
+        st["acc_c"] = {k: v.detach() for k, v in st["acc_c"].items()}
         st["prev_c"] = st["prev_c"].detach()
         st["tail"] = st["tail"].detach()
         # M keeps one write-op of graph for exactly the first chunk
@@ -345,21 +349,28 @@ class ScanLM(nn.Module):
                 rd = self._read(st, c_out, read_ok)
                 r_slot = self.store_in(rd) if rd is not None \
                     else torch.zeros_like(c_out)
-            # the bands listen through their council slots every token
+            # the bands LISTEN through their council slots every token and
+            # must PREDICT the cortex stream (the fidelity target = the
+            # neocortex output pooled over the interval — input-driven,
+            # the certified hybrid's target; a band's own council slot is
+            # mostly an echo of its state and was self-predictable, fid
+            # saturating at +0.98 even centred per band)
             st["tok"] += 1
             ticked = False
             for i, k in enumerate(self.bands):
                 s_k = S[:, 2 + i]
                 st["acc"][k] = st["acc"][k] + s_k
+                st["acc_c"][k] = st["acc_c"][k] + c_out
                 st["cnt"][k] += 1
                 if st["tok"] % self.clocks[k] == 0:
                     pooled = st["acc"][k] / max(st["cnt"][k], 1)
-                    target = pooled
+                    target = st["acc_c"][k] / max(st["cnt"][k], 1)
                     if self.band_center:
-                        target = pooled - self.band_mu[k]
+                        pooled_c = target
+                        target = pooled_c - self.band_mu[k]
                         if self.training:
                             with torch.no_grad():
-                                pm = pooled.detach().mean(0)
+                                pm = pooled_c.detach().mean(0)
                                 if self.band_mu_n[k] == 0:
                                     self.band_mu[k] = pm
                                 else:
@@ -388,6 +399,7 @@ class ScanLM(nn.Module):
                     if self.clocks[k] > 1:
                         wcost.append(g.mean())
                     st["acc"][k] = torch.zeros_like(st["acc"][k])
+                    st["acc_c"][k] = torch.zeros_like(st["acc_c"][k])
                     st["cnt"][k] = 0
                     ticked = True
             if ticked:

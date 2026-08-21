@@ -1,0 +1,26 @@
+WARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager, possibly rendering your system unusable.It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv. Use the --root-user-action option if you know what you are doing and want to suppress this warning.
+
+[notice] A new release of pip is available: 24.2 -> 26.2.1
+[notice] To update, run: python -m pip install --upgrade pip
+fetch smoltalk_smollm3_smol_magpie_ultra_no_think-00000-of-00006.parquet
+fetch smoltalk_smollm3_smol_magpie_ultra_no_think-00001-of-00006.parquet
+fetch smoltalk_smollm3_smol_magpie_ultra_no_think-00002-of-00006.parquet
+fetch smoltalk_smollm3_smol_magpie_ultra_no_think-00003-of-00006.parquet
+fetch smoltalk_smollm3_smol_magpie_ultra_no_think-00004-of-00006.parquet
+fetch smoltalk_smollm3_smol_magpie_ultra_no_think-00005-of-00006.parquet
+fetch OpenHermes_2.5_no_think-00000-of-00002.parquet
+fetch OpenHermes_2.5_no_think-00001-of-00002.parquet
+fetch OpenThoughts3_1.2M_no_think_no_think-00000-of-00003.parquet
+fetch OpenThoughts3_1.2M_no_think_no_think-00001-of-00003.parquet
+fetch OpenThoughts3_1.2M_no_think_no_think-00002-of-00003.parquet
+fetch smoltalk_smollm3_smol_summarize_no_think-00000-of-00001.parquet
+fetch smoltalk_smollm3_smol_rewrite_no_think-00000-of-00001.parquet
+fetch smoltalk_smollm3_everyday_conversations_no_think-00000-of-00001.parquet
+fetch smoltalk_smollm3_explore_instruct_rewriting_no_think-00000-of-00001.parquet
+fetch tulu_3_sft_personas_instruction_following_no_think-00000-of-00001.parquet
+fetch table_gpt_no_think-00000-of-00001.parquet
+fetch Mixture_of_Thoughts_science_no_think-00000-of-00001.parquet
+fetch LongAlign_64k_context_lang_annotated_lang_6_no_think-00000-of-00001.parquet
+fetch ultrachat_train_9.jsonl
+corpus fetch (rebuild) complete -> /workspace/v10/raw
+CAST {"cast_asks": 13235229, "epi_facts": 3072126, "epi_asks": 12283190, "plants": 3072318, "corrections": 498654, "kept": 8985418}
