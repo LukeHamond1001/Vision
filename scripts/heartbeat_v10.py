@@ -285,16 +285,28 @@ def main():
     d3 = probe_collapse(m, tok, a.T)
     rows.append({"probe": "collapse", "distinct3": d3})
     cast = probe_cast(m, tok, manifest)
+    # A67's incumbent DISEASE is conviction that resists CORRECTION —
+    # it cannot exist before corrections have been experienced. Stamp
+    # how many the stream has delivered (per-lane position vs the
+    # manifest's correction_pos registry); the kill arms on this.
+    lane_toks = a.tokens // max(manifest.get("n_lives", 1), 1)
+    cast["n_corr_seen"] = sum(
+        1 for p in manifest.get("correction_pos", []) if p <= lane_toks)
     rows.append({"probe": "cast", **cast})
     rows.append({"probe": "tail_audit",
                  **probe_tail_audit(a.data, manifest, tok)})
     if not a.skip_lesions:
+        # like-for-like base: the first live batteries compared a
+        # quarter-sample lesioned CE against the FULL-sample base —
+        # the fixed walk-length offset (0.1804) swamped the real
+        # deltas identically for all four bands
+        small = max(a.chunks // 4, 50)
+        ce_b, _ = probe_ce_recall(m, a.eval_data, a.T, small)
         for k in sorted(m.bands):
-            ce_l, _ = probe_ce_recall(m, a.eval_data, a.T,
-                                      max(a.chunks // 4, 50),
+            ce_l, _ = probe_ce_recall(m, a.eval_data, a.T, small,
                                       lesion=(k,))
             rows.append({"probe": f"lesion_b{k}",
-                         "ce_delta": round(ce_l - ce, 4)})
+                         "ce_delta": round(ce_l - ce_b, 4)})
     if isinstance(blob, dict) and "sleeper" in blob:
         rows.append({"probe": "pruned_unharvested",
                      "n": blob["sleeper"].get("pruned_unharvested",
@@ -312,10 +324,17 @@ def main():
     if d3 < KILL["collapse_distinct3_floor"] and frac >= 0.10:
         # armed only past infancy — every infant babbles
         verdict, why = "KILL", why + [f"collapse distinct3 {d3}"]
-    if cast.get("incumbent_mass", 0) >= KILL["incumbent_mass"]:
+    # incumbent kill ARMS only once >=16 corrections have been lived
+    # (2026-08-21 amendment, ledgered: the raw max-over-facts mass is
+    # ~1.0 from birth for any softmax model — the 07:45 KILL fired on
+    # a meter that saturates before its disease can exist; history
+    # rows lacking n_corr_seen never count toward the kill)
+    if cast.get("n_corr_seen", 0) >= 16 and \
+            cast.get("incumbent_mass", 0) >= KILL["incumbent_mass"]:
         n_bad = 1 + sum(1 for h in hist[-KILL["incumbent_rows"]:]
                         for r in h.get("rows", [])
                         if r.get("probe") == "cast" and
+                        r.get("n_corr_seen", 0) >= 16 and
                         r.get("incumbent_mass", 0)
                         >= KILL["incumbent_mass"])
         if n_bad >= KILL["incumbent_rows"]:

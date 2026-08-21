@@ -4114,3 +4114,33 @@ label on that option was sloppy — the exact ceiling is 5.1-5.2B
 (UC binds at fracs .08+.27), corrected in the same hour. Suite
 116/116. The measure phase existing at all is what caught this
 before a dollar of H100 time burned.
+
+## 2026-08-21 — THE 07:45 KILL: A PRE-REGISTERED METER THAT SATURATES AT BIRTH
+
+At step 24,500 (infancy's final battery) the incumbent-mass kill fired
+(0.9993 >= 0.90, two consecutive rows) and the driver exited rc=3 —
+banked, stopped, volume intact. Diagnosis, from the published rows:
+
+1. The metric is max-over-facts of false-answer mass. The max over ~96
+   bare asks from ANY young softmax model is ~1.0 by construction —
+   the meter reads "diseased" from birth. The A67 incumbent disease it
+   exists to catch is conviction that RESISTS CORRECTION; the being had
+   lived zero corrections when it fired (childhood starts at 24,500).
+   A meter that saturates before its disease can exist measures
+   something else.
+2. The same battery's lesion rows read ce_delta=0.1804 on ALL FOUR
+   bands — a quarter-sample lesioned CE compared against the
+   full-sample base CE; the walk-length offset swamps the real deltas
+   identically. (Bonus finding, real: with a like-for-like base the
+   deltas are ~0 in infancy because the gates are barely open —
+   coupling is the adolescence milestone, exactly as the growth chart
+   pre-registered.)
+
+AMENDMENT (this entry is the required ledger): the incumbent kill now
+arms only after >=16 corrections have been LIVED (manifest
+correction_pos vs per-lane position, stamped as n_corr_seen in the
+cast row; history rows lacking the stamp never count). The threshold
+and two-row rule are unchanged. Lesion deltas now use a same-size
+base. The kill did its job: it stopped the run, forced the diagnosis,
+and the instruments came out truer. Rule kept: amendments to
+pre-registered criteria are ledgered with evidence BEFORE relaunch.
