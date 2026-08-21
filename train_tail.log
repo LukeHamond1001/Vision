@@ -1,9 +1,3 @@
-lane1 maintain fid:5          target 0.20 phi0 0.86 band 5 due 36874240
-lane1 frontier recall:b2      target 1.05 phi0 0.05 band 4 due 36874240
-lane1 frontier recall:b1      target 1.05 phi0 0.05 band 3 due 36866048
-lane1 frontier recall:b0      target 1.05 phi0 0.05 band 3 due 36866048
-lane2 maintain fid:5          target 0.20 phi0 0.86 band 5 due 36874240
-lane2 frontier recall:b2      target 1.05 phi0 0.05 band 4 due 36874240
 lane2 frontier recall:b1      target 1.05 phi0 0.05 band 3 due 36866048
 lane2 frontier recall:b0      target 1.05 phi0 0.05 band 3 due 36866048
 lane3 maintain fid:5          target 0.20 phi0 0.86 band 5 due 36874240
@@ -98,3 +92,9 @@ step 22000  ce 1.151  loss 1.431  holds 68472  11,271 tok/s  [fid:3=+0.988 fid:4
     best banked @ 22000 (0.088)
 step 22100  ce 1.102  loss 1.139  holds 70192  11,246 tok/s  [fid:3=+0.988 fid:4=+0.952 fid:5=+0.034 fid:6=+0.017 b0=+1.000 b1=+0.998 b2=+0.997]
 step 22200  ce 1.153  loss 1.192  holds 71896  11,274 tok/s  [fid:3=+0.990 fid:4=+0.952 fid:5=+0.034 fid:6=+0.017 b0=+0.999 b1=+0.999 b2=+0.999]
+step 22300  ce 1.129  loss 1.166  holds 73616  11,256 tok/s  [fid:3=+0.991 fid:4=+0.952 fid:5=+0.035 fid:6=+0.017 b0=+1.000 b1=+0.999 b2=+0.995]
+step 22400  ce 1.321  loss 1.361  holds 75320  11,282 tok/s  [fid:3=+0.990 fid:4=+0.953 fid:5=+0.035 fid:6=+0.017 b0=+0.999 b1=+0.999 b2=+0.999]
+step 22500  ce 1.072  loss 1.333  holds 77040  11,262 tok/s  [fid:3=+0.991 fid:4=+0.954 fid:5=+0.035 fid:6=+0.017 b0=+0.999 b1=+1.000 b2=+1.000]
+step 22600  ce 1.244  loss 1.283  holds 78744  11,250 tok/s  [fid:3=+0.993 fid:4=+0.954 fid:5=+0.035 fid:6=+0.017 b0=+0.997 b1=+0.996 b2=+1.000]
+step 22700  ce 1.236  loss 1.277  holds 80464  11,229 tok/s  [fid:3=+0.992 fid:4=+0.955 fid:5=+0.035 fid:6=+0.017 b0=+1.000 b1=+0.997 b2=+0.999]
+step 22800  ce 1.132  loss 1.202  holds 82168  11,251 tok/s  [fid:3=+0.994 fid:4=+0.956 fid:5=+0.035 fid:6=+0.017 b0=+1.000 b1=+0.994 b2=+0.998]
