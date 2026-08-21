@@ -91,7 +91,10 @@ def load_model(a):
         band_widths=cfg.get("band_widths"),
         tie_embed=cfg.get("tie_embed", False),
         attn=cfg.get("attn", "abs"), qk_norm=cfg.get("qk_norm", False),
-        mlp=cfg.get("mlp", "gelu"))
+        mlp=cfg.get("mlp", "gelu"),
+        band_credit=cfg.get("band_credit", False),
+        band_center=cfg.get("band_center", False),
+        tail_tokens=cfg.get("tail_tokens", 0))
     m.load_state_dict(sd, strict=True)
     m.eval()
     return m, tok, blob

@@ -145,6 +145,11 @@ def main():
     # content-keyed store (2026-08-21, docs/MEMORY_MATH.md): "hidden" keys
     # the store on the trunk's hidden; "logit" = the certified token mix
     ap.add_argument("--keyed", default="logit", choices=["logit", "hidden"])
+    # band repair (docs/MEMORY_MATH.md 5): credit routing, centred
+    # fidelity, the tail memory token; 0/0/0 = certified bit-exactly
+    ap.add_argument("--band-credit", type=int, default=0)
+    ap.add_argument("--band-center", type=int, default=0)
+    ap.add_argument("--tail-tokens", type=int, default=0)
     ap.add_argument("--hb-out", default="results/hb_v10.jsonl")
     ap.add_argument("--trace", default="results/v10_driver.jsonl")
     ap.add_argument("--log-every", type=int, default=100)
@@ -181,6 +186,8 @@ def main():
             "attn": a.attn, "qk_norm": str(a.qk_norm) == "1",
             "band_lr_mult": a.band_lr_mult, "mlp": a.mlp,
             "clock_mult": a.clock_mult, "clocks": clocks, "keyed": a.keyed,
+            "band_credit": a.band_credit, "band_center": a.band_center,
+            "tail_tokens": a.tail_tokens,
             "hb_every": a.hb_every,
             "hb_chunks": a.hb_chunks, "lesion_every": a.lesion_every}
     print("PLAN " + json.dumps(plan), flush=True)
@@ -224,7 +231,9 @@ def main():
             log_every=a.log_every, carry_state=carry,
             precision=a.precision, attn=a.attn,
             qk_norm=(str(a.qk_norm) == "1"),
-            band_lr_mult=a.band_lr_mult, mlp=a.mlp)
+            band_lr_mult=a.band_lr_mult, mlp=a.mlp,
+            band_credit=bool(a.band_credit), band_center=bool(a.band_center),
+            tail_tokens=a.tail_tokens)
         carry = model._st
         aucs = {}
         for k in sorted(prophet.clocks):

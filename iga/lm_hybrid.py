@@ -219,6 +219,17 @@ class SlowCell(nn.Module):
         c = torch.tanh(self.cand(hx))
         return (1 - z) * h + z * c, z.mean()
 
+    def forward_cloned(self, x, h):
+        """The same map through CLONED parameters (A38 pattern): the
+        graph it returns survives the optimizer's in-place updates, so
+        a later chunk's backward can credit this write (band_credit)."""
+        hx = torch.cat([h, x], dim=-1)
+        z = torch.sigmoid(nn.functional.linear(
+            hx, self.z.weight.clone(), self.z.bias.clone()))
+        c = torch.tanh(nn.functional.linear(
+            hx, self.cand.weight.clone(), self.cand.bias.clone()))
+        return (1 - z) * h + z * c
+
 
 class HybridLM(nn.Module):
     def __init__(self, vocab_size, d=128, n_layers=6, n_heads=8,
@@ -226,8 +237,26 @@ class HybridLM(nn.Module):
                  use_xl=True, gate_init=-4.0, read_drop=0.5,
                  gate_mode="scalar", keyed=None, norm_mix=False,
                  aux_trunk=0.0, clocks=None, band_widths=None,
-                 tie_embed=False, attn="abs", qk_norm=False, mlp="gelu"):
+                 tie_embed=False, attn="abs", qk_norm=False, mlp="gelu",
+                 band_credit=False, band_center=False, tail_tokens=0):
         super().__init__()
+        # BAND REPAIR (2026-08-21, docs/MEMORY_MATH.md 5; measured: the
+        # SlowCell candidate and the predictor never received gradient
+        # — pend was detached before the fidelity that used it, and
+        # nothing downstream of a band write lived past the chunk).
+        #   band_credit: fidelity trains cell + predictor through a
+        #     cloned-parameter one-tick graph, and the NEXT chunk's CE
+        #     credits the write through a one-chunk graph (the A38
+        #     pattern); values bit-identical, gradients routed.
+        #   band_center: fidelity on reads centred by a running mean,
+        #     so the shared hidden direction (cos ~.97 between any two
+        #     chunk means) cannot satisfy it.
+        #   tail_tokens: one extra memory token = the mean of the last
+        #     TAIL_W hiddens of the previous chunk — the boundary organ.
+        # All False/0 = the certified forward bit-exactly.
+        self.band_credit = bool(band_credit)
+        self.band_center = bool(band_center)
+        self.tail_tokens = int(tail_tokens)
         # v10.1 gated candidates (2026-08-21): attn="rope" = decoupled
         # rotary (text rows rotate by position, memory tokens stay
         # position-free, no text position table); qk_norm = per-head
@@ -285,14 +314,16 @@ class HybridLM(nn.Module):
         if attn == "rope":
             from .lm_transformer import RotaryBlock
             # memory slots keep a learned tag; text carries no table
-            self.pos = nn.Embedding(len(self.bands), d)
+            self.pos = nn.Embedding(len(self.bands) + self.tail_tokens, d)
             self.blocks = nn.ModuleList(
-                [RotaryBlock(d, n_heads, n_mem=len(self.bands),
+                [RotaryBlock(d, n_heads,
+                             n_mem=len(self.bands) + self.tail_tokens,
                              qk_norm=self.qk_norm, mlp=mlp)
                  for _ in range(n_layers)])
         else:
             assert not self.qk_norm, "qk_norm requires attn='rope'"
-            self.pos = nn.Embedding(max_T + len(self.bands), d)
+            self.pos = nn.Embedding(
+                max_T + len(self.bands) + self.tail_tokens, d)
             self.blocks = nn.ModuleList(
                 [Block(d, n_heads, mlp=mlp) for _ in range(n_layers)])
         self.lnf = nn.LayerNorm(d)
@@ -318,6 +349,12 @@ class HybridLM(nn.Module):
         self.mem_proj = nn.ModuleDict(
             {str(k): nn.Linear(self.band_w[k], d, bias=False)
              for k in self.bands})
+        if self.tail_tokens:
+            self.tail_proj = nn.Linear(d, d, bias=False)
+        # running mean of the final hidden (no grad): the centre for
+        # band_center's fidelity target
+        self.register_buffer("band_mu", torch.zeros(d))
+        self.TAIL_W = 64
         if store == "matrix":
             # half-life = the band's clock, in chunks
             self.mats = nn.ModuleDict(
@@ -456,6 +493,8 @@ class HybridLM(nn.Module):
                       for k in self.bands},
               "cnt": {k: 0 for k in self.bands},
               "pend": {k: None for k in self.bands},
+              "fresh": {k: False for k in self.bands},
+              "tail": torch.zeros(B, self.d, device=device),
               "chunk": 0}
         if self.store == "matrix":
             if getattr(self, "keyed", None) in ("logit", "hidden"):
@@ -470,10 +509,21 @@ class HybridLM(nn.Module):
         return st
 
     def detach_state(self, st):
-        st["h"] = {k: v.detach() for k, v in st["h"].items()}
+        if self.band_credit:
+            # a band that ticked in this chunk keeps its one-op write
+            # graph for exactly the next chunk (the memory token's
+            # hindsight credit); pend keeps its one-tick graph until
+            # the fidelity that consumes it
+            st["h"] = {k: (v if st["fresh"].get(k) else v.detach())
+                       for k, v in st["h"].items()}
+            st["fresh"] = {k: False for k in st["h"]}
+        else:
+            st["h"] = {k: v.detach() for k, v in st["h"].items()}
+            st["pend"] = {k: (p.detach() if p is not None else None)
+                          for k, p in st["pend"].items()}
         st["acc"] = {k: v.detach() for k, v in st["acc"].items()}
-        st["pend"] = {k: (p.detach() if p is not None else None)
-                      for k, p in st["pend"].items()}
+        if "tail" in st:
+            st["tail"] = st["tail"].detach()
         # A38: M is deliberately NOT detached here — it carries one
         # write-op of graph across the boundary (inputs were detached
         # at the write site), so the next chunk's read backward can
@@ -490,12 +540,25 @@ class HybridLM(nn.Module):
             if k in self.lesioned or getattr(self, "mem_off", False):
                 h = torch.zeros_like(h)
             toks.append(self.mem_proj[str(k)](h))
+        if self.tail_tokens:
+            # the previous chunk's tail; part of the THREAD (off under
+            # mem_off) and of the full amputation (every band lesioned)
+            t = st["tail"]
+            if getattr(self, "mem_off", False) or \
+                    len(self.lesioned) >= len(self.bands):
+                t = torch.zeros_like(t)
+            toks.append(self.tail_proj(t))
         return torch.stack(toks, dim=1)          # [B, M, d]
 
     def forward(self, tokens, st, scene_starts=None):
         B, T = tokens.shape
         dev = tokens.device
-        M = len(self.bands)
+        M = len(self.bands) + self.tail_tokens
+        # states from older checkpoints predate these keys
+        if "fresh" not in st:
+            st["fresh"] = {k: False for k in self.bands}
+        if "tail" not in st:
+            st["tail"] = torch.zeros(B, self.d, device=dev)
         mem = self._mem_tokens(st, B)
         if self.attn_kind == "rope":
             x = self.embed(tokens)            # position lives in rotary
@@ -688,6 +751,14 @@ class HybridLM(nn.Module):
                     if self.aux_trunk > 0 and self.training:
                         self._aux_hidden = hidden
                     logits = logits + rsum @ lg_E.t()
+        if self.tail_tokens:
+            # the boundary organ's content: the last TAIL_W hiddens'
+            # mean (detached — the projection learns at read time)
+            st["tail"] = hidden[:, -min(self.TAIL_W, T):].mean(1).detach()
+        if self.band_center and self.training:
+            with torch.no_grad():
+                self.band_mu.mul_(0.99).add_(
+                    0.01 * hidden.detach().mean(dim=(0, 1)))
         # band updates: each band SELECTS from the window with its own
         # query (A24) instead of receiving the window mean
         ticks = [[] for _ in range(max(N_BANDS, max(self.bands) + 1))]
@@ -701,13 +772,34 @@ class HybridLM(nn.Module):
             st["cnt"][k] += 1
             if st["chunk"] % self.clocks[k] == 0:
                 pooled = st["acc"][k] / max(st["cnt"][k], 1)
+                target = pooled
+                if self.band_center:
+                    target = pooled - self.band_mu
                 if st["pend"][k] is not None:
                     fid = nn.functional.cosine_similarity(
-                        st["pend"][k], pooled, dim=-1)
+                        st["pend"][k], target, dim=-1)
                     ticks[k].append((T - 1, fid))
-                st["h"][k], z = self.cells[str(k)](pooled, st["h"][k])
+                if self.band_credit:
+                    # values identical to the live cell; gradient is
+                    # routed: this chunk's loss sees z (write cost),
+                    # the next chunk's CE sees the write through the
+                    # memory token, the next tick's fidelity sees the
+                    # predictor AND the cell — each through its own
+                    # cloned-parameter graph on detached inputs
+                    h_old = st["h"][k].detach()
+                    p_d = pooled.detach()
+                    _, z = self.cells[str(k)](pooled, h_old)
+                    cell = self.cells[str(k)]
+                    st["h"][k] = cell.forward_cloned(p_d, h_old)
+                    st["fresh"][k] = True
+                    pr = self.pred[str(k)]
+                    st["pend"][k] = nn.functional.linear(
+                        cell.forward_cloned(p_d, h_old),
+                        pr.weight.clone(), pr.bias.clone())
+                else:
+                    st["h"][k], z = self.cells[str(k)](pooled, st["h"][k])
+                    st["pend"][k] = self.pred[str(k)](st["h"][k])
                 wcost.append(z)
-                st["pend"][k] = self.pred[str(k)](st["h"][k])
                 st["acc"][k] = torch.zeros_like(st["acc"][k])
                 st["cnt"][k] = 0
         if wcost:

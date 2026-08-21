@@ -211,6 +211,12 @@ def main():
         # content-keyed store (docs/MEMORY_MATH.md 4): the write key is
         # the trunk's hidden at t-1, the read query the hidden at t
         "hidden": dict(data=BIO, keyed="hidden"),
+        # band repair (docs/MEMORY_MATH.md 5): credit routing + centred
+        # fidelity + the tail token; and everything together
+        "bands": dict(data=BIO, band_credit=True, band_center=True,
+                      tail_tokens=1),
+        "organs": dict(data=BIO, keyed="hidden", band_credit=True,
+                       band_center=True, tail_tokens=1),
         # the CONVEYOR (user hypothesis 2026-08-21): half the window,
         # clocks x2 (same token horizons), steps x2 (same tokens)
         "conveyor": dict(data=BIO, T=T // 2, steps=STEPS * 2,
@@ -291,7 +297,7 @@ def main():
     # cross-day bin (b5+) is IN the regression check — it is the
     # architecture's load-bearing bin, not an optional extra.
     for organ in ("a71", "a73", "a74", "a75", "rope", "modern", "bandlr",
-                  "conveyor", "hidden"):
+                  "conveyor", "hidden", "bands", "organs"):
         if organ in a and "bio" in a:
             ce_o, ce_b = a[organ]["eval"]["ce"], a["bio"]["eval"]["ce"]
             ce_win = ce_o < ce_b * 0.99
