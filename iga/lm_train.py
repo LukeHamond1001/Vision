@@ -518,7 +518,12 @@ def train(d=64, lanes=4, T=256, steps=40, seed=0, device="cpu",
                             peval["best"] = recent
                             atomic_save({"model": model.state_dict(),
                                          "step": step,
-                                         "same_recent": recent},
+                                         "same_recent": recent,
+                                         # serve seeds its lane from the
+                                         # banked moment's band states
+                                         "st": _st_tree(
+                                             model._st,
+                                             lambda t: t.detach().cpu())},
                                         ckpt + ".best.pt")
                             print(f"    best banked @ {step} "
                                   f"({recent:.3f})", flush=True)

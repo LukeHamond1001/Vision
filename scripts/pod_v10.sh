@@ -269,11 +269,23 @@ import torch
 b = torch.load("$CKPT.best.pt", map_location="cpu", weights_only=False)
 torch.save({"model": b["model"], "step": b.get("step"),
             "peval_best": b.get("peval_best")}, "v10_best_model.pt")
+# band states for serve seeding: the banked moment's (if the best blob
+# carries them) and the END-OF-LIFE state from the last 500-step save
+# (2026-08-21: warm-restart checkpoints carry "st"; the volume was the
+# only copy — this rides the ckpt branch as v10_states.pt)
+states = {"best_step": b.get("step"), "best_st": b.get("st")}
+try:
+    fin = torch.load("$CKPT", map_location="cpu", weights_only=False)
+    states.update({"final_step": fin.get("step"), "final_st": fin.get("st")})
+except Exception as e:
+    states["final_err"] = str(e)
+torch.save(states, "v10_states.pt")
 EOF
   git checkout -B results-v10-ckpt
   split -b 25m v10_best_model.pt v10best_part_
-  for f in v10best_part_*; do
-    git add -f "$f" && git commit -qm "ckpt piece: $f"
+  split -b 25m v10_states.pt v10states_part_ 2>/dev/null || true
+  for f in v10best_part_* v10states_part_*; do
+    [ -f "$f" ] && git add -f "$f" && git commit -qm "ckpt piece: $f"
   done
   for i in 1 2 3 4; do
     git push -qf "$PUSH" results-v10-ckpt && break

@@ -4229,3 +4229,19 @@ cheapest moment; every later restart is warm.
 Also recorded: binder closed set = 5 candidates (4 distractors), so
 CHANCE = 20%; in-ctx 17.0% -> 22.2% at 24k/30k = unarmed, as the growth
 chart expects; the childhood-end milestone is 2x chance = 40%.
+
+## 2026-08-21 — END-OF-LIFE STATE: CAUGHT, AND NOW BANKED OFF-SITE
+
+Serve seeding needs the band states at the moment the served weights
+were taken. Status on the running code (ce15f4b): the run's total is a
+multiple of 500, so the final step's save writes v10.pt with weights +
+optimizer + "st" — the end-of-life state IS captured, on the volume
+only. Gaps closed here: (1) .best.pt (the banked holdout peak, the
+artifact A54 C1 says we serve if the run peaks early) now carries "st"
+too; (2) the pod's bank exports v10_states.pt {best_step, best_st,
+final_step, final_st} in 25MB pieces to results-v10-ckpt beside the
+model. Both deploy at the next restart; if the run finishes without
+one, the final state is still on the volume and a cheap attached pod
+exports it. Serve-room day-one protocol: seed the single served lane
+from the served checkpoint's own lane-0 state (both demo copies get
+the same seed — within-run contrasts hold).
