@@ -60,7 +60,7 @@ GATE = {"g1_chance_x": 2.0, "g2_min_probes": 50, "g3_min_pairs": 3}
 EPI = os.environ.get("GATE_EPI", "0") == "1"
 SUF = "_epi" if EPI else ""
 EPI_CFG = {"n_asks": (2, 6)} if EPI else None
-EVID = f"results/evidence/v10_gates{SUF}.json"
+EVID = os.environ.get("GATE_OUT", f"results/evidence/v10_gates{SUF}.json")
 RAW = "data/v10_raw"
 BIO, CTRL, EVAL = (f"data/life_gate_bio{SUF}", f"data/life_gate_ctrl{SUF}",
                    f"data/life_gate_eval{SUF}")
@@ -119,7 +119,8 @@ def train_arm(tag, data, arch="hybrid", **kw):
     # half the attention window — bands must carry the rest)
     T_arm = kw.pop("T", T)
     steps_arm = kw.pop("steps", STEPS)
-    if arch == "hybrid":
+    lanes_arm = kw.pop("lanes", LANES)
+    if arch in ("hybrid", "scan"):
         sl = Sleeper(arm="C", every=16, block_chunks=2, seed=1,
                      **{k: kw.pop(k) for k in
                         ("splice", "novelty", "homeostasis")
@@ -127,7 +128,7 @@ def train_arm(tag, data, arch="hybrid", **kw):
         sl.press_pay = (T_arm, 64)
     keyed_arm = kw.pop("keyed", "logit")
     model, drive, vocab, ce0, ce1 = train(
-        d=D, lanes=LANES, T=T_arm, steps=steps_arm, seed=0, device="cpu",
+        d=D, lanes=lanes_arm, T=T_arm, steps=steps_arm, seed=0, device="cpu",
         arch=arch, store="matrix", keyed=keyed_arm, norm_mix=True,
         aux_trunk=0.2, use_xl=False, gate_init=-2.0, lam=0.02,
         log_every=max(steps_arm // 4, 1), data=data, sleep=sl, **kw)
@@ -161,6 +162,8 @@ def evaluate(model, arch="hybrid"):
     ce_sum, ce_n = 0.0, 0
     acc = {name: [0, 0] for _, _, name in BINS}
     chunks = min(2500 * (T // Tm), len(conv.tokens) // (2 * Tm) - 2)
+    if os.environ.get("GATE_EVAL_CHUNKS"):
+        chunks = min(chunks, int(os.environ["GATE_EVAL_CHUNKS"]))
     for _ in range(chunks):
         x, y, events = conv.chunk(Tm)
         out = model(x, st, None)
@@ -221,6 +224,25 @@ def main():
         # clocks x2 (same token horizons), steps x2 (same tokens)
         "conveyor": dict(data=BIO, T=T // 2, steps=STEPS * 2,
                          clocks={3: 2, 4: 16, 5: 128}),   # bio = {1, 8, 64}
+        # THE ONE-TOKEN ORGANISM (2026-08-21, the user's design,
+        # iga/lm_scan.py): the cortex sees only the token that just
+        # arrived; the bands (ladder in tokens, band 3 every token) and
+        # the content-keyed store carry everything else; a council
+        # between tokens with vetoes. Same tokens per step (16 lanes x
+        # 64), same steps. "scanpfc" = the stricter order (token -> PFC
+        # -> cortex decides). "win64" = HybridLM seeing 64 tokens with
+        # the same ladder (in chunks): the reference that keeps
+        # attention inside the window.
+        "scan": dict(data=BIO, arch="scan", T=64, lanes=16,
+                     clocks={3: 1, 4: 8, 5: 64, 6: 512, 7: 4096, 8: 32768},
+                     scan={"order": "cortex_first"}),
+        "scanpfc": dict(data=BIO, arch="scan", T=64, lanes=16,
+                        clocks={3: 1, 4: 8, 5: 64, 6: 512, 7: 4096, 8: 32768},
+                        scan={"order": "pfc_first"}),
+        "win64": dict(data=BIO, T=64, lanes=16, keyed="hidden",
+                      band_credit=True, band_center=True, tail_tokens=1,
+                      clocks={3: 1, 4: 8, 5: 64, 6: 512, 7: 4096, 8: 32768},
+                      horizon_rule="clock"),
         "a73": dict(data=BIO, splice=0.35),
         "a74": dict(data=BIO, novelty=0.5),
         "a75": dict(data=BIO, tie_embed=True),
@@ -239,7 +261,7 @@ def main():
         ev = evaluate(model, arch)
         out["arms"][tag] = {"train": meta, "eval": ev}
         print(f"[{tag}/eval] {json.dumps(ev)}", flush=True)
-        if arch == "hybrid":
+        if arch in ("hybrid", "scan"):
             # the two meters from docs/MEMORY_MATH.md: the boundary
             # deficit and each removal's share of it; the store's key
             # health (a collapsed key mix = a bigram cache)
@@ -297,7 +319,8 @@ def main():
     # cross-day bin (b5+) is IN the regression check — it is the
     # architecture's load-bearing bin, not an optional extra.
     for organ in ("a71", "a73", "a74", "a75", "rope", "modern", "bandlr",
-                  "conveyor", "hidden", "bands", "organs"):
+                  "conveyor", "hidden", "bands", "organs", "scan", "scanpfc",
+                  "win64"):
         if organ in a and "bio" in a:
             ce_o, ce_b = a[organ]["eval"]["ce"], a["bio"]["eval"]["ce"]
             ce_win = ce_o < ce_b * 0.99

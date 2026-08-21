@@ -272,7 +272,7 @@ def train(d=64, lanes=4, T=256, steps=40, seed=0, device="cpu",
           tie_embed=False, dream=None, n_layers=6, ledger_cap=None,
           attn="abs", qk_norm=False, band_lr_mult=1.0, precision="fp32",
           band_credit=False, band_center=False, tail_tokens=0,
-          mlp="gelu", horizon_rule="fixed",
+          mlp="gelu", horizon_rule="fixed", scan=None,
           lr_warmup=0, carry_state=None):
     """resume (A26): path to a checkpoint — model + optimizer + drive
     EMAs/records/minted/vetoes continue; step numbering continues.
@@ -328,6 +328,26 @@ def train(d=64, lanes=4, T=256, steps=40, seed=0, device="cpu",
         from .lm_transformer import TransformerLM
         model = TransformerLM(vocab_size, d=d, max_T=T).to(device)
         model_cfg = {"arch": "transformer", "d": d, "T": T}
+    elif arch == "scan":
+        # the one-token organism (iga/lm_scan.py): clocks in TOKENS,
+        # horizons = clocks; the chunk T is the BPTT length, the store
+        # write cadence (x write_every) and the serve window
+        from .lm_scan import ScanLM, SCAN_CLOCKS
+        scan_opts = dict(scan or {})
+        clocks = dict(SCAN_CLOCKS if clocks is None else clocks)
+        model = ScanLM(vocab_size, d=d, n_layers=n_layers, n_heads=8,
+                       max_T=T, clocks=clocks, gate_init=gate_init,
+                       read_drop=read_drop, aux_trunk=aux_trunk, mlp=mlp,
+                       **scan_opts).to(device)
+        model.autocast_bf16 = (precision == "bf16")
+        model_cfg = {"arch": "scan", "d": d, "n_layers": n_layers,
+                     "n_heads": 8, "T": T, "precision": precision,
+                     "clocks": clocks, "scan": scan_opts, "mlp": mlp,
+                     "store": "matrix", "keyed": "hidden",
+                     "aux_trunk": aux_trunk, "gate_init": gate_init}
+        drive.bin_band = {0: 3, 1: 3, 2: 4, 3: 5}
+        for k in model.bands:
+            drive._horizons[k] = int(clocks[k])
     elif arch == "hybrid":
         from .lm_hybrid import HybridLM
         model = HybridLM(vocab_size, d=d, n_layers=n_layers, max_T=T,
@@ -402,7 +422,8 @@ def train(d=64, lanes=4, T=256, steps=40, seed=0, device="cpu",
     # own AdamW group at lr * mult — a "boost" for the slow organs whose
     # ticks are rare. Default 1.0 = one group, bit-exact.
     if band_lr_mult and float(band_lr_mult) != 1.0:
-        band_pfx = ("cells.", "pred.", "mem_proj.", "read_q.", "tail_proj.")
+        band_pfx = ("cells.", "pred.", "mem_proj.", "read_q.", "tail_proj.",
+                    "veto_w.", "veto_b.")
         bp = [p_ for n, p_ in model.named_parameters()
               if n.startswith(band_pfx)]
         rest = [p_ for n, p_ in model.named_parameters()
