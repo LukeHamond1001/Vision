@@ -4661,3 +4661,39 @@ even beats. Rules, fixed now:
    writes per life, ~$230, corpus rebuilt on mule-2's CPU tonight).
 The A100 cost is ~$6 for the night; the minis' x-axis (tokens per
 life, 50M) is unchanged by the 2-lane choice; per-row n halves.
+
+## 2026-08-21 — "HOW DO WE GET THE MODEL DEPENDENT ON THE TWO DEMOS?" (user)
+
+It will not work out by itself: the record is 0-for-N. A69-R3 (30k
+steps, certified lam): "wake-time state (store, bands) carries zero
+recall across chunks, full stop"; v9.4 final battery: all organs
+removed = +0.26% CE, recall identical; v10 at 42k: per-band lesions
+~0. The MECHANISM, from the v9.4 autopsy: the store's learned key mix
+collapsed onto the immediately preceding token (qmix softmax
+[0.999, 0.001, ...]) — the contextual memory was a BIGRAM CACHE; keyed
+by "was", it cannot answer "what colour was Mira's key". The cortex
+routes around an organ whenever the objective can be met without it
+and the organ's path is the harder one to learn. Dependence has to be
+engineered on both sides: NECESSARY (an objective component only the
+organ can satisfy, at a weight that matters — the episodic asks at
+long gaps plus paid recalls, in V10.1 for the first time) and ABLE (a
+key that can find an entity; a cortex that reads the memory tokens).
+Added tonight, before the minis: (1) battery probe store_health — the
+key mix's top offsets and entropy, tok_u of entity words vs colours,
+alpha and read gates per band, every beat: if qmix collapses again
+on the episodic diet the store is structurally unable and a
+content-keyed store (the trunk's hidden at the write position as the
+key, not a positional mix of embeddings) becomes v10.2's first item;
+(2) the CONVEYOR arm as a fourth mini (--T 1024 --clock-mult 2: half
+window, same token horizons) — the forced-necessity bet, now with
+lesion rows. Tonight's four minis therefore test necessity (episodic
+diet; forced window), ability (modern trunk reads; band-lr writes)
+and the store's key health at 78M, side by side. If none shows a
+cross-chunk carry (short/b3/b4 above chance on unseen lives, or a
+per-band lesion delta beyond noise), the honest position is that the
+two removal demos would be nulls at 500M on this diet, and the user
+decides whether V10.1 launches for the served-life claim alone
+(sleep + economy + weights, the organs that DO work) or waits for the
+content-keyed store. CE comparison caveat: the conveyor's eval runs
+at T=1024 — its CE is not on the others' scale; its recall bins and
+lesion deltas are.
