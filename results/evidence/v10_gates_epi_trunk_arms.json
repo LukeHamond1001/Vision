@@ -144,12 +144,113 @@
     "sleep_steps": 749,
     "secs": 3797
    }
+  },
+  "bandlr": {
+   "eval": {
+    "ce": 5.0749,
+    "recall": {
+     "in-ctx": {
+      "acc": 0.191,
+      "n": 523
+     },
+     "short": {
+      "acc": 0.207,
+      "n": 1363
+     },
+     "b3": {
+      "acc": 0.188,
+      "n": 520
+     },
+     "b4": {
+      "acc": 0.203,
+      "n": 803
+     },
+     "b5+": {
+      "acc": 0.19,
+      "n": 105
+     }
+    }
+   },
+   "train_ce_last": 3.329,
+   "last_step": 12000,
+   "holds_last": 8128,
+   "ema_last": "fid:3=+0.961 fid:4=+0.410 fid:5=-0.043 b0=+0.005 b1=+0.008 b2=+0.010 b3=+0.004",
+   "pair_blocks": 130,
+   "pair_margin_quartile_means": [
+    2.198,
+    5.391,
+    6.427,
+    6.218
+   ],
+   "config": "band_lr_mult 3.0 (abs trunk)",
+   "ce_vs_bio": -0.0041,
+   "train": {
+    "ce_first": 9.344745635986328,
+    "ce_last": 3.3294272422790527,
+    "secs": 3283,
+    "params": 5290629,
+    "pairs": 78,
+    "pair_law": true,
+    "sleep_steps": 749,
+    "only_paid": true
+   }
+  },
+  "conveyor": {
+   "eval": {
+    "ce": 4.9121,
+    "recall": {
+     "in-ctx": {
+      "acc": 0.222,
+      "n": 522
+     },
+     "short": {
+      "acc": 0.236,
+      "n": 1360
+     },
+     "b3": {
+      "acc": 0.218,
+      "n": 519
+     },
+     "b4": {
+      "acc": 0.211,
+      "n": 801
+     },
+     "b5+": {
+      "acc": 0.21,
+      "n": 105
+     }
+    }
+   },
+   "train_ce_last": 3.19,
+   "last_step": 24000,
+   "holds_last": 8032,
+   "ema_last": "fid:3=+0.941 fid:4=+0.095 fid:5=+0.061 b0=+0.007 b1=+0.015 b2=+0.012 b3=+0.006",
+   "pair_blocks": 284,
+   "pair_margin_quartile_means": [
+    0.36,
+    0.519,
+    0.809,
+    1.036
+   ],
+   "config": "window T/2=128, clocks x2 {3:2,4:16,5:128} (same token horizons), steps x2 (same tokens)",
+   "ce_vs_bio": -0.036,
+   "train": {
+    "ce_first": 9.43033504486084,
+    "ce_last": 3.189784049987793,
+    "secs": 3879,
+    "params": 5274245,
+    "pairs": 78,
+    "pair_law": true,
+    "sleep_steps": 1498,
+    "only_paid": true
+   }
   }
  },
  "verdict": {
   "trunk_ce_gate": "rope -4.6% / modern -4.8% vs bio (floor: parity within 1%) -> both WIN at d=128",
   "binder": "all arms at chance (uninformative at this scale; the 78M mini-flash is the binder instrument)",
   "note": "ARM C pair margins: bio grows to ~6.4 (absolute positions let replayed pairs be memorized by position); rope/modern ~0.3. fid:4 bio .17 / rope .31 / modern .61. Ships into a paid run only after its own mini-flash (rule ledgered before this result).",
-  "laws": "params matched within 1.5% (bio 5.29M / rope 5.26M / modern 5.21M); pair law, only-paid and sleep schedule identical across arms"
+  "laws": "params matched within 1.5% (bio 5.29M / rope 5.26M / modern 5.21M); pair law, only-paid and sleep schedule identical across arms",
+  "band_boost_arms": "bandlr: CE -0.4% (noise), fid:4 .41 vs bio .17 (2.4x) at zero CE cost, fid:5 -.04; conveyor: CE -3.6% (confounded: 2x optimizer steps at the same tokens), fid:4 .095 (DOWN), fid:5 .061 (up), margins ~1.0 \u2014 no lesion rows at this scale, so load-bearing is NOT shown; both are mini-flash candidates, modern remains the best-evidenced"
  }
 }

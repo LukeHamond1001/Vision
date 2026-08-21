@@ -4593,3 +4593,46 @@ for the modern mini first (still inside the plan's own "Aug 22
 evening" launch window) and launch on modern if it holds at 78M.
 Default if the user says nothing: (a) — the centerpiece runs on the
 trunk every organ law was certified on. The user is asked.
+
+## 2026-08-21 — THE MINI-FLASH OOM (step ~2550) AND THE BAND-BOOST ARMS
+
+MINI OOM: the 78M mini on the 16 GB mule died in the WAKE backward at
+step ~2550 (childhood, 1000 steps in): "15.31 GiB in use, 267 MiB
+free", the 1 GiB key-mix allocation in the store's checkpoint recompute.
+The 40-step smoke had peaked at 13.0 GiB; what childhood added that the
+smoke never ran is nightly sleep with PAID spans and the first ARM C
+pairs — batch-1 blocks of odd lengths that fragment the caching
+allocator around the wake step's fixed 1 GiB block until a fresh
+segment cannot be reserved. The H100's 80 GB hid it in v10. Fixes
+(800e6e1): empty_cache after every night; PYTORCH_CUDA_ALLOC_CONF=
+expandable_segments on both pod payloads; MINI_LIVES=2 (2 lives x 50M
+— the same tokens per life, half the activation memory, half the
+compute); start_mini/MINI2/MINI3 so several minis run concurrently on
+one bigger card. The corpus build on the mule continues (its critical
+path anyway); the mule is replaced after "ship tar ready" by an A100
+(EU-RO-1, $1.59/hr, low stock; fallback RTX 4090) running three 2-lane
+minis: baseline abs, modern, band-lr 3x — all with per-band CE lesion
+rows every 6000 steps. The first attempt's one row (step 1500, infancy
+end: every bin at chance, CE 5.91, tail audit 0/121) is filed under
+results/v10_1_mini/attempt1_oom/. Launch slips to ~03:00 UTC 08-22.
+
+BAND-BOOST ARMS at d=128 (episodic shards; evidence
+v10_gates_epi_trunk_arms.json): band_lr_mult 3x — eval CE 5.075
+(-0.4% = noise), band-4 fidelity .41 vs bio .17 (2.4x) at zero CE
+cost, band 5 -.04. CONVEYOR (window 128 = T/2, clocks x2 so token
+horizons match, steps x2 so tokens match) — eval CE 4.912 (-3.6%),
+fid:4 .095 (DOWN from .17), fid:5 .061 (up), pair margins ~1.0 over
+284 nights. Readings, not verdicts: the conveyor's CE gain is
+confounded with twice the optimizer steps at the same tokens, and the
+d=128 gate has no lesion rows, so whether the bands CARRIED the
+context attention lost is unmeasured. What the arms do establish: a
+band lr boost writes more readable band-4 content for free; halving
+the window is not costly at this scale. The user's question — "will
+3-5 even work if not a conveyor" — has an architectural answer: the
+belt feeds them already (attention sees one chunk, no XL carry, so at
+every boundary the previous chunk lives only in band 3 + the stores),
+and their fidelity says they hold it; what v10 showed is that the
+cortex did not READ them (lesion b3 +0.0001 CE at 42k). Forcing (a
+smaller window) and inviting (modern trunk, band lr, structure on the
+belt) are different bets; the 78M lesion rows tonight measure both
+trunks and the lr boost side by side.

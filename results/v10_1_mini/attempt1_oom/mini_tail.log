@@ -1,0 +1,60 @@
+    sleep@1824 armC lane0 [3623419,3625468) of span[3623419,3625468] pay 1.000  chunks 1  loss 4.5656
+    sleep@1856 armC lane1 [3383304,3385353) of span[3383304,3385353] pay 2.000  chunks 1  loss 4.3996
+    sleep@1888 armC lane2 [3675643,3677692) of span[3675643,3677692] pay 2.000  chunks 1  loss 4.4389
+step  1900  ce 4.535  loss 4.580  holds 3412  9,530 tok/s (now 9,224)  [fid:3=+0.988 fid:4=+0.039 fid:5=-0.005 fid:6=-0.021 b0=+0.001 b1=+0.002 b2=+0.001]
+    sleep@1920 armC lane1 [3071857,3073906) of span[3071857,3073906] pay 2.000  chunks 1  loss 3.8889
+    sleep@1952 armC lane1 [3478398,3480447) of span[3478398,3480447] pay 2.000  chunks 1  loss 4.1586
+    sleep@1984 armC lane0 [3285187,3287236) of span[3285187,3287236] pay 2.000  chunks 1  loss 4.8631
+step  2000  ce 5.211  loss 5.304  holds 4268  9,589 tok/s (now 9,830)  [fid:3=+0.987 fid:4=+0.044 fid:5=-0.005 fid:6=-0.021 b0=+0.002 b1=+0.002 b2=+0.002 b3=+0.003]
+    holdout(cum): {'cross': [0.042, 0.03, 66], 'same': [0.045, 0.08, 158], 'straddle': [0.046, 0.09, 54]}
+    same(recent 158 probes): 0.045
+    best banked @ 2000 (0.045)
+    sleep@2016 armC lane1 [3955061,3957110) of span[3955061,3957110] pay 2.000  chunks 1  loss 4.1744
+    sleep@2048 armC lane3 [3158196,3160245) of span[3158196,3160245] pay 1.000  chunks 1  loss 4.4048
+    sleep@2080 armC lane0 [4106406,4108455) of span[4106406,4108455] pay 1.000  chunks 1  loss 4.6544
+step  2100  ce 4.849  loss 5.899  holds 5124  9,505 tok/s (now 9,108)  [fid:3=+0.987 fid:4=+0.047 fid:5=-0.005 fid:6=-0.020 b0=+0.003 b1=+0.003 b2=+0.003 b3=+0.003]
+    sleep@2112 armC lane3 [3449745,3451794) of span[3449745,3451794] pay 1.000  chunks 1  loss 4.3582
+    sleep@2144 armC lane0 [3356914,3358963) of span[3356914,3358963] pay 1.000  chunks 1  loss 4.7536
+    sleep@2176 armC lane1 [3738054,3740103) of span[3738054,3740103] pay 2.000  chunks 1  loss 4.4248
+step  2200  ce 4.944  loss 5.036  holds 5980  9,599 tok/s (now 10,207)  [fid:3=+0.987 fid:4=+0.050 fid:5=-0.005 fid:6=-0.020 b0=+0.003 b1=+0.007 b2=+0.005 b3=+0.005]
+    sleep@2208 armC lane1 [3635487,3637536) of span[3635487,3637536] pay 2.000  chunks 1  loss 4.8287
+    sleep@2240 armC lane3 [3682567,3684616) of span[3682567,3684616] pay 2.000  chunks 1  loss 4.1912
+    sleep@2272 armC lane0 [3781397,3783446) of span[3781397,3783446] pay 2.000  chunks 1  loss 4.4482
+step  2300  ce 4.894  loss 4.940  holds 6836  9,649 tok/s (now 10,013)  [fid:3=+0.988 fid:4=+0.050 fid:5=-0.004 fid:6=-0.020 b0=+0.002 b1=+0.002 b2=+0.002 b3=+0.001]
+    sleep@2304 armC pair[4636884|4636898] targets [7, 13]  margin -0.4253  loss 0.9282
+    sleep@2336 armC lane0 [4229453,4231502) of span[4229453,4231502] pay 2.000  chunks 1  loss 4.3182
+    sleep@2368 armC lane0 [4836395,4838444) of span[4836395,4838444] pay 2.000  chunks 1  loss 5.3482
+    sleep@2400 armC lane1 [3915903,3917952) of span[3915903,3917952] pay 2.000  chunks 1  loss 4.7735
+step  2400  ce 4.730  loss 5.803  holds 7724  9,701 tok/s (now 10,138)  [fid:3=+0.987 fid:4=+0.051 fid:5=-0.004 fid:6=-0.020 b0=+0.011 b1=+0.016 b2=+0.025 b3=+0.028]
+    sleep@2432 armC lane2 [4620161,4622210) of span[4620161,4622210] pay 2.000  chunks 1  loss 4.3396
+    sleep@2464 armC lane1 [4976645,4978694) of span[4976645,4978694] pay 2.000  chunks 1  loss 4.5438
+    sleep@2496 armC lane1 [4927350,4929399) of span[4927350,4929399] pay 1.000  chunks 1  loss 4.6242
+step  2500  ce 4.568  loss 4.614  holds 8620  9,772 tok/s (now 10,465)  [fid:3=+0.987 fid:4=+0.053 fid:5=-0.004 fid:6=-0.020 b0=+0.004 b1=+0.009 b2=+0.012 b3=+0.014]
+    sleep@2528 armC lane1 [4425333,4427382) of span[4425333,4427382] pay 2.000  chunks 1  loss 4.8988
+    sleep@2560 armC lane2 [5122208,5124257) of span[5122208,5124257] pay 2.000  chunks 1  loss 4.4405
+Traceback (most recent call last):
+  File "/workspace/w-v10prep/Vision/scripts/v10_driver.py", line 270, in <module>
+    main()
+  File "/workspace/w-v10prep/Vision/scripts/v10_driver.py", line 198, in main
+    model, drive, vocab, ce0, ce1 = train(
+                                    ^^^^^^
+  File "/workspace/w-v10prep/Vision/iga/lm_train.py", line 476, in train
+    ce, loss = process_chunk(model, drive, conveyor, T, device,
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/w-v10prep/Vision/iga/lm_train.py", line 200, in process_chunk
+    loss.backward()
+  File "/usr/local/lib/python3.11/dist-packages/torch/_tensor.py", line 521, in backward
+    torch.autograd.backward(
+  File "/usr/local/lib/python3.11/dist-packages/torch/autograd/__init__.py", line 289, in backward
+    _engine_run_backward(
+  File "/usr/local/lib/python3.11/dist-packages/torch/autograd/graph.py", line 769, in _engine_run_backward
+    return Variable._execution_engine.run_backward(  # Calls into the C++ engine to run the backward pass
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/dist-packages/torch/utils/checkpoint.py", line 1116, in unpack_hook
+    frame.recompute_fn(*args)
+  File "/usr/local/lib/python3.11/dist-packages/torch/utils/checkpoint.py", line 1400, in recompute_fn
+    fn(*args, **kwargs)
+  File "/workspace/w-v10prep/Vision/iga/lm_hybrid.py", line 603, in _mixq
+    mix = torch.einsum("btr,btrd->btd", mw, lg_E[wt])
+                                            ~~~~^^^^
+torch.OutOfMemoryError: CUDA out of memory. Tried to allocate 1024.00 MiB. GPU 0 has a total capacity of 15.58 GiB of which 267.25 MiB is free. Including non-PyTorch memory, this process has 15.31 GiB memory in use. Of the allocated memory 9.97 GiB is allocated by PyTorch, and 5.22 GiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://pytorch.org/docs/stable/notes/cuda.html#environment-variables)
