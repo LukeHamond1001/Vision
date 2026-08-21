@@ -4425,3 +4425,52 @@ the growth chart's childhood-end binder milestone as a WARN line
 .08/.27/.38/.27 table: childhood ends at .35, adolescence at .73).
 ETA unchanged: ~90 h from 16:00 UTC Aug 21 -> ~midday UTC Aug 25,
 ~$300 more (~$360 total).
+
+## 2026-08-21 — THE STOP (step 43,500): THE BINDER NEVER ARMED, AND WHY
+
+Asked "will this run be worth it?", the honest answer needed one
+cross-check: G1 at debug (results/evidence/v10_g1_8k.json) was
+`false` (in-ctx .247 vs chance .20) and had been DEFERRED to the 500M
+growth chart; the flash's unseen eval life read .170/.222/.201/.211
+across 24k-42k while the TRAINING lanes' recall channels read
+0.93-0.97. Memorization, not binding. Cause in the builder: LifeCast
+= 24 PERSISTENT facts per life from NAMES x OBJECTS (8 x 8), each
+planted once and re-asked forever at the stage menu's gaps (infancy:
+96/700 -> measured 1 ask per 42 tokens, ~70% of infancy tokens were
+the drill); 8 lives x 24 = 192 facts, trivially held by 500M params.
+A69-R2 (dense synthetic weaver, fresh facts) had armed in-ctx at 84%
+at d=128 — the faculty is learnable; the diet did not teach it. Pod
+ngq30ri1hc7jc4 terminated 16:2x UTC at step 43,500 (volume intact;
+v10.pt@42000 with band states kept); ~$64 spent. Decision (user):
+rerun at 500M in bf16 on the same spine with an EPISODIC cast; no
+model scale-up (a bigger model memorizes 192 facts more easily and
+runs slower per token); bands boosted only through gated arms.
+Plan: docs/V10_1_RERUN_PLAN.md.
+
+## 2026-08-21 — EPISODIC CAST (builder), SMOLTALK2 ORDER, GATED ARMS
+
+Episodic cast: novel (name, obj) -> color facts from 273 x 165
+vocabularies disjoint from the roster, planted on a TOKEN cadence per
+stage (500/1200/1600/1600; also between exchanges inside long
+conversations — one plant per unit had starved adolescence 4x), asked
+2-6 times at the stage menu's gaps (first ask with an in-context 96
+option), then RETIRED; the roster demoted to biography at 16x the
+stage's longest gap. Measured on an 80M build: 1 ask / 316 tok, 93% of
+asks episodic, 99% of facts retired, infancy ~29% of tokens (binding
+bootcamp), childhood 8%, adolescence 5% with b5 11k / b6 5.1k asks per
+64M tokens (band food the old cast never delivered). Roster mode is
+bit-exact (md5 of tokens.bin equal on three builds). Also found and
+fixed: the builder consumed SmolTalk2 subsets in alphabetical order —
+LongAlign_64k (15k-token single exchanges) opened adolescence; order
+is now explicit (everyday -> rewriting -> personas -> Hermes ->
+science -> long-context last). Gated arms for the rerun, all default-
+off and parity-tested: decoupled RoPE (RotaryBlock: text rotates,
+memory tokens position-free, MHA-exact when unrotated) + QK-norm;
+band_lr_mult (band organs' own AdamW group); A71 re-gated on the new
+diet. bf16: trunk-blocks-only autocast, fp32 residual/states/store/
+head/loss (dtype law, trajectory parity, precision-agnostic ckpts);
+the smoke runs fp32 then bf16 at the real shape and records both.
+Ops: RUN_TAG relocation on the flash volume (old corpus/ckpts/logs
+archived aside, never deleted), mule rebuild script ships corpus AND
+sources so one volume remains; prep + rmix volumes become the user's
+to delete. G1 (episodic, d=128, 12k steps) running as this is written.
