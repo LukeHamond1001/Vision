@@ -480,6 +480,14 @@ def train(d=64, lanes=4, T=256, steps=40, seed=0, device="cpu",
             # append-only, no RNG, no graph; only novelty>0 reads it
             sleep.note_ce(ce, drive.step_t - T, drive.step_t)
             slept = sleep.maybe_sleep(model, opt, drive, step)
+            if slept is not None and "cuda" in str(device):
+                # the mini-flash OOM (2026-08-21, 16 GB card): sleep
+                # blocks at batch 1 with odd lengths fragment the
+                # caching allocator around the wake step's fixed
+                # 1 GiB key-mix block until a fresh segment cannot be
+                # reserved. Release the odd blocks after every night;
+                # the pod also runs with expandable segments.
+                torch.cuda.empty_cache()
             if dream is not None and slept is not None \
                     and hasattr(vocab, "decode"):
                 # A77 (gated): a leashed dream rides every Nth night

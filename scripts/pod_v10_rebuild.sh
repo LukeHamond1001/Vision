@@ -24,9 +24,11 @@ git checkout -B results-v10
 
 hb() {
   echo "$(date -u '+%H:%M:%S') $1" >> HEARTBEAT.log
-  [ -f mini_train$MT.log ] && tail -60 mini_train$MT.log > mini_tail$MT.log 2>/dev/null
+  for t in mini_train*.log; do
+    [ -f "$t" ] && tail -60 "$t" > "${t/mini_train/mini_tail}" 2>/dev/null
+  done
   for f in HEARTBEAT.log rebuild.log build_tail.log flash_manifest.json \
-           mini_hb$MT.jsonl mini_driver$MT.jsonl mini_tail$MT.log mini_smoke$MT.json; do
+           mini_hb*.jsonl mini_driver*.jsonl mini_tail*.log mini_smoke*.json; do
     [ -f "$f" ] && git add -f "$f" 2>/dev/null
   done
   git commit -qm "hb: $1" 2>/dev/null || true
@@ -76,8 +78,16 @@ fi
 # dialogue diet (0.7M cast tokens vs A69-R2's 12M); 4 lives x 50M
 # tokens at d=512/8L gives the in-ctx-vs-tokens curve the launch
 # decision needs. Publishes mini_hb.jsonl every 10 min.
-OUTM=/workspace/v10_mini_out$MT; mkdir -p "$OUTM"
-MINIPID=""
+# allocator: expandable segments — the 2026-08-21 mini-flash OOM was
+# fragmentation (15.3 GiB reserved, 267 MiB free on a 16 GB card)
+export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
+# (mini checkpoint dirs are per tag: /workspace/v10_mini_out<tag>, made in start_mini)
+# MINI_LIVES (2026-08-21, after the 4-lane OOM on the 16 GB card): the
+# mini shard is lanes == lives; 2 lives x 50M halves activation memory
+# at the same tokens per life. Built from the 4-life shard's tokenizer
+# so the eval shard (mini_eval_epi) stays valid for every variant.
+ML=${MINI_LIVES:-4}
+MINI=$DATA/mini_epi; [ "$ML" != "4" ] && MINI=$DATA/mini_epi_l$ML
 if [ "${MINIGATE:-1}" = "1" ]; then
   if [ ! -f "$DATA/mini_epi/manifest.json" ]; then
     # shellcheck disable=SC2086
@@ -88,6 +98,15 @@ if [ "${MINIGATE:-1}" = "1" ]; then
       --tok-sample 20000 --episodic > mini_build.log 2>&1
     hb "mini shard $( [ -f "$DATA/mini_epi/manifest.json" ] && echo ok || echo FAILED)"
   fi
+  if [ "$ML" != "4" ] && [ ! -f "$MINI/manifest.json" ] && [ -f "$DATA/mini_epi/tokenizer.json" ]; then
+    # shellcheck disable=SC2086
+    python -m iga.lm_data_life prepare --out "$MINI" \
+      --budget $((50000000 * ML)) --lives "$ML" --seed 20 \
+      $STG $UCARGS --st2-dir "$RAW" --magpie-dir "$RAW" \
+      --judge-thresholds "$DATA/judge_freeze.json" \
+      --tokenizer "$DATA/mini_epi/tokenizer.json" --episodic >> mini_build.log 2>&1
+    hb "mini shard l$ML $( [ -f "$MINI/manifest.json" ] && echo ok || echo FAILED)"
+  fi
   if [ -f "$DATA/mini_epi/manifest.json" ] && [ ! -f "$DATA/mini_eval_epi/manifest.json" ]; then
     python -m iga.lm_data_life prepare --out "$DATA/mini_eval_epi" \
       --budget 20000000 --lives 2 --seed 999 --world-seed 999 \
@@ -96,11 +115,7 @@ if [ "${MINIGATE:-1}" = "1" ]; then
       --tokenizer "$DATA/mini_epi/tokenizer.json" --episodic >> mini_build.log 2>&1
     hb "mini eval $( [ -f "$DATA/mini_eval_epi/manifest.json" ] && echo ok || echo FAILED)"
   fi
-  if [ -f "$DATA/mini_eval_epi/manifest.json" ]; then
-    # lam by the A60f pairing on THIS diet and shape (40-step smoke)
-    MINI_ATTN="${ATTN:-abs}" MINI_QK="${QK_NORM:-0}" MINI_MLP="${MLP:-gelu}" \
-    MINI_BLR="${BAND_LR_MULT:-1.0}" MINI_SMOKE_OUT="mini_smoke$MT.json" \
-    python - > mini_smoke$MT.log 2>&1 <<'PY'
+  cat > mini_smoke.py <<'PY'
 import json, os, sys, time, torch
 sys.path.insert(0, ".")
 from iga.lm_train import train
@@ -108,37 +123,60 @@ from iga.lm_sleep import Sleeper
 sl = Sleeper(arm="C", every=8, block_chunks=2, seed=1, homeostasis=1e-3)
 sl.press_pay = (2048, 256)
 t0 = time.time()
+L = int(os.environ["MINI_LANES"])
 model, drive, vocab, ce0, ce1 = train(
-    d=512, n_layers=8, lanes=4, T=2048, steps=40, seed=0, device="cuda",
+    d=512, n_layers=8, lanes=L, T=2048, steps=40, seed=0, device="cuda",
     arch="hybrid", store="matrix", keyed="logit", norm_mix=True,
     aux_trunk=0.2, use_xl=False, gate_init=-2.0, lam=0.02,
     clocks={3: 1, 4: 8, 5: 64, 6: 512}, precision="bf16",
     attn=os.environ["MINI_ATTN"], qk_norm=(os.environ["MINI_QK"] == "1"),
     mlp=os.environ["MINI_MLP"], band_lr_mult=float(os.environ["MINI_BLR"]),
-    data="/workspace/v10/mini_epi", sleep=sl, log_every=20)
+    data=os.environ["MINI_DATA"], sleep=sl, log_every=20)
 dt = time.time() - t0
 holds = len(drive.ledger) / 40
 lam = min(0.25, 0.25 / max(holds, 1))
-out = {"tok_s": round(40 * 4 * 2048 / dt), "holds": round(holds, 2),
+out = {"lanes": L, "tok_s": round(40 * L * 2048 / dt), "holds": round(holds, 2),
        "lam": round(lam, 5), "ce": [round(ce0, 3), round(ce1, 3)],
        "peak_gib": round(torch.cuda.max_memory_allocated() / 2**30, 1)}
 json.dump(out, open(os.environ["MINI_SMOKE_OUT"], "w"))
 print("MINISMOKE", json.dumps(out))
 PY
-    hb "mini smoke$MT $(grep MINISMOKE mini_smoke$MT.log | tail -1 | cut -c1-200)"
-    LAM=$(python -c "import json;print(json.load(open('mini_smoke$MT.json'))['lam'])" 2>/dev/null || echo 0.03)
+  MINIPIDS=""
+  # start_mini TAG ATTN QK MLP BLR — lam smoke (A60f pairing on THIS
+  # config), then the real driver + battery in the background
+  start_mini() {
+    local tag=$1 attn=$2 qk=$3 mlp=$4 blr=$5
+    local outm=/workspace/v10_mini_out$tag; mkdir -p "$outm"
+    MINI_ATTN="$attn" MINI_QK="$qk" MINI_MLP="$mlp" MINI_BLR="$blr" \
+    MINI_SMOKE_OUT="mini_smoke$tag.json" MINI_DATA="$MINI" MINI_LANES="$ML" \
+      python mini_smoke.py > mini_smoke$tag.log 2>&1
+    hb "mini smoke$tag $(grep MINISMOKE mini_smoke$tag.log | tail -1 | cut -c1-200)"
+    local lam
+    lam=$(python -c "import json;print(json.load(open('mini_smoke$tag.json'))['lam'])" 2>/dev/null || echo 0.03)
     python scripts/v10_driver.py \
-      --data "$DATA/mini_epi" --eval-data "$DATA/mini_eval_epi" \
-      --ckpt "$OUTM/mini.pt" --lam "$LAM" \
+      --data "$MINI" --eval-data "$DATA/mini_eval_epi" \
+      --ckpt "$outm/mini.pt" --lam "$lam" \
       --d 512 --n-layers 8 --T 2048 --lr 1e-4 --lr-warmup 1000 \
       --hb-every 3000 --hb-chunks 1000 --lesion-every 2 \
-      --precision bf16 --attn "${ATTN:-abs}" --qk-norm "${QK_NORM:-0}" \
-      --mlp "${MLP:-gelu}" --band-lr-mult "${BAND_LR_MULT:-1.0}" \
-      --device cuda --hb-out mini_hb$MT.jsonl --trace mini_driver$MT.jsonl \
-      --log-every 100 > mini_train$MT.log 2>&1 &
-    MINIPID=$!
-    hb "mini-flash$MT started (pid $MINIPID, lam $LAM, attn ${ATTN:-abs} qk ${QK_NORM:-0} mlp ${MLP:-gelu} blr ${BAND_LR_MULT:-1.0})"
-    ( while kill -0 $MINIPID 2>/dev/null; do sleep 600; hb "mini$MT inflight $(tail -1 mini_hb$MT.jsonl 2>/dev/null | head -c 240)"; done ) &
+      --precision bf16 --attn "$attn" --qk-norm "$qk" \
+      --mlp "$mlp" --band-lr-mult "$blr" \
+      --device cuda --hb-out mini_hb$tag.jsonl --trace mini_driver$tag.jsonl \
+      --log-every 100 > mini_train$tag.log 2>&1 &
+    local pid=$!
+    MINIPIDS="$MINIPIDS $pid"
+    hb "mini-flash$tag started (pid $pid, lam $lam, lanes $ML, attn $attn qk $qk mlp $mlp blr $blr)"
+    ( while kill -0 $pid 2>/dev/null; do sleep 600; hb "mini$tag inflight $(tail -1 mini_hb$tag.jsonl 2>/dev/null | head -c 240)"; done
+      hb "mini-flash$tag ENDED rc=? rows: $(grep -c . mini_hb$tag.jsonl 2>/dev/null) tail: $(grep -v 'sleep@' mini_train$tag.log | tail -1 | cut -c1-160)" ) &
+  }
+  if [ -f "$DATA/mini_eval_epi/manifest.json" ] && [ -f "$MINI/manifest.json" ]; then
+    start_mini "$MT" "${ATTN:-abs}" "${QK_NORM:-0}" "${MLP:-gelu}" "${BAND_LR_MULT:-1.0}"
+    # MINI2="<tag> <attn> <qk> <mlp> <blr>": a second mini on the same
+    # GPU at the same time (needs the memory: 2 lanes x 2 on 16 GB, or
+    # a 24-48 GB card) — the paired trunk comparison in one night
+    if [ -n "${MINI2:-}" ]; then
+      # shellcheck disable=SC2086
+      start_mini $MINI2
+    fi
   fi
 fi
 
@@ -211,11 +249,10 @@ if [ "${SHIP:-1}" = "1" ]; then
     hb "send finished rc=$RC"
   fi
 fi
-if [ -n "$MINIPID" ]; then
-  hb "waiting for the mini-flash (pid $MINIPID)"
-  wait $MINIPID; MRC=$?
-  tail -60 mini_train$MT.log > mini_tail$MT.log
-  hb "mini-flash$MT exit rc=$MRC; rows: $(grep -c . mini_hb$MT.jsonl 2>/dev/null)"
+if [ -n "${MINIPIDS:-}" ]; then
+  hb "waiting for the mini-flash(es):$MINIPIDS"
+  for pid in $MINIPIDS; do wait $pid; hb "mini pid $pid exit rc=$?"; done
+  hb "mini rows: $(for f in mini_hb*.jsonl; do printf '%s=%s ' "$f" "$(grep -c . "$f")"; done)"
 fi
 hb "rebuild pod done; self-removing in 60s"
 sleep 60
