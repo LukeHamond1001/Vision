@@ -54,12 +54,12 @@ def _rotate(x, cos, sin):
     """Apply rotary to the first 2*cos.shape[-1] dims of x [B,H,L,hd];
     the remaining dims pass through (partial rotary, GPT-NeoX style)."""
     r2 = cos.shape[-1] * 2
-    xr, xp = x[..., :r2], x[..., r2:]
+    xr, xp = x[..., :r2].float(), x[..., r2:]
     x1, x2 = xr[..., 0::2], xr[..., 1::2]
     c, s_ = cos[None, None], sin[None, None]
     o1 = x1 * c - x2 * s_
     o2 = x1 * s_ + x2 * c
-    out = torch.stack([o1, o2], dim=-1).flatten(-2)
+    out = torch.stack([o1, o2], dim=-1).flatten(-2).to(x.dtype)
     return torch.cat([out, xp], dim=-1)
 
 
@@ -96,12 +96,14 @@ class RotaryBlock(nn.Module):
             self.kn = nn.Parameter(torch.ones(self.hd))
         self._cache = None
 
-    def _tables(self, L, device, dtype):
+    def _tables(self, L, device, dtype=torch.float32):
+        # rotary angles are always fp32 (bf16 cos/sin is too coarse
+        # past a few hundred positions); the rotation casts back
         c = self._cache
-        if c is None or c[0] < L or c[1] != device or c[2] != dtype:
+        if c is None or c[0] < L or c[1] != device:
             cos, sin = _rope_cache(max(L, 8), self.rot, self.base,
-                                   device, dtype)
-            self._cache = (max(L, 8), device, dtype, cos, sin)
+                                   device, torch.float32)
+            self._cache = (max(L, 8), device, torch.float32, cos, sin)
             c = self._cache
         return c[3][:L], c[4][:L]
 
@@ -125,7 +127,7 @@ class RotaryBlock(nn.Module):
         M = self.n_mem
         Tt = L - M
         if Tt > 0 and self.rot > 0:
-            cos, sin = self._tables(Tt, x.device, q.dtype)
+            cos, sin = self._tables(Tt, x.device)
             q = torch.cat([q[:, :, :M], _rotate(q[:, :, M:], cos, sin)],
                           dim=2)
             k = torch.cat([k[:, :, :M], _rotate(k[:, :, M:], cos, sin)],

@@ -160,6 +160,9 @@ for L in [int(x) for x in "${SMOKE_LANES:-8 12}".split()]:
             keyed="logit", norm_mix=True, aux_trunk=0.2,
             use_xl=False, gate_init=-2.0, lam=0.02,
             clocks={3: 1, 4: 8, 5: 64, 6: 512},
+            precision="${PRECISION:-fp32}",
+            attn="${ATTN:-abs}", qk_norm=("${QK_NORM:-0}" == "1"),
+            band_lr_mult=float("${BAND_LR_MULT:-1.0}"),
             data="$DATA/smoke_l" + str(L), sleep=sl, log_every=20)
         dt = time.time() - t0
         toks = 60 * L * 2048
@@ -283,6 +286,8 @@ for ATTEMPT in 1 2 3 4 5 6; do
     --ckpt "$CKPT" --smoke "$OUT/smoke.json" \
     --hb-every "${HB_EVERY:-6000}" --hb-chunks "${HB_CHUNKS:-2500}" \
     --lesion-every "${LESION_EVERY:-2}" \
+    --precision "${PRECISION:-fp32}" --attn "${ATTN:-abs}" \
+    --qk-norm "${QK_NORM:-0}" --band-lr-mult "${BAND_LR_MULT:-1.0}" \
     --hb-out hb_v10.jsonl --trace v10_driver.jsonl \
     >> v10_train.log 2>&1
   RC=$?

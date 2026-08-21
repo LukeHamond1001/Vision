@@ -235,6 +235,13 @@ class HybridLM(nn.Module):
         # bit-exactly (same modules, names, RNG draw order).
         self.attn_kind = attn
         self.qk_norm = bool(qk_norm)
+        # bf16 MIXED PRECISION (v10.1, certified separately): when set by
+        # the trainer, ONLY the trunk blocks (attention + MLP matmuls)
+        # run under bf16 autocast. The residual stream, embeddings, band
+        # reads/ticks/cells, store reads/writes, head and losses stay
+        # fp32 — the band-state swamping law at 1M-token horizons. Not a
+        # parameter: checkpoints are precision-agnostic.
+        self.autocast_bf16 = False
         self.d = d
         self.vocab_size = vocab_size
         self.max_T = max_T
@@ -507,7 +514,11 @@ class HybridLM(nn.Module):
             if self.use_xl:
                 new_xl.append(x[:, M:].detach())
             kv = (xl[i] + self.xl_tag) if xl is not None else None
-            x = b(x, mask if xl is not None else sq, kv=kv)
+            with torch.autocast(device_type=dev.type, dtype=torch.bfloat16,
+                                enabled=self.autocast_bf16):
+                x = b(x, mask if xl is not None else sq, kv=kv)
+            if self.autocast_bf16:
+                x = x.float()            # residual stream stays fp32
             if self.store == "matrix" and i == self.mid - 1 \
                     and read_ok \
                     and not getattr(self, "store_read_off", False) \

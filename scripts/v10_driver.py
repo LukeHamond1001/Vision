@@ -126,6 +126,12 @@ def main():
     ap.add_argument("--hb-every", type=int, default=HB_EVERY)
     ap.add_argument("--lesion-every", type=int, default=LESION_EVERY)
     ap.add_argument("--hb-chunks", type=int, default=2500)   # 2026-08-21: 400 = 819k tok/lane = eval-infancy only; bins b3-b6 structurally empty
+    # v10.1 (2026-08-21): precision + gated architecture candidates ride
+    # the CLI so the pod env decides; defaults = the certified v10 shape
+    ap.add_argument("--precision", default="fp32", choices=["fp32", "bf16"])
+    ap.add_argument("--attn", default="abs", choices=["abs", "rope"])
+    ap.add_argument("--qk-norm", default="0")
+    ap.add_argument("--band-lr-mult", type=float, default=1.0)
     ap.add_argument("--hb-out", default="results/hb_v10.jsonl")
     ap.add_argument("--trace", default="results/v10_driver.jsonl")
     ap.add_argument("--log-every", type=int, default=100)
@@ -157,7 +163,10 @@ def main():
             "total_steps": total,
             "total_tokens": total * a.T * lanes, "lam": lam,
             "bounds": bounds, "ladder": LADDER,
-            "segments": len(ends)}
+            "segments": len(ends), "precision": a.precision,
+            "attn": a.attn, "qk_norm": str(a.qk_norm) == "1",
+            "band_lr_mult": a.band_lr_mult, "hb_every": a.hb_every,
+            "hb_chunks": a.hb_chunks, "lesion_every": a.lesion_every}
     print("PLAN " + json.dumps(plan), flush=True)
     if a.dry:
         return
@@ -196,7 +205,10 @@ def main():
             lr=a.lr, lr_warmup=a.lr_warmup, lr_decay="cosine",
             lr_total_steps=total, lam=lam,
             ledger_cap=a.ledger_cap, sleep=sl, prophet=prophet,
-            log_every=a.log_every, carry_state=carry)
+            log_every=a.log_every, carry_state=carry,
+            precision=a.precision, attn=a.attn,
+            qk_norm=(str(a.qk_norm) == "1"),
+            band_lr_mult=a.band_lr_mult)
         carry = model._st
         aucs = {}
         for k in sorted(prophet.clocks):

@@ -270,7 +270,7 @@ def train(d=64, lanes=4, T=256, steps=40, seed=0, device="cpu",
           hold_cap=None, sleep=None, buttons=None, prophet=None,
           life=None, clocks=None, band_widths=None,
           tie_embed=False, dream=None, n_layers=6, ledger_cap=None,
-          attn="abs", qk_norm=False, band_lr_mult=1.0,
+          attn="abs", qk_norm=False, band_lr_mult=1.0, precision="fp32",
           lr_warmup=0, carry_state=None):
     """resume (A26): path to a checkpoint — model + optimizer + drive
     EMAs/records/minted/vetoes continue; step numbering continues.
@@ -337,7 +337,11 @@ def train(d=64, lanes=4, T=256, steps=40, seed=0, device="cpu",
                          band_widths=band_widths,
                          tie_embed=tie_embed, attn=attn,
                          qk_norm=qk_norm).to(device)
+        # bf16 autocast on the trunk blocks only (see HybridLM); fp32
+        # master weights, fp32 band states/store/losses; no GradScaler
+        model.autocast_bf16 = (precision == "bf16")
         model_cfg = {"d": d, "n_layers": n_layers, "n_heads": 8, "T": T,
+                     "precision": precision,
                      "clocks": clocks, "band_widths": band_widths,
                      "tie_embed": tie_embed, "attn": attn,
                      "qk_norm": qk_norm, "store": store, "keyed": keyed,
