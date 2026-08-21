@@ -1,1 +1,2 @@
 {"seg": 1, "from": 18000, "to": 24000, "stage": "infancy", "every": 0, "ce_first": 1.4094, "ce_last": 0.8135, "pairs": 0, "sleep_steps": 0, "pair_law_ok": true, "hot_pairs": 0, "minted": 3, "vetoes": 19128, "ledger": 102720, "prophet_auc": {}, "secs": 8961}
+{"seg": 2, "from": 24000, "to": 24500, "stage": "infancy", "every": 0, "ce_first": 1.2315, "ce_last": 1.0447, "pairs": 0, "sleep_steps": 0, "pair_law_ok": true, "hot_pairs": 0, "minted": 3, "vetoes": 19128, "ledger": 8536, "prophet_auc": {}, "secs": 903}

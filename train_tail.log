@@ -1,55 +1,19 @@
-lane0 frontier recall:b1      target 1.05 phi0 0.05 band 3 due 49154048
-lane0 frontier recall:b0      target 1.05 phi0 0.05 band 3 due 49154048
-lane1 maintain fid:5          target 0.20 phi0 0.82 band 5 due 49186816
-lane1 frontier recall:b2      target 1.05 phi0 0.05 band 4 due 49154048
-lane1 frontier recall:b1      target 1.05 phi0 0.05 band 3 due 49154048
-lane1 frontier recall:b0      target 1.05 phi0 0.05 band 3 due 49154048
-lane2 maintain fid:5          target 0.20 phi0 0.82 band 5 due 49186816
-lane2 frontier recall:b2      target 1.05 phi0 0.05 band 4 due 49154048
-lane2 frontier recall:b1      target 1.05 phi0 0.05 band 3 due 49154048
-lane2 frontier recall:b0      target 1.05 phi0 0.05 band 3 due 49154048
-lane3 maintain fid:5          target 0.20 phi0 0.82 band 5 due 49186816
-lane3 frontier recall:b2      target 1.05 phi0 0.05 band 4 due 49154048
-lane3 frontier recall:b1      target 1.05 phi0 0.05 band 3 due 49154048
-lane3 frontier recall:b0      target 1.05 phi0 0.05 band 3 due 49154048
-lane4 maintain fid:5          target 0.20 phi0 0.82 band 5 due 49186816
-lane4 frontier recall:b2      target 1.05 phi0 0.05 band 4 due 49154048
-lane4 frontier recall:b1      target 1.05 phi0 0.05 band 3 due 49154048
-lane4 frontier recall:b0      target 1.05 phi0 0.05 band 3 due 49154048
-lane5 maintain fid:5          target 0.20 phi0 0.82 band 5 due 49186816
-lane5 frontier recall:b2      target 1.05 phi0 0.05 band 4 due 49154048
-lane5 frontier recall:b1      target 1.05 phi0 0.05 band 3 due 49154048
-lane5 frontier recall:b0      target 1.05 phi0 0.05 band 3 due 49154048
-lane6 maintain fid:5          target 0.20 phi0 0.82 band 5 due 49186816
-lane6 frontier recall:b2      target 1.05 phi0 0.05 band 4 due 49154048
-lane6 frontier recall:b1      target 1.05 phi0 0.05 band 3 due 49154048
-lane6 frontier recall:b0      target 1.05 phi0 0.05 band 3 due 49154048
-lane7 maintain fid:5          target 0.20 phi0 0.82 band 5 due 49186816
-lane7 frontier recall:b2      target 1.05 phi0 0.05 band 4 due 49154048
-lane7 frontier recall:b1      target 1.05 phi0 0.05 band 3 due 49154048
-lane7 frontier recall:b0      target 1.05 phi0 0.05 band 3 due 49154048
-record   fid:3          0.998 (ema 0.997)
-record   fid:4          0.960 (ema 0.960)
-record   fid:5          0.036 (ema 0.036)
-record   fid:6          0.044 (ema 0.016)
-record   recall:b0      1.000 (ema 0.993)
-record   recall:b1      1.000 (ema 0.999)
-record   recall:b2      1.000 (ema 0.998)
-SEG {"seg": 1, "from": 18000, "to": 24000, "stage": "infancy", "every": 0, "ce_first": 1.4094, "ce_last": 0.8135, "pairs": 0, "sleep_steps": 0, "pair_law_ok": true, "hot_pairs": 0, "minted": 3, "vetoes": 19128, "ledger": 102720, "prophet_auc": {}, "secs": 8961}
+record   recall:b2      1.000 (ema 0.999)
+SEG {"seg": 2, "from": 24000, "to": 24500, "stage": "infancy", "every": 0, "ce_first": 1.2315, "ce_last": 1.0447, "pairs": 0, "sleep_steps": 0, "pair_law_ok": true, "hot_pairs": 0, "minted": 3, "vetoes": 19128, "ledger": 8536, "prophet_auc": {}, "secs": 903}
 {
- "step": 24000,
- "tokens": 393216000,
+ "step": 24500,
+ "tokens": 401408000,
  "rows": [
   {
    "probe": "ce_recall",
-   "ce": 1.5536,
+   "ce": 1.546,
    "recall": {
     "in-ctx": {
-     "acc": 0.17,
+     "acc": 0.171,
      "n": 12839
     },
     "short": {
-     "acc": 0.174,
+     "acc": 0.177,
      "n": 52370
     },
     "b3": {
@@ -72,16 +36,16 @@ SEG {"seg": 1, "from": 18000, "to": 24000, "stage": "infancy", "every": 0, "ce_f
   },
   {
    "probe": "collapse",
-   "distinct3": 0.1653
+   "distinct3": 0.251
   },
   {
    "probe": "cast",
    "n_facts": 96,
-   "incumbent_mass": 0.9993,
+   "incumbent_mass": 0.9999,
    "class_mean_p_true": {
-    "none": 0.16,
-    "pos1": 0.3661,
-    "pos2": 0.0222
+    "none": 0.2282,
+    "pos1": 0.4653,
+    "pos2": 0.1442
    }
   },
   {
@@ -89,12 +53,28 @@ SEG {"seg": 1, "from": 18000, "to": 24000, "stage": "infancy", "every": 0, "ce_f
    "n": 121,
    "clipped": 0,
    "mismatch": 0.0
+  },
+  {
+   "probe": "lesion_b3",
+   "ce_delta": 0.1804
+  },
+  {
+   "probe": "lesion_b4",
+   "ce_delta": 0.1804
+  },
+  {
+   "probe": "lesion_b5",
+   "ce_delta": 0.1804
+  },
+  {
+   "probe": "lesion_b6",
+   "ce_delta": 0.1804
   }
  ],
- "verdict": "ok",
- "why": []
+ "verdict": "KILL",
+ "why": [
+  "incumbent mass"
+ ]
 }
-resumed /workspace/v10_out/v10.pt at step 24000 (ema keys: ['fid:3', 'fid:4', 'fid:5', 'fid:6', 'recall:b0', 'recall:b1', 'recall:b2'])
-step 24100  ce 0.841  loss 1.052  holds 1688  16,112 tok/s  [fid:3=+0.997 fid:4=+0.961 fid:5=+0.036 fid:6=+0.016 b0=+1.000 b1=+0.997 b2=+0.998]
-step 24200  ce 1.211  loss 1.503  holds 3400  12,317 tok/s  [fid:3=+0.997 fid:4=+0.961 fid:5=+0.036 fid:6=+0.015 b0=+0.999 b1=+0.999 b2=+0.998]
-step 24300  ce 0.949  loss 1.181  holds 5112  12,245 tok/s  [fid:3=+0.998 fid:4=+0.962 fid:5=+0.037 fid:6=+0.015 b0=+1.000 b1=+0.989 b2=+0.995]
+KILL
+KILL
