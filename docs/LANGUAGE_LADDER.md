@@ -4378,3 +4378,30 @@ filter emptied the span list and maybe_sleep returned before any
 block — sleep was silently OFF for the segment, not misdirected. Net
 cost of the seam bug: one childhood segment without replay or pairs
 (and without A76 downscale). Nothing wrong was trained.
+
+## 2026-08-21 — 42000 ROW (lesion beat) AND THE RELAUNCH
+
+Same 5.1M walk as 36000, so the first comparable pair: eval CE 2.429
+-> 2.388 (falling); in-ctx .211, short .217, b3 .224 (n 5743), b4 .216
+(n 4780) — every bin up, b3/b4 now ~3-4 SE above chance (.20) but the
+binder stays unarmed (milestone .40); greedy distinct3 0.129 -> 0.228
+(the contraction reversed — a noisy 16-prompt greedy measure, as the
+WARN judgment assumed); cast p_true none .29 / pos1 .37 / pos2 .29
+(pos1 > none: the economy fingerprint is back; the 36000 .43s were
+not a plateau), confident_wrong_frac 10.4% (10/96, unchanged); tail
+0/121. LESIONS, fair base, childhood step 42000: b3 +0.0001, b4
++0.0002, b5 -0.0295, b6 +0.0012 CE. Reading: the trunk does not yet
+LEAN on bands 3/4 (gates track, fid .99/.97, but the CE does not move
+without them — the coupling milestone is adolescence, as the 07:45
+analysis predicted); band 5 is a slight HINDRANCE right now (CE drops
+0.03 without it — consistent with fid:5 ~ -0.017 since the cold
+restarts; the first uninterrupted accumulation began at 33500), band
+6 a hair positive. This is the v10.1 per-band-capacity input the spec
+asked for, and the in-flight instruction is: watch fid:5 and the b5
+lesion across the next warm-restart-free segments; if b5 stays
+negative through adolescence the A71 re-litigation has its number.
+RELAUNCH 15:36 UTC: pod ywwb6ejp9knzfq terminated after the row
+(404 confirmed, volume unheld), pod ngq30ri1hc7jc4 launched at
+6139f12 (harvest fix + seam law + boot-history fix + sampled/entropy
+collapse probe + windowed tok/s), resuming warm from the 42000
+checkpoint. Money so far ~$62.
