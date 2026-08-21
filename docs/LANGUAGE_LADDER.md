@@ -4636,3 +4636,28 @@ cortex did not READ them (lesion b3 +0.0001 CE at 42k). Forcing (a
 smaller window) and inviting (modern trunk, band lr, structure on the
 belt) are different bets; the 78M lesion rows tonight measure both
 trunks and the lr boost side by side.
+
+## 2026-08-21 — TONIGHT'S MINI TRIO: DECISION RULES, WRITTEN BEFORE THE ROWS
+
+Mule-2 (A100 if in stock, else RTX 4090) runs three 2-lane minis on
+the same shards, same driver, same battery (sha 0666fd2): BASE (abs,
+GELU, band lr 1x), MODERN (decoupled RoPE + QK-norm + SwiGLU), BANDLR
+(abs, band lr 3x). Rows every 3000 steps, per-band CE lesions on the
+even beats. Rules, fixed now:
+1. THE GATE (any arm): in-ctx on the unseen eval lives clearly rising
+   through childhood (steps 1500-8000) or >= .40 by 24000. If NO arm
+   arms the binder, the H100 does not launch; the diet is re-examined.
+2. TRUNK: MODERN ships iff, at matched steps from 12000 on, its eval
+   CE <= BASE's, its in-ctx/short/b3/b4 are not below BASE's beyond
+   row noise, and no fid channel or per-band lesion delta is worse
+   than BASE's. Otherwise abs.
+3. BAND LR 3x ships iff its per-band lesion deltas (b4 and/or b5) or
+   fid:4/fid:5 exceed BASE's on the even beats with eval CE within 1%
+   of BASE. It combines with whichever trunk won (the two are
+   independent knobs; the combination is not separately certified —
+   ledgered as the one uncertified pairing, accepted because each
+   alone is certified and the knob is an lr group).
+4. LIVES: 8 unless the user chooses REBUILD_LIVES=4 (band 6 ~1200
+   writes per life, ~$230, corpus rebuilt on mule-2's CPU tonight).
+The A100 cost is ~$6 for the night; the minis' x-axis (tokens per
+life, 50M) is unchanged by the 2-lane choice; per-row n halves.
