@@ -181,7 +181,15 @@ sys.path.insert(0, ".")
 from iga.lm_train import train
 from iga.lm_sleep import Sleeper
 rows = []
+PREC = "${PRECISION:-fp32}"
+# bf16 certification rides the smoke (2026-08-21): when the run asks
+# for bf16, the fp32 reference runs FIRST at the same shape so the
+# smoke.json carries both — tok/s, peak memory, the 60-step CE path
+# and the band channels side by side; the chosen precision prices
+# the run and sets lam (A60f pairing on ITS holds/step).
+PRECS = ["fp32", "bf16"] if PREC == "bf16" else [PREC]
 for L in [int(x) for x in "${SMOKE_LANES:-8 12}".split()]:
+  for prec in PRECS:
     sl = Sleeper(arm="C", every=8, block_chunks=2, seed=1,
                  homeostasis=1e-3)
     sl.press_pay = (2048, 256)
@@ -194,7 +202,7 @@ for L in [int(x) for x in "${SMOKE_LANES:-8 12}".split()]:
             keyed="logit", norm_mix=True, aux_trunk=0.2,
             use_xl=False, gate_init=-2.0, lam=0.02,
             clocks={3: 1, 4: 8, 5: 64, 6: 512},
-            precision="${PRECISION:-fp32}",
+            precision=prec,
             attn="${ATTN:-abs}", qk_norm=("${QK_NORM:-0}" == "1"),
             band_lr_mult=float("${BAND_LR_MULT:-1.0}"),
             data="$DATA/smoke_l" + str(L), sleep=sl, log_every=20)
@@ -202,18 +210,22 @@ for L in [int(x) for x in "${SMOKE_LANES:-8 12}".split()]:
         toks = 60 * L * 2048
         holds = len(drive.ledger) / 60
         peak = torch.cuda.max_memory_allocated() / 2**30
-        rows.append({"lanes": L, "tok_s": round(toks / dt),
+        rows.append({"lanes": L, "precision": prec,
+                     "tok_s": round(toks / dt),
                      "holds": round(holds, 2),
                      "peak_gib": round(peak, 1),
                      "ce": [round(ce0, 3), round(ce1, 3)],
+                     "ema": {k: round(float(v), 4)
+                             for k, v in drive.ema.items()},
                      "sleep_steps": sl.steps_taken})
         del model, drive
         torch.cuda.empty_cache()
     except torch.cuda.OutOfMemoryError:
-        rows.append({"lanes": L, "oom": True})
+        rows.append({"lanes": L, "precision": prec, "oom": True})
         torch.cuda.empty_cache()
 print(json.dumps(rows, indent=1))
-ok = [r for r in rows if not r.get("oom") and r["peak_gib"] < 70]
+ok = [r for r in rows if not r.get("oom") and r["peak_gib"] < 70
+      and r["precision"] == PREC]
 assert ok, "no lane count fits — smoke FAILED"
 best = ok[0]
 for r in ok[1:]:
@@ -222,6 +234,9 @@ for r in ok[1:]:
 assert best["tok_s"] > 8000, "throughput floor 8k tok/s"
 lam = min(0.25, 0.25 / max(best["holds"], 1))   # A60f pairing
 out = {"gpu": "$GPUTAG", "lanes": best["lanes"],
+       "precision": PREC, "attn": "${ATTN:-abs}",
+       "qk_norm": "${QK_NORM:-0}" == "1",
+       "band_lr_mult": float("${BAND_LR_MULT:-1.0}"),
        "lam": round(lam, 5),
        "tok_s": best["tok_s"], "holds": best["holds"],
        "peak_gib": best["peak_gib"], "rows": rows}
