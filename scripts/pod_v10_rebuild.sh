@@ -20,7 +20,9 @@ git checkout -B results-v10
 
 hb() {
   echo "$(date -u '+%H:%M:%S') $1" >> HEARTBEAT.log
-  for f in HEARTBEAT.log rebuild.log build_tail.log flash_manifest.json; do
+  [ -f mini_train.log ] && tail -60 mini_train.log > mini_tail.log 2>/dev/null
+  for f in HEARTBEAT.log rebuild.log build_tail.log flash_manifest.json \
+           mini_hb.jsonl mini_driver.jsonl mini_tail.log mini_smoke.json; do
     [ -f "$f" ] && git add -f "$f" 2>/dev/null
   done
   git commit -qm "hb: $1" 2>/dev/null || true
@@ -63,6 +65,74 @@ if [ ! -f "$RAW/.fetch_rebuild_done" ]; then
   hb "fetch $( [ -f "$RAW/.fetch_rebuild_done" ] && echo ok || echo FAILED): $(ls "$RAW"/*.parquet 2>/dev/null | wc -l) parquets"
 fi
 [ -f "$RAW/.fetch_rebuild_done" ] || { hb "ABORT fetch failed"; exit 1; }
+
+# ---- 1b. MINI-FLASH GATE (78M, the real driver + battery, bf16) on
+# this pod's GPU while the CPU builds the full corpus. The faithful
+# gate: G1 at d=128/12k steps is ~17x under-exposed for a real-
+# dialogue diet (0.7M cast tokens vs A69-R2's 12M); 4 lives x 50M
+# tokens at d=512/8L gives the in-ctx-vs-tokens curve the launch
+# decision needs. Publishes mini_hb.jsonl every 10 min.
+OUTM=/workspace/v10_mini_out; mkdir -p "$OUTM"
+MINIPID=""
+if [ "${MINIGATE:-1}" = "1" ]; then
+  if [ ! -f "$DATA/mini_epi/manifest.json" ]; then
+    # shellcheck disable=SC2086
+    python -m iga.lm_data_life prepare --out "$DATA/mini_epi" \
+      --budget 200000000 --lives 4 --seed 20 \
+      $STG $UCARGS --st2-dir "$RAW" --magpie-dir "$RAW" \
+      --judge-thresholds "$DATA/judge_freeze.json" \
+      --tok-sample 20000 --episodic > mini_build.log 2>&1
+    hb "mini shard $( [ -f "$DATA/mini_epi/manifest.json" ] && echo ok || echo FAILED)"
+  fi
+  if [ -f "$DATA/mini_epi/manifest.json" ] && [ ! -f "$DATA/mini_eval_epi/manifest.json" ]; then
+    python -m iga.lm_data_life prepare --out "$DATA/mini_eval_epi" \
+      --budget 20000000 --lives 2 --seed 999 --world-seed 999 \
+      --stages flash --ultrachat "$UC_EVAL" \
+      --judge-thresholds "$DATA/judge_freeze.json" \
+      --tokenizer "$DATA/mini_epi/tokenizer.json" --episodic >> mini_build.log 2>&1
+    hb "mini eval $( [ -f "$DATA/mini_eval_epi/manifest.json" ] && echo ok || echo FAILED)"
+  fi
+  if [ -f "$DATA/mini_eval_epi/manifest.json" ]; then
+    # lam by the A60f pairing on THIS diet and shape (40-step smoke)
+    python - > mini_smoke.log 2>&1 <<'PY'
+import json, sys, time, torch
+sys.path.insert(0, ".")
+from iga.lm_train import train
+from iga.lm_sleep import Sleeper
+sl = Sleeper(arm="C", every=8, block_chunks=2, seed=1, homeostasis=1e-3)
+sl.press_pay = (2048, 256)
+t0 = time.time()
+model, drive, vocab, ce0, ce1 = train(
+    d=512, n_layers=8, lanes=4, T=2048, steps=40, seed=0, device="cuda",
+    arch="hybrid", store="matrix", keyed="logit", norm_mix=True,
+    aux_trunk=0.2, use_xl=False, gate_init=-2.0, lam=0.02,
+    clocks={3: 1, 4: 8, 5: 64, 6: 512}, precision="bf16",
+    data="/workspace/v10/mini_epi", sleep=sl, log_every=20)
+dt = time.time() - t0
+holds = len(drive.ledger) / 40
+lam = min(0.25, 0.25 / max(holds, 1))
+out = {"tok_s": round(40 * 4 * 2048 / dt), "holds": round(holds, 2),
+       "lam": round(lam, 5), "ce": [round(ce0, 3), round(ce1, 3)],
+       "peak_gib": round(torch.cuda.max_memory_allocated() / 2**30, 1)}
+json.dump(out, open("mini_smoke.json", "w"))
+print("MINISMOKE", json.dumps(out))
+PY
+    hb "mini smoke $(grep MINISMOKE mini_smoke.log | tail -1 | cut -c1-200)"
+    LAM=$(python -c "import json;print(json.load(open('mini_smoke.json'))['lam'])" 2>/dev/null || echo 0.03)
+    python scripts/v10_driver.py \
+      --data "$DATA/mini_epi" --eval-data "$DATA/mini_eval_epi" \
+      --ckpt "$OUTM/mini.pt" --lam "$LAM" \
+      --d 512 --n-layers 8 --T 2048 --lr 1e-4 --lr-warmup 1000 \
+      --hb-every 3000 --hb-chunks 1000 --lesion-every 2 \
+      --precision bf16 --attn "${ATTN:-abs}" --qk-norm "${QK_NORM:-0}" \
+      --mlp "${MLP:-gelu}" --band-lr-mult "${BAND_LR_MULT:-1.0}" \
+      --device cuda --hb-out mini_hb.jsonl --trace mini_driver.jsonl \
+      --log-every 100 > mini_train.log 2>&1 &
+    MINIPID=$!
+    hb "mini-flash started (pid $MINIPID, lam $LAM)"
+    ( while kill -0 $MINIPID 2>/dev/null; do sleep 600; hb "mini inflight $(tail -1 mini_hb.jsonl 2>/dev/null | head -c 240)"; done ) &
+  fi
+fi
 
 # ---- 2. the episodic corpus (fresh tokenizer sample from the spine) ----
 if [ ! -f "$DATA/flash_epi/manifest.json" ]; then
@@ -132,6 +202,12 @@ if [ "${SHIP:-1}" = "1" ]; then
     wait $SENDPID; RC=$?
     hb "send finished rc=$RC"
   fi
+fi
+if [ -n "$MINIPID" ]; then
+  hb "waiting for the mini-flash (pid $MINIPID)"
+  wait $MINIPID; MRC=$?
+  tail -60 mini_train.log > mini_tail.log
+  hb "mini-flash exit rc=$MRC; rows: $(grep -c . mini_hb.jsonl 2>/dev/null)"
 fi
 hb "rebuild pod done; self-removing in 60s"
 sleep 60
