@@ -1,0 +1,100 @@
+step 15000  ce 1.533  loss 1.899  holds 42792  11,377 tok/s  [fid:3=+0.980 fid:4=+0.868 fid:5=+0.021 fid:6=+0.026 b0=+0.979 b1=+0.998 b2=+0.990]
+step 15100  ce 1.281  loss 1.598  holds 44496  11,360 tok/s  [fid:3=+0.983 fid:4=+0.872 fid:5=+0.021 fid:6=+0.025 b0=+0.999 b1=+0.992 b2=+0.998]
+step 15200  ce 1.430  loss 1.470  holds 46216  11,324 tok/s  [fid:3=+0.983 fid:4=+0.875 fid:5=+0.021 fid:6=+0.025 b0=+0.985 b1=+0.999 b2=+0.986]
+step 15300  ce 1.307  loss 1.351  holds 47920  11,358 tok/s  [fid:3=+0.984 fid:4=+0.877 fid:5=+0.022 fid:6=+0.025 b0=+0.999 b1=+0.993 b2=+0.999]
+step 15400  ce 1.149  loss 1.432  holds 49640  11,393 tok/s  [fid:3=+0.987 fid:4=+0.880 fid:5=+0.022 fid:6=+0.025 b0=+0.998 b1=+0.999 b2=+0.999]
+step 15500  ce 1.056  loss 1.098  holds 51344  11,361 tok/s  [fid:3=+0.989 fid:4=+0.883 fid:5=+0.022 fid:6=+0.025 b0=+0.996 b1=+1.000 b2=+0.999]
+step 15600  ce 1.201  loss 1.239  holds 53064  11,346 tok/s  [fid:3=+0.991 fid:4=+0.887 fid:5=+0.023 fid:6=+0.024 b0=+0.999 b1=+0.994 b2=+0.999]
+step 15700  ce 1.424  loss 1.801  holds 54768  11,314 tok/s  [fid:3=+0.989 fid:4=+0.890 fid:5=+0.023 fid:6=+0.024 b0=+0.999 b1=+0.995 b2=+0.999]
+step 15800  ce 1.322  loss 1.640  holds 56488  11,344 tok/s  [fid:3=+0.991 fid:4=+0.892 fid:5=+0.024 fid:6=+0.024 b0=+0.999 b1=+0.999 b2=+0.998]
+step 15900  ce 1.209  loss 1.508  holds 58200  11,320 tok/s  [fid:3=+0.992 fid:4=+0.894 fid:5=+0.024 fid:6=+0.024 b0=+0.999 b1=+1.000 b2=+0.999]
+step 16000  ce 1.331  loss 1.653  holds 59912  11,347 tok/s  [fid:3=+0.993 fid:4=+0.896 fid:5=+0.024 fid:6=+0.024 b0=+1.000 b1=+1.000 b2=+0.996]
+    holdout(cum): {'same': [0.065, 0.06, 1805], 'straddle': [0.056, 0.06, 644]}
+    same(recent 955 probes): 0.084
+step 16100  ce 1.447  loss 1.491  holds 61624  11,271 tok/s  [fid:3=+0.993 fid:4=+0.898 fid:5=+0.025 fid:6=+0.023 b0=+0.997 b1=+0.993 b2=+0.982]
+step 16200  ce 1.086  loss 1.124  holds 63336  11,300 tok/s  [fid:3=+0.988 fid:4=+0.900 fid:5=+0.025 fid:6=+0.023 b0=+0.991 b1=+0.997 b2=+0.999]
+step 16300  ce 1.196  loss 1.238  holds 65048  11,278 tok/s  [fid:3=+0.990 fid:4=+0.902 fid:5=+0.025 fid:6=+0.023 b0=+0.993 b1=+1.000 b2=+0.995]
+step 16400  ce 1.046  loss 1.305  holds 66760  11,302 tok/s  [fid:3=+0.988 fid:4=+0.904 fid:5=+0.025 fid:6=+0.023 b0=+0.999 b1=+0.999 b2=+0.999]
+step 16500  ce 1.191  loss 1.486  holds 68472  11,272 tok/s  [fid:3=+0.989 fid:4=+0.906 fid:5=+0.025 fid:6=+0.023 b0=+0.982 b1=+1.000 b2=+0.997]
+step 16600  ce 1.155  loss 1.193  holds 70192  11,258 tok/s  [fid:3=+0.990 fid:4=+0.909 fid:5=+0.026 fid:6=+0.022 b0=+0.984 b1=+0.999 b2=+0.999]
+step 16700  ce 1.216  loss 1.258  holds 71896  11,283 tok/s  [fid:3=+0.991 fid:4=+0.911 fid:5=+0.026 fid:6=+0.022 b0=+0.999 b1=+0.993 b2=+1.000]
+step 16800  ce 1.048  loss 1.084  holds 73616  11,270 tok/s  [fid:3=+0.992 fid:4=+0.913 fid:5=+0.026 fid:6=+0.022 b0=+1.000 b1=+0.999 b2=+0.995]
+step 16900  ce 1.133  loss 1.174  holds 75320  11,299 tok/s  [fid:3=+0.992 fid:4=+0.916 fid:5=+0.026 fid:6=+0.022 b0=+0.999 b1=+0.991 b2=+0.994]
+step 17000  ce 1.233  loss 1.533  holds 77040  11,282 tok/s  [fid:3=+0.990 fid:4=+0.917 fid:5=+0.027 fid:6=+0.022 b0=+0.999 b1=+1.000 b2=+1.000]
+step 17100  ce 1.242  loss 1.283  holds 78744  11,275 tok/s  [fid:3=+0.989 fid:4=+0.919 fid:5=+0.027 fid:6=+0.022 b0=+0.999 b1=+0.998 b2=+0.998]
+step 17200  ce 1.071  loss 1.109  holds 80464  11,257 tok/s  [fid:3=+0.982 fid:4=+0.921 fid:5=+0.027 fid:6=+0.022 b0=+0.992 b1=+0.997 b2=+0.972]
+step 17300  ce 1.171  loss 1.242  holds 82168  11,278 tok/s  [fid:3=+0.986 fid:4=+0.922 fid:5=+0.027 fid:6=+0.022 b0=+0.981 b1=+1.000 b2=+0.998]
+step 17400  ce 1.063  loss 1.100  holds 83888  11,261 tok/s  [fid:3=+0.987 fid:4=+0.924 fid:5=+0.027 fid:6=+0.022 b0=+0.999 b1=+0.999 b2=+0.984]
+step 17500  ce 1.012  loss 1.268  holds 85600  11,282 tok/s  [fid:3=+0.989 fid:4=+0.925 fid:5=+0.027 fid:6=+0.022 b0=+0.998 b1=+0.999 b2=+0.999]
+step 17600  ce 1.160  loss 1.442  holds 87312  11,235 tok/s  [fid:3=+0.988 fid:4=+0.926 fid:5=+0.027 fid:6=+0.022 b0=+0.996 b1=+0.999 b2=+0.992]
+step 17700  ce 1.102  loss 1.142  holds 89024  11,257 tok/s  [fid:3=+0.988 fid:4=+0.927 fid:5=+0.028 fid:6=+0.021 b0=+0.998 b1=+0.994 b2=+0.999]
+step 17800  ce 1.139  loss 1.177  holds 90736  11,278 tok/s  [fid:3=+0.991 fid:4=+0.928 fid:5=+0.028 fid:6=+0.021 b0=+0.996 b1=+0.999 b2=+0.997]
+step 17900  ce 1.190  loss 1.482  holds 92448  11,265 tok/s  [fid:3=+0.993 fid:4=+0.929 fid:5=+0.028 fid:6=+0.021 b0=+0.999 b1=+1.000 b2=+0.999]
+step 18000  ce 1.339  loss 1.377  holds 94160  11,281 tok/s  [fid:3=+0.990 fid:4=+0.930 fid:5=+0.028 fid:6=+0.021 b0=+1.000 b1=+1.000 b2=+0.999]
+    holdout(cum): {'same': [0.073, 0.07, 2784], 'straddle': [0.069, 0.07, 1024]}
+    same(recent 979 probes): 0.088
+    best banked @ 18000 (0.088)
+audit: {'holds': 94160, 'telescoping_exact': True, 'scoped': True, 'vetoes': 19128, 'proposed': 94192, 'presses': 597475, 'press_vetoes': 0, 'voided_zero': True}
+panel:
+lane0 maintain fid:5          target 0.20 phi0 0.86 band 5 due 36874240
+lane0 frontier recall:b2      target 1.05 phi0 0.05 band 4 due 36874240
+lane0 frontier recall:b1      target 1.05 phi0 0.05 band 3 due 36866048
+lane0 frontier recall:b0      target 1.05 phi0 0.05 band 3 due 36866048
+lane1 maintain fid:5          target 0.20 phi0 0.86 band 5 due 36874240
+lane1 frontier recall:b2      target 1.05 phi0 0.05 band 4 due 36874240
+lane1 frontier recall:b1      target 1.05 phi0 0.05 band 3 due 36866048
+lane1 frontier recall:b0      target 1.05 phi0 0.05 band 3 due 36866048
+lane2 maintain fid:5          target 0.20 phi0 0.86 band 5 due 36874240
+lane2 frontier recall:b2      target 1.05 phi0 0.05 band 4 due 36874240
+lane2 frontier recall:b1      target 1.05 phi0 0.05 band 3 due 36866048
+lane2 frontier recall:b0      target 1.05 phi0 0.05 band 3 due 36866048
+lane3 maintain fid:5          target 0.20 phi0 0.86 band 5 due 36874240
+lane3 frontier recall:b2      target 1.05 phi0 0.05 band 4 due 36874240
+lane3 frontier recall:b1      target 1.05 phi0 0.05 band 3 due 36866048
+lane3 frontier recall:b0      target 1.05 phi0 0.05 band 3 due 36866048
+lane4 maintain fid:5          target 0.20 phi0 0.86 band 5 due 36874240
+lane4 frontier recall:b2      target 1.05 phi0 0.05 band 4 due 36874240
+lane4 frontier recall:b1      target 1.05 phi0 0.05 band 3 due 36866048
+lane4 frontier recall:b0      target 1.05 phi0 0.05 band 3 due 36866048
+lane5 maintain fid:5          target 0.20 phi0 0.86 band 5 due 36874240
+lane5 frontier recall:b2      target 1.05 phi0 0.05 band 4 due 36874240
+lane5 frontier recall:b1      target 1.05 phi0 0.05 band 3 due 36866048
+lane5 frontier recall:b0      target 1.05 phi0 0.05 band 3 due 36866048
+lane6 maintain fid:5          target 0.20 phi0 0.86 band 5 due 36874240
+lane6 frontier recall:b2      target 1.05 phi0 0.05 band 4 due 36874240
+lane6 frontier recall:b1      target 1.05 phi0 0.05 band 3 due 36866048
+lane6 frontier recall:b0      target 1.05 phi0 0.05 band 3 due 36866048
+lane7 maintain fid:5          target 0.20 phi0 0.86 band 5 due 36874240
+lane7 frontier recall:b2      target 1.05 phi0 0.05 band 4 due 36874240
+lane7 frontier recall:b1      target 1.05 phi0 0.05 band 3 due 36866048
+lane7 frontier recall:b0      target 1.05 phi0 0.05 band 3 due 36866048
+record   fid:3          0.998 (ema 0.990)
+record   fid:4          0.930 (ema 0.930)
+record   fid:5          0.028 (ema 0.028)
+record   fid:6          0.044 (ema 0.021)
+record   recall:b0      1.000 (ema 1.000)
+record   recall:b1      1.000 (ema 1.000)
+record   recall:b2      1.000 (ema 0.999)
+SEG {"seg": 1, "from": 12500, "to": 18000, "stage": "infancy", "every": 0, "ce_first": 1.3397, "ce_last": 1.3391, "pairs": 0, "sleep_steps": 0, "pair_law_ok": true, "hot_pairs": 0, "minted": 3, "vetoes": 19128, "ledger": 94160, "prophet_auc": {}, "secs": 8219}
+Traceback (most recent call last):
+  File "/workspace/w-v10/Vision/scripts/heartbeat_v10.py", line 346, in <module>
+    main()
+  File "/workspace/w-v10/Vision/scripts/heartbeat_v10.py", line 336, in main
+    os.makedirs(os.path.dirname(a.out), exist_ok=True)
+  File "<frozen os>", line 225, in makedirs
+FileNotFoundError: [Errno 2] No such file or directory: ''
+heartbeat crashed rc=1 (1/3)
+resumed /workspace/v10_out/v10.pt at step 18000 (ema keys: ['fid:3', 'fid:4', 'fid:5', 'fid:6', 'recall:b0', 'recall:b1', 'recall:b2'])
+step 18100  ce 1.152  loss 1.436  holds 1688  16,220 tok/s  [fid:3=+0.992 fid:4=+0.931 fid:5=+0.028 fid:6=+0.021 b0=+0.999 b1=+0.998 b2=+0.999]
+step 18200  ce 1.230  loss 1.528  holds 3400  12,567 tok/s  [fid:3=+0.993 fid:4=+0.932 fid:5=+0.028 fid:6=+0.020 b0=+0.999 b1=+1.000 b2=+0.999]
+step 18300  ce 1.574  loss 1.943  holds 5112  12,532 tok/s  [fid:3=+0.994 fid:4=+0.934 fid:5=+0.028 fid:6=+0.020 b0=+1.000 b1=+1.000 b2=+0.998]
+PLAN {"lanes": 8, "life_len": 637763310, "total_steps": 311000, "total_tokens": 5095424000, "lam": 0.01875, "bounds": [["infancy", 24500], ["childhood", 108500], ["adolescence", 227000], ["tail", 311000]], "ladder": {"infancy": 0, "childhood": 32, "adolescence": 16, "tail": 16}, "segments": 55}
+resuming at step 18000
+resumed /workspace/v10_out/v10.pt at step 18000 (ema keys: ['fid:3', 'fid:4', 'fid:5', 'fid:6', 'recall:b0', 'recall:b1', 'recall:b2'])
+/usr/local/lib/python3.11/dist-packages/torch/utils/checkpoint.py:1399: FutureWarning: `torch.cpu.amp.autocast(args...)` is deprecated. Please use `torch.amp.autocast('cpu', args...)` instead.
+  with device_autocast_ctx, torch.cpu.amp.autocast(**cpu_autocast_kwargs), recompute_context:  # type: ignore[attr-defined]
+step 18100  ce 1.155  loss 1.438  holds 1688  12,563 tok/s  [fid:3=+0.995 fid:4=+0.835 fid:5=+0.028 fid:6=+0.021 b0=+0.996 b1=+0.963 b2=+0.747]
+step 18200  ce 1.234  loss 1.293  holds 3400  12,615 tok/s  [fid:3=+0.998 fid:4=+0.765 fid:5=+0.027 fid:6=+0.021 b0=+0.988 b1=+0.990 b2=+0.910]
+step 18300  ce 1.576  loss 1.614  holds 5112  12,686 tok/s  [fid:3=+0.998 fid:4=+0.728 fid:5=+0.026 fid:6=+0.021 b0=+0.965 b1=+0.971 b2=+0.919]
+step 18400  ce 1.143  loss 1.437  holds 6824  12,077 tok/s  [fid:3=+0.998 fid:4=+0.710 fid:5=+0.026 fid:6=+0.021 b0=+0.982 b1=+0.961 b2=+0.932]
+step 18500  ce 1.162  loss 1.445  holds 8536  12,150 tok/s  [fid:3=+0.998 fid:4=+0.707 fid:5=+0.026 fid:6=+0.021 b0=+0.947 b1=+0.985 b2=+0.921]
