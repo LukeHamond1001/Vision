@@ -38,7 +38,8 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(
     os.path.abspath(__file__))))
 
 from iga.lm_data_life import (prepare_life, simple_only,          # noqa
-                              smoltalk2_source, ultrachat_source)
+                              smoltalk2_source, ultrachat_source,
+                              st2_ordered)
 from iga.lm_data_ultrachat import UltraConveyor, load_tokenizer   # noqa
 from iga.lm_sleep import Sleeper                                  # noqa
 from iga.lm_train import train                                    # noqa
@@ -60,8 +61,8 @@ RAW = "data/v10_raw"
 def _sources(eval_mode=False):
     uc = ("data/ultrachat_heldout.jsonl" if eval_mode
           else "data/ultrachat_raw.jsonl")
-    st2 = sorted(f"{RAW}/{f}" for f in os.listdir(RAW)
-                 if f.endswith(".parquet") and "magpie" not in f)
+    st2 = st2_ordered(f"{RAW}/{f}" for f in os.listdir(RAW)
+                      if f.endswith(".parquet") and "magpie" not in f)
     mag = sorted(f"{RAW}/{f}" for f in os.listdir(RAW)
                  if "magpie" in f)
     skip = 3000 if eval_mode else 0

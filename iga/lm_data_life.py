@@ -185,6 +185,79 @@ class StageScheduler:
         return self.stages[-1]
 
 
+# EPISODIC CAST (2026-08-21, v10.1): the v10 cast was 24 PERSISTENT
+# facts per life from an 8x8 vocabulary, each asked tens of thousands
+# of times per 637M-token life — 192 facts in all, memorized by the
+# weights (train-lane recall .96, unseen-life in-ctx .21 = chance).
+# The binder faculty needs facts the weights CANNOT hoard: novel
+# (name, object) -> color facts from large vocabularies disjoint from
+# the roster's, planted continually, asked a few times at the stage's
+# gaps (the long ones are band food), then retired. The same pair
+# recurs later with other colors, so the only winning policy is
+# "the latest statement in context or in memory" — the A69 faculty.
+EPISODIC_NAMES = (
+    "ada alma amos anya aris asha avi axel bea bela beni bram cai cara "
+    "cato celia cleo cora cyrus dana dara davi dell dina eben edda eli "
+    "elio elsa emil enzo erin esme etta evan ezra fae faro fenn finn "
+    "fleur flor freya gael gia gil gwen hal hana hans hart hazel hedy "
+    "hugo ida ilan ines ira iris isla ivo jace jai jana jem jens jory "
+    "jude juno kai kami kara kato keir kenji kira kit koa kofi lars lea "
+    "leif lev lila lior liv lorn luca lukas lyra mace mae maia malik "
+    "mara marc mateo max mena milo mina moss nadia nell nico nika nils "
+    "nina noor nora oda odin olin oren orla otis paz pell pia pim quin "
+    "rafa rani ravi reid remy rhea rian rico rina rolf romy rory rosa "
+    "ruth sabi sage salo sami sarah saul sena seth shay sian silas simon "
+    "sol sonia soren stig suki sven tam tara tavi teo tess thea thor "
+    "tilda tova tycho uli uma una vale vera vida vik vin wade wren xavi "
+    "yael yara yuki yusuf zadie zane zara zeke zia zora abel adrian aldo "
+    "alina amara andre anton ari arno asa aya ayla bas bastian beck benno "
+    "berit birk bruno carla cas cedric cian colm dag dario dez dimi dora "
+    "dries edan elin ella ellis emre enid esra etan fabio farah felix fia "
+    "fritz gabi gita greta hakan hedda heidi ilse imre ingo isak ivar "
+    "janne jarl jori kaja kalle karim kasia kenan kerem lale lasse leila "
+    "lotte maren marit mika milan nadim neva noa olaf paula pelle piet "
+    "rasmus ronja runa saga selin sigrid tarik tindra ulla viggo wilma"
+).split()
+EPISODIC_OBJECTS = (
+    "basket ladder kettle hammer candle mirror needle bucket saddle "
+    "pillow blanket ribbon feather bottle spoon knife fork plate bowl "
+    "cup mug teapot brush comb towel apron glove scarf hat boot sandal "
+    "belt button thread pin nail screw wrench saw chisel drill anvil "
+    "bench stool chair table desk shelf crate barrel sack pouch wallet "
+    "purse satchel trunk chest box tin flask vase pot pan lid tray ladle "
+    "sieve whisk cushion rug mat curtain lantern torch clock compass "
+    "ruler pencil pen chalk slate notebook ledger scroll stamp ticket "
+    "card dice marble kite drum flute fiddle harp horn whistle rattle "
+    "doll puppet mask cloak cape robe tunic vest collar brooch ring "
+    "bracelet necklace crown badge medal shield spear bow arrow quiver "
+    "dagger axe shovel rake hoe trowel sickle yoke harness bridle cart "
+    "wagon wheel oar paddle anchor net hook reel sail mast flag banner "
+    "tent pole stake peg cord wire chain lock bolt latch hinge handle "
+    "knob cork funnel pipe hose valve pump bellows sponge loaf jug urn"
+).split()
+assert not set(EPISODIC_NAMES) & set(NAMES)
+assert not set(EPISODIC_OBJECTS) & set(OBJECTS)
+EPISODIC_DEFAULT = {
+    "n_asks": (2, 6),          # ask quota per novel fact, then retired
+    "sample": 24,              # retired-fact reservoir for the bare probe
+    # plant cadence in TOKENS per stage (v10 planted per unit and the
+    # roster's 96/700-gap re-asks made infancy ~70% cast drill by
+    # tokens — measured 1 ask / 42 tok; a memorization bootcamp).
+    # quota ~4 asks -> asks per token ~ 4 / cadence: infancy ~25% of
+    # tokens (a BINDING bootcamp on novel facts), childhood ~10%,
+    # adolescence/tail ~8% with the long menus (b5/b6 band food).
+    "plant_tokens": {"infancy": 500, "childhood": 1200,
+                     "adolescence": 1600, "tail": 1600},
+    # the persistent roster becomes biography: re-asked only at 16x
+    # the stage's longest gap (infancy 11k, childhood 384k, later 16M)
+    "roster_gap_mult": 16,
+    # every novel fact's FIRST ask draws from the stage menu plus an
+    # in-context gap (96) at this weight, so the binder channel (and
+    # the in-ctx bin) stays fed in every stage
+    "first_ask_inctx_w": 2,
+}
+
+
 class LifeCast:
     """The persistent world of ONE life — a fixed roster of
     (name, object) -> color facts plus ERA facts re-asked at the
@@ -200,7 +273,8 @@ class LifeCast:
 
     CLS_P = (("pos2", 0.15), ("pos1", 0.10), ("none", 0.75))
 
-    def __init__(self, rng, world_seed, n_roster=24, n_era=4):
+    def __init__(self, rng, world_seed, n_roster=24, n_era=4,
+                 episodic=None):
         wrng = random.Random(world_seed)
         pairs = [(n, o) for n in NAMES for o in OBJECTS]
         wrng.shuffle(pairs)
@@ -215,6 +289,16 @@ class LifeCast:
         self.rng = rng
         self.pending = []          # (due_pos, fact)
         self.unplanted = list(self.roster)
+        # episodic cast (None = the certified v10 roster bit-exactly;
+        # no rng is drawn on this path unless an episodic plant fires)
+        self.epi = dict(EPISODIC_DEFAULT, **episodic) \
+            if episodic is not None else None
+        self.epi_n = 0             # facts planted
+        self.epi_asks = 0
+        self.epi_retired = 0
+        self.epi_live = 0
+        self.epi_sample = []       # reservoir of retired facts (probe)
+        self.last_plant = None     # stream pos of the last plant (epi cadence)
 
     def _cls(self, rng):
         x, acc = rng.random(), 0.0
@@ -229,17 +313,65 @@ class LifeCast:
 
     def schedule(self, fact, pos, stage):
         menu = [g for g in stage.gap_menu]
-        if fact["era"]:
+        if fact.get("epi"):
+            if fact["asks"] >= fact["quota"]:
+                self._retire(fact)          # quota met: never asked again
+                return
+            if fact["asks"] == 0 and self.epi["first_ask_inctx_w"]:
+                menu = [(96, self.epi["first_ask_inctx_w"])] + \
+                    [g for g in menu if g[0] != 96]
+        elif self.epi is not None:
+            # episodic mode: the whole roster is biography — re-asked
+            # only at 16x the stage's longest gap; the episodic stream
+            # carries the binder load (v10 roster re-asks at 96/700
+            # were the memorization drill)
+            menu = [(menu[-1][0] * self.epi["roster_gap_mult"], 1)]
+        elif fact["era"]:
             menu = [g for g in menu if g[0] >= menu[-1][0] // 8] \
                 or menu
         gaps, ws = zip(*menu)
         gap = self.rng.choices(gaps, weights=ws)[0]
         self.pending.append((pos + gap, fact))
 
+    def _retire(self, fact):
+        self.epi_retired += 1
+        self.epi_live -= 1
+        k = self.epi["sample"]
+        if len(self.epi_sample) < k:
+            self.epi_sample.append(fact)
+        else:                       # reservoir sampling, deterministic rng
+            j = self.rng.randrange(self.epi_retired)
+            if j < k:
+                self.epi_sample[j] = fact
+
+    def plant_episodic(self, pos, stage):
+        """One NOVEL fact: fresh (name, obj) from the large disjoint
+        vocabularies, random color/room/class, an ask quota drawn from
+        n_asks. Same plant grammar as the roster."""
+        e = self.epi
+        f = {"name": self.rng.choice(EPISODIC_NAMES),
+             "obj": self.rng.choice(EPISODIC_OBJECTS),
+             "col": self.rng.choice(COLORS),
+             "room": self.rng.choice(ROOMS),
+             "cls": self._cls(self.rng), "era": False, "epi": True,
+             "quota": self.rng.randint(*e["n_asks"]),
+             "planted": pos, "asks": 0}
+        self.epi_n += 1
+        self.epi_live += 1
+        self.schedule(f, pos, stage)
+        turns = [(f"by the way {f['name']} kept a {f['col']} "
+                  f"{f['obj']} in the {f['room']} .", "human", []),
+                 ("noted .", "model", [])]
+        return turns, {"fact": f, "kind": "plant"}
+
     def plant_unit(self, pos, stage):
         """One plant: 'by the way NAME kept a COL OBJ in the ROOM .'
-        + 'noted .' — returns (turns, meta) or None."""
+        + 'noted .' — returns (turns, meta) or None. Roster first (as
+        certified); once the roster is planted, episodic mode keeps
+        planting novel facts at the same cadence for the whole life."""
         if not self.unplanted:
+            if self.epi is not None:
+                return self.plant_episodic(pos, stage)
             return None
         f = self.unplanted.pop(self.rng.randrange(len(self.unplanted)))
         f["planted"] = pos                    # refined at encode time
@@ -280,6 +412,8 @@ class LifeCast:
                           f"{fact['col']} .", "human", []))
             turns.append(self._press(2))
         fact["asks"] += 1
+        if fact.get("epi"):
+            self.epi_asks += 1
         return turns, {"fact": fact, "kind": "ask",
                        "correct": correct}
 
@@ -299,7 +433,8 @@ def _iter_stage_source(sources, stage_name):
 def prepare_life(out_dir, budget_tokens, n_lives, seed=0,
                  world_seed=None, vocab=16384, tokenizer_path=None,
                  stages=STAGES_V10, sources=None, tok_sample=1200,
-                 spill=4_000_000, shuffle_sessions=False):
+                 spill=4_000_000, shuffle_sessions=False,
+                 episodic=None):
     """Writes tokenizer.json, tokens.bin (n_lives equal lives,
     back-to-back), events.jsonl (sorted, absolute pos), manifest.json,
     judge_audit.jsonl.
@@ -355,6 +490,12 @@ def prepare_life(out_dir, budget_tokens, n_lives, seed=0,
                 "specials": SPECIALS_LIFE, "seed": seed,
                 "world_seed": world_seed,
                 "shuffle_sessions": bool(shuffle_sessions),
+                "cast_mode": ("episodic_v1" if episodic is not None
+                              else "roster_v10"),
+                "episodic": (dict(EPISODIC_DEFAULT, **episodic,
+                                  n_names=len(EPISODIC_NAMES),
+                                  n_objects=len(EPISODIC_OBJECTS))
+                             if episodic is not None else None),
                 "stages": [], "lives": []}
 
     def emit_turns(turns):
@@ -434,7 +575,8 @@ def prepare_life(out_dir, budget_tokens, n_lives, seed=0,
         life_start = len(stream)
         sched = StageScheduler(life_budget, stages)
         cast = LifeCast(random.Random(seed * 1000 + life_i + 1),
-                        world_seed * 1000 + life_i + 1)
+                        world_seed * 1000 + life_i + 1,
+                        episodic=episodic)
         if shuffle_sessions:
             for f in cast.roster:
                 f["era"] = False
@@ -453,10 +595,18 @@ def prepare_life(out_dir, budget_tokens, n_lives, seed=0,
                 if len(stream) - life_start >= life_budget - 512:
                     break
                 unit_i += 1
-                # cast plant cadence
-                if unit_i % stage.plant_every == 0:
+                # cast plant cadence: per unit (certified v10) or, in
+                # episodic mode, per TOKENS since the last plant
+                if cast.epi is not None:
+                    due_plant = (cast.last_plant is None or
+                                 len(stream) - cast.last_plant
+                                 >= cast.epi["plant_tokens"][stage.name])
+                else:
+                    due_plant = unit_i % stage.plant_every == 0
+                if due_plant:
                     u = cast.plant_unit(len(stream), stage)
                     if u:
+                        cast.last_plant = len(stream)
                         emit_plant(u, life_i)
                 # due asks fire first (spacing is the curriculum) —
                 # DRAINED in a bounded loop so a 96-token gap drawn
@@ -491,10 +641,41 @@ def prepare_life(out_dir, budget_tokens, n_lives, seed=0,
                     break
                 pairs = [(convo[i], convo[i + 1])
                          for i in range(0, len(convo) - 1, 2)]
-                for h_text, m_text in pairs:
+                for pair_i, (h_text, m_text) in enumerate(pairs):
                     if (life_budget - (len(stream) - life_start)
                             < 4096):
                         break     # life boundary: no pair may cross
+                    if cast.epi is not None and pair_i > 0:
+                        # episodic mode: plants keep their TOKEN cadence
+                        # inside long conversations (adolescence units
+                        # run ~6k tokens; one plant per unit starved
+                        # the stage 4x), and due asks also fire BETWEEN
+                        # exchanges (bounded), so a 96-token gap
+                        # realizes in-context instead of waiting a
+                        # whole conversation for the unit boundary
+                        # (v10: in-ctx asks existed only in infancy's
+                        # back-to-back drill)
+                        if (len(stream) - cast.last_plant
+                                >= cast.epi["plant_tokens"][stage.name]):
+                            u = cast.plant_unit(len(stream), stage)
+                            if u:
+                                cast.last_plant = len(stream)
+                                emit_plant(u, life_i)
+                        due_now = cast.due_asks(len(stream))
+                        for f in due_now[4:]:       # bounded: rest stay due
+                            cast.pending.append((len(stream), f))
+                        for f in due_now[:4]:
+                            correct = rng.random() >= stage.corr_rate
+                            turns_a, _ = cast.ask_unit(f, stage, correct)
+                            emit_turns(turns_a)
+                            f["last_seen"] = len(stream)
+                            cast.schedule(f, len(stream), stage)
+                            stats["cast_asks"] += 1
+                            if not correct:
+                                stats["corrections"] += 1
+                                manifest.setdefault(
+                                    "correction_pos",
+                                    []).append(len(stream))
                     q = J.grade_dialogue(h_text, m_text)
                     tail = stage.name == "tail"
                     if not J.passes_floor(q):
@@ -530,12 +711,29 @@ def prepare_life(out_dir, budget_tokens, n_lives, seed=0,
             stats["filler_days"] += 1
         while len(stream) - life_start < life_budget:
             stream.append(eot_h)
-        manifest["lives"].append({
+        life_row = {
             "life": life_i, "start": life_start, "days": day_i,
             "stage_marks": stage_marks,
             "cast": [{k: f[k] for k in
                       ("name", "obj", "col", "cls", "era", "asks")}
-                     for f in cast.roster]})
+                     for f in cast.roster]}
+        if cast.epi is not None:
+            # the bare-ask probe reads life["cast"]: a retired-fact
+            # sample rides along as class "epi:<cls>" — weights that
+            # hoard novel facts would show there as p_true > chance
+            life_row["cast"] += [
+                {"name": f["name"], "obj": f["obj"], "col": f["col"],
+                 "cls": "epi:" + f["cls"], "era": False,
+                 "asks": f["asks"]} for f in cast.epi_sample]
+            life_row["episodic"] = {
+                "n_facts": cast.epi_n, "n_asks": cast.epi_asks,
+                "retired": cast.epi_retired, "live_at_end": cast.epi_live,
+                "n_asks_range": list(cast.epi["n_asks"]),
+                "plant_tokens": cast.epi["plant_tokens"],
+                "roster_gap_mult": cast.epi["roster_gap_mult"]}
+            stats["epi_facts"] = stats.get("epi_facts", 0) + cast.epi_n
+            stats["epi_asks"] = stats.get("epi_asks", 0) + cast.epi_asks
+        manifest["lives"].append(life_row)
 
     total = stream.close()
     audit.close()
@@ -556,6 +754,31 @@ def prepare_life(out_dir, budget_tokens, n_lives, seed=0,
           f"{stats['presses']}, corrections {stats['corrections']} "
           f"-> {out_dir}")
     return out_dir
+
+
+# SmolTalk2 subset ORDER (2026-08-21): v10 consumed the no_think
+# parquets in sorted-filename order, which put LongAlign_64k (64k-
+# context document QA: 2-turn "exchanges" of ~15k tokens) FIRST in
+# adolescence and table_gpt / OpenThoughts3 wherever the alphabet fell.
+# The ratified curriculum is flat floor / rising ceiling, so the order
+# is now explicit: everyday conversation -> rewriting / summarizing ->
+# personas -> Hermes -> science -> reasoning -> long-context LAST.
+ST2_ORDER = ("everyday", "explore_instruct", "smol_rewrite",
+             "smol_summarize", "tulu_3", "OpenHermes", "table_gpt",
+             "Mixture_of_Thoughts", "OpenThoughts3", "LongAlign")
+
+
+def st2_ordered(paths):
+    """Deterministic curriculum order for SmolTalk2 parquet paths:
+    ST2_ORDER rank, then filename (unknown subsets sort mid-list)."""
+    import os as _os
+
+    def key(pth):
+        name = _os.path.basename(pth)
+        rank = next((i for i, pat in enumerate(ST2_ORDER) if pat in name),
+                    len(ST2_ORDER) // 2)
+        return (rank, name)
+    return sorted(paths, key=key)
 
 
 def smoltalk2_source(paths, en_only=True):
@@ -721,6 +944,11 @@ if __name__ == "__main__":
     ap.add_argument("--ultrachat", default="data/ultrachat_raw.jsonl")
     ap.add_argument("--skip", type=int, default=0)
     ap.add_argument("--shuffle-sessions", action="store_true")
+    ap.add_argument("--episodic", action="store_true",
+                    help="v10.1 episodic cast (novel facts, quotas, "
+                         "retirement; roster demoted to long gaps)")
+    ap.add_argument("--epi-asks", default="2,6",
+                    help="episodic ask quota range lo,hi")
     ap.add_argument("--st2-dir", default=None,
                     help="dir of SmolTalk2 no_think parquet files "
                          "(adolescence); magpie files excluded")
@@ -752,9 +980,9 @@ if __name__ == "__main__":
                  "childhood": ultrachat_source(a.ultrachat,
                                                a.skip + 40)}
         if a.st2_dir:
-            st2 = sorted(f for f in
-                         _glob.glob(f"{a.st2_dir}/*.parquet")
-                         if "magpie" not in f)
+            st2 = st2_ordered(f for f in
+                              _glob.glob(f"{a.st2_dir}/*.parquet")
+                              if "magpie" not in f)
             s["adolescence"] = epochs(
                 lambda: smoltalk2_source(st2),
                 a.st2_epochs if ep else 1)
@@ -823,4 +1051,7 @@ if __name__ == "__main__":
                      tokenizer_path=a.tokenizer, sources=_src(),
                      stages=stages_sel,
                      tok_sample=a.tok_sample,
-                     shuffle_sessions=a.shuffle_sessions)
+                     shuffle_sessions=a.shuffle_sessions,
+                     episodic=({"n_asks": tuple(int(x) for x in
+                                                a.epi_asks.split(","))}
+                               if a.episodic else None))
