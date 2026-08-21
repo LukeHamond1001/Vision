@@ -25,8 +25,8 @@ import time
 
 import torch
 
-sys.path.insert(0, os.path.dirname(os.path.dirname(
-    os.path.abspath(__file__))))
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(
+    os.path.abspath(__file__)))))   # scripts/archive/ -> repo root
 
 from iga.lm_conveyor import Conveyor, Vocab, splits   # noqa: E402
 from iga.lm_gen import COLORS                          # noqa: E402

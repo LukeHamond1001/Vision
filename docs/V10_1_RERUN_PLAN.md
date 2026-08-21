@@ -98,6 +98,27 @@ build once G1 passes; $5 smoke; launch by evening UTC if G1 and the
 smoke pass. Aug 25 (±): flash lands; serve-room day-one protocol.
 Budget: $64 spent + ~$1 + ~$5 + ~$180 = ~$250.
 
+## Status (2026-08-21 18:30 UTC)
+- Steps 1–3 done (episodic builder + laws; bf16 path + laws; gated arms
+  built — rope / modern / bandlr / conveyor in `life_gate.py`). G1 at
+  d=128 on the episodic diet was FALSE for exposure, not faculty
+  (ledger: "G1 EPISODIC FALSE"); the faithful gate is the 78M MINI-FLASH
+  running on the mule (pod 4gzvaq7jrokt31, sha 92a317d): 4 lives × 50M,
+  real driver + battery, bf16, lam 0.05682 from its own smoke (7775
+  tok/s, holds 4.4). Rows land hourly on `results-v10` as `mini_hb.jsonl`.
+  PASS = in-ctx on unseen lives arming (≥ .40 by the end or clearly
+  rising). The mule's pinned sha predates the childhood-1:16 ladder and
+  the `lesion_bands_all`/`lesion_store` battery rows; neither touches the
+  gate question; both ride the H100 run, which boots from HEAD.
+- Step 4 in progress on the same mule (full 5.1B episodic build started
+  17:58 UTC; ship code posts as `ship_code2.txt`).
+- Step 5 staged: `RUN_TAG=v10_1 OLD_TAG=roster PRECISION=bf16
+  MIN_TOKS=22000 SMOKE_LANES=8 GO=1 SHIP_CODE=<ship_code2>`; launches
+  only on the mini-flash PASS. Trunk candidates (rope, modern) enter
+  only after their own mini-flash; their d=128 CE arms vs bio are in
+  `results/gate_epi/`.
+- The demos this run serves: [CENTERPIECE.md](CENTERPIECE.md).
+
 ## What v10 did NOT include — inventory and rerun decision
 | Item | v10 status / evidence | Rerun |
 |---|---|---|

@@ -29,8 +29,8 @@ import sys
 
 import torch
 
-sys.path.insert(0, os.path.dirname(os.path.dirname(
-    os.path.abspath(__file__))))
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(
+    os.path.abspath(__file__)))))   # scripts/archive/ -> repo root
 
 from iga.lm_conveyor import Vocab                  # noqa: E402
 from iga.lm_hybrid import HybridLM                 # noqa: E402

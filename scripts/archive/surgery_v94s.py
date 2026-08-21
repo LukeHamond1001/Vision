@@ -12,8 +12,8 @@ import sys
 import numpy as np
 import torch
 
-sys.path.insert(0, os.path.dirname(os.path.dirname(
-    os.path.abspath(__file__))))
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(
+    os.path.abspath(__file__)))))   # scripts/archive/ -> repo root
 
 from iga.lm_data_ultrachat import load_tokenizer   # noqa: E402
 from iga.lm_hybrid import HybridLM                 # noqa: E402

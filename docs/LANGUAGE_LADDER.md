@@ -4530,3 +4530,32 @@ are measured for the first time on the H100 run, which boots from
 HEAD. Deliverables still to land from the mule: mini_hb.jsonl rows
 (publisher every 10 min), the "cast:" beat of the full build,
 flash_eval_epi, smoke_l8_epi, the ship tar and ship_code2.txt.
+
+## 2026-08-21 — THE REPO REORGANIZED AROUND THE CENTERPIECE (user)
+
+User: "get Vision up to date and reorganized; the model we are about
+to train is the centerpiece, with our two demos — removing bands and
+removing contextual memory." Done without moving anything the pod
+boots from (`iga/`, `scripts/pod_v10.sh`, `v10_driver.py`,
+`heartbeat_v10.py`, `life_gate.py`, `tests/` untouched in place; the
+H100 resets to origin/main at boot). New root README (the being, the
+two demos as pre-registered expectations, status, evidence map);
+docs/ARCHITECTURE.md (the organism from the code: 524.7M built /
+~504M served — trunk 75%, bands 7.5%, store apparatus 5%, vocab 12%;
+the two lesion switches; the life, the drive, the battery);
+docs/CENTERPIECE.md (the plan: Act 1 base, Demo 1 `lesioned={3..6}`,
+Demo 2 `store_read_off`, expectations per bin, laws, the in-flight
+go/no-go on the lesion rows, $0 build items — the serve-room
+`/lesion` switch with a parity law and `demo_lesions.py` extending
+the A66 three-act script — timeline); DEMO_PROTOCOL Amendment 1
+(the removal acts as pre-registered classes with bars, living-vs-
+frozen unchanged); rerun-plan status. The drive-layer program's
+README/SPEC/AUDIT/PAPER/SEQUENCING/ROBOT_PROGRAM moved verbatim to
+docs/drive-layer/ (its modules and results paths unchanged so its
+reproduce matrix and audit still run). scripts/: 60 historical pod
+payloads and 78M-era gate drivers to scripts/archive/ (repo-root
+path patched in the seven that resolve it); READMEs in scripts/ and
+results/; loose local gate logs filed under results/gate_v10/ and
+results/evidence/shakedown/. Ledger paths before this entry are
+pre-archive. Naming hazard recorded: results/v10_* files are the
+drive-layer v1.0 Crafter artifacts, not the V10 flash.

@@ -49,11 +49,11 @@ Expect the final line to report `telescoping_exact: True` and
 theorem holding on data generated on your machine, not ours.
 
 ## 4. Read the record
-- `results/INTERPRETATION.md` — the honest log: every round,
+- `results/INTERPRETATION.md` (repo root) — the honest log: every round,
   reversals and addenda included.
-- `docs/SEQUENCING.md` — the v4.0 design card, committed before the
+- `docs/drive-layer/SEQUENCING.md` — the v4.0 design card, committed before the
   run, amendments ledgered.
-- `SPEC.md` — the laws; `tests/` maps clauses to tests.
+- `docs/drive-layer/SPEC.md` — the laws; `tests/` maps clauses to tests.
 - Raw per-pod outputs: the `results-*` branches
   (`git clone --depth 1` the ones you want).
 
@@ -65,6 +65,6 @@ wants, frozen-before-training discipline throughout.
 Missed bars (printed): v1.2 ratio, v2.1 uptime/parity, v1.3 strict
 gate, v4.0 magnitude.
 Design-only (not run): derived slow-band channels, generation-2
-senses, the LLM and humanoid applications in docs/ROBOT_PROGRAM.md.
+senses, the LLM and humanoid applications in docs/drive-layer/ROBOT_PROGRAM.md.
 Known limits: n=5 seeds, toy worlds, the acting-time veto benched by
 its own audit (F2).

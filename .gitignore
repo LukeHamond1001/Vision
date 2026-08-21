@@ -9,3 +9,6 @@ API Key.md
 # launch-private (playbooks stay local)
 docs-private/
 data/
+
+# per-run scratch target of scripts/life_gate.py (per-arm copies are committed as *_<arm>.json)
+results/evidence/v10_gates_epi.json

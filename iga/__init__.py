@@ -1,4 +1,4 @@
-"""Imagination-Gated Agent — reference scaffold for SPEC.md.
+"""Imagination-Gated Agent — reference scaffold for docs/drive-layer/SPEC.md (the drive-layer program; the language being lives in iga/lm_*).
 
 Structural correctness over performance: this package exists to make the
 wiring commitments (SPEC §3) and gating rules (SPEC §5) executable and

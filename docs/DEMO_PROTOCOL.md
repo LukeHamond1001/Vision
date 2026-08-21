@@ -56,3 +56,22 @@ weights, store running, no presses, no sleep.
 Absolute capability boasts; consciousness/sentience language;
 cross-model comparisons; any number whose class, metric, and bar do
 not appear in this file.
+
+## Amendment 1 (2026-08-21, pre-launch of V10.1; ledgered)
+
+The demo gains two acts made by REMOVAL on the same served model, the
+user's centerpiece framing ("remove the bands and show what they
+contribute; remove the contextual memory and show what it does"):
+
+| act | switch | headline class | n min |
+|---|---|---|---|
+| Act 1 base | none (bit-exact certified forward) | the probe set as lived | 20 per bin |
+| Act 2 bands removed | `model.lesioned = {3,4,5,6}` (memory tokens zeroed, stores unread) | recall at b4/b5/b6 vs base; prophet AUC vs base | 20 per bin |
+| Act 3 contextual memory removed, bands on | `model.store_read_off = True` | recall at in-ctx/short/b3 vs base; thread continuity (judge-scored) vs base | 20 per bin |
+
+Bars: paired contrast on the same probe set and the same committed
+state, one-sided sign test p < 0.05 per headline bin; expected
+directions and the go/no-go read from the flash's lesion rows are in
+[CENTERPIECE.md](CENTERPIECE.md). The living-vs-frozen claim above is
+unchanged and runs after the three acts. Design laws 1–3 apply to every
+act; the prohibited list applies verbatim.

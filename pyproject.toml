@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "iga"
 version = "1.0.0"
-description = "Imagination-Gated Agent — a drive layer for agents: unfarmable rewards, readable goals, editable wants. Wrap any env with DriveWrapper."
+description = "Vision — a language being flashed with a lifetime: timescale bands, contextual memory stores, a press economy and sleep (iga/lm_*); plus the original drive-layer program (docs/drive-layer)."
 requires-python = ">=3.11"
 license = "Apache-2.0"
 license-files = ["LICENSE", "NOTICE"]

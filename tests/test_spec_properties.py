@@ -1,4 +1,4 @@
-"""Structural tests keyed to SPEC.md clauses.
+"""Structural tests keyed to docs/drive-layer/SPEC.md clauses.
 
 These do not test performance. Each test asserts an architectural identity or
 enforcement that a spec clause claims — the point is that a refactor which

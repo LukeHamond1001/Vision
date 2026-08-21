@@ -38,8 +38,8 @@ import os
 import sys
 from math import comb
 
-sys.path.insert(0, os.path.dirname(os.path.dirname(
-    os.path.abspath(__file__))))
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(
+    os.path.abspath(__file__)))))   # scripts/archive/ -> repo root
 import numpy as np
 import torch
 
