@@ -3,10 +3,13 @@
 Act 1  the being as lived: facts planted in the served life at three
        gaps (in-ctx, short = one chunk back, long = b4+ chunks back)
        with neutral dialogue between plant and ask.
-Demo 1 bands removed   (`lesion bands`): memory tokens zeroed, stores
-       unread — expected: long-gap recall falls to chance, in-ctx holds.
+Demo 1 bands removed   (`lesion bands`): every band's memory token
+       zeroed, stores still read — the slow thread off. Expected: the
+       being stops carrying the day; exact facts the stores hold survive.
 Demo 2 stores removed, bands on (`lesion store`): expected: exact
        recall falls at every gap, the thread of the day holds.
+Both   (`lesion both`): tokens AND stores gone — the cortex alone with
+       its chunk; the in-the-moment extreme, read beside the two.
 
 Every reading is PAIRED on the same committed state: the probe is a
 score-only forward on a state copy, the reply is greedy speech
@@ -47,7 +50,7 @@ from iga.lm_serve import ServeSession, LESION_MODES  # noqa: E402
 from iga.lm_sleep import state_copy                  # noqa: E402
 
 SEED = 11
-CONDITIONS = ("none", "bands", "store")
+CONDITIONS = ("none", "bands", "store", "both")
 # gap bins in CHUNKS of filler between plant and ask (T tokens each);
 # in-ctx = same pending window, short = one chunk (b3), b4 = 8 chunks
 # (16k tokens at T=2048), b5 = 64 chunks
@@ -195,7 +198,7 @@ def summarize(facts, reads):
                     reads[i][cond]["said"] for i in idx) / len(idx), 4),
                 "p_true_mean": round(sum(
                     reads[i][cond]["p_true"] for i in idx) / len(idx), 5)}
-        for cond in ("bands", "store"):
+        for cond in ("bands", "store", "both"):
             p, plus, minus = sign_test_one_sided(
                 [(reads[i]["none"]["said"], reads[i][cond]["said"])
                  for i in idx])

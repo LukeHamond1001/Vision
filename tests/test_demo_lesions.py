@@ -136,7 +136,7 @@ def test_D5_summary_shape():
         assert row["n"] == 2
         for cond in DL.CONDITIONS:
             assert set(row[cond]) == {"speech_recall", "p_true_mean"}
-        for cond in ("bands", "store"):
+        for cond in ("bands", "store", "both"):
             assert set(row[f"sign_base_gt_{cond}"]) == {"p", "plus", "minus"}
     th = res["thread"]
     assert set(th) == set(DL.CONDITIONS) and th["none"]["of"] == 4

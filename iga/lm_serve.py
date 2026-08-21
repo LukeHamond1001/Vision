@@ -35,9 +35,12 @@ SLEEP_LR = 1e-4          # A63's healthy regime (cosine tail scale)
 # commit, a sleep block or a save: the committed life is written by the
 # certified forward whatever the switch says, so the contrast is "same
 # state, organ off", and 'none' is bit-exact to the base.
-#   bands: model.lesioned = all bands (memory tokens zeroed, stores unread)
-#   store: model.store_read_off (bands live, stores unread)
-LESION_MODES = ("none", "bands", "store")
+#   bands: model.mem_off — the slow thread off (every band's memory
+#          token zeroed), the stores still read
+#   store: model.store_read_off — stores unread, the thread live
+#   both:  model.lesioned = all bands — tokens AND stores gone (the
+#          full amputation: the cortex alone with its chunk)
+LESION_MODES = ("none", "bands", "store", "both")
 MAX_SLEEP_BLOCKS = 32    # R3 dose law: serve-sleep is capped
 
 
@@ -144,15 +147,18 @@ class ServeSession:
         commits, sleep and saves always see the certified model."""
         m = self.m
         prev = (set(m.lesioned),
-                bool(getattr(m, "store_read_off", False)))
+                bool(getattr(m, "store_read_off", False)),
+                bool(getattr(m, "mem_off", False)))
         try:
             if self.lesion_mode == "bands":
-                m.lesioned = set(m.bands)
+                m.mem_off = True
             elif self.lesion_mode == "store":
                 m.store_read_off = True
+            elif self.lesion_mode == "both":
+                m.lesioned = set(m.bands)
             yield m
         finally:
-            m.lesioned, m.store_read_off = prev
+            m.lesioned, m.store_read_off, m.mem_off = prev
 
     def flush(self):
         """Public short-commit of the pending window (A66-R2: the

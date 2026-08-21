@@ -369,6 +369,17 @@ def main():
         rows.append({"probe": "lesion_store",
                      "ce_delta": round(ce_l - ce_b, 4),
                      "recall": _racc(rec_l)})
+        # the slow THREAD alone (memory tokens zeroed, stores still
+        # read): lesion_bands_all minus this row is what the band
+        # STATES carry beyond their stores — Demo 1's own organ
+        m.mem_off = True
+        try:
+            ce_l, rec_l = probe_ce_recall(m, a.eval_data, a.T, small)
+        finally:
+            m.mem_off = False
+        rows.append({"probe": "lesion_thread",
+                     "ce_delta": round(ce_l - ce_b, 4),
+                     "recall": _racc(rec_l)})
         rows.append({"probe": "lesion_base", "ce": round(ce_b, 4),
                      "recall": _racc(rec_b)})
     if isinstance(blob, dict) and "sleeper" in blob:

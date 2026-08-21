@@ -7,9 +7,10 @@ Laws:
       sessions fed the same stream, one under 'bands', one under
       'store', end with the SAME band states and stores as the base.
   L3  The switches bite where they should: under 'bands' the memory
-      tokens are zero and stores are unread; under 'store' the memory
-      tokens are live and stores are unread; reply logits differ from
-      the base once the life has written state.
+      tokens are zero and the stores are STILL read; under 'store' the
+      memory tokens are live and the stores are unread; under 'both'
+      the bands are amputated (tokens and stores); reply logits differ
+      from the base once the life has written state.
   L4  The switch never outlives a forward — flags restore even when
       the read raises.
   L5  Unknown modes are refused; the switch is logged as an event.
@@ -90,10 +91,11 @@ def test_L1_none_is_bit_exact_and_leaves_flags_alone():
     s.m.pop_write_cost(); s.m.pop_recon()
     assert torch.equal(lg, ref[0, -1].float())
     assert s.m.lesioned == set() and s.m.store_read_off is False
+    assert s.m.mem_off is False
     assert s.lesion_mode == "none"
 
 
-@pytest.mark.parametrize("mode", ["bands", "store"])
+@pytest.mark.parametrize("mode", ["bands", "store", "both"])
 def test_L2_commits_are_certified_under_any_switch(mode):
     base, cut = _session(), _session(mode=mode)
     _feed(base); _feed(cut)
@@ -108,33 +110,45 @@ def test_L2_commits_are_certified_under_any_switch(mode):
 def test_L3_switches_bite_on_the_read_path():
     base = _session(); _feed(base)
     lg_base = base._next_logits()
-    for mode in ("bands", "store"):
+    logits = {}
+    for mode in ("bands", "store", "both"):
         s = _session(mode=mode); _feed(s)
         with s.lesion_scope() as m:
-            if mode == "bands":
-                assert m.lesioned == set(m.bands)
-                assert m.store_read_off is False
-                mem = m._mem_tokens(s.st, 1).detach()
-                assert float(mem.abs().sum()) == 0.0
-            else:
-                assert m.lesioned == set()
-                assert m.store_read_off is True
-                mem = m._mem_tokens(s.st, 1).detach()
-                assert float(mem.abs().sum()) > 0.0
+            mem = float(m._mem_tokens(s.st, 1).detach().abs().sum())
+            if mode == "bands":       # thread off, stores on
+                assert m.mem_off is True and m.lesioned == set()
+                assert m.store_read_off is False and mem == 0.0
+            elif mode == "store":     # stores off, thread on
+                assert m.store_read_off is True and m.mem_off is False
+                assert m.lesioned == set() and mem > 0.0
+            else:                     # both: the amputation
+                assert m.lesioned == set(m.bands) and mem == 0.0
+                assert m.store_read_off is False and m.mem_off is False
         assert m.lesioned == set() and m.store_read_off is False
-        lg = s._next_logits()
-        assert not torch.equal(lg, lg_base), mode
+        assert m.mem_off is False
+        logits[mode] = s._next_logits()
+        assert not torch.equal(logits[mode], lg_base), mode
+    # the three removals are three different readings
+    assert not torch.equal(logits["bands"], logits["store"])
+    assert not torch.equal(logits["bands"], logits["both"])
     # the base's own memory tokens are live (the bands wrote state)
     assert float(base.m._mem_tokens(base.st, 1).detach().abs().sum()) > 0.0
 
 
 def test_L4_switch_never_outlives_a_forward_even_on_error():
-    s = _session(mode="bands")
+    s = _session(mode="both")
     with pytest.raises(RuntimeError):
         with s.lesion_scope() as m:
             assert m.lesioned == set(m.bands)
             raise RuntimeError("mid-read failure")
+    assert s.m.lesioned == set()
+    s.lesion("bands")
+    with pytest.raises(RuntimeError):
+        with s.lesion_scope() as m:
+            assert m.mem_off is True
+            raise RuntimeError("mid-read failure")
     assert s.m.lesioned == set() and s.m.store_read_off is False
+    assert s.m.mem_off is False
 
 
 def test_L5_modes_are_closed_and_logged():
@@ -145,5 +159,5 @@ def test_L5_modes_are_closed_and_logged():
     assert s.lesion("") == "none"
     kinds = [e for e in s.events if e["kind"] == "lesion"]
     assert [e["mode"] for e in kinds] == ["store", "none"]
-    assert set(LESION_MODES) == {"none", "bands", "store"}
+    assert set(LESION_MODES) == {"none", "bands", "store", "both"}
     assert s.panel()["lesion"] == "none"

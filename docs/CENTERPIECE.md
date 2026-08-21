@@ -15,9 +15,12 @@ within-run contrast; every bar below is fixed before the weights exist.
 > Switch the stores off with the bands on and it keeps the thread but
 > loses the facts — it juggles, and fails.
 
-The contrasts are switches that already exist in the forward pass
-(`model.lesioned`, `model.store_read_off`); with both off the model is
-bit-exact to the certified one. Nothing is retrained for a demo.
+The contrasts are read-path switches in the forward pass
+(`model.mem_off`, `model.store_read_off`, `model.lesioned`); with all
+off the model is bit-exact to the certified one. Nothing is retrained
+for a demo. Note the organ boundary: every band owns a state (its slow
+summary, read by the cortex as a memory token) AND a store (exact
+contextual memory). `lesioned` removes both; the demos separate them.
 
 ## The model (V10.1)
 
@@ -41,24 +44,27 @@ end-of-life band states and stores seeded from the flash, the certified
 serve loop (economy, presses, nightly sleep). Probes are score-only
 forwards on state copies; the committed stream is never perturbed.
 
-## Demo 1 — bands removed: in the moment
+## Demo 1 — bands removed (the slow thread off, stores on)
 
-`lesioned = {3,4,5,6}`: the four memory tokens are zeroed and the stores
-are not read. The cortex is alone with its 2048-token chunk.
+`mem_off = True`: the four memory tokens are zeroed; the stores are
+still read. The being keeps its exact contextual memory but loses the
+slow thread — the summaries at 2k / 16k / 131k / 1M tokens.
 
 Pre-registered expectation (the direction the organ program predicts;
 a miss is reported as a miss):
 
-| probe | base | bands off |
+| probe | base | thread off |
 |---|---|---|
-| recall at gaps beyond the chunk (b4, b5, b6 bins) | above chance | falls toward chance (20%) |
-| in-ctx / short recall | — | holds within the base's own CI (attention owns the chunk) |
-| press anticipation (prophet AUC) | > .5 | chance (the heads ride the bands) |
-| CE on held-out lives | — | rises by the lesion delta the battery reported in flight |
+| thread continuity (who / what the day has been about, judge-scored and name-counted) | held | falls |
+| recall at long gaps (b4, b5, b6 bins) | above chance | falls by what the band STATES carry beyond their stores (the battery's `lesion_thread` row is the in-flight estimate) |
+| in-ctx / short recall | — | holds within the base's own CI (attention and the stores own the chunk) |
+| CE on held-out lives | — | rises by the `lesion_thread` delta |
 
-The reel moment: a fact planted earlier in the day, asked after a long
-gap — the base answers; bands off, the being answers as if it had never
-heard it, while still speaking fluently about what is in front of it.
+The reel moment: the being is asked what the day has been about — the
+base tells the story; thread off, it answers from the sentence in front
+of it. (The prophet heads read the band states directly, so press
+anticipation is unchanged by any read-path switch; it is a diagnostic of
+the states, not a demo reading.)
 
 ## Demo 2 — contextual memory removed, bands active: juggles but fails
 
@@ -69,11 +75,17 @@ live; no store is read.
 |---|---|---|
 | exact recall of planted facts (in-ctx, short, b3) | above chance | falls toward chance — the identities live in the stores |
 | continuity of the thread (topic, counterparty, the day's shape — scored by the frozen judge on the reply) | held | held (the bands still carry the summary) |
-| press anticipation (prophet AUC) | > .5 | held |
 | CE | — | rises by the battery's `lesion_store` delta |
 
 The reel moment: asked the same fact, the being knows it was told and
 what the conversation was about, and reaches for the wrong name.
+
+## The fourth reading — both off (`lesioned = {3,4,5,6}`)
+
+Tokens and stores gone: the cortex alone with its 2048-token chunk, the
+in-the-moment extreme. Read beside the two demos on the same probe set;
+it bounds what the two organs carry together, and `both − store` is
+the band states' share when no store is there to lean on.
 
 ## Laws (inherited from [DEMO_PROTOCOL.md](DEMO_PROTOCOL.md))
 
@@ -92,10 +104,11 @@ what the conversation was about, and reaches for the wrong name.
 ## Go / no-go, read in flight
 
 The demos only show what the organs contribute if the organs are
-load-bearing. The battery reports `lesion_bands_all`, `lesion_store` and
-the per-band lesions every second beat, CE and recall-by-bin against the
-same base, on the H100 run (the mule's mini-flash carries the older
-battery: per-band CE lesions only). Decision rule:
+load-bearing. The battery reports `lesion_thread` (memory tokens off,
+stores on — Demo 1's organ), `lesion_store` (Demo 2's), `lesion_bands_all`
+(both) and the per-band lesions every second beat, CE and recall-by-bin
+against the same base, on the H100 run (the mule's mini-flash carries the
+older battery: per-band CE lesions only). Decision rule:
 
 - By the end of childhood (~35% of the life): a band lesion moves at
   least one long-gap bin or CE beyond the row-to-row noise → the demos
@@ -109,8 +122,8 @@ battery: per-band CE lesions only). Decision rule:
 
 | item | where | law |
 |---|---|---|
-| **BUILT 2026-08-21** — `lesion none|bands|store` in the serve room (`ServeSession.lesion`, `lesion_scope`; room command `lesion`): applies to replies and score-only probes, never to a commit, a sleep block or a save — the committed life stays the certified forward's, so the contrast is "same state, organ off" | `iga/lm_serve.py`, `scripts/live_room.py` | `tests/test_lm_serve_lesion.py` L1–L5: 'none' bit-exact; commits identical under any switch; switches bite on reads; flags never outlive a forward |
-| **BUILT 2026-08-21** — `scripts/demo_lesions.py`: seeded probe set (n per gap bin: in-ctx / short = 1 chunk / b4 = 8 chunks / b5 = 64), plants with neutral dialogue between plant and ask, then every fact read under the three conditions on the SAME committed state — greedy speech on a copy (never appended) + p_true; paired one-sided sign test base > removed per bin; thread-continuity read; evidence JSON, frozen `probe_set.json`, transcripts | `scripts/demo_lesions.py` | `tests/test_demo_lesions.py` D1–D5: seeded/frozen/disjoint set; gap invariant per bin; reads paired and silent; exact sign test; summary shape. Dry run on the 78M raised life before day one |
+| **BUILT 2026-08-21** — `lesion none|bands|store|both` in the serve room (`ServeSession.lesion`, `lesion_scope`; room command `lesion`): bands = `mem_off` (thread off, stores on), store = `store_read_off`, both = `lesioned` all; applies to replies and score-only probes, never to a commit, a sleep block or a save — the committed life stays the certified forward's, so the contrast is "same state, organ off" | `iga/lm_hybrid.py` (`mem_off`), `iga/lm_serve.py`, `scripts/live_room.py` | `tests/test_lm_serve_lesion.py` L1–L5: 'none' bit-exact; commits identical under any switch; the three switches are three different readings; flags never outlive a forward |
+| **BUILT 2026-08-21** — `scripts/demo_lesions.py`: seeded probe set (n per gap bin: in-ctx / short = 1 chunk / b4 = 8 chunks / b5 = 64), plants with neutral dialogue between plant and ask, then every fact read under the four conditions (none / bands / store / both) on the SAME committed state — greedy speech on a copy (never appended) + p_true; paired one-sided sign test base > removed per bin; thread-continuity read; evidence JSON, frozen `probe_set.json`, transcripts | `scripts/demo_lesions.py` | `tests/test_demo_lesions.py` D1–D5: seeded/frozen/disjoint set; gap invariant per bin; reads paired and silent; exact sign test; summary shape. Dry run on the 78M raised life before day one |
 | reel capture: the two moments above plus the base, as text transcripts first, video second | `results/evidence/v10_1_demo/` | nothing edited; full transcripts committed |
 | day-one growth chart: the flash's lesion rows plotted per bin over the life | `results/v10_1_flash/` | — |
 

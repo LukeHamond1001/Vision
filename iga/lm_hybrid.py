@@ -424,6 +424,11 @@ class HybridLM(nn.Module):
         # pass and ARM A replay run with this on; False = bit-exact
         # certified forward (L2).
         self.store_read_off = False
+        # CENTERPIECE (2026-08-21): the slow THREAD alone — every
+        # band's memory token zeroed while the stores stay readable.
+        # `lesioned` removes a band's token AND its store; this switch
+        # separates the two organs for the demos. False = bit-exact.
+        self.mem_off = False
         self._write_cost = None
         self._recon = None
 
@@ -465,7 +470,7 @@ class HybridLM(nn.Module):
         toks = []
         for k in self.bands:
             h = st["h"][k]
-            if k in self.lesioned:
+            if k in self.lesioned or getattr(self, "mem_off", False):
                 h = torch.zeros_like(h)
             toks.append(self.mem_proj[str(k)](h))
         return torch.stack(toks, dim=1)          # [B, M, d]

@@ -3,7 +3,7 @@ can sit with the life turn by turn: read what it says, think, and
 answer sentence by sentence. Commands arrive on <life>.inbox as
 "seq|cmd|payload" lines; results append to <life>.outbox as
 "seq|kind|text". Commands: say, press, sleep, lesion (none|bands|
-store — the centerpiece's removals, read path only), probe (a silent
+store|both — the centerpiece's removals, read path only), probe (a silent
 belief read — the parent glancing at the child's face), probe0
 (the weights-only read: fresh state, no pending — for day-to-day
 comparisons), state, save, quit.
@@ -118,7 +118,7 @@ def main():
                     out(n, "belief0",
                         f"{belief(nm, ob, co, bare=True):.4f}")
                 elif cmd == "lesion":
-                    # CENTERPIECE: none | bands | store — read path only
+                    # CENTERPIECE: none | bands | store | both — read path only
                     out(n, "lesion", s.lesion(payload))
                 elif cmd == "state":
                     out(n, "state", json.dumps(s.panel()))

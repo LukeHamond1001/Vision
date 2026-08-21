@@ -66,12 +66,17 @@ contribute; remove the contextual memory and show what it does"):
 | act | switch | headline class | n min |
 |---|---|---|---|
 | Act 1 base | none (bit-exact certified forward) | the probe set as lived | 20 per bin |
-| Act 2 bands removed | `model.lesioned = {3,4,5,6}` (memory tokens zeroed, stores unread) | recall at b4/b5/b6 vs base; prophet AUC vs base | 20 per bin |
+| Act 2 bands removed | `model.mem_off = True` (memory tokens zeroed, stores still read) | thread continuity vs base; recall at b4/b5/b6 vs base | 20 per bin |
 | Act 3 contextual memory removed, bands on | `model.store_read_off = True` | recall at in-ctx/short/b3 vs base; thread continuity (judge-scored) vs base | 20 per bin |
+| Act 4 both off | `model.lesioned = {3,4,5,6}` (tokens and stores) | the bound: recall and continuity vs base; `both − store` = the band states' share | 20 per bin |
 
 Bars: paired contrast on the same probe set and the same committed
 state, one-sided sign test p < 0.05 per headline bin; expected
 directions and the go/no-go read from the flash's lesion rows are in
-[CENTERPIECE.md](CENTERPIECE.md). The living-vs-frozen claim above is
+[CENTERPIECE.md](CENTERPIECE.md). (Amended the same evening, before
+launch: Act 2's switch is `mem_off`, not `lesioned` — `lesioned`
+removes a band's store as well as its state, which would have made
+Act 2 contain Act 3; the prophet heads read band states directly and
+are not a demo reading.) The living-vs-frozen claim above is
 unchanged and runs after the three acts. Design laws 1–3 apply to every
 act; the prohibited list applies verbatim.

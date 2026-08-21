@@ -34,17 +34,21 @@ horizons 2,048 / 16,384 / 131,072 / 1,048,576 tokens. Band 6 ticks ~600
 times per 5.1B-token life: the slowest thing in the organism that still
 learns.
 
-**Two lesion switches, both already in the forward pass:**
+**Three read-path switches in the forward pass** (every band owns a
+state — read by the cortex as a memory token — and a store):
 
-- `model.lesioned = {3,4,5,6}` — amputates the bands: their memory tokens
-  are zeroed AND their stores are no longer read. The cortex is alone with
-  its chunk. This is "bands removed" — the being in the moment.
-- `model.store_read_off = True` — the stores are not read, but the band
-  states and memory tokens stay live. The slow thread survives, the exact
-  facts do not. This is "contextual memory removed, bands active".
+- `model.mem_off = True` — the slow thread off: every band's memory
+  token is zeroed; the stores are still read. "Bands removed" (Demo 1).
+- `model.store_read_off = True` — the stores are not read; band states
+  and memory tokens stay live. "Contextual memory removed, bands
+  active" (Demo 2).
+- `model.lesioned = {3,4,5,6}` — the amputation: tokens AND stores of
+  those bands gone. The cortex alone with its chunk (the fourth reading;
+  per band, the battery's `lesion_b{k}` rows).
 
-With both off the forward is bit-exact to the certified model (law L2;
-`tests/`).
+With all off the forward is bit-exact to the certified model (law L2;
+`tests/`). The prophet heads read the band states directly and are
+unaffected by any of them.
 
 ## 2. The drive: presses, economy, sleep
 
@@ -115,9 +119,10 @@ warm-up walk:
 - Collapse (greedy and sampled distinct-3gram, entropy), cast incumbent
   mass and confidently-wrong prevalence, tail press audit against the
   frozen judge, prophet AUC.
-- **Lesions, every second beat:** each band alone, `lesion_bands_all`,
-  `lesion_store`, and `lesion_base` — CE delta and recall-by-bin under
-  each removal against the same base. These rows are the growth curve of
+- **Lesions, every second beat:** each band alone, `lesion_thread`
+  (tokens off, stores on), `lesion_store`, `lesion_bands_all` (both), and
+  `lesion_base` — CE delta and recall-by-bin under each removal against
+  the same base. These rows are the growth curve of
   the two demos: they say, in flight, what the bands and the stores are
   contributing and at which horizons.
 
