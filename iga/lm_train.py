@@ -270,6 +270,7 @@ def train(d=64, lanes=4, T=256, steps=40, seed=0, device="cpu",
           hold_cap=None, sleep=None, buttons=None, prophet=None,
           life=None, clocks=None, band_widths=None,
           tie_embed=False, dream=None, n_layers=6, ledger_cap=None,
+          attn="abs", qk_norm=False, band_lr_mult=1.0,
           lr_warmup=0, carry_state=None):
     """resume (A26): path to a checkpoint — model + optimizer + drive
     EMAs/records/minted/vetoes continue; step numbering continues.
@@ -324,6 +325,7 @@ def train(d=64, lanes=4, T=256, steps=40, seed=0, device="cpu",
     if arch == "transformer":
         from .lm_transformer import TransformerLM
         model = TransformerLM(vocab_size, d=d, max_T=T).to(device)
+        model_cfg = {"arch": "transformer", "d": d, "T": T}
     elif arch == "hybrid":
         from .lm_hybrid import HybridLM
         model = HybridLM(vocab_size, d=d, n_layers=n_layers, max_T=T,
@@ -333,7 +335,14 @@ def train(d=64, lanes=4, T=256, steps=40, seed=0, device="cpu",
                          read_drop=read_drop, gate_mode=gate_mode,
                          keyed=keyed, clocks=clocks,
                          band_widths=band_widths,
-                         tie_embed=tie_embed).to(device)
+                         tie_embed=tie_embed, attn=attn,
+                         qk_norm=qk_norm).to(device)
+        model_cfg = {"d": d, "n_layers": n_layers, "n_heads": 8, "T": T,
+                     "clocks": clocks, "band_widths": band_widths,
+                     "tie_embed": tie_embed, "attn": attn,
+                     "qk_norm": qk_norm, "store": store, "keyed": keyed,
+                     "norm_mix": norm_mix, "aux_trunk": aux_trunk,
+                     "use_xl": use_xl, "gate_init": gate_init}
         drive.bin_band = {0: 3, 1: 3, 2: 4, 3: 5}  # carry bands (A19)
         # A70: bands beyond the original ladder (6+) register their
         # horizons so sleep's replay cap and the prophet see them;
@@ -365,7 +374,22 @@ def train(d=64, lanes=4, T=256, steps=40, seed=0, device="cpu",
     # d=384 (4.4x params) is the lead suspect for v7.1's
     # gates-shut held-out bleed (circuit churn under updates
     # the loss barely notices)
-    opt = torch.optim.AdamW(model.parameters(), lr=lr)
+    # v10.1 gated candidate (2026-08-21): band_lr_mult > 1 gives the
+    # band organs (cells, their predictors, mem/read projections) their
+    # own AdamW group at lr * mult — a "boost" for the slow organs whose
+    # ticks are rare. Default 1.0 = one group, bit-exact.
+    if band_lr_mult and float(band_lr_mult) != 1.0:
+        band_pfx = ("cells.", "pred.", "mem_proj.", "read_q.")
+        bp = [p_ for n, p_ in model.named_parameters()
+              if n.startswith(band_pfx)]
+        rest = [p_ for n, p_ in model.named_parameters()
+                if not n.startswith(band_pfx)]
+        opt = torch.optim.AdamW(
+            [{"params": rest, "lr": lr, "base_lr": lr},
+             {"params": bp, "lr": lr * float(band_lr_mult),
+              "base_lr": lr * float(band_lr_mult)}], lr=lr)
+    else:
+        opt = torch.optim.AdamW(model.parameters(), lr=lr)
     step0 = 0
     if resume:
         state = torch.load(resume, map_location=device,
@@ -434,10 +458,10 @@ def train(d=64, lanes=4, T=256, steps=40, seed=0, device="cpu",
                 # untested-depth mitigation at 20L; 0 = bit-exact.
                 f *= step / lr_warmup
             for g in opt.param_groups:
-                g["lr"] = lr * f
+                g["lr"] = g.get("base_lr", lr) * f
         elif lr_warmup:
             for g in opt.param_groups:
-                g["lr"] = lr * min(step / lr_warmup, 1.0)
+                g["lr"] = g.get("base_lr", lr) * min(step / lr_warmup, 1.0)
         if read_drop_end is not None and hasattr(model, "read_drop"):
             # A39 bootstrap knob: linear read-dropout anneal — early
             # protection for induction, late oxygen for the store
@@ -524,7 +548,7 @@ def train(d=64, lanes=4, T=256, steps=40, seed=0, device="cpu",
                                 and n_now >= 20:
                             peval["best"] = recent
                             atomic_save({"model": model.state_dict(),
-                                         "step": step,
+                                         "step": step, "cfg": model_cfg,
                                          "same_recent": recent,
                                          # serve seeds its lane from the
                                          # banked moment's band states
@@ -542,6 +566,7 @@ def train(d=64, lanes=4, T=256, steps=40, seed=0, device="cpu",
         if ckpt and step % 500 == 0:
             atomic_save({"model": model.state_dict(),
                          "opt": opt.state_dict(), "step": step,
+                         "cfg": model_cfg,
                          "st": _st_tree(model._st,
                                         lambda t: t.detach().cpu()),
                          "peval_best": (peval or {}).get("best"),

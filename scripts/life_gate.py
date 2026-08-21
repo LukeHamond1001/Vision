@@ -54,8 +54,16 @@ LANES, T = 4, 256
 BUDGET = max(6_000_000, int(STEPS * LANES * T * 1.25))
 SEED = 7
 GATE = {"g1_chance_x": 2.0, "g2_min_probes": 50, "g3_min_pairs": 3}
-EVID = "results/evidence/v10_gates.json"
+# GATE_EPI=1 (2026-08-21): shards built with the v10.1 EPISODIC cast
+# (novel facts, quotas, retirement) into *_epi dirs; evidence file
+# kept separate so the v10 roster verdicts stay on record.
+EPI = os.environ.get("GATE_EPI", "0") == "1"
+SUF = "_epi" if EPI else ""
+EPI_CFG = {"n_asks": (2, 6)} if EPI else None
+EVID = f"results/evidence/v10_gates{SUF}.json"
 RAW = "data/v10_raw"
+BIO, CTRL, EVAL = (f"data/life_gate_bio{SUF}", f"data/life_gate_ctrl{SUF}",
+                   f"data/life_gate_eval{SUF}")
 
 
 def _sources(eval_mode=False):
@@ -79,28 +87,28 @@ def _sources(eval_mode=False):
 def build_shards():
     assert STEPS * LANES * T <= BUDGET, \
         "one-epoch law: the run must not wrap the shard"
-    tok_ref = "data/life_gate_bio/tokenizer.json"
-    man = "data/life_gate_bio/manifest.json"
+    tok_ref = f"{BIO}/tokenizer.json"
+    man = f"{BIO}/manifest.json"
     if os.path.exists(man):
         have = __import__("json").load(open(man))["total_tokens"]
         if have < BUDGET:
             import shutil
-            for d_ in ("data/life_gate_bio", "data/life_gate_ctrl"):
+            for d_ in (BIO, CTRL):
                 shutil.rmtree(d_, ignore_errors=True)
-    if not os.path.exists("data/life_gate_bio/manifest.json"):
-        prepare_life("data/life_gate_bio", BUDGET, LANES, seed=SEED,
+    if not os.path.exists(f"{BIO}/manifest.json"):
+        prepare_life(BIO, BUDGET, LANES, seed=SEED,
                      world_seed=99, vocab=16384,
-                     sources=_sources())
-    if not os.path.exists("data/life_gate_ctrl/manifest.json"):
-        prepare_life("data/life_gate_ctrl", BUDGET, LANES, seed=SEED,
+                     sources=_sources(), episodic=EPI_CFG)
+    if not os.path.exists(f"{CTRL}/manifest.json"):
+        prepare_life(CTRL, BUDGET, LANES, seed=SEED,
                      world_seed=99, vocab=16384,
                      tokenizer_path=tok_ref, sources=_sources(),
-                     shuffle_sessions=True)
-    if not os.path.exists("data/life_gate_eval/manifest.json"):
-        prepare_life("data/life_gate_eval", 1_500_000, 2, seed=101,
+                     shuffle_sessions=True, episodic=EPI_CFG)
+    if not os.path.exists(f"{EVAL}/manifest.json"):
+        prepare_life(EVAL, 1_500_000, 2, seed=101,
                      world_seed=999, vocab=16384,
                      tokenizer_path=tok_ref,
-                     sources=_sources(eval_mode=True))
+                     sources=_sources(eval_mode=True), episodic=EPI_CFG)
 
 
 def train_arm(tag, data, arch="hybrid", **kw):
@@ -138,7 +146,7 @@ BINS = [(1, 256, "in-ctx"), (257, 2048, "short"),
 def evaluate(model, arch="hybrid"):
     """Stream the eval shard: CE + probe accuracy binned by TRUE
     gap (closed set = answer + distractors)."""
-    conv = UltraConveyor("data/life_gate_eval", n_lanes=2)
+    conv = UltraConveyor(EVAL, n_lanes=2)
     model.eval()
     st = model.init_state(2, "cpu")
     ce_sum, ce_n = 0.0, 0
@@ -183,19 +191,22 @@ def main():
              "tf_bio", "tf_ctrl"] if ARMS == ["all"] else ARMS)
 
     runs = {
-        "bio": dict(data="data/life_gate_bio"),
-        "ctrl": dict(data="data/life_gate_ctrl"),
-        "a71": dict(data="data/life_gate_bio",
+        "bio": dict(data=BIO),
+        "ctrl": dict(data=CTRL),
+        "a71": dict(data=BIO,
                     band_widths={5: 2 * D}),
-        "a73": dict(data="data/life_gate_bio", splice=0.35),
-        "a74": dict(data="data/life_gate_bio", novelty=0.5),
-        "a75": dict(data="data/life_gate_bio", tie_embed=True),
-        "a77": dict(data="data/life_gate_bio",
+        # v10.1 gated candidates (2026-08-21)
+        "rope": dict(data=BIO, attn="rope", qk_norm=True),
+        "bandlr": dict(data=BIO, band_lr_mult=3.0),
+        "a73": dict(data=BIO, splice=0.35),
+        "a74": dict(data=BIO, novelty=0.5),
+        "a75": dict(data=BIO, tie_embed=True),
+        "a77": dict(data=BIO,
                     dream={"every_nights": 4, "n": 4, "max_new": 48,
                            "min_q": 0.55}),
-        "tf_bio": dict(data="data/life_gate_bio",
+        "tf_bio": dict(data=BIO,
                        arch="transformer"),
-        "tf_ctrl": dict(data="data/life_gate_ctrl",
+        "tf_ctrl": dict(data=CTRL,
                         arch="transformer"),
     }
     for tag in want:
@@ -241,7 +252,7 @@ def main():
     # attribution ban applies to organ deltas too; (2) the
     # cross-day bin (b5+) is IN the regression check — it is the
     # architecture's load-bearing bin, not an optional extra.
-    for organ in ("a71", "a73", "a74", "a75"):
+    for organ in ("a71", "a73", "a74", "a75", "rope", "bandlr"):
         if organ in a and "bio" in a:
             ce_o, ce_b = a[organ]["eval"]["ce"], a["bio"]["eval"]["ce"]
             ce_win = ce_o < ce_b * 0.99

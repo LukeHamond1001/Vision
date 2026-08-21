@@ -226,8 +226,15 @@ class HybridLM(nn.Module):
                  use_xl=True, gate_init=-4.0, read_drop=0.5,
                  gate_mode="scalar", keyed=None, norm_mix=False,
                  aux_trunk=0.0, clocks=None, band_widths=None,
-                 tie_embed=False):
+                 tie_embed=False, attn="abs", qk_norm=False):
         super().__init__()
+        # v10.1 gated candidates (2026-08-21): attn="rope" = decoupled
+        # rotary (text rows rotate by position, memory tokens stay
+        # position-free, no text position table); qk_norm = per-head
+        # RMS-normalized q/k. Defaults reproduce the certified model
+        # bit-exactly (same modules, names, RNG draw order).
+        self.attn_kind = attn
+        self.qk_norm = bool(qk_norm)
         self.d = d
         self.vocab_size = vocab_size
         self.max_T = max_T
@@ -267,9 +274,19 @@ class HybridLM(nn.Module):
             self.band_w.update({int(k): int(v)
                                 for k, v in band_widths.items()})
         self.embed = nn.Embedding(vocab_size, d)
-        self.pos = nn.Embedding(max_T + len(self.bands), d)
-        self.blocks = nn.ModuleList(
-            [Block(d, n_heads) for _ in range(n_layers)])
+        if attn == "rope":
+            from .lm_transformer import RotaryBlock
+            # memory slots keep a learned tag; text carries no table
+            self.pos = nn.Embedding(len(self.bands), d)
+            self.blocks = nn.ModuleList(
+                [RotaryBlock(d, n_heads, n_mem=len(self.bands),
+                             qk_norm=self.qk_norm)
+                 for _ in range(n_layers)])
+        else:
+            assert not self.qk_norm, "qk_norm requires attn='rope'"
+            self.pos = nn.Embedding(max_T + len(self.bands), d)
+            self.blocks = nn.ModuleList(
+                [Block(d, n_heads) for _ in range(n_layers)])
         self.lnf = nn.LayerNorm(d)
         self.head = nn.Linear(d, vocab_size)
         # A75 (gated): weight tying — head shares the embedding
@@ -450,8 +467,11 @@ class HybridLM(nn.Module):
         dev = tokens.device
         M = len(self.bands)
         mem = self._mem_tokens(st, B)
-        x = self.embed(tokens) + self.pos(
-            torch.arange(M, M + T, device=dev))[None]
+        if self.attn_kind == "rope":
+            x = self.embed(tokens)            # position lives in rotary
+        else:
+            x = self.embed(tokens) + self.pos(
+                torch.arange(M, M + T, device=dev))[None]
         mem = mem + self.pos(torch.arange(M, device=dev))[None]
         x = torch.cat([mem, x], dim=1)           # [B, M+T, d]
         # causal over text; every text position may attend all memory;
