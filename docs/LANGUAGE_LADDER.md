@@ -4245,3 +4245,100 @@ one, the final state is still on the volume and a cheap attached pod
 exports it. Serve-room day-one protocol: seed the single served lane
 from the served checkpoint's own lane-0 state (both demo copies get
 the same seed — within-run contrasts hold).
+
+## 2026-08-21 — THE QUADRATIC SLEEP (throughput 16k -> 7.3k tok/s)
+
+The 36000 battery landed clean (tail 0/121, eval CE 2.43 on the new
+5.1M walk — a new baseline, not comparable with the 819k-walk rows),
+but the train log's tok/s — a cumulative mean since segment start —
+was sliding 15.9k -> 13.7k -> 12.0k inside segment 36000-42000.
+Differencing the 100-step rows gave an INSTANTANEOUS rate of ~9k at
+step 41k and ~7.3k by 41.8k: the pod was spending more time in Python
+than on the GPU. Cause, read from the code and reproduced locally:
+maybe_sleep (every 32 steps in childhood) calls harvest_presses, which
+scanned drive.presses FROM INDEX 0 every call and kept every positive
+press's span alive until the final window filter, so each negative
+press re-filtered a list growing ~20/step. Presses/step measured on
+the gate shard: 21, ~5% negative -> ~10 x steps^2 comparisons per
+sleep: 0.43 s at 1000 steps, 2.6 s at 2500, 11 s at 5000 on a fast
+core (x2-3 on the pod's vCPU) = ~30 s of CPU every 32 steps by
+mid-segment, ~1 s/step of dead GPU. The Drive is rebuilt per 6000-step
+segment, so the cost reset each battery and the early-childhood
+figures looked fine; seg 1 of the bundle pod (2500 steps) averaged
+14.4k, seg 2 would have averaged ~11k and ended near 7k. Projected
+cost of leaving it: ~+33 h, ~+$110, and every later segment the same.
+FIX (exact, not approximate): both scans start at the first press
+that can still touch the sleeper's buffer window. A span survives the
+final filter only if t1 >= start + MIN_REPLAY; a negative can only
+void spans minted by EARLIER presses, which sit within T of it, so
+nothing before start + MIN_REPLAY - T can change the result; the void
+test is per-span independent, so dropping doomed spans early changes
+nothing; voiding runs per lane and the surviving list is re-sorted
+into dispatch order (the replay lottery's RNG path is unchanged).
+_press_lo walks back from the end until t < t_min - T — sound because
+presses are dispatched step by step over disjoint increasing ranges
+(exact at any T >= the widest chunk; serve flushes are narrower).
+harvest_pairs starts at start + 1 (a negative at tw <= start breaks
+before pairing). LAW: tests/test_lm_sleep_harvest.py compares spans,
+pairs and consumed-press sets against the pre-fix bodies verbatim on
+step-dispatched random streams across window placements, with and
+without skip sets — bit-identical (45 cases). Timing after: ~60 ms at
+1000, 2500, 5000 and 6000 steps — flat. Suite 205/205.
+DEPLOY: kill the bundle pod after the 42000 row (a lesion beat) and
+relaunch warm from the 42000 checkpoint at this commit, which also
+carries the end-of-life-state bank (603dce6).
+
+## 2026-08-21 — THE BOOT THAT FORGOT (heartbeat history wiped each restart)
+
+The results-v10 branch carried ONE battery row after the 11:50
+restart. pod_v10.sh boots with `git reset --hard origin/main` while
+the clone sits on results-v10, where HEARTBEAT.log / hb_v10.jsonl /
+v10_driver.jsonl were force-added — the reset deleted them every
+boot. Consequence: the battery's history-dependent checks ran blind
+after each restart; the 36000 row said "distinct3 0.129 below floor,
+not contracting" when the true series is 0.165 (24000) -> 0.251
+(24500) -> 0.207 (30000) -> 0.129 (36000): a two-row contraction.
+Rows recovered from the force-pushed-away commits via the activity
+API and committed as results/v10_flash/hb_v10.jsonl (24000, 24500
+KILL-under-the-superseded-meter, 30000, 36000). Boot now keeps the
+three logs on the volume across the reset and merges the ledger copy
+into hb_v10.jsonl by step, so no restart forgets the run.
+
+## 2026-08-21 — 36000 READING AND THE DISTINCT3 JUDGMENT (WARN, not kill)
+
+What the row says: eval CE 2.43 (5.1M walk: eval-infancy + 65% of
+eval-childhood; childhood's gap menu tops at 24k so b5/b6 stay empty
+BY CONSTRUCTION until the walk reaches eval-adolescence at 7.0M —
+walk extension scheduled for the childhood->adolescence boundary
+~step 108k, when the binder milestone makes long bins meaningful);
+in-ctx 20.1% / short 19.4% / b3 16.9% / b4 15.4% = unarmed (chance
+20%, milestone 40%); cast p_true none .43 / pos1 .43 / pos2 .31 (facts
+entering the weights; pos2 lowest because the correction episodes'
+WRONG answers live there too — confident_wrong_frac 10.4%, the A67
+axis now measurable; watch its trend); tail audit 0/121; prophet AUC
+band 3 = 0.44 (spectating, not yet predictive); training CE falling
+1.95 -> 1.76 across seg 1 and 1.65-1.93 at 41k; fid:3 .99 / fid:4 .97
+/ fid:5 -.017 / fid:6 +.015 (5 and 6 still the uninterrupted-
+accumulation question — first warm restart happened at 33500).
+The greedy distinct3 contraction (0.25 -> 0.13) is the one reading
+that "doesn't look right". Why it is a WARN and not a kill today:
+the measure is greedy argmax decoding of a 590M-token model, a
+regime where every undertrained LM loops (neural text degeneration
+is a decoder property); the disease the criterion was written for
+is ENTROPY collapse, which greedy distinct3 cannot separate from
+decoder loops; meanwhile CE on the stream falls, facts are being
+absorbed, and the tail audit is clean — not a collapse picture. What
+would make it a kill: the same contraction under SAMPLING with the
+next-token entropy falling while CE stalls. The collapse probe now
+carries both (distinct3_sampled at temperature 1, fixed seed; mean
+next-token entropy along the greedy path; shakedown: greedy 0.024 vs
+sampled 1.00 at entropy 8.07 nats on the toy model — exactly the
+contrast the instrument exists to draw). Pre-registered for 48000:
+KILL if distinct3_sampled < 0.50 AND entropy fell >= 15% from 48000's
+own baseline at 54000 with eval CE not falling; a tail-audit kill
+stays automatic. Also noted for the ledger: A76 homeostasis (x0.999
+per sleep, every 32 steps) compounds to x0.70 across childhood's
+~11.5k steps so far absent gradient counter-pressure — an equivalent
+decoupled weight decay of ~3e-5/step (AdamW wd ~0.8 at this lr);
+certified at debug, flagged here as the first suspect if sampled
+diversity contracts.

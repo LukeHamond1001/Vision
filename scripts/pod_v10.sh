@@ -27,10 +27,40 @@ mkdir -p "$W" "$OUT" && cd "$W"
 [ -d Vision ] || git clone --depth 1 \
   https://github.com/LukeHamond1001/Vision.git
 cd Vision
+# RUN LOGS SURVIVE BOOTS (2026-08-21): the reset below runs on the
+# results-v10 branch where HEARTBEAT.log / hb_v10.jsonl /
+# v10_driver.jsonl were force-added, so every boot DELETED them —
+# the battery's history checks (CE rise over 3 rows, distinct3
+# contraction over 2) ran blind after each restart (36000 read
+# "not contracting" with 0.251 -> 0.207 -> 0.129 lost). Keep copies
+# on the volume across the reset, and seed the battery history from
+# the ledger copy on main (rows recovered from force-pushed-away
+# commits) so no restart forgets the run.
+KEEP=$OUT/keep; mkdir -p "$KEEP"
+for f in HEARTBEAT.log hb_v10.jsonl v10_driver.jsonl; do
+  [ -f "$f" ] && cp -f "$f" "$KEEP/$f"
+done
 git fetch -q origin main && git reset --hard -q origin/main
 PUSH="https://x-access-token:${GIT_TOKEN}@github.com/LukeHamond1001/Vision.git"
 git config user.email "pod@Vision"; git config user.name "iga-pod"
 git checkout -B results-v10
+for f in HEARTBEAT.log hb_v10.jsonl v10_driver.jsonl; do
+  [ -f "$KEEP/$f" ] && cp -f "$KEEP/$f" "$f"
+done
+python - <<'EOF_SEED'
+import json, os
+rows = {}
+for src in ("results/v10_flash/hb_v10.jsonl", "hb_v10.jsonl"):
+    if os.path.exists(src):
+        for l in open(src):
+            l = l.strip()
+            if l:
+                r = json.loads(l); rows[r["step"]] = r
+if rows:
+    with open("hb_v10.jsonl", "w") as f:
+        for k in sorted(rows):
+            f.write(json.dumps(rows[k]) + "\n")
+EOF_SEED
 
 hb() {
   echo "$(date -u '+%H:%M:%S') $1" >> HEARTBEAT.log

@@ -280,6 +280,25 @@ class Sleeper:
                       - max(s["t0"], self.start)
                       >= MIN_REPLAY][-MAX_SPANS:]
 
+    @staticmethod
+    def _press_lo(ps, t_min, T):
+        """Smallest index i0 such that EVERY press before i0 has
+        t < t_min. Presses are dispatched step by step: each step's
+        presses occupy [step_t, step_t + T) (lanes concatenated, so
+        the list is t-sorted only at step granularity) and steps
+        advance by T. Walking back from the end, the first press
+        with t < t_min - T closes the question: anything earlier
+        sits in the same step (t < its step start + T <= that
+        press's t + T < t_min) or an earlier one (t < that step
+        start <= that press's t). O(window), exact, no assumption
+        beyond step-ordered dispatch (serve flush chunks are shorter
+        than T, never longer)."""
+        j = len(ps) - 1
+        lim = t_min - T
+        while j >= 0 and ps[j]["t"] >= lim:
+            j -= 1
+        return j + 1
+
     def harvest_presses(self, drive, span_w=512, void_w=None,
                         skip=None):
         """A65 serve-time pay — the A61 payer problem's designed
@@ -294,11 +313,29 @@ class Sleeper:
         the old coupling. Replaces self.spans (serve mode); the
         training-time harvest() is untouched. skip (A68): press
         indices consumed by correction pairs — they neither mint a
-        wide CE span nor void (their whole effect is the pair)."""
+        wide CE span nor void (their whole effect is the pair).
+        v10 FLASH SLOWDOWN FIX (2026-08-21): the scan used to start
+        at press 0 and keep every positive span of the segment
+        alive until the final window filter, so each negative press
+        re-filtered a list growing 20/step — cost ~10 x steps^2 per
+        sleep, ~30 s by step 5000 of a segment (throughput 16k ->
+        8.8k tok/s). Now the scan starts at the first press that
+        can still touch the buffer window and voids per lane. A
+        span survives the final filter only if t1 >= start +
+        MIN_REPLAY, and a negative can only void a span minted by
+        an EARLIER press (t < its own t + T), so nothing before
+        t_min = start + MIN_REPLAY - T can change the result; the
+        void test is per-span independent, so dropping doomed
+        spans early changes nothing. Output is bit-identical
+        (law test: tests/test_lm_sleep_harvest.py)."""
         if void_w is None:
             void_w = span_w
-        spans = []
-        for i, p in enumerate(drive.presses):
+        ps = drive.presses
+        T = self.T or span_w
+        by_lane = {}
+        for i in range(self._press_lo(ps, self.start + MIN_REPLAY - T, T),
+                       len(ps)):
+            p = ps[i]
             if skip and i in skip:
                 continue
             if p["v"] > 0:
@@ -306,15 +343,20 @@ class Sleeper:
                 # the span's final CE target, so replay also teaches
                 # PREDICTING the press ("this exchange earns <+2>"):
                 # approval understanding from real presses only
-                spans.append({"lane": p["lane"],
-                              "t0": max(0, p["t"] - span_w),
-                              "t1": p["t"] + 1, "pay": float(p["v"]),
-                              "i": -(i + 1)})
+                by_lane.setdefault(p["lane"], []).append(
+                    {"lane": p["lane"],
+                     "t0": max(0, p["t"] - span_w),
+                     "t1": p["t"] + 1, "pay": float(p["v"]),
+                     "i": -(i + 1)})
             else:
-                spans = [s for s in spans
-                         if not (s["lane"] == p["lane"]
-                                 and s["t0"] < p["t"]
-                                 and p["t"] - void_w < s["t1"])]
+                lane_spans = by_lane.get(p["lane"])
+                if lane_spans:
+                    t, lo = p["t"], p["t"] - void_w
+                    by_lane[p["lane"]] = [s for s in lane_spans
+                                          if not (s["t0"] < t
+                                                  and lo < s["t1"])]
+        spans = [s for ls in by_lane.values() for s in ls]
+        spans.sort(key=lambda s: -s["i"])     # dispatch order, as before
         self.spans = [s for s in spans
                       if min(s["t1"], self.end)
                       - max(s["t0"], self.start) >= MIN_REPLAY]
@@ -368,7 +410,12 @@ class Sleeper:
         if self.buffers is None:
             return used
         ps = drive.presses
-        for i, p in enumerate(ps):
+        # v10 slowdown fix: a negative at tw <= start can never pair
+        # (the window test below breaks on it), so the scan starts at
+        # the first press that can lie inside the window — exact.
+        for i in range(self._press_lo(ps, self.start + 1,
+                                      self.T or u_cap), len(ps)):
+            p = ps[i]
             if p["v"] >= 0 or i in used:
                 continue
             for j in range(i + 1, len(ps)):

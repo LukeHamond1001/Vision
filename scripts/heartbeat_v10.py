@@ -133,26 +133,51 @@ def probe_ce_recall(m, eval_dir, T, chunks, lesion=None):
 @torch.no_grad()
 def probe_collapse(m, tok, T):
     """Greedy 64-token continuations of fixed prompts; the collapse
-    signature is distinct-3gram contraction."""
-    ratios = []
+    signature is distinct-3gram contraction. 36000 AMENDMENT
+    (2026-08-21): greedy distinct3 alone cannot tell entropy
+    collapse (the disease) from greedy degeneration (a decoding
+    artifact every undertrained LM shows — Holtzman 2019); the row
+    now also carries distinct3 under temperature-1 sampling (fixed
+    seed) and the mean next-token entropy along the greedy path.
+    Collapse = sampled diversity AND entropy contracting together;
+    greedy loops with healthy entropy are the decoder, not the
+    model. Verdict logic unchanged (greedy floor, WARN)."""
     dev = next(m.parameters()).device
-    for ptxt in PROMPTS:
+    gen = torch.Generator(device="cpu").manual_seed(0)
+
+    def run(ptxt, sample):
         ids = tok.encode(ptxt).ids[-(T - 70):]
         st = m.init_state(1, dev)
-        out = []
+        out, ents = [], []
         x = torch.tensor([ids], device=dev)
         for _ in range(64):
             lg, st, _ = m(x, st, None)
             m.pop_write_cost()
             m.pop_recon()
             st = m.detach_state(st)
-            nxt = int(lg[0, -1].argmax())
+            logits = lg[0, -1].float()
+            if sample:
+                pr = torch.softmax(logits, -1).cpu()
+                nxt = int(torch.multinomial(pr, 1, generator=gen))
+            else:
+                lp = torch.log_softmax(logits, -1)
+                ents.append(float(-(lp.exp() * lp).sum()))
+                nxt = int(logits.argmax())
             out.append(nxt)
             x = torch.tensor([[nxt]], device=dev)
-        if len(out) >= 3:
-            grams = [tuple(out[i:i + 3]) for i in range(len(out) - 2)]
-            ratios.append(len(set(grams)) / len(grams))
-    return round(sum(ratios) / len(ratios), 4)
+        grams = [tuple(out[i:i + 3]) for i in range(len(out) - 2)]
+        return len(set(grams)) / len(grams), ents
+
+    greedy, sampled, ents = [], [], []
+    for ptxt in PROMPTS:
+        r, e = run(ptxt, False)
+        greedy.append(r)
+        ents.extend(e)
+        r, _ = run(ptxt, True)
+        sampled.append(r)
+    return {"distinct3": round(sum(greedy) / len(greedy), 4),
+            "distinct3_sampled": round(sum(sampled) / len(sampled), 4),
+            "entropy": round(sum(ents) / len(ents), 4)}
 
 
 @torch.no_grad()
@@ -292,8 +317,9 @@ def main():
 
     ce, recall = probe_ce_recall(m, a.eval_data, a.T, a.chunks)
     rows.append({"probe": "ce_recall", "ce": ce, "recall": recall})
-    d3 = probe_collapse(m, tok, a.T)
-    rows.append({"probe": "collapse", "distinct3": d3})
+    col = probe_collapse(m, tok, a.T)
+    d3 = col["distinct3"]
+    rows.append({"probe": "collapse", **col})
     cast = probe_cast(m, tok, manifest)
     # A67's incumbent DISEASE is conviction that resists CORRECTION —
     # it cannot exist before corrections have been experienced. Stamp
