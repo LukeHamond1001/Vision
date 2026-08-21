@@ -1,54 +1,3 @@
-lane4 maintain fid:5          target 0.20 phi0 0.86 band 5 due 36874240
-lane4 frontier recall:b2      target 1.05 phi0 0.05 band 4 due 36874240
-lane4 frontier recall:b1      target 1.05 phi0 0.05 band 3 due 36866048
-lane4 frontier recall:b0      target 1.05 phi0 0.05 band 3 due 36866048
-lane5 maintain fid:5          target 0.20 phi0 0.86 band 5 due 36874240
-lane5 frontier recall:b2      target 1.05 phi0 0.05 band 4 due 36874240
-lane5 frontier recall:b1      target 1.05 phi0 0.05 band 3 due 36866048
-lane5 frontier recall:b0      target 1.05 phi0 0.05 band 3 due 36866048
-lane6 maintain fid:5          target 0.20 phi0 0.86 band 5 due 36874240
-lane6 frontier recall:b2      target 1.05 phi0 0.05 band 4 due 36874240
-lane6 frontier recall:b1      target 1.05 phi0 0.05 band 3 due 36866048
-lane6 frontier recall:b0      target 1.05 phi0 0.05 band 3 due 36866048
-lane7 maintain fid:5          target 0.20 phi0 0.86 band 5 due 36874240
-lane7 frontier recall:b2      target 1.05 phi0 0.05 band 4 due 36874240
-lane7 frontier recall:b1      target 1.05 phi0 0.05 band 3 due 36866048
-lane7 frontier recall:b0      target 1.05 phi0 0.05 band 3 due 36866048
-record   fid:3          0.998 (ema 0.990)
-record   fid:4          0.930 (ema 0.930)
-record   fid:5          0.028 (ema 0.028)
-record   fid:6          0.044 (ema 0.021)
-record   recall:b0      1.000 (ema 1.000)
-record   recall:b1      1.000 (ema 1.000)
-record   recall:b2      1.000 (ema 0.999)
-SEG {"seg": 1, "from": 12500, "to": 18000, "stage": "infancy", "every": 0, "ce_first": 1.3397, "ce_last": 1.3391, "pairs": 0, "sleep_steps": 0, "pair_law_ok": true, "hot_pairs": 0, "minted": 3, "vetoes": 19128, "ledger": 94160, "prophet_auc": {}, "secs": 8219}
-Traceback (most recent call last):
-  File "/workspace/w-v10/Vision/scripts/heartbeat_v10.py", line 346, in <module>
-    main()
-  File "/workspace/w-v10/Vision/scripts/heartbeat_v10.py", line 336, in main
-    os.makedirs(os.path.dirname(a.out), exist_ok=True)
-  File "<frozen os>", line 225, in makedirs
-FileNotFoundError: [Errno 2] No such file or directory: ''
-heartbeat crashed rc=1 (1/3)
-resumed /workspace/v10_out/v10.pt at step 18000 (ema keys: ['fid:3', 'fid:4', 'fid:5', 'fid:6', 'recall:b0', 'recall:b1', 'recall:b2'])
-step 18100  ce 1.152  loss 1.436  holds 1688  16,220 tok/s  [fid:3=+0.992 fid:4=+0.931 fid:5=+0.028 fid:6=+0.021 b0=+0.999 b1=+0.998 b2=+0.999]
-step 18200  ce 1.230  loss 1.528  holds 3400  12,567 tok/s  [fid:3=+0.993 fid:4=+0.932 fid:5=+0.028 fid:6=+0.020 b0=+0.999 b1=+1.000 b2=+0.999]
-step 18300  ce 1.574  loss 1.943  holds 5112  12,532 tok/s  [fid:3=+0.994 fid:4=+0.934 fid:5=+0.028 fid:6=+0.020 b0=+1.000 b1=+1.000 b2=+0.998]
-PLAN {"lanes": 8, "life_len": 637763310, "total_steps": 311000, "total_tokens": 5095424000, "lam": 0.01875, "bounds": [["infancy", 24500], ["childhood", 108500], ["adolescence", 227000], ["tail", 311000]], "ladder": {"infancy": 0, "childhood": 32, "adolescence": 16, "tail": 16}, "segments": 55}
-resuming at step 18000
-resumed /workspace/v10_out/v10.pt at step 18000 (ema keys: ['fid:3', 'fid:4', 'fid:5', 'fid:6', 'recall:b0', 'recall:b1', 'recall:b2'])
-/usr/local/lib/python3.11/dist-packages/torch/utils/checkpoint.py:1399: FutureWarning: `torch.cpu.amp.autocast(args...)` is deprecated. Please use `torch.amp.autocast('cpu', args...)` instead.
-  with device_autocast_ctx, torch.cpu.amp.autocast(**cpu_autocast_kwargs), recompute_context:  # type: ignore[attr-defined]
-step 18100  ce 1.155  loss 1.438  holds 1688  12,563 tok/s  [fid:3=+0.995 fid:4=+0.835 fid:5=+0.028 fid:6=+0.021 b0=+0.996 b1=+0.963 b2=+0.747]
-step 18200  ce 1.234  loss 1.293  holds 3400  12,615 tok/s  [fid:3=+0.998 fid:4=+0.765 fid:5=+0.027 fid:6=+0.021 b0=+0.988 b1=+0.990 b2=+0.910]
-step 18300  ce 1.576  loss 1.614  holds 5112  12,686 tok/s  [fid:3=+0.998 fid:4=+0.728 fid:5=+0.026 fid:6=+0.021 b0=+0.965 b1=+0.971 b2=+0.919]
-step 18400  ce 1.143  loss 1.437  holds 6824  12,077 tok/s  [fid:3=+0.998 fid:4=+0.710 fid:5=+0.026 fid:6=+0.021 b0=+0.982 b1=+0.961 b2=+0.932]
-step 18500  ce 1.162  loss 1.445  holds 8536  12,150 tok/s  [fid:3=+0.998 fid:4=+0.707 fid:5=+0.026 fid:6=+0.021 b0=+0.947 b1=+0.985 b2=+0.921]
-step 18600  ce 1.222  loss 1.529  holds 10248  11,577 tok/s  [fid:3=+0.994 fid:4=+0.714 fid:5=+0.026 fid:6=+0.021 b0=+0.997 b1=+0.993 b2=+0.993]
-step 18700  ce 1.337  loss 1.376  holds 11960  11,689 tok/s  [fid:3=+0.990 fid:4=+0.727 fid:5=+0.026 fid:6=+0.021 b0=+0.984 b1=+0.999 b2=+0.986]
-step 18800  ce 0.990  loss 1.243  holds 13672  11,543 tok/s  [fid:3=+0.989 fid:4=+0.747 fid:5=+0.027 fid:6=+0.021 b0=+0.997 b1=+0.999 b2=+0.991]
-step 18900  ce 1.046  loss 1.083  holds 15392  11,649 tok/s  [fid:3=+0.990 fid:4=+0.767 fid:5=+0.027 fid:6=+0.021 b0=+0.995 b1=+0.999 b2=+0.998]
-step 19000  ce 1.105  loss 1.149  holds 17096  11,542 tok/s  [fid:3=+0.988 fid:4=+0.790 fid:5=+0.027 fid:6=+0.021 b0=+1.000 b1=+0.997 b2=+0.998]
 step 19100  ce 1.114  loss 1.151  holds 18816  11,478 tok/s  [fid:3=+0.990 fid:4=+0.809 fid:5=+0.028 fid:6=+0.020 b0=+0.993 b1=+0.999 b2=+0.996]
 step 19200  ce 1.083  loss 1.352  holds 20520  11,407 tok/s  [fid:3=+0.990 fid:4=+0.829 fid:5=+0.028 fid:6=+0.020 b0=+0.999 b1=+0.997 b2=+0.997]
 step 19300  ce 1.207  loss 1.498  holds 22240  11,479 tok/s  [fid:3=+0.989 fid:4=+0.846 fid:5=+0.028 fid:6=+0.020 b0=+0.997 b1=+0.999 b2=+0.966]
@@ -98,3 +47,54 @@ step 23100  ce 0.980  loss 1.220  holds 87312  11,221 tok/s  [fid:3=+0.995 fid:4
 step 23200  ce 1.099  loss 1.136  holds 89024  11,245 tok/s  [fid:3=+0.996 fid:4=+0.957 fid:5=+0.036 fid:6=+0.016 b0=+1.000 b1=+0.999 b2=+0.994]
 step 23300  ce 1.260  loss 1.297  holds 90736  11,266 tok/s  [fid:3=+0.996 fid:4=+0.958 fid:5=+0.036 fid:6=+0.016 b0=+0.998 b1=+1.000 b2=+0.999]
 step 23400  ce 0.887  loss 1.106  holds 92448  11,251 tok/s  [fid:3=+0.996 fid:4=+0.958 fid:5=+0.036 fid:6=+0.016 b0=+0.999 b1=+0.998 b2=+0.981]
+step 23500  ce 1.214  loss 1.251  holds 94160  11,271 tok/s  [fid:3=+0.997 fid:4=+0.959 fid:5=+0.036 fid:6=+0.016 b0=+1.000 b1=+0.999 b2=+0.999]
+step 23600  ce 0.841  loss 1.053  holds 95872  11,233 tok/s  [fid:3=+0.997 fid:4=+0.959 fid:5=+0.036 fid:6=+0.016 b0=+0.999 b1=+0.995 b2=+0.999]
+step 23700  ce 0.783  loss 0.979  holds 97592  11,253 tok/s  [fid:3=+0.997 fid:4=+0.959 fid:5=+0.036 fid:6=+0.016 b0=+0.998 b1=+1.000 b2=+0.989]
+step 23800  ce 1.091  loss 1.128  holds 99296  11,243 tok/s  [fid:3=+0.997 fid:4=+0.960 fid:5=+0.036 fid:6=+0.016 b0=+1.000 b1=+0.994 b2=+1.000]
+step 23900  ce 1.081  loss 1.116  holds 101016  11,264 tok/s  [fid:3=+0.997 fid:4=+0.960 fid:5=+0.036 fid:6=+0.016 b0=+0.998 b1=+0.998 b2=+0.999]
+step 24000  ce 0.814  loss 1.018  holds 102720  11,256 tok/s  [fid:3=+0.997 fid:4=+0.960 fid:5=+0.036 fid:6=+0.016 b0=+0.993 b1=+0.999 b2=+0.998]
+    holdout(cum): {'same': [0.086, 0.09, 2784], 'straddle': [0.069, 0.07, 1024]}
+    same(recent 979 probes): 0.089
+    best banked @ 24000 (0.089)
+audit: {'holds': 102720, 'telescoping_exact': True, 'scoped': True, 'vetoes': 19128, 'proposed': 102752, 'presses': 651930, 'press_vetoes': 0, 'voided_zero': True}
+panel:
+lane0 maintain fid:5          target 0.20 phi0 0.82 band 5 due 49186816
+lane0 frontier recall:b2      target 1.05 phi0 0.05 band 4 due 49154048
+lane0 frontier recall:b1      target 1.05 phi0 0.05 band 3 due 49154048
+lane0 frontier recall:b0      target 1.05 phi0 0.05 band 3 due 49154048
+lane1 maintain fid:5          target 0.20 phi0 0.82 band 5 due 49186816
+lane1 frontier recall:b2      target 1.05 phi0 0.05 band 4 due 49154048
+lane1 frontier recall:b1      target 1.05 phi0 0.05 band 3 due 49154048
+lane1 frontier recall:b0      target 1.05 phi0 0.05 band 3 due 49154048
+lane2 maintain fid:5          target 0.20 phi0 0.82 band 5 due 49186816
+lane2 frontier recall:b2      target 1.05 phi0 0.05 band 4 due 49154048
+lane2 frontier recall:b1      target 1.05 phi0 0.05 band 3 due 49154048
+lane2 frontier recall:b0      target 1.05 phi0 0.05 band 3 due 49154048
+lane3 maintain fid:5          target 0.20 phi0 0.82 band 5 due 49186816
+lane3 frontier recall:b2      target 1.05 phi0 0.05 band 4 due 49154048
+lane3 frontier recall:b1      target 1.05 phi0 0.05 band 3 due 49154048
+lane3 frontier recall:b0      target 1.05 phi0 0.05 band 3 due 49154048
+lane4 maintain fid:5          target 0.20 phi0 0.82 band 5 due 49186816
+lane4 frontier recall:b2      target 1.05 phi0 0.05 band 4 due 49154048
+lane4 frontier recall:b1      target 1.05 phi0 0.05 band 3 due 49154048
+lane4 frontier recall:b0      target 1.05 phi0 0.05 band 3 due 49154048
+lane5 maintain fid:5          target 0.20 phi0 0.82 band 5 due 49186816
+lane5 frontier recall:b2      target 1.05 phi0 0.05 band 4 due 49154048
+lane5 frontier recall:b1      target 1.05 phi0 0.05 band 3 due 49154048
+lane5 frontier recall:b0      target 1.05 phi0 0.05 band 3 due 49154048
+lane6 maintain fid:5          target 0.20 phi0 0.82 band 5 due 49186816
+lane6 frontier recall:b2      target 1.05 phi0 0.05 band 4 due 49154048
+lane6 frontier recall:b1      target 1.05 phi0 0.05 band 3 due 49154048
+lane6 frontier recall:b0      target 1.05 phi0 0.05 band 3 due 49154048
+lane7 maintain fid:5          target 0.20 phi0 0.82 band 5 due 49186816
+lane7 frontier recall:b2      target 1.05 phi0 0.05 band 4 due 49154048
+lane7 frontier recall:b1      target 1.05 phi0 0.05 band 3 due 49154048
+lane7 frontier recall:b0      target 1.05 phi0 0.05 band 3 due 49154048
+record   fid:3          0.998 (ema 0.997)
+record   fid:4          0.960 (ema 0.960)
+record   fid:5          0.036 (ema 0.036)
+record   fid:6          0.044 (ema 0.016)
+record   recall:b0      1.000 (ema 0.993)
+record   recall:b1      1.000 (ema 0.999)
+record   recall:b2      1.000 (ema 0.998)
+SEG {"seg": 1, "from": 18000, "to": 24000, "stage": "infancy", "every": 0, "ce_first": 1.4094, "ce_last": 0.8135, "pairs": 0, "sleep_steps": 0, "pair_law_ok": true, "hot_pairs": 0, "minted": 3, "vetoes": 19128, "ledger": 102720, "prophet_auc": {}, "secs": 8961}
