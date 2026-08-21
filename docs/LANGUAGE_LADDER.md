@@ -4194,3 +4194,21 @@ mismatch > 1% (plumbing integrity), three consecutive battery crashes
 (blind). Committed without a restart (each restart now drops the
 unreplayed sleep pool); goes live at the next restart or the
 childhood->adolescence boundary.
+
+## 2026-08-21 — WARM RESTART: BAND STATES RIDE THE CHECKPOINT
+
+Six cold restarts in 13 hours (plumbing fixes + one host death) had
+kept band 6 — one tick per 512 steps — from ever accumulating more
+than ~8.5k uninterrupted steps; fid:5 went negative and fid:6 drifted
+down across the restarts. The earlier argument against saving band
+states (the <=500-step rewind would misalign them) was wrong: the
+checkpoint and the live states are snapshotted at the SAME step, so
+restoring both is exactly consistent — only the data between save and
+crash replays. lm_train now stores the detached CPU band-state tree
+under "st" in every 500-step checkpoint; resume restores it unless a
+live carry_state (in-process seam) is handed in; legacy checkpoints
+resume cold. Law test: structure + no-grad + warm-vs-legacy evolutions
+differ + live carry wins. Suite 117/117. SCOPE: the Sleeper's replay
+buffers/spans/pairs are NOT serialized (a larger, riskier change);
+the unreplayed pool still drops on restart. Deploys at the next
+restart together with the kill demotion.

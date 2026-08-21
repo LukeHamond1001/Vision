@@ -2570,6 +2570,56 @@ class TestFlashDriverLaws(unittest.TestCase):
         self.assertEqual(a.shape, b.shape)
         self.assertFalse(torch.equal(a, b))
 
+    def test_warm_restart_restores_band_states(self):
+        import os, tempfile
+        from iga.lm_train import _st_tree
+        def leaves(st, out=None):
+            out = [] if out is None else out
+            if torch.is_tensor(st):
+                out.append(st.reshape(-1).float())
+            elif isinstance(st, dict):
+                for k in sorted(st):
+                    leaves(st[k], out)
+            elif isinstance(st, (list, tuple)):
+                for v in st:
+                    leaves(v, out)
+            return out
+        with tempfile.TemporaryDirectory() as td:
+            ck = os.path.join(td, "w.pt")
+            m0, *_ = self._train(steps=500, n_layers=1, ckpt=ck)
+            blob = torch.load(ck, map_location="cpu", weights_only=False)
+            # the checkpoint carries the band states, detached, on CPU,
+            # shaped like the live ones
+            self.assertIn("st", blob)
+            saved = leaves(blob["st"])
+            # (the save fires mid-iteration; the returned live state is
+            # the end of that iteration — a pending band buffer may
+            # differ, so equality is not the law; structure and
+            # behavior are)
+            self.assertGreater(len(saved), 0)
+            self.assertEqual(set(blob["st"]), set(m0._st))
+            for t in saved:
+                self.assertFalse(t.requires_grad)
+                self.assertEqual(t.device.type, "cpu")
+            # legacy checkpoint (no "st") resumes cold; the warm one
+            # enters with the saved states — the two evolutions differ
+            legacy = {k: v for k, v in blob.items() if k != "st"}
+            lk = os.path.join(td, "legacy.pt")
+            torch.save(legacy, lk)
+            def core(st):   # the persistent integrators (pend is
+                return torch.cat(leaves({"h": st["h"],   # transient)
+                                         "acc": st["acc"]}))
+            mw, *_ = self._train(steps=1, n_layers=1, resume=ck)
+            mc, *_ = self._train(steps=1, n_layers=1, resume=lk)
+            a, b = core(mw._st), core(mc._st)
+            self.assertEqual(a.shape, b.shape)
+            self.assertFalse(torch.equal(a, b))
+            # a live carry_state still wins over the checkpoint's
+            carried = _st_tree(blob["st"], lambda t: t.clone() * 0 + 1)
+            mk, *_ = self._train(steps=1, n_layers=1, resume=ck,
+                                 carry_state=carried)
+            self.assertFalse(torch.equal(core(mk._st), a))
+
     def test_judge_stage_threshold_freeze(self):
         import copy
         from iga import lm_judge as J

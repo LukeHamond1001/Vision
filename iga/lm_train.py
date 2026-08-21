@@ -29,6 +29,22 @@ def atomic_save(obj, path):
     torch.save(obj, tmp)
     os.replace(tmp, path)
 
+
+def _st_tree(obj, fn):
+    """Map fn over every tensor in a band-state tree (dict/list/tuple
+    of tensors, None leaves pass through) — the warm-restart
+    serializer (2026-08-21): a checkpoint and the live band states are
+    snapshotted at the SAME step, so restoring both together is exactly
+    consistent; only the data between the save and the crash replays."""
+    if torch.is_tensor(obj):
+        return fn(obj)
+    if isinstance(obj, dict):
+        return {k: _st_tree(v, fn) for k, v in obj.items()}
+    if isinstance(obj, (list, tuple)):
+        out = [_st_tree(v, fn) for v in obj]
+        return out if isinstance(obj, list) else tuple(out)
+    return obj
+
 from .lm_conveyor import Vocab, Conveyor, splits
 from .lm_bands import BandLM
 from .lm_drive import Drive
@@ -365,6 +381,16 @@ def train(d=64, lanes=4, T=256, steps=40, seed=0, device="cpu",
         drive.step_t = step0 * T
         print(f"resumed {resume} at step {step0} "
               f"(ema keys: {sorted(drive.ema)})", flush=True)
+        # WARM RESTART (2026-08-21): six cold restarts in 13h had kept
+        # band 6 (one tick per 512 steps) from ever accumulating more
+        # than ~8.5k steps of state. A live carry_state (in-process
+        # segment seam) wins; otherwise the checkpoint's own states,
+        # saved at this same step, are restored. Legacy checkpoints
+        # without "st" resume cold as before.
+        if carry_state is None and state.get("st") is not None:
+            model._st = _st_tree(state["st"], lambda t: t.to(device))
+            print("warm resume: band states restored from checkpoint",
+                  flush=True)
     peval = None
     if data and eval_data:
         from .lm_data_ultrachat import UltraConveyor as _UC
@@ -504,6 +530,8 @@ def train(d=64, lanes=4, T=256, steps=40, seed=0, device="cpu",
         if ckpt and step % 500 == 0:
             atomic_save({"model": model.state_dict(),
                          "opt": opt.state_dict(), "step": step,
+                         "st": _st_tree(model._st,
+                                        lambda t: t.detach().cpu()),
                          "peval_best": (peval or {}).get("best"),
                          "drive": {"ema": drive.ema,
                                    "records": drive.records,
