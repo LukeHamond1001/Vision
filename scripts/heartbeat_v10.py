@@ -342,12 +342,35 @@ def main():
         # the fixed walk-length offset (0.1804) swamped the real
         # deltas identically for all four bands
         small = max(a.chunks // 4, 50)
-        ce_b, _ = probe_ce_recall(m, a.eval_data, a.T, small)
+        ce_b, rec_b = probe_ce_recall(m, a.eval_data, a.T, small)
+
+        def _racc(rec):
+            return {k: v["acc"] for k, v in rec.items()}
         for k in sorted(m.bands):
-            ce_l, _ = probe_ce_recall(m, a.eval_data, a.T, small,
-                                      lesion=(k,))
+            ce_l, rec_l = probe_ce_recall(m, a.eval_data, a.T, small,
+                                          lesion=(k,))
             rows.append({"probe": f"lesion_b{k}",
-                         "ce_delta": round(ce_l - ce_b, 4)})
+                         "ce_delta": round(ce_l - ce_b, 4),
+                         "recall": _racc(rec_l)})
+        # the DEMO's organs (2026-08-21, user's three acts): Act 2 =
+        # all bands off (in-the-moment), Act 3 = the STORE off with the
+        # bands on (the slow thread without the facts). Both measured
+        # on every lesion beat, CE and recall, against the same base.
+        ce_l, rec_l = probe_ce_recall(m, a.eval_data, a.T, small,
+                                      lesion=tuple(m.bands))
+        rows.append({"probe": "lesion_bands_all",
+                     "ce_delta": round(ce_l - ce_b, 4),
+                     "recall": _racc(rec_l)})
+        m.store_read_off = True
+        try:
+            ce_l, rec_l = probe_ce_recall(m, a.eval_data, a.T, small)
+        finally:
+            m.store_read_off = False
+        rows.append({"probe": "lesion_store",
+                     "ce_delta": round(ce_l - ce_b, 4),
+                     "recall": _racc(rec_l)})
+        rows.append({"probe": "lesion_base", "ce": round(ce_b, 4),
+                     "recall": _racc(rec_b)})
     if isinstance(blob, dict) and "sleeper" in blob:
         rows.append({"probe": "pruned_unharvested",
                      "n": blob["sleeper"].get("pruned_unharvested",

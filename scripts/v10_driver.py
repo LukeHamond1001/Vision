@@ -55,7 +55,11 @@ from iga.lm_press import PressProphet           # noqa: E402
 from iga.lm_sleep import Sleeper                # noqa: E402
 from iga.lm_train import train                  # noqa: E402
 
-LADDER = {"infancy": 0, "childhood": 32, "adolescence": 16,
+# 2026-08-21 (user): childhood at 1:16 — the certified dose (A62 1:16,
+# A76 H=1e-3 at every=16) on a trunk ~400M tokens old; A64-R3's
+# collapse was a FRESH trunk at 1:4. Sleep replays press-paid spans =
+# binder practice. Infancy stays sleepless (A64-R3).
+LADDER = {"infancy": 0, "childhood": 16, "adolescence": 16,
           "tail": 16}
 CKPT_CADENCE = 500          # lm_train saves at step % 500 == 0
 HB_EVERY = 6000             # heartbeat cadence in steps (~2.7h)

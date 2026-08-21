@@ -24,7 +24,9 @@ the v10 diet did not teach it.
   (same JUDGE_VERSION, thresholds, density targets).
 - lr 4e-5, warmup 2000, cosine on the global step; lam from the bf16
   smoke's holds/step (A60f product 0.25); ledger_cap 200k; sleep ladder
-  infancy 0 / childhood 32 / adol+tail 16, ARM C, block 2, A76 H=1e-3,
+  infancy 0 / childhood 16 / adol+tail 16 (user 2026-08-21; A62 1:16 +
+  A76 certified at every=16; infancy sleepless per A64-R3), ARM C,
+  block 2, A76 H=1e-3,
   press_pay (T, T//8). Demoted kill policy stands (WARN lines; auto-
   stops: non-finite loss, tail audit >1%, dead instruments).
 - Battery: HB_EVERY 6000 / 2500-chunk walk / lesions every 2nd beat
@@ -142,3 +144,15 @@ Budget: $64 spent + ~$1 + ~$5 + ~$180 = ~$250.
   stability at 20L; (4) sliding-window + bands as the purest division
   of labor (ablation); (5) GQA/MLA irrelevant at our KV sizes.
   (1) ships (certified); (2)+(3) only on a debug win; (4) later.
+
+## Addenda (2026-08-21 evening, user)
+- The demo's three acts are the lesions: Act 1 the being as lived;
+  Act 2 bands OFF -> in-the-moment (lesion_bands_all); Act 3 store
+  OFF with bands on -> juggles but fails (lesion_store). The battery
+  now reports both on every lesion beat, CE and recall-by-bin, against
+  the same base (lesion_base). The bands must be load-bearing for any
+  of this to show: the mini-flash's lesion rows are the go/no-go.
+- Sleep ladder: childhood moved to 1:16 (certified dose on a mature
+  trunk; infancy stays sleepless). Cost ~6% wall-clock.
+- Gated band boosts (A71 width, band_lr 3x) get a mini-flash of their
+  own only if the baseline mini-flash shows the bands engaging.
