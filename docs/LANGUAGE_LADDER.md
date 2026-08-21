@@ -4144,3 +4144,36 @@ and two-row rule are unchanged. Lesion deltas now use a same-size
 base. The kill did its job: it stopped the run, forced the diagnosis,
 and the instruments came out truer. Rule kept: amendments to
 pre-registered criteria are ledgered with evidence BEFORE relaunch.
+
+## 2026-08-21 — AMENDMENTS #2 AND #3: TWO MORE METERS THAT WOULD HAVE KILLED A HEALTHY CHILD
+
+The 30,000 battery (first of childhood; verdict ok) showed eval CE
+1.554 -> 1.245, in-ctx recall 17.0% -> 22.2%, distinct3 0.165 ->
+0.207, tail audit 0/121, ~200 corrections lived per life. Reading its
+rows against the kill code showed two criteria that would fire at the
+36,000 battery regardless of health:
+
+#2 INCUMBENT (again). Amendment #1 fixed the ARMING; the statistic
+   itself is max-over-~96-facts false mass, which reads 0.992 with
+   p_true class means of .20-.36 — i.e. two-thirds of facts have some
+   wrong color on top, so the max is ~1.0 by construction until the
+   being recalls the ENTIRE cast perfectly from a cold start. That is
+   a graduation criterion, not a disease detector. Replaced by
+   PREVALENCE: confident_wrong_frac = fraction of cast facts with a
+   false color >= 0.90 beating the truth; KILL iff >= 0.90 on two
+   armed rows (>= 16 lived corrections). A working correction pathway
+   drives prevalence DOWN; a broken one leaves it at ~1. Max-mass
+   stays as telemetry.
+#3 COLLAPSE. Floor 0.35 on greedy distinct-3gram, armed at frac>=0.10
+   (36,000 crosses it). Greedy argmax decoding of a healthy small
+   model loops; the reading ROSE 0.165 -> 0.207 while eval CE FELL —
+   expansion, the opposite of the docstring's own definition
+   ("contraction"). Code now matches the definition: KILL iff below
+   floor AND lower than both previous rows; below-floor-but-not-
+   contracting is a warn in the row.
+
+Unchanged: thresholds, the two-row rules, tail audit, CE divergence.
+Also noted: gap_flat and prophet constants are declared but never
+wired to a kill (no trap; growth-chart warns cover them). Suite
+116/116. Ledgered before relaunch at step ~33,000 (<=500 steps cost)
+rather than letting a guaranteed false KILL spend a bank cycle.

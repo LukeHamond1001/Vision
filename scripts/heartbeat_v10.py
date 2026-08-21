@@ -41,6 +41,7 @@ KILL = {
     "prophet_auc_floor": 0.55, "prophet_after_frac": 0.5,
     # conviction disease: max false-belief mass on cast facts
     "incumbent_mass": 0.90, "incumbent_rows": 2,
+    "confident_wrong_frac": 0.90,   # prevalence, not max (2026-08-21 #2)
     # babble: distinct-3gram ratio floor on fixed prompts
     "collapse_distinct3_floor": 0.35,
     # correction collateral (the A68-T S3 lesson): allies of
@@ -188,8 +189,17 @@ def probe_cast(m, tok, manifest):
         by_cls.setdefault(r["cls"], []).append(r["p_true"])
     cls_mean = {k: round(sum(v) / len(v), 4)
                 for k, v in by_cls.items()}
+    # A67's disease at population level: the FRACTION of cast facts
+    # where a false color holds >= KILL["incumbent_mass"] AND beats
+    # the truth. The max over ~96 facts saturates at ~1.0 for any
+    # softmax model (the 30000 row: 0.992 with p_true class means of
+    # .20-.36) — only prevalence can fall as corrections land.
+    cw = sum(1 for r in rows
+             if r["p_max_false"] > r["p_true"]
+             and r["p_max_false"] >= KILL["incumbent_mass"])
     return {"n_facts": len(rows),
             "incumbent_mass": round(incumbent, 4),
+            "confident_wrong_frac": round(cw / len(rows), 4),
             "class_mean_p_true": cls_mean}
 
 
@@ -321,24 +331,42 @@ def main():
     verdict, why = "ok", []
     frac = (a.tokens / a.total_tokens) if (a.total_tokens > 0
                                            and a.tokens > 0) else 1.0
-    if d3 < KILL["collapse_distinct3_floor"] and frac >= 0.10:
-        # armed only past infancy — every infant babbles
+    # collapse = distinct-3gram CONTRACTION (the docstring's own
+    # definition): below the floor AND lower than both previous rows.
+    # Amendment #3 (2026-08-21, ledgered): greedy argmax decoding of a
+    # healthy small model loops (0.165 -> 0.207 while eval CE FELL
+    # 1.55 -> 1.25 — expansion, not collapse); a level-only floor at
+    # frac>=0.10 would have killed the 36000 battery on an artifact.
+    prev_d3 = [r["distinct3"] for h in hist[-2:] for r in h.get("rows", [])
+               if r.get("probe") == "collapse"]
+    contracting = len(prev_d3) >= 2 and all(d3 < x for x in prev_d3)
+    if d3 < KILL["collapse_distinct3_floor"] and frac >= 0.10 \
+            and contracting:
         verdict, why = "KILL", why + [f"collapse distinct3 {d3}"]
+    elif d3 < KILL["collapse_distinct3_floor"] and frac >= 0.10:
+        why = why + [f"warn: distinct3 {d3} below floor, not contracting"]
     # incumbent kill ARMS only once >=16 corrections have been lived
     # (2026-08-21 amendment, ledgered: the raw max-over-facts mass is
     # ~1.0 from birth for any softmax model — the 07:45 KILL fired on
     # a meter that saturates before its disease can exist; history
     # rows lacking n_corr_seen never count toward the kill)
-    if cast.get("n_corr_seen", 0) >= 16 and \
-            cast.get("incumbent_mass", 0) >= KILL["incumbent_mass"]:
+    # amendment #2 (ledgered): the statistic is PREVALENCE of
+    # confidently-wrong cast facts — >= 90% of the cast confidently
+    # wrong after >= 16 lived corrections, two armed rows running, is
+    # a broken correction pathway. The max-mass field stays as
+    # telemetry; rows lacking confident_wrong_frac never count.
+    cwf = cast.get("confident_wrong_frac")
+    if cast.get("n_corr_seen", 0) >= 16 and cwf is not None and \
+            cwf >= KILL["confident_wrong_frac"]:
         n_bad = 1 + sum(1 for h in hist[-KILL["incumbent_rows"]:]
                         for r in h.get("rows", [])
                         if r.get("probe") == "cast" and
                         r.get("n_corr_seen", 0) >= 16 and
-                        r.get("incumbent_mass", 0)
-                        >= KILL["incumbent_mass"])
+                        r.get("confident_wrong_frac") is not None and
+                        r["confident_wrong_frac"]
+                        >= KILL["confident_wrong_frac"])
         if n_bad >= KILL["incumbent_rows"]:
-            verdict, why = "KILL", why + ["incumbent mass"]
+            verdict, why = "KILL", why + ["confident-wrong prevalence"]
     ta = rows[3]
     if ta.get("mismatch") is not None and \
             ta["mismatch"] > KILL["tail_audit_mismatch"]:
