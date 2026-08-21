@@ -81,6 +81,19 @@ def load_model(a):
     sd = blob.get("model", blob) if isinstance(blob, dict) else blob
     cfg = blob.get("cfg", {}) if isinstance(blob, dict) else {}
     tok = load_tokenizer(os.path.join(a.data, "tokenizer.json"))
+    if cfg.get("arch") == "scan":
+        # the one-token organism (iga/lm_scan.py): clocks in tokens
+        from iga.lm_scan import ScanLM
+        m = ScanLM(tok.get_vocab_size(), d=cfg["d"],
+                   n_layers=cfg["n_layers"], n_heads=cfg.get("n_heads", 8),
+                   max_T=cfg["T"],
+                   clocks={int(k): v for k, v in cfg["clocks"].items()},
+                   aux_trunk=cfg.get("aux_trunk", 0.2),
+                   gate_init=cfg.get("gate_init", -2.0),
+                   mlp=cfg.get("mlp", "gelu"), **cfg.get("scan", {}))
+        m.load_state_dict(sd, strict=True)
+        m.eval()
+        return m, tok, blob
     m = HybridLM(
         tok.get_vocab_size(), d=cfg.get("d", a.d),
         n_layers=cfg.get("n_layers", a.n_layers),
@@ -154,7 +167,11 @@ def probe_collapse(m, tok, T):
     gen = torch.Generator(device="cpu").manual_seed(0)
 
     def run(ptxt, sample):
-        ids = tok.encode(ptxt).ids[-(T - 70):]
+        # the prompt keeps the last T-70 tokens at the flash's T=2048;
+        # at a short window (the scan's T=64) keep the last T//2 so the
+        # slice is never empty (an empty prompt was a FloatTensor crash)
+        keep = T - 70 if T > 140 else max(1, T // 2)
+        ids = tok.encode(ptxt).ids[-keep:]
         st = m.init_state(1, dev)
         out, ents = [], []
         x = torch.tensor([ids], device=dev)

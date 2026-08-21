@@ -148,6 +148,18 @@ def main():
     # content-keyed store (2026-08-21, docs/MEMORY_MATH.md): "hidden" keys
     # the store on the trunk's hidden; "logit" = the certified token mix
     ap.add_argument("--keyed", default="logit", choices=["logit", "hidden"])
+    # THE ONE-TOKEN ORGANISM (2026-08-21, iga/lm_scan.py): --arch scan
+    # with --clocks in TOKENS; --scan-order cortex_first|pfc_first;
+    # --lanes overrides one-life-per-lane (the per-token scan needs
+    # batch: 32 lanes x T=64 tokens per step) — each life is then cut
+    # into lanes/n_lives contiguous pieces and the stage bounds scale
+    ap.add_argument("--arch", default="hybrid", choices=["hybrid", "scan"])
+    ap.add_argument("--scan-order", default="cortex_first",
+                    choices=["cortex_first", "pfc_first"])
+    # extra ScanLM kwargs as JSON, e.g. '{"n_council": 2, "slot_every": 8,
+    # "write_every": 4}' (docs/ONE_TOKEN_PLAN.md: one knob per iteration)
+    ap.add_argument("--scan-opts", default="")
+    ap.add_argument("--lanes", type=int, default=0)
     # band repair (docs/MEMORY_MATH.md 5): credit routing, centred
     # fidelity, the tail memory token; 0/0/0 = certified bit-exactly
     ap.add_argument("--band-credit", type=int, default=0)
@@ -166,6 +178,18 @@ def main():
     lanes = manifest["n_lives"]
     life_len = manifest["life_len"]
     bounds, total = stage_step_bounds(manifest, a.T)
+    if a.lanes and a.lanes != lanes:
+        # lanes/n_lives pieces per life: a lane holds life_len x
+        # n_lives / lanes tokens; every bound scales the same way
+        f = lanes / a.lanes
+        life_len = int(life_len * f)
+        total = int(total * f) // CKPT_CADENCE * CKPT_CADENCE
+        bounds = [(n, min(int(b * f) // CKPT_CADENCE * CKPT_CADENCE, total))
+                  for n, b in bounds]
+        bounds[-1] = (bounds[-1][0], total)
+        lanes = a.lanes
+        print(f"LANES override: {lanes} lanes ({manifest['n_lives']} lives), "
+              f"{life_len:,} tokens per lane, {total} steps")
     true_total = total          # probe arming uses the REAL life
     if a.max_steps:             # length even under a shakedown cap
         total = min(total, a.max_steps // CKPT_CADENCE
@@ -184,6 +208,11 @@ def main():
     if a.clocks:
         clocks = {int(kv.split(":")[0]): int(kv.split(":")[1])
                   for kv in a.clocks.split(",") if kv}
+    scan_opts = None
+    if a.arch == "scan":
+        scan_opts = {"order": a.scan_order}
+        if a.scan_opts:
+            scan_opts.update(json.loads(a.scan_opts))
     plan = {"lanes": lanes, "life_len": life_len,
             "total_steps": total,
             "total_tokens": total * a.T * lanes, "lam": lam,
@@ -192,6 +221,7 @@ def main():
             "attn": a.attn, "qk_norm": str(a.qk_norm) == "1",
             "band_lr_mult": a.band_lr_mult, "mlp": a.mlp,
             "clock_mult": a.clock_mult, "clocks": clocks, "keyed": a.keyed,
+            "arch": a.arch, "scan_order": a.scan_order, "scan": scan_opts,
             "band_credit": a.band_credit, "band_center": a.band_center,
             "tail_tokens": a.tail_tokens,
             "hb_every": a.hb_every,
@@ -203,7 +233,11 @@ def main():
     sl = Sleeper(arm="C", every=0, block_chunks=2, seed=1,
                  homeostasis=1e-3)
     sl.press_pay = (a.T, a.T // 8)
-    prophet = PressProphet(d=a.d, clocks=clocks,
+    # the prophet samples band states by CHUNK clocks; the scan's
+    # clocks are in tokens
+    pclocks = ({k: max(1, c // a.T) for k, c in clocks.items()}
+               if a.arch == "scan" else clocks)
+    prophet = PressProphet(d=a.d, clocks=pclocks,
                            holdout_frac=0.1, device=a.device)
 
     cur = 0
@@ -225,7 +259,8 @@ def main():
         model, drive, vocab, ce0, ce1 = train(
             d=a.d, n_layers=a.n_layers, lanes=lanes, T=a.T,
             steps=end - cur, seed=1000 + seg_i, device=a.device,
-            arch="hybrid", store="matrix", keyed=a.keyed,
+            arch=a.arch, store="matrix", keyed=a.keyed,
+            scan=scan_opts,
             norm_mix=True, aux_trunk=0.2, use_xl=False,
             gate_init=-2.0, clocks=clocks,
             data=a.data, eval_data=a.eval_data, ckpt=a.ckpt,

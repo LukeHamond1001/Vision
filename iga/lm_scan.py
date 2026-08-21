@@ -30,9 +30,18 @@ decision):
         over the interval; h_k <- (1-g)h_k + g tanh(W[h_k; pooled]),
         g = sigmoid(z) * prod_{j!=k}(1 - veto_{j->k});
         pend_k = pred_k(h_k); fid_k = cos(pend_k(prev), pooled - mu)
-order="pfc_first" (the user's stricter variant, gated beside it): the
-council runs on the raw embedding, the bands write, and the trunk sees
-ONLY the council's token slot (no band slots) before the head.
+order="pfc_first" (the user's design, ratified 2026-08-21: all input
+goes into the PFC; the PFC outputs one bundle of embeddings; the rest
+of the neocortex makes the decision): the council (PFC) runs on the
+raw embedding with the band and hippocampus slots, the bands write,
+and the trunk (neocortex) queries with the council's token slot over
+the WHOLE council bundle S'_t as its key/value slots at every layer —
+it never sees e_t directly.
+
+Precision law (the user's: bf16 for the neocortex, 32 bit for the
+PFC): only the trunk blocks run under bf16 autocast; the council, the
+cells, the vetoes, the predictors, the band states, the store, the head
+and the loss are fp32 in both orders.
 
 Store writes once per chunk (T tokens): key_t = proj(c'_{t-1}), value
 = identity of x_t, the A38 two-pass credit unchanged; reads see the
@@ -178,7 +187,15 @@ class ScanLM(nn.Module):
                  for k in self.bands})
             self.veto_b = nn.ParameterDict(
                 {str(k): nn.Parameter(torch.tensor(-4.0)) for k in self.bands})
-        self.register_buffer("band_mu", torch.zeros(d))
+        # band_center, PER BAND (2026-08-21 fix): each band's fidelity
+        # target is its own council slot pooled over the interval, so the
+        # centring mean must be that slot's running mean — one row per
+        # band, seeded by the first tick, EMA 0.99 per tick afterwards.
+        # (A single mean of the cortex output left a per-band constant in
+        # the target and saturated fid at +0.999: no learning signal.)
+        nb = max(self.bands) + 1
+        self.register_buffer("band_mu", torch.zeros(nb, d))
+        self.register_buffer("band_mu_n", torch.zeros(nb))
         # the hippocampus: the certified content-keyed identity store,
         # capacity per band doubling up the ladder; half-life in WRITES
         # (one write per chunk) = the band's clock in chunks
@@ -254,11 +271,13 @@ class ScanLM(nn.Module):
         S' [B, 2+K, d] after the exchange."""
         S = torch.cat([c.unsqueeze(1), r.unsqueeze(1), m], dim=1)
         S = S + self.slot.weight[None, : S.shape[1]]
+        # the PFC is fp32 always (precision law); autocast is switched
+        # OFF here so a bf16 trunk never pulls the council with it
         with torch.autocast(device_type=dev.type, dtype=torch.bfloat16,
-                            enabled=self.autocast_bf16):
+                            enabled=False):
             for b in self.council:
                 S = b(S, None)
-        return S.float() if self.autocast_bf16 else S
+        return S
 
     def _trunk(self, e, slots, dev):
         x = e.unsqueeze(1)
@@ -316,8 +335,10 @@ class ScanLM(nn.Module):
                 S = self._council(c, r_slot, m, dev)
                 c_out = S[:, 0]
             else:
+                # PFC first: the council deliberates on the raw token;
+                # the neocortex decides from the PFC's bundle alone
                 S = self._council(e, r_slot, m, dev)
-                c_out = self._trunk(S[:, 0], None, dev)
+                c_out = self._trunk(S[:, 0], S[:, 1:], dev)
             cs.append(c_out)
             if (t + 1) % self.slot_every == 0 and t + 1 < T:
                 # the hippocampus, queried by what the council concluded
@@ -333,7 +354,17 @@ class ScanLM(nn.Module):
                 st["cnt"][k] += 1
                 if st["tok"] % self.clocks[k] == 0:
                     pooled = st["acc"][k] / max(st["cnt"][k], 1)
-                    target = pooled - self.band_mu if self.band_center else pooled
+                    target = pooled
+                    if self.band_center:
+                        target = pooled - self.band_mu[k]
+                        if self.training:
+                            with torch.no_grad():
+                                pm = pooled.detach().mean(0)
+                                if self.band_mu_n[k] == 0:
+                                    self.band_mu[k] = pm
+                                else:
+                                    self.band_mu[k].mul_(0.99).add_(0.01 * pm)
+                                self.band_mu_n[k] += 1
                     if st["pend"][k] is not None:
                         fid = nn.functional.cosine_similarity(
                             st["pend"][k], target, dim=-1)
@@ -372,9 +403,6 @@ class ScanLM(nn.Module):
         if wcost:
             self._write_cost = torch.stack(wcost).mean()
         self._veto_mean = {k: float(torch.stack(v).mean()) for k, v in vetoes.items() if v}
-        if self.band_center and self.training:
-            with torch.no_grad():
-                self.band_mu.mul_(0.99).add_(0.01 * C.detach().mean(dim=(0, 1)))
         # ---- the carried band graphs (A38): the last write of each band
         # that ticked, recomputed through cloned params on detached
         # inputs, so the next chunk's CE and fidelity can credit it

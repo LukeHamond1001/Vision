@@ -22,11 +22,21 @@
   S6  Write cadence: M changes only every write_every chunks; after a
       write it carries one write-op of graph for exactly the first
       reading chunk, then reads a detached M.
-  S7  pfc_first: same API; the deep trunk sees no band slot — band
-      removal changes logits only through the council.
+  S7  pfc_first (the user's design): same API; the neocortex's query
+      is the PFC's token slot and its key/value slots are the rest of
+      the PFC bundle — it never receives the raw embedding or the raw
+      band states; band removal changes logits only through the PFC.
   S8  train() runs end to end in fp32 and bf16 (states, stores and
       logits stay fp32 under bf16); arch, clocks and the scan options
       ride the checkpoint cfg; horizons = clocks in tokens.
+  S10 band_center is per band: each band's centring mean is the running
+      mean of ITS OWN council slot (seeded by its first tick), so the
+      fidelity target is the deviation, not a per-band constant; bands
+      that never ticked keep a zero row; eval never moves it.
+  S9  Precision law: under bf16 every Linear in the trunk (neocortex)
+      computes in bf16 and every Linear in the council (PFC), the
+      cells, the predictors and the head computes in fp32 — in both
+      orders; in fp32 everything is fp32.
 """
 
 import torch
@@ -244,10 +254,37 @@ def test_S6_write_cadence_and_one_op_credit():
 def test_S7_pfc_first_order():
     m = _model(seed=17, order="pfc_first"); m.eval()
     x = _toks(30)
+    # the neocortex sees only what the PFC outputs: capture what the
+    # council returns and what the trunk receives, token by token
+    seen = {"council": [], "trunk": []}
+    council0, trunk0 = m._council, m._trunk
+
+    def council(c, r, mm, dev):
+        S = council0(c, r, mm, dev)
+        seen["council"].append(S.detach().clone())
+        return S
+
+    def trunk(e, slots, dev):
+        seen["trunk"].append((e.detach().clone(),
+                              None if slots is None else slots.detach().clone()))
+        return trunk0(e, slots, dev)
+    m._council, m._trunk = council, trunk
     with torch.no_grad():
         st = m.init_state(1, "cpu")
         lg, st, ticks, _, _ = _fwd(m, x, st)
         assert lg.shape == (1, T, V) and len(ticks[3]) == T - 1
+        emb = m.embed(x)[0]
+        K = len(m.bands)
+        assert len(seen["council"]) == T == len(seen["trunk"])
+        for t in range(T):
+            S = seen["council"][t]
+            e_in, slots = seen["trunk"][t]
+            assert torch.equal(e_in, S[:, 0])           # query = PFC token slot
+            assert slots is not None and slots.shape == (1, 1 + K, m.d)
+            assert torch.equal(slots, S[:, 1:])         # kv = the PFC bundle
+            assert not torch.allclose(e_in, emb[t][None])   # never the raw token
+    m._council, m._trunk = council0, trunk0
+    with torch.no_grad():
         st = m.detach_state(st)
         x2 = _toks(31)
         base, _, _, _, _ = _fwd(m, x2, state_copy(st))
@@ -280,3 +317,73 @@ def test_S8_train_runs_both_precisions(tmp_path, precision):
     assert cfg["arch"] == "scan" and cfg["scan"] == {"n_council": 1, "write_every": 2}
     assert {int(k): v for k, v in cfg["clocks"].items()} == CLK
     assert dict(drive._horizons) == CLK
+
+
+@pytest.mark.parametrize("order", ["cortex_first", "pfc_first"])
+@pytest.mark.parametrize("bf16", [False, True])
+def test_S9_precision_law_trunk_bf16_pfc_fp32(order, bf16):
+    m = _model(seed=5, order=order); m.eval()
+    m.autocast_bf16 = bf16
+    dtypes = {"trunk": set(), "council": set(), "cells": set(), "pred": set(),
+              "head": set()}
+
+    def hook(name):
+        def f(mod, inp, out):
+            dtypes[name].add(out.dtype)
+        return f
+    hs = []
+    for lin in m.blocks.modules():
+        if isinstance(lin, torch.nn.Linear):
+            hs.append(lin.register_forward_hook(hook("trunk")))
+    for lin in m.council.modules():
+        if isinstance(lin, torch.nn.Linear):
+            hs.append(lin.register_forward_hook(hook("council")))
+    for lin in m.cells.modules():
+        if isinstance(lin, torch.nn.Linear):
+            hs.append(lin.register_forward_hook(hook("cells")))
+    for lin in m.pred.modules():
+        if isinstance(lin, torch.nn.Linear):
+            hs.append(lin.register_forward_hook(hook("pred")))
+    hs.append(m.head.register_forward_hook(hook("head")))
+    x = _toks(40)
+    with torch.no_grad():
+        st = m.init_state(1, "cpu")
+        lg, st, _, _, _ = _fwd(m, x, st)
+        st = m.detach_state(st)
+        lg, st, _, _, _ = _fwd(m, _toks(41), st)     # a chunk with reads + writes
+    for h in hs:
+        h.remove()
+    assert lg.dtype == torch.float32
+    assert dtypes["trunk"] == {torch.bfloat16 if bf16 else torch.float32}
+    for name in ("council", "cells", "pred", "head"):
+        assert dtypes[name] == {torch.float32}, (name, dtypes[name])
+    for k in m.bands:
+        assert st["h"][k].dtype == torch.float32
+        assert st["M"][k].dtype == torch.float32
+
+
+def test_S10_band_center_is_per_band():
+    m = _model(seed=9, order="pfc_first"); m.train()
+    st = m.init_state(2, "cpu")
+    x = _toks(50, B=2)
+    seen = {}
+    pred0 = {k: m.pred[str(k)] for k in m.bands}
+    lg, st, ticks, wc, rc = _fwd(m, x, st)
+    # band 3 ticks every token, band 4 every 8: both rows seeded and moving
+    assert m.band_mu.shape == (max(m.bands) + 1, m.d)
+    assert int(m.band_mu_n[3]) == T and int(m.band_mu_n[4]) == T // 8
+    assert m.band_mu[3].abs().sum() > 0 and m.band_mu[4].abs().sum() > 0
+    assert not torch.allclose(m.band_mu[3], m.band_mu[4])
+    # bands 5 (clock 64) and 6 (512) never ticked in 32 tokens: zero rows
+    assert int(m.band_mu_n[5]) == 0 and m.band_mu[5].abs().sum() == 0
+    assert int(m.band_mu_n[6]) == 0 and m.band_mu[6].abs().sum() == 0
+    # the fidelity target is the deviation: at band 3's tick the fid is
+    # cos(pend, pooled - mu_before) — not saturated at 1 for a random net
+    fids = torch.stack([f for _, f in ticks[3]])
+    assert fids.abs().max() < 0.999
+    # eval never moves the means
+    m.eval()
+    mu = m.band_mu.clone(); n = m.band_mu_n.clone()
+    with torch.no_grad():
+        _fwd(m, _toks(51, B=2), m.detach_state(st))
+    assert torch.equal(mu, m.band_mu) and torch.equal(n, m.band_mu_n)
