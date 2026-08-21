@@ -230,7 +230,7 @@ for ATTEMPT in 1 2 3 4 5 6; do
   # in-flight publisher: the driver's probe rows land in LOCAL jsonls;
   # without this loop the branch sees nothing until exit — the watcher
   # (and the kill-fix-relaunch protocol) needs them DURING the run
-  ( while true; do sleep 1500
+  ( while true; do sleep 900
       tail -100 v10_train.log > train_tail.log 2>/dev/null || true
       LASTHB=$(tail -1 hb_v10.jsonl 2>/dev/null | head -c 300)
       echo "$(date -u +%H:%M:%S) inflight ${LASTHB:-no-hb-row-yet}" >> HEARTBEAT.log
