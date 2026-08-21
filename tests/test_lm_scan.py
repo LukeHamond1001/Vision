@@ -35,10 +35,12 @@
   S12 The hippocampus is a PFC organ: the slot-refresh query, the logit
       read query and the write keys are the council's token slot — in
       both orders — and prev_c carries the last token's slot.
-  S10 band_center is per band: each band's centring mean is the running
-      mean of ITS OWN council slot (seeded by its first tick), so the
-      fidelity target is the deviation, not a per-band constant; bands
-      that never ticked keep a zero row; eval never moves it.
+  S10 band_center: in training the target is centred by the batch mean
+      at the tick (the cortex's training drift cancels — a lagging mean
+      left it in, and a predictor bias matched it: scan1 fid:5 = +1.000);
+      each band keeps a running mean of its own pooled target (seeded by
+      its first scored tick) for eval/serve; bands that never ticked keep
+      a zero row; eval never moves it.
   S9  Precision law: under bf16 every Linear in the trunk (neocortex)
       computes in bf16 and every Linear in the council (PFC), the
       cells, the predictors and the head computes in fp32 — in both
@@ -389,9 +391,20 @@ def test_S10_band_center_is_per_band():
     assert int(m.band_mu_n[5]) == 0 and m.band_mu[5].abs().sum() == 0
     assert int(m.band_mu_n[6]) == 0 and m.band_mu[6].abs().sum() == 0
     # the fidelity target is the deviation: at band 3's tick the fid is
-    # cos(pend, pooled - mu_before) — not saturated at 1 for a random net
+    # cos(pend, pooled_c - batch mean) — not saturated at 1 for a random net
     fids = torch.stack([f for _, f in ticks[3]])
     assert fids.abs().max() < 0.999
+    # training centres by the batch mean at the tick: with 2 lanes the two
+    # targets are exact negatives, so the two lanes' fids against the same
+    # pend would be negatives — check the target itself through a tick of
+    # a fresh model whose pend is the all-ones direction
+    m2 = _model(seed=9, order="pfc_first"); m2.train()
+    for k in m2.bands:
+        torch.nn.init.zeros_(m2.pred[str(k)].weight); torch.nn.init.ones_(m2.pred[str(k)].bias)
+    st2 = m2.init_state(2, "cpu")
+    _, _, ticks2, _, _ = _fwd(m2, _toks(52, B=2), st2)
+    f = torch.stack([f for _, f in ticks2[3]])            # [n_ticks, 2]
+    assert torch.allclose(f[:, 0], -f[:, 1], atol=1e-5)
     # eval never moves the means
     m.eval()
     mu = m.band_mu.clone(); n = m.band_mu_n.clone()

@@ -410,7 +410,19 @@ class ScanLM(nn.Module):
             pooled_c = (st["acc_c"][k] + C[:, s_from:t + 1].sum(1)) / max(cnt, 1)
             target = pooled_c
             if self.band_center:
-                target = pooled_c - self.band_mu[k]
+                # TRAINING centres by the batch mean at this very tick:
+                # a lagging running mean leaves the training DRIFT of the
+                # cortex mean in the residual — one direction shared by
+                # every lane, matched by a predictor bias (scan1 measured
+                # fid:5 = +1.000 at step 1300). The instantaneous mean
+                # cancels it exactly; what remains is how THIS lane's
+                # context differs from the others — the signal a band
+                # can only carry by remembering. Eval/serve (B may be 1,
+                # no drift) centre by the per-band running mean.
+                if self.training and B > 1:
+                    target = pooled_c - pooled_c.detach().mean(0, keepdim=True)
+                else:
+                    target = pooled_c - self.band_mu[k]
                 if self.training:
                     with torch.no_grad():
                         pm = pooled_c.detach().mean(0)
