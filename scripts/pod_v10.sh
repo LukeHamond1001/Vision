@@ -273,9 +273,16 @@ for ATTEMPT in 1 2 3 4 5 6; do
       git commit -qm "inflight" 2>/dev/null
       git push -qf "$PUSH" results-v10 2>/dev/null || true
     done ) & PUBPID=$!
+  # battery cadence rides pod env (2026-08-21): the adolescence-boundary
+  # restart sets HB_EVERY=9000 HB_CHUNKS=5000 (walk reaches eval-
+  # adolescence so b5/b6 populate) LESION_EVERY=2 — same battery hours
+  # as 6000/2500/2, better instruments where the long bins live.
+  # Defaults = the childhood configuration exactly.
   python scripts/v10_driver.py \
     --data "$DATA/flash" --eval-data "$DATA/flash_eval" \
     --ckpt "$CKPT" --smoke "$OUT/smoke.json" \
+    --hb-every "${HB_EVERY:-6000}" --hb-chunks "${HB_CHUNKS:-2500}" \
+    --lesion-every "${LESION_EVERY:-2}" \
     --hb-out hb_v10.jsonl --trace v10_driver.jsonl \
     >> v10_train.log 2>&1
   RC=$?

@@ -4405,3 +4405,23 @@ RELAUNCH 15:36 UTC: pod ywwb6ejp9knzfq terminated after the row
 6139f12 (harvest fix + seam law + boot-history fix + sampled/entropy
 collapse probe + windowed tok/s), resuming warm from the 42000
 checkpoint. Money so far ~$62.
+
+## 2026-08-21 — ADOLESCENCE BATTERY PLAN (user: "do what you think is best")
+
+Decision: keep the dense cadence (6000 / 2500-chunk walk / lesions
+every 2nd beat) through the rest of childhood — the binder milestone
+at 108,500 is where dense probes earn their keep — and at the
+childhood->adolescence boundary restart with HB_EVERY=9000,
+HB_CHUNKS=5000 (10.2M tokens/lane: the walk reaches 3.2M into eval-
+adolescence, where the 131k and 1M gap menus live, so b5/b6 finally
+populate — ~4000 b5 asks, ~2000 b6 asks per battery at the observed
+ask density), LESION_EVERY=2 (every 18k steps). Battery hours for
+adolescence+tail come out the same (~9.3 h vs ~9.4 h) with the long
+bins measured and lesions every ~5 h. Plumbing: pod_v10.sh passes
+HB_EVERY/HB_CHUNKS/LESION_EVERY from pod env (defaults = today's
+config exactly, so an unplanned restart changes nothing). Also wired:
+the growth chart's childhood-end binder milestone as a WARN line
+(GROWTH was declared and never read; fracs corrected to the ratified
+.08/.27/.38/.27 table: childhood ends at .35, adolescence at .73).
+ETA unchanged: ~90 h from 16:00 UTC Aug 21 -> ~midday UTC Aug 25,
+~$300 more (~$360 total).

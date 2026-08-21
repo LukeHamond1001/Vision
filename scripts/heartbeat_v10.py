@@ -54,9 +54,12 @@ KILL = {
     "pruned_unharvested": 1,
 }
 GROWTH = {   # soft milestones (warn) keyed by flash fraction
+    # fracs follow STAGES_V10_FLASH (.08/.27/.38/.27): infancy ends at
+    # .08, childhood at .35, adolescence at .73 (2026-08-21 — the old
+    # .10/.50/.90 keys were the pre-ratification stage table)
     "infancy_end": {"frac": 0.10, "distinct3": 0.5},
-    "childhood_end": {"frac": 0.50, "binder_x_chance": 2.0},
-    "adolescence_end": {"frac": 0.90, "prophet_auc": 0.55},
+    "childhood_end": {"frac": 0.35, "binder_x_chance": 2.0},
+    "adolescence_end": {"frac": 0.73, "prophet_auc": 0.55},
 }
 BINS = [(1, 256, "in-ctx"), (257, 2048, "short"),
         (2049, 8192, "b3"), (8193, 40000, "b4"),
@@ -377,6 +380,16 @@ def main():
         why = why + [f"WARN collapse: distinct3 {d3} contracting"]
     elif d3 < KILL["collapse_distinct3_floor"] and frac >= 0.10:
         why = why + [f"warn: distinct3 {d3} below floor, not contracting"]
+    # growth chart (soft, 2026-08-21 wired): the childhood-end binder
+    # milestone — in-ctx recall >= 2x chance (closed set of 5 -> 40%)
+    # once the flash passes childhood's end. A missed milestone is
+    # investigated, never killed on.
+    g = GROWTH["childhood_end"]
+    inctx = recall.get("in-ctx", {}).get("acc")
+    if frac >= g["frac"] and inctx is not None \
+            and inctx < g["binder_x_chance"] * 0.20:
+        why = why + [f"growth: binder unarmed past childhood end "
+                     f"(in-ctx {inctx} < {g['binder_x_chance'] * 0.20:.2f})"]
     # incumbent kill ARMS only once >=16 corrections have been lived
     # (2026-08-21 amendment, ledgered: the raw max-over-facts mass is
     # ~1.0 from birth for any softmax model — the 07:45 KILL fired on
