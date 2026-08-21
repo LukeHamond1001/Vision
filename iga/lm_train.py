@@ -413,6 +413,7 @@ def train(d=64, lanes=4, T=256, steps=40, seed=0, device="cpu",
         sleep.bind(drive)   # A62: after resume, so the buffer's
                             # absolute offset matches drive.step_t
     t0 = time.time()
+    t_log, step_log = t0, step0     # windowed rate since the last log line
     ce_first = None
     trace = (ckpt + ".trace.jsonl") if ckpt else None
     for step in range(step0 + 1, step0 + steps + 1):
@@ -467,14 +468,20 @@ def train(d=64, lanes=4, T=256, steps=40, seed=0, device="cpu",
             prophet.observe(model, drive)   # A64 spectator (B5)
         ce_first = ce_first or ce
         if step % log_every == 0 or step == 1:
-            tok_s = lanes * T * (step - step0) / (time.time() - t0)
+            now = time.time()
+            tok_s = lanes * T * (step - step0) / (now - t0)
+            # v10 (2026-08-21): the cumulative mean hid a 2x slowdown
+            # for hours; print the rate over the last log window too
+            now_s = lanes * T * (step - step_log) / max(now - t_log, 1e-9)
+            t_log, step_log = now, step
             # A24 L2: channel EMAs ride every log line — run 4's
             # cross-window transient lived and died between snapshots
             emas = " ".join(
                 f"{k.replace('recall:', '')}={drive.ema[k]:+.3f}"
                 for k in sorted(drive.ema))
             print(f"step {step:5d}  ce {ce:.3f}  loss {loss:.3f}  "
-                  f"holds {len(drive.ledger):4d}  {tok_s:,.0f} tok/s  "
+                  f"holds {len(drive.ledger):4d}  {tok_s:,.0f} tok/s "
+                  f"(now {now_s:,.0f})  "
                   f"[{emas}]", flush=True)
             row = {"step": step, "ce": round(ce, 4),
                    "ema": {k: round(float(v), 5)
