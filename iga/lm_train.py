@@ -272,7 +272,7 @@ def train(d=64, lanes=4, T=256, steps=40, seed=0, device="cpu",
           tie_embed=False, dream=None, n_layers=6, ledger_cap=None,
           attn="abs", qk_norm=False, band_lr_mult=1.0, precision="fp32",
           band_credit=False, band_center=False, tail_tokens=0,
-          mlp="gelu",
+          mlp="gelu", horizon_rule="fixed",
           lr_warmup=0, carry_state=None):
     """resume (A26): path to a checkpoint — model + optimizer + drive
     EMAs/records/minted/vetoes continue; step numbering continues.
@@ -362,13 +362,16 @@ def train(d=64, lanes=4, T=256, steps=40, seed=0, device="cpu",
         for k in model.bands:
             if k not in drive._horizons and k >= 6:
                 drive._horizons[k] = _hz(k)
-        if clocks:
-            # the economy's horizon for a band IS its clock in tokens
-            # (clock x window): at T=2048 with the certified clocks this
-            # reproduces {2048, 16384, 131072, 1048576} to the integer;
-            # a shorter window or a re-based ladder (2026-08-21, the
-            # "see only recent tokens, then bands" arm) keeps the
-            # prophet rings, replay caps and press horizons consistent
+        if clocks and horizon_rule == "clock":
+            # horizon_rule="clock": the economy's horizon for a band IS
+            # its clock in tokens (clock x window): at T=2048 with the
+            # certified clocks this reproduces {2048, 16384, 131072,
+            # 1048576} to the integer; a re-based ladder (2026-08-21,
+            # the "see only recent tokens, then bands" arm at T=64)
+            # keeps the prophet rings, replay caps and press horizons
+            # consistent with what the bands actually span. "fixed"
+            # (default) = the A70 law: horizons are absolute tokens
+            # whatever the window.
             for k in model.bands:
                 drive._horizons[k] = int(model.clocks[k]) * int(T)
         # (a prophet only watches bands in ITS OWN clocks — pass

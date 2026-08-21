@@ -239,7 +239,8 @@ def main():
             qk_norm=(str(a.qk_norm) == "1"),
             band_lr_mult=a.band_lr_mult, mlp=a.mlp,
             band_credit=bool(a.band_credit), band_center=bool(a.band_center),
-            tail_tokens=a.tail_tokens)
+            tail_tokens=a.tail_tokens,
+            horizon_rule=("clock" if a.clocks else "fixed"))
         carry = model._st
         aucs = {}
         for k in sorted(prophet.clocks):
