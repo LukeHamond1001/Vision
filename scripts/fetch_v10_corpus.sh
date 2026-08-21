@@ -39,7 +39,14 @@ SMOL_SMALL=(
 HERMES=(OpenHermes_2.5_no_think-0000{0..1}-of-00002.parquet)
 OT3=(OpenThoughts3_1.2M_no_think_no_think-0000{0..2}-of-00003.parquet)
 
-if [ "$TIER" = "gate" ]; then
+if [ "$TIER" = "rebuild" ]; then
+  # v10.1 rebuild (2026-08-21): the prep pod deleted raw after the
+  # first build (A54c); the UC split files survive, so only ST2 +
+  # Magpie + the reserved UC eval file are fetched again.
+  for f in "${MAGPIE[@]}" "${HERMES[@]}" "${OT3[@]}" \
+           "${SMOL_SMALL[@]}"; do fetch "$ST2/$f" "$f"; done
+  fetch "$UC/train_9.jsonl" "ultrachat_train_9.jsonl"
+elif [ "$TIER" = "gate" ]; then
   fetch "$ST2/${MAGPIE[0]}" "${MAGPIE[0]}"
   fetch "$ST2/${HERMES[0]}" "${HERMES[0]}"
   for f in "${SMOL_SMALL[@]}"; do fetch "$ST2/$f" "$f"; done

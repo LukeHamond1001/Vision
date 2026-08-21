@@ -37,20 +37,34 @@ cd Vision
 # the ledger copy on main (rows recovered from force-pushed-away
 # commits) so no restart forgets the run.
 KEEP=$OUT/keep; mkdir -p "$KEEP"
-for f in HEARTBEAT.log hb_v10.jsonl v10_driver.jsonl; do
-  [ -f "$f" ] && cp -f "$f" "$KEEP/$f"
-done
+# a NEW run on this volume (RUN_TAG set, sentinel absent) must not
+# inherit the previous run's logs: they are archived, not restored
+NEW_RUN=0
+if [ -n "${RUN_TAG:-}" ] && [ ! -f "$DATA/.run_${RUN_TAG}" ]; then
+  NEW_RUN=1
+  ARCH=$KEEP/archive_${OLD_TAG:-roster}; mkdir -p "$ARCH"
+  for f in HEARTBEAT.log hb_v10.jsonl v10_driver.jsonl v10_train.log train_tail.log; do
+    [ -f "$f" ] && mv -f "$f" "$ARCH/$f"
+  done
+else
+  for f in HEARTBEAT.log hb_v10.jsonl v10_driver.jsonl; do
+    [ -f "$f" ] && cp -f "$f" "$KEEP/$f"
+  done
+fi
 git fetch -q origin main && git reset --hard -q origin/main
 PUSH="https://x-access-token:${GIT_TOKEN}@github.com/LukeHamond1001/Vision.git"
 git config user.email "pod@Vision"; git config user.name "iga-pod"
 git checkout -B results-v10
-for f in HEARTBEAT.log hb_v10.jsonl v10_driver.jsonl; do
-  [ -f "$KEEP/$f" ] && cp -f "$KEEP/$f" "$f"
-done
-python - <<'EOF_SEED'
+if [ "$NEW_RUN" = "0" ]; then
+  for f in HEARTBEAT.log hb_v10.jsonl v10_driver.jsonl; do
+    [ -f "$KEEP/$f" ] && cp -f "$KEEP/$f" "$f"
+  done
+fi
+SEED_HB="results/${RUN_TAG:-v10}_flash/hb_v10.jsonl"
+SEED_HB="$SEED_HB" python - <<'EOF_SEED'
 import json, os
 rows = {}
-for src in ("results/v10_flash/hb_v10.jsonl", "hb_v10.jsonl"):
+for src in (os.environ["SEED_HB"], "hb_v10.jsonl"):
     if os.path.exists(src):
         for l in open(src):
             l = l.strip()
@@ -96,6 +110,20 @@ hb "canary ok"
 # env SHIP_CODE — this pod's own boot force-pushes the results branch
 # and WIPES ship_code.txt, so the branch copy is only a fallback for
 # same-DC relights that boot before any prep mule re-post.
+# RUN_TAG (v10.1, 2026-08-21): a new run on a volume that already
+# holds an older corpus + checkpoints. Once per tag: the old corpus,
+# eval/smoke shards and v10_out (the 42k roster checkpoint) are moved
+# aside under *_<oldtag>, never deleted; the freshly received
+# *_epi shards are renamed into place so every later path is unchanged.
+if [ -n "${RUN_TAG:-}" ] && [ ! -f "$DATA/.run_${RUN_TAG}" ]; then
+  OLD=${OLD_TAG:-roster}
+  for d in flash flash_eval smoke_l8 smoke_l12; do
+    [ -d "$DATA/$d" ] && mv "$DATA/$d" "$DATA/${d}_$OLD"
+  done
+  [ -d "$OUT" ] && [ -n "$(ls -A "$OUT" 2>/dev/null)" ] &&     mv "$OUT" "${OUT}_$OLD" && mkdir -p "$OUT"
+  touch "$DATA/.run_${RUN_TAG}"
+  hb "run tag $RUN_TAG: old corpus/ckpts moved aside as *_$OLD"
+fi
 if [ "${GO:-0}" = "1" ] && [ ! -f "$DATA/flash/manifest.json" ]; then
   CODE="${SHIP_CODE:-}"
   if [ -z "$CODE" ]; then
@@ -107,10 +135,16 @@ if [ "${GO:-0}" = "1" ] && [ ! -f "$DATA/flash/manifest.json" ]; then
     hb "receiving corpus (code $CODE)"
     ( cd /workspace && runpodctl receive "$CODE" ) \
       > receive.log 2>&1 || true
-    if [ -f /workspace/v10_ship.tar ]; then
-      tar xf /workspace/v10_ship.tar -C /workspace && \
-        rm -f /workspace/v10_ship.tar
-    fi
+    for TARF in /workspace/v10_ship.tar /workspace/v10_ship2.tar; do
+      if [ -f "$TARF" ]; then
+        tar xf "$TARF" -C /workspace && rm -f "$TARF"
+      fi
+    done
+    # v10.1 ship: *_epi shards land beside the moved-aside old ones
+    for d in flash flash_eval smoke_l8; do
+      [ -d "$DATA/${d}_epi" ] && [ ! -d "$DATA/$d" ] && \
+        mv "$DATA/${d}_epi" "$DATA/$d"
+    done
     hb "receive $( [ -f "$DATA/flash/manifest.json" ] && echo ok || echo "FAILED $(tail -1 receive.log 2>/dev/null | head -c 120)")"
   fi
 fi
