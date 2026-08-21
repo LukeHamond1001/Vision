@@ -136,3 +136,23 @@ cost and the CUDA-graph candidate after that.
 
 scan1 keeps running until its first row (step 6000, 12.3M tokens —
 the R1 read) lands, then scan2 replaces it (one model at a time).
+
+## 7. scan1 in flight (step 1300, 23:56 UTC): the drift artifact
+
+scan1 trains at 2.77k tok/s (CE 6.51 at 2.7M tokens). Its fid channels:
+fid:3 +0.84, fid:4 +0.39, **fid:5 +1.000**. Band 5 ticks once per
+chunk; its target was the chunk-mean of the cortex minus a LAGGING
+running mean — during early training the cortex mean drifts, the
+residual is the drift direction, identical in every lane, and a
+predictor bias matches it. The EMA centring re-created the anisotropy
+floor the hybrid's band_center was meant to remove. Fixed for scan2
+(commit c6ba686): in training the target is centred by the batch mean
+at the tick (the drift cancels exactly; the residual is how this
+lane's context differs from the others — carryable only by memory);
+the per-band running mean stays for eval/serve. S10 extended.
+
+scan2 = iteration 2 = commit c6ba686: batched decoder + PFC-keyed
+hippocampus + instantaneous centring. Everything else identical to
+scan1. Reads: R3 first (tok/s at the smoke), then R1 against scan1's
+step-6000 row (the one A/B we get for free: cortex-keyed vs PFC-keyed
+hippocampus, per-token vs batched decoder being exact).
