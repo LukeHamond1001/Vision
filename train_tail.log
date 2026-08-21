@@ -1,13 +1,3 @@
-step 18000  ce 1.339  loss 1.377  holds 94160  11,281 tok/s  [fid:3=+0.990 fid:4=+0.930 fid:5=+0.028 fid:6=+0.021 b0=+1.000 b1=+1.000 b2=+0.999]
-    holdout(cum): {'same': [0.073, 0.07, 2784], 'straddle': [0.069, 0.07, 1024]}
-    same(recent 979 probes): 0.088
-    best banked @ 18000 (0.088)
-audit: {'holds': 94160, 'telescoping_exact': True, 'scoped': True, 'vetoes': 19128, 'proposed': 94192, 'presses': 597475, 'press_vetoes': 0, 'voided_zero': True}
-panel:
-lane0 maintain fid:5          target 0.20 phi0 0.86 band 5 due 36874240
-lane0 frontier recall:b2      target 1.05 phi0 0.05 band 4 due 36874240
-lane0 frontier recall:b1      target 1.05 phi0 0.05 band 3 due 36866048
-lane0 frontier recall:b0      target 1.05 phi0 0.05 band 3 due 36866048
 lane1 maintain fid:5          target 0.20 phi0 0.86 band 5 due 36874240
 lane1 frontier recall:b2      target 1.05 phi0 0.05 band 4 due 36874240
 lane1 frontier recall:b1      target 1.05 phi0 0.05 band 3 due 36866048
@@ -98,3 +88,13 @@ step 21200  ce 1.255  loss 1.589  holds 54768  11,279 tok/s  [fid:3=+0.990 fid:4
 step 21300  ce 1.033  loss 1.287  holds 56488  11,313 tok/s  [fid:3=+0.989 fid:4=+0.946 fid:5=+0.033 fid:6=+0.018 b0=+1.000 b1=+0.998 b2=+0.998]
 step 21400  ce 0.884  loss 1.108  holds 58200  11,291 tok/s  [fid:3=+0.991 fid:4=+0.947 fid:5=+0.034 fid:6=+0.018 b0=+0.996 b1=+0.998 b2=+0.997]
 step 21500  ce 1.298  loss 1.607  holds 59912  11,329 tok/s  [fid:3=+0.992 fid:4=+0.948 fid:5=+0.034 fid:6=+0.018 b0=+0.998 b1=+0.994 b2=+0.999]
+step 21600  ce 1.026  loss 1.064  holds 61624  11,260 tok/s  [fid:3=+0.993 fid:4=+0.948 fid:5=+0.034 fid:6=+0.018 b0=+1.000 b1=+0.999 b2=+1.000]
+step 21700  ce 1.140  loss 1.176  holds 63336  11,290 tok/s  [fid:3=+0.993 fid:4=+0.949 fid:5=+0.034 fid:6=+0.018 b0=+0.998 b1=+0.999 b2=+0.984]
+step 21800  ce 1.170  loss 1.209  holds 65048  11,271 tok/s  [fid:3=+0.990 fid:4=+0.950 fid:5=+0.034 fid:6=+0.018 b0=+1.000 b1=+1.000 b2=+0.999]
+step 21900  ce 1.090  loss 1.354  holds 66760  11,294 tok/s  [fid:3=+0.989 fid:4=+0.951 fid:5=+0.034 fid:6=+0.018 b0=+1.000 b1=+0.996 b2=+1.000]
+step 22000  ce 1.151  loss 1.431  holds 68472  11,271 tok/s  [fid:3=+0.988 fid:4=+0.951 fid:5=+0.034 fid:6=+0.018 b0=+0.998 b1=+0.997 b2=+0.997]
+    holdout(cum): {'same': [0.085, 0.09, 1805], 'straddle': [0.063, 0.06, 644]}
+    same(recent 955 probes): 0.088
+    best banked @ 22000 (0.088)
+step 22100  ce 1.102  loss 1.139  holds 70192  11,246 tok/s  [fid:3=+0.988 fid:4=+0.952 fid:5=+0.034 fid:6=+0.017 b0=+1.000 b1=+0.998 b2=+0.997]
+step 22200  ce 1.153  loss 1.192  holds 71896  11,274 tok/s  [fid:3=+0.990 fid:4=+0.952 fid:5=+0.034 fid:6=+0.017 b0=+0.999 b1=+0.999 b2=+0.999]
