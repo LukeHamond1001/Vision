@@ -4368,3 +4368,13 @@ buffer_frame — tokens encode their own stream position; the frame is
 checked before and after a seam with the cap hit, and a span minted
 in segment 2 must read its own exchange; the pre-fix bind fails it
 (negative control run). Suite 206/206. Ships with the harvest fix.
+IN VIVO (seg-2 trace row, 36000-42000, landed 15:20 UTC): pairs 0 (seg
+1: 1321 in 2500 steps), steps_taken unchanged at 79 across 187 sleeps,
+ce 1.908 -> 1.679, secs 8616 (11.4k tok/s segment mean — the quadratic
+model's prediction). Correction to the exposure estimate above: with
+the shift equal to the full cap, the claimed window [tau, tau + cap)
+sat entirely AHEAD of every press in the segment, so the final window
+filter emptied the span list and maybe_sleep returned before any
+block — sleep was silently OFF for the segment, not misdirected. Net
+cost of the seam bug: one childhood segment without replay or pairs
+(and without A76 downscale). Nothing wrong was trained.
