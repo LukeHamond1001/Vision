@@ -185,7 +185,64 @@ def probe_collapse(m, tok, T):
             "entropy": round(sum(ents) / len(ents), 4)}
 
 
+BOUNDARY_BUCKETS = ((0, 16), (16, 64), (64, 256), (256, 1024))
+
+
 @torch.no_grad()
+def probe_boundary(m, eval_dir, T, chunks=64):
+    """The NECESSITY meter (2026-08-21, memory math): CE by position in
+    the chunk, state carried across chunks, under base / thread off /
+    stores off / both off. Attention sees one chunk; at its first
+    tokens the cortex is blind to everything before the boundary unless
+    an organ carries it. On the 78M raised life the deficit was 1.5
+    nats on the first 16 tokens (5.06 vs 3.51 late in the chunk, ~0.18
+    nats/token averaged = 5% of CE) and the organs recovered 0.4% of it.
+    Reported as the deficit (early minus late CE) and each removal's
+    delta at the early buckets: the organs are load-bearing at the
+    boundary exactly when thread_off/store_off RAISE the early CE."""
+    dev = next(m.parameters()).device
+    conv = UltraConveyor(eval_dir, n_lanes=2)
+    n_chunks = max(1, min(chunks, len(conv.tokens) // (2 * T) - 2))
+    xs = []
+    for _ in range(n_chunks):
+        x, y, _ = conv.chunk(T)
+        xs.append((x, y))
+    out = {"n_chunks": n_chunks}
+    conds = {"base": {}, "thread_off": {"mem_off": True},
+             "store_off": {"store_read_off": True},
+             "both_off": {"lesioned": set(m.bands)}}
+    for name, flags in conds.items():
+        m.lesioned, m.store_read_off, m.mem_off = set(), False, False
+        for k, v in flags.items():
+            setattr(m, k, v)
+        st = m.init_state(2, dev)
+        sums = torch.zeros(T, device=dev)
+        try:
+            for x, y in xs:
+                x, y = x.to(dev), y.to(dev)
+                lg, st, _ = m(x, st, None)
+                m.pop_write_cost(); m.pop_recon()
+                st = m.detach_state(st)
+                ce = torch.nn.functional.cross_entropy(
+                    lg.float().reshape(-1, lg.shape[-1]), y.reshape(-1),
+                    reduction="none").view(x.shape[0], T).mean(0)
+                sums += ce
+        finally:
+            m.lesioned, m.store_read_off, m.mem_off = set(), False, False
+        per = sums / n_chunks
+        row = {f"{a}-{b}": round(float(per[a:min(b, T)].mean()), 4)
+               for a, b in BOUNDARY_BUCKETS if a < T}
+        row["late"] = round(float(per[T // 2:].mean()), 4)
+        out[name] = row
+    base = out["base"]
+    out["deficit_0_16"] = round(base["0-16"] - base["late"], 4)
+    out["deficit_16_64"] = round(base["16-64"] - base["late"], 4)
+    out["deltas_0_64"] = {c: round((out[c]["0-16"] + out[c]["16-64"]) / 2
+                                   - (base["0-16"] + base["16-64"]) / 2, 4)
+                          for c in ("thread_off", "store_off", "both_off")}
+    return out
+
+
 @torch.no_grad()
 def probe_store_health(m, tok):
     """Is the contextual memory ABLE to carry a fact? The v9.4 final
@@ -376,6 +433,12 @@ def main():
         rows.append({"probe": "store_health", **probe_store_health(m, tok)})
     except Exception as e:            # a diagnostic must never kill a beat
         rows.append({"probe": "store_health", "error": repr(e)[:120]})
+    try:
+        rows.append({"probe": "boundary",
+                     **probe_boundary(m, a.eval_data, a.T,
+                                      chunks=min(64, a.chunks))})
+    except Exception as e:
+        rows.append({"probe": "boundary", "error": repr(e)[:120]})
     cast = probe_cast(m, tok, manifest)
     # A67's incumbent DISEASE is conviction that resists CORRECTION —
     # it cannot exist before corrections have been experienced. Stamp
