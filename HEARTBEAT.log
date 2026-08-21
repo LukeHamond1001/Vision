@@ -12,3 +12,4 @@
 06:46:53 inflight no-hb-row-yet
 07:01:56 inflight no-hb-row-yet
 07:16:58 inflight no-hb-row-yet
+07:32:02 inflight {"step": 24000, "tokens": 393216000, "rows": [{"probe": "ce_recall", "ce": 1.5536, "recall": {"in-ctx": {"acc": 0.17, "n": 12839}, "short": {"acc": 0.174, "n": 52370}, "b3": {"acc": null, "n": 0}, "b4": {"acc": null, "n": 0}, "b5": {"acc": null, "n": 0}, "b6": {"acc": null, "n": 0}}}, {"probe": "col
