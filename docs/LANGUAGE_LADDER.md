@@ -4474,3 +4474,33 @@ Ops: RUN_TAG relocation on the flash volume (old corpus/ckpts/logs
 archived aside, never deleted), mule rebuild script ships corpus AND
 sources so one volume remains; prep + rmix volumes become the user's
 to delete. G1 (episodic, d=128, 12k steps) running as this is written.
+
+## 2026-08-21 — G1 ON THE EPISODIC DIET AT d=128: FALSE, AND WHY THAT GATE IS
+## THE WRONG INSTRUMENT; THE 78M MINI-FLASH IS THE GATE
+
+bio arm (episodic shards, d=128, 12k steps, T=256, 4 lives): in-ctx
+.199 (n 523), short .208, b3 .204, b4 .232, b5+ .171 — chance
+everywhere; training-lane binding margins never left ~0.005; train CE
+3.33, eval CE 5.10 (results/evidence/v10_gates_epi_bio.json). Plumbing
+verified by decoding windows: the previous mention sits ~120 tokens
+before the ask, the model only has to copy a color. Reading: exposure.
+The 12M-token gate shard holds ~0.7M tokens of cast practice (6%);
+A69-R2, where the same d=128 model armed in-ctx at 84% in 12k steps,
+was ~12M tokens of pure fact binding — 17x more. Induction-style
+copying on a mixed real-dialogue stream needs far more than 12M
+tokens at 5M params; the gate scale cannot carry the question. Also
+seen in the decoded windows: the local gate shard pads stages with
+EMPTY ritual days once its small local sources run out — another
+reason the local gate is not the instrument. DECISION: the gate moves
+to a 78M MINI-FLASH of the actual rerun — the real driver, battery,
+sleep ladder and bf16 path on 4 lives x 50M episodic tokens (d=512,
+8L, T=2048, lam by the A60f pairing on this diet), running on the
+rebuild mule's GPU (pod 4gzvaq7jrokt31, sha 92a317d) while its CPU
+builds the full corpus. PASS = in-ctx on the unseen eval lives
+visibly arming along the curve (>= .40 by the end of the mini life,
+or clearly rising through childhood); flat at chance = the diet or
+the architecture, not the scale, and the H100 does not launch. Local
+CPU meanwhile runs the trunk-candidate arms (rope; modern = rope +
+QK-norm + SwiGLU) against bio on CE — binder bins are uninformative
+at this scale, CE is a fair trunk metric; a candidate enters the paid
+run only after its own mini-flash.
