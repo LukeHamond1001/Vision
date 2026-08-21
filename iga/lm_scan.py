@@ -331,55 +331,47 @@ class ScanLM(nn.Module):
         rd0 = self._read(st, st["prev_c"], read_ok) if st["chunk"] > 0 else None
         r_slot = self.store_in(rd0) if rd0 is not None \
             else torch.zeros(B, self.d, device=dev)
-        cs = []
+        cs, s0s, bundles, tick_log = [], [], [], []
+        seg_start = {k: 0 for k in self.bands}   # chunk-local start of each band's open interval
         for t in range(T):
             e = emb[:, t]
             if self.order == "cortex_first":
                 c = self._trunk(e, torch.cat([m, r_slot.unsqueeze(1)], 1), dev)
                 S = self._council(c, r_slot, m, dev)
-                c_out = S[:, 0]
+                cs.append(S[:, 0])
             else:
-                # PFC first: the council deliberates on the raw token;
-                # the neocortex decides from the PFC's bundle alone
+                # PFC first: the council deliberates on the raw token; the
+                # neocortex is OFF the recurrent path and decodes the whole
+                # chunk's bundles at once after the loop (same math, one
+                # batched call — the per-token decoder was launch-bound)
                 S = self._council(e, r_slot, m, dev)
-                c_out = self._trunk(S[:, 0], S[:, 1:], dev)
-            cs.append(c_out)
+                bundles.append(S[:, 1:])
+            s0 = S[:, 0]
+            s0s.append(s0)
             if (t + 1) % self.slot_every == 0 and t + 1 < T:
                 # the hippocampus, queried by what the council concluded
-                rd = self._read(st, c_out, read_ok)
+                rd = self._read(st, s0, read_ok)
                 r_slot = self.store_in(rd) if rd is not None \
-                    else torch.zeros_like(c_out)
+                    else torch.zeros_like(s0)
             # the bands LISTEN through their council slots every token and
             # must PREDICT the cortex stream (the fidelity target = the
             # neocortex output pooled over the interval — input-driven,
             # the certified hybrid's target; a band's own council slot is
             # mostly an echo of its state and was self-predictable, fid
-            # saturating at +0.98 even centred per band)
+            # saturating at +0.98 even centred per band). The fidelity is
+            # scored after the decoder has run (C is not known in the loop)
             st["tok"] += 1
             ticked = False
             for i, k in enumerate(self.bands):
                 s_k = S[:, 2 + i]
                 st["acc"][k] = st["acc"][k] + s_k
-                st["acc_c"][k] = st["acc_c"][k] + c_out
                 st["cnt"][k] += 1
                 if st["tok"] % self.clocks[k] == 0:
                     pooled = st["acc"][k] / max(st["cnt"][k], 1)
-                    target = st["acc_c"][k] / max(st["cnt"][k], 1)
-                    if self.band_center:
-                        pooled_c = target
-                        target = pooled_c - self.band_mu[k]
-                        if self.training:
-                            with torch.no_grad():
-                                pm = pooled_c.detach().mean(0)
-                                if self.band_mu_n[k] == 0:
-                                    self.band_mu[k] = pm
-                                else:
-                                    self.band_mu[k].mul_(0.99).add_(0.01 * pm)
-                                self.band_mu_n[k] += 1
                     if st["pend"][k] is not None:
-                        fid = nn.functional.cosine_similarity(
-                            st["pend"][k], target, dim=-1)
-                        ticks[k].append((t, fid))
+                        tick_log.append((t, k, st["pend"][k], seg_start[k],
+                                         st["cnt"][k]))
+                    seg_start[k] = t + 1
                     p = None
                     if self.veto and K > 1:
                         others = torch.cat([S[:, 2 + j] for j in range(K) if j != i], 0)
@@ -399,15 +391,45 @@ class ScanLM(nn.Module):
                     if self.clocks[k] > 1:
                         wcost.append(g.mean())
                     st["acc"][k] = torch.zeros_like(st["acc"][k])
-                    st["acc_c"][k] = torch.zeros_like(st["acc_c"][k])
                     st["cnt"][k] = 0
                     ticked = True
             if ticked:
                 m = self._band_slots(st, B)
-        C = torch.stack(cs, dim=1)                         # [B, T, d]
+        S0 = torch.stack(s0s, dim=1)                       # [B, T, d] the PFC's conclusions
+        if self.order == "cortex_first":
+            C = torch.stack(cs, dim=1)                     # [B, T, d]
+        else:
+            Bd = torch.stack(bundles, dim=1)               # [B, T, 1+K, d]
+            C = self._trunk(S0.reshape(B * T, self.d),
+                            Bd.reshape(B * T, Bd.shape[2], self.d), dev)
+            C = C.reshape(B, T, self.d)
+        # ---- band fidelity: pend (from the previous tick) vs the cortex
+        # stream pooled over the interval, centred per band; intervals
+        # that began in earlier chunks carry their partial sum in acc_c
+        for (t, k, pend, s_from, cnt) in tick_log:
+            pooled_c = (st["acc_c"][k] + C[:, s_from:t + 1].sum(1)) / max(cnt, 1)
+            target = pooled_c
+            if self.band_center:
+                target = pooled_c - self.band_mu[k]
+                if self.training:
+                    with torch.no_grad():
+                        pm = pooled_c.detach().mean(0)
+                        if self.band_mu_n[k] == 0:
+                            self.band_mu[k] = pm
+                        else:
+                            self.band_mu[k].mul_(0.99).add_(0.01 * pm)
+                        self.band_mu_n[k] += 1
+            fid = nn.functional.cosine_similarity(pend, target, dim=-1)
+            ticks[k].append((t, fid))
+            st["acc_c"][k] = torch.zeros_like(st["acc_c"][k])
+        for k in self.bands:                               # the open intervals' partial sums
+            if seg_start[k] < T:
+                st["acc_c"][k] = st["acc_c"][k] + C[:, seg_start[k]:].sum(1)
         logits = self.head(self.lnf(C))
         self._aux_hidden = None
-        R = self._read(st, C, read_ok)                     # batched, [B, T, d]
+        # the hippocampus is a PFC organ: keyed and queried by the
+        # council's token slot (in cortex_first that is the cortex output)
+        R = self._read(st, S0, read_ok)                   # batched, [B, T, d]
         if R is not None:
             if self.aux_trunk > 0 and self.training:
                 self._aux_hidden = C
@@ -431,14 +453,15 @@ class ScanLM(nn.Module):
                 pr = self.pred[str(k)]
                 st["pend"][k] = nn.functional.linear(
                     h_c2, pr.weight.clone(), pr.bias.clone())
-        # ---- store writes, once per chunk: key_t = proj(c'_{t-1}),
-        # value = identity of x_t; recon pass live, store pass cloned
-        h_prev_live = torch.cat([st["prev_c"].unsqueeze(1), C[:, :-1]], dim=1)
+        # ---- store writes, once per chunk: key_t = proj(s'_{t-1}) — the
+        # PFC's conclusion about the previous token — value = identity of
+        # x_t; recon pass live, store pass cloned
+        h_prev_live = torch.cat([st["prev_c"].unsqueeze(1), S0[:, :-1]], dim=1)
         h_prev_det = h_prev_live.detach()
         smask = torch.ones(B, T, device=dev)
         if st["chunk"] == 0:
             smask[:, 0] = 0.0                              # nothing before
-        st["prev_c"] = C[:, -1].detach()
+        st["prev_c"] = S0[:, -1].detach()
         st["chunk"] += 1
         if st["chunk"] % self.write_every != 0:
             st["wbuf"].append((h_prev_det, tokens, smask))

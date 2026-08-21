@@ -29,6 +29,12 @@
   S8  train() runs end to end in fp32 and bf16 (states, stores and
       logits stay fp32 under bf16); arch, clocks and the scan options
       ride the checkpoint cfg; horizons = clocks in tokens.
+  S11 The batched decoder is the per-token decoder: pfc_first logits
+      from the one-call neocortex equal a token-by-token reference run
+      of the same blocks on the same bundles (fp32, 1e-5).
+  S12 The hippocampus is a PFC organ: the slot-refresh query, the logit
+      read query and the write keys are the council's token slot — in
+      both orders — and prev_c carries the last token's slot.
   S10 band_center is per band: each band's centring mean is the running
       mean of ITS OWN council slot (seeded by its first tick), so the
       fidelity target is the deviation, not a per-band constant; bands
@@ -255,7 +261,7 @@ def test_S7_pfc_first_order():
     m = _model(seed=17, order="pfc_first"); m.eval()
     x = _toks(30)
     # the neocortex sees only what the PFC outputs: capture what the
-    # council returns and what the trunk receives, token by token
+    # council returns token by token and what the decoder receives
     seen = {"council": [], "trunk": []}
     council0, trunk0 = m._council, m._trunk
 
@@ -275,14 +281,17 @@ def test_S7_pfc_first_order():
         assert lg.shape == (1, T, V) and len(ticks[3]) == T - 1
         emb = m.embed(x)[0]
         K = len(m.bands)
-        assert len(seen["council"]) == T == len(seen["trunk"])
-        for t in range(T):
-            S = seen["council"][t]
-            e_in, slots = seen["trunk"][t]
-            assert torch.equal(e_in, S[:, 0])           # query = PFC token slot
-            assert slots is not None and slots.shape == (1, 1 + K, m.d)
-            assert torch.equal(slots, S[:, 1:])         # kv = the PFC bundle
-            assert not torch.allclose(e_in, emb[t][None])   # never the raw token
+        assert len(seen["council"]) == T
+        # ONE decoder call per chunk (the neocortex is off the recurrent
+        # path), fed the PFC's token slots as queries and the rest of
+        # each token's bundle as its key/value slots
+        assert len(seen["trunk"]) == 1
+        e_in, slots = seen["trunk"][0]
+        assert e_in.shape == (T, m.d) and slots.shape == (T, 1 + K, m.d)
+        S_all = torch.cat(seen["council"], 0)           # [T, 2+K, d]
+        assert torch.equal(e_in, S_all[:, 0])            # query = PFC token slot
+        assert torch.equal(slots, S_all[:, 1:])          # kv = the PFC bundle
+        assert not torch.allclose(e_in, emb)             # never the raw tokens
     m._council, m._trunk = council0, trunk0
     with torch.no_grad():
         st = m.detach_state(st)
@@ -369,9 +378,11 @@ def test_S10_band_center_is_per_band():
     seen = {}
     pred0 = {k: m.pred[str(k)] for k in m.bands}
     lg, st, ticks, wc, rc = _fwd(m, x, st)
-    # band 3 ticks every token, band 4 every 8: both rows seeded and moving
+    # band 3 ticks every token, band 4 every 8: both rows seeded and
+    # moving (the mean is updated at SCORED ticks — a tick with a pend —
+    # so the first tick of each band does not count)
     assert m.band_mu.shape == (max(m.bands) + 1, m.d)
-    assert int(m.band_mu_n[3]) == T and int(m.band_mu_n[4]) == T // 8
+    assert int(m.band_mu_n[3]) == T - 1 and int(m.band_mu_n[4]) == T // 8 - 1
     assert m.band_mu[3].abs().sum() > 0 and m.band_mu[4].abs().sum() > 0
     assert not torch.allclose(m.band_mu[3], m.band_mu[4])
     # bands 5 (clock 64) and 6 (512) never ticked in 32 tokens: zero rows
@@ -387,3 +398,62 @@ def test_S10_band_center_is_per_band():
     with torch.no_grad():
         _fwd(m, _toks(51, B=2), m.detach_state(st))
     assert torch.equal(mu, m.band_mu) and torch.equal(n, m.band_mu_n)
+
+
+def test_S11_batched_decoder_equals_per_token():
+    m = _model(seed=23, order="pfc_first"); m.eval()
+    m.store_read_off = True                     # logits = head(lnf(C)) only
+    seen = []
+    council0 = m._council
+
+    def council(c, r, mm, dev):
+        S = council0(c, r, mm, dev)
+        seen.append(S.detach().clone())
+        return S
+    m._council = council
+    x = _toks(60)
+    with torch.no_grad():
+        st = m.init_state(1, "cpu")
+        lg, st, _, _, _ = _fwd(m, x, st)
+        # the reference: the same decoder blocks, one token at a time
+        ref = torch.stack([m._trunk(S[:, 0], S[:, 1:], torch.device("cpu"))
+                           for S in seen], dim=1)            # [1, T, d]
+        lg_ref = m.head(m.lnf(ref))
+    m._council = council0
+    assert torch.allclose(lg, lg_ref, atol=1e-5), (lg - lg_ref).abs().max()
+
+
+@pytest.mark.parametrize("order", ["cortex_first", "pfc_first"])
+def test_S12_hippocampus_is_a_pfc_organ(order):
+    m = _model(seed=29, order=order, slot_every=8); m.eval()
+    m.read_drop = 0.0
+    council_out, read_q = [], []
+    council0, read0 = m._council, m._read
+
+    def council(c, r, mm, dev):
+        S = council0(c, r, mm, dev)
+        council_out.append(S.detach().clone())
+        return S
+
+    def read(st, q, ok):
+        read_q.append(q.detach().clone())
+        return read0(st, q, ok)
+    m._council, m._read = council, read
+    with torch.no_grad():
+        st = m.init_state(1, "cpu")
+        _, st, _, _, _ = _fwd(m, _toks(70), st)      # chunk 0: no reads (no M yet) but queries are recorded
+        council_out.clear(); read_q.clear()
+        st = m.detach_state(st)
+        _, st, _, _, _ = _fwd(m, _toks(71), st)      # chunk 1
+    S_all = torch.cat(council_out, 0)                 # [T, 2+K, d]
+    s0 = S_all[:, 0]
+    # chunk-start read (prev_c), slot refreshes at t = 7, 15, 23, then the
+    # batched logit read over the chunk — every query is a PFC token slot
+    refresh = [q for q in read_q if q.dim() == 2]
+    batched = [q for q in read_q if q.dim() == 3]
+    assert len(batched) == 1 and torch.equal(batched[0][0], s0)
+    assert len(refresh) == 1 + (T // 8 - 1)
+    for j, q in enumerate(refresh[1:]):
+        assert torch.equal(q[0], s0[8 * (j + 1) - 1])
+    assert torch.equal(st["prev_c"][0], s0[-1])       # the write key for the next token
+    m._council, m._read = council0, read0
