@@ -141,7 +141,8 @@ if [ "${GO:-0}" = "1" ] && [ ! -f "$DATA/flash/manifest.json" ]; then
       fi
     done
     # v10.1 ship: *_epi shards land beside the moved-aside old ones
-    for d in flash flash_eval smoke_l8; do
+    # (smoke_l<N>_epi for whatever life count the mule built)
+    for d in flash flash_eval smoke_l8 smoke_l4 smoke_l2; do
       [ -d "$DATA/${d}_epi" ] && [ ! -d "$DATA/$d" ] && \
         mv "$DATA/${d}_epi" "$DATA/$d"
     done

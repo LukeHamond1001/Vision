@@ -177,10 +177,31 @@ PY
       # shellcheck disable=SC2086
       start_mini $MINI2
     fi
+    if [ -n "${MINI3:-}" ]; then
+      # shellcheck disable=SC2086
+      start_mini $MINI3
+    fi
   fi
 fi
 
 # ---- 2. the episodic corpus (fresh tokenizer sample from the spine) ----
+# REBUILD_LIVES (2026-08-21, user's "the conveyor never stops"): fewer,
+# longer lives give the slow bands more events per life (band 6 writes
+# once per 1M tokens: 8 lives -> ~600 per life, 4 -> ~1200, 2 -> ~2400)
+# at the same total tokens. When the built corpus has a different life
+# count, it is moved aside (never deleted), the shards that carry its
+# tokenizer with it, and the ship tar is rebuilt.
+if [ -n "${REBUILD_LIVES:-}" ] && [ -f "$DATA/flash_epi/manifest.json" ]; then
+  HAVE=$(python -c "import json;print(json.load(open('$DATA/flash_epi/manifest.json')).get('n_lives'))" 2>/dev/null || echo "?")
+  if [ "$HAVE" != "$REBUILD_LIVES" ]; then
+    for d in flash_epi flash_eval_epi smoke_l${HAVE}_epi; do
+      [ -d "$DATA/$d" ] && mv "$DATA/$d" "$DATA/${d}_l$HAVE"
+    done
+    rm -f /workspace/v10_ship2.tar
+    LIVES=$REBUILD_LIVES
+    hb "rebuild with $LIVES lives (the $HAVE-life corpus moved aside as *_l$HAVE)"
+  fi
+fi
 if [ ! -f "$DATA/flash_epi/manifest.json" ]; then
   hb "episodic build starts: lives=$LIVES budget=$BUDGET"
   # shellcheck disable=SC2086
@@ -204,16 +225,17 @@ if [ ! -f "$DATA/flash_eval_epi/manifest.json" ]; then
     --tokenizer "$DATA/flash_epi/tokenizer.json" --episodic >> build.log 2>&1
   hb "eval shard $( [ -f "$DATA/flash_eval_epi/manifest.json" ] && echo ok || echo FAILED)"
 fi
-if [ ! -f "$DATA/smoke_l8_epi/manifest.json" ]; then
+SMK=smoke_l${LIVES}_epi     # lanes == lives holds for the smoke shard too
+if [ ! -f "$DATA/$SMK/manifest.json" ]; then
   # shellcheck disable=SC2086
-  python -m iga.lm_data_life prepare --out "$DATA/smoke_l8_epi" \
-    --budget 16000000 --lives 8 --seed 10 \
+  python -m iga.lm_data_life prepare --out "$DATA/$SMK" \
+    --budget $((2000000 * LIVES)) --lives "$LIVES" --seed 10 \
     $STG $UCARGS --st2-dir "$RAW" --magpie-dir "$RAW" \
     --judge-thresholds "$DATA/judge_freeze.json" \
     --tokenizer "$DATA/flash_epi/tokenizer.json" --episodic >> build.log 2>&1
-  hb "smoke shard $( [ -f "$DATA/smoke_l8_epi/manifest.json" ] && echo ok || echo FAILED)"
+  hb "smoke shard $( [ -f "$DATA/$SMK/manifest.json" ] && echo ok || echo FAILED)"
 fi
-for d in flash_eval_epi smoke_l8_epi; do
+for d in flash_eval_epi $SMK; do
   [ -f "$DATA/$d/manifest.json" ] || { hb "ABORT $d failed"; exit 1; }
 done
 python - >> rebuild.log 2>&1 <<'P'
@@ -228,7 +250,7 @@ hb "cast: $(grep '^CAST' rebuild.log | tail -1 | cut -c1-160)"
 if [ "${SHIP:-1}" = "1" ]; then
   if [ ! -f /workspace/v10_ship2.tar ]; then
     tar cf /workspace/v10_ship2.tar -C /workspace \
-      v10/flash_epi v10/flash_eval_epi v10/smoke_l8_epi \
+      v10/flash_epi v10/flash_eval_epi v10/$SMK \
       v10/measure.json v10/judge_freeze.json v10/split.json \
       v10/uc_simple.jsonl v10/uc_rest.jsonl v10/raw
   fi
