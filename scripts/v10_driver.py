@@ -142,6 +142,9 @@ def main():
     # less, the bands must carry more. --T 1024 --clock-mult 2 = half
     # window, same horizons; 1 = the certified clocks bit-exactly.
     ap.add_argument("--clock-mult", type=int, default=1)
+    # a re-based ladder: "3:1,4:8,5:64,6:512,7:4096,8:32768" (clocks in
+    # chunks; horizons = clock x T). Overrides --clock-mult.
+    ap.add_argument("--clocks", default="")
     # content-keyed store (2026-08-21, docs/MEMORY_MATH.md): "hidden" keys
     # the store on the trunk's hidden; "logit" = the certified token mix
     ap.add_argument("--keyed", default="logit", choices=["logit", "hidden"])
@@ -178,6 +181,9 @@ def main():
     ends = segment_ends(bounds, total, a.hb_every)
 
     clocks = {k: v * a.clock_mult for k, v in BAND6_CLOCKS.items()}
+    if a.clocks:
+        clocks = {int(kv.split(":")[0]): int(kv.split(":")[1])
+                  for kv in a.clocks.split(",") if kv}
     plan = {"lanes": lanes, "life_len": life_len,
             "total_steps": total,
             "total_tokens": total * a.T * lanes, "lam": lam,

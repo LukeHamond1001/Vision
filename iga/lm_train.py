@@ -362,6 +362,15 @@ def train(d=64, lanes=4, T=256, steps=40, seed=0, device="cpu",
         for k in model.bands:
             if k not in drive._horizons and k >= 6:
                 drive._horizons[k] = _hz(k)
+        if clocks:
+            # the economy's horizon for a band IS its clock in tokens
+            # (clock x window): at T=2048 with the certified clocks this
+            # reproduces {2048, 16384, 131072, 1048576} to the integer;
+            # a shorter window or a re-based ladder (2026-08-21, the
+            # "see only recent tokens, then bands" arm) keeps the
+            # prophet rings, replay caps and press horizons consistent
+            for k in model.bands:
+                drive._horizons[k] = int(model.clocks[k]) * int(T)
         # (a prophet only watches bands in ITS OWN clocks — pass
         # clocks= to PressProphet too, or band 6 is simply unwatched)
     else:
