@@ -109,7 +109,7 @@ battery: per-band CE lesions only). Decision rule:
 
 | item | where | law |
 |---|---|---|
-| `/lesion bands` `/lesion store` `/lesion none` in the serve room: flips the switches on the scoring copy and on the greedy reply path | `iga/lm_serve.py`, `scripts/room_cli.py` | switches off = bit-exact parity test |
+| **BUILT 2026-08-21** — `lesion none|bands|store` in the serve room (`ServeSession.lesion`, `lesion_scope`; room command `lesion`): applies to replies and score-only probes, never to a commit, a sleep block or a save — the committed life stays the certified forward's, so the contrast is "same state, organ off" | `iga/lm_serve.py`, `scripts/live_room.py` | `tests/test_lm_serve_lesion.py` L1–L5: 'none' bit-exact; commits identical under any switch; switches bite on reads; flags never outlive a forward |
 | `scripts/demo_lesions.py`: the pre-registered probe set run under the three conditions, paired, speech-gated; writes the evidence JSON and the transcripts | extends `scripts/demo_three_acts.py` | probe set frozen and committed before day one |
 | reel capture: the two moments above plus the base, as text transcripts first, video second | `results/evidence/v10_1_demo/` | nothing edited; full transcripts committed |
 | day-one growth chart: the flash's lesion rows plotted per bin over the life | `results/v10_1_flash/` | — |

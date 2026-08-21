@@ -21,6 +21,7 @@ clock and the sleeper's buffer stay aligned forever.
 """
 
 import json
+from contextlib import contextmanager
 
 import torch
 
@@ -29,6 +30,14 @@ from .lm_sleep import Sleeper, state_copy
 from .lm_vocab import PRESS_TOKENS
 
 SLEEP_LR = 1e-4          # A63's healthy regime (cosine tail scale)
+# The centerpiece's removal switches (docs/CENTERPIECE.md). They apply
+# to the READ path only — replies and score-only probes — never to a
+# commit, a sleep block or a save: the committed life is written by the
+# certified forward whatever the switch says, so the contrast is "same
+# state, organ off", and 'none' is bit-exact to the base.
+#   bands: model.lesioned = all bands (memory tokens zeroed, stores unread)
+#   store: model.store_read_off (bands live, stores unread)
+LESION_MODES = ("none", "bands", "store")
 MAX_SLEEP_BLOCKS = 32    # R3 dose law: serve-sleep is capped
 
 
@@ -63,6 +72,7 @@ class ServeSession:
         self.prophet = prophet
         self.log_path = log_path
         self.events = []
+        self.lesion_mode = "none"
         if resume_state is not None:
             self._restore(resume_state)   # A67: the life continues
 
@@ -112,10 +122,37 @@ class ServeSession:
     def _next_logits(self):
         x = torch.tensor([self.pending], dtype=torch.long,
                          device=self.device)
-        logits, _, _ = self.m(x, state_copy(self.st), None)
+        with self.lesion_scope():
+            logits, _, _ = self.m(x, state_copy(self.st), None)
         self.m.pop_write_cost()
         self.m.pop_recon()
         return logits[0, -1].float()
+
+    # ---------- the removals (score-only reads; see LESION_MODES) ----------
+    def lesion(self, mode):
+        mode = (mode or "none").strip().lower()
+        if mode not in LESION_MODES:
+            raise ValueError(f"lesion mode {mode!r}: one of {LESION_MODES}")
+        self.lesion_mode = mode
+        self._log({"kind": "lesion", "mode": mode, "pos": self.pos})
+        return mode
+
+    @contextmanager
+    def lesion_scope(self):
+        """Apply the session's removal to the model for ONE read and
+        restore it after — the switches never outlive a forward, so
+        commits, sleep and saves always see the certified model."""
+        m = self.m
+        prev = (set(m.lesioned),
+                bool(getattr(m, "store_read_off", False)))
+        try:
+            if self.lesion_mode == "bands":
+                m.lesioned = set(m.bands)
+            elif self.lesion_mode == "store":
+                m.store_read_off = True
+            yield m
+        finally:
+            m.lesioned, m.store_read_off = prev
 
     def flush(self):
         """Public short-commit of the pending window (A66-R2: the
@@ -282,6 +319,7 @@ class ServeSession:
             spans = self.sleeper.harvest_presses(self.drive,
                                                  void_w=64)
         return {"pos": self.pos, "committed": self.n_committed,
+                "lesion": self.lesion_mode,
                 "presses": len(self.drive.presses),
                 "live_spans": spans,
                 "sleeps": sum(1 for e in self.events

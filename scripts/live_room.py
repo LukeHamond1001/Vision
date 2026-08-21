@@ -2,7 +2,8 @@
 can sit with the life turn by turn: read what it says, think, and
 answer sentence by sentence. Commands arrive on <life>.inbox as
 "seq|cmd|payload" lines; results append to <life>.outbox as
-"seq|kind|text". Commands: say, press, sleep, probe (a silent
+"seq|kind|text". Commands: say, press, sleep, lesion (none|bands|
+store — the centerpiece's removals, read path only), probe (a silent
 belief read — the parent glancing at the child's face), probe0
 (the weights-only read: fresh state, no pending — for day-to-day
 comparisons), state, save, quit.
@@ -80,7 +81,8 @@ def main():
             ctx = s.pending[-(s.T - len(ids)):] if s.pending else []
             st = state_copy(s.st)
         x = torch.tensor([ctx + ids], dtype=torch.long)
-        lg, _, _ = s.m(x, st, None)
+        with s.lesion_scope():          # the removal, if one is set
+            lg, _, _ = s.m(x, st, None)
         s.m.pop_write_cost()
         s.m.pop_recon()
         return float(torch.softmax(lg[0, -1].float(), -1)[ans])
@@ -115,6 +117,9 @@ def main():
                     nm, ob, co = payload.split()
                     out(n, "belief0",
                         f"{belief(nm, ob, co, bare=True):.4f}")
+                elif cmd == "lesion":
+                    # CENTERPIECE: none | bands | store — read path only
+                    out(n, "lesion", s.lesion(payload))
                 elif cmd == "state":
                     out(n, "state", json.dumps(s.panel()))
                 elif cmd == "save":
