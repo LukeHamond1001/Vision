@@ -4177,3 +4177,20 @@ Also noted: gap_flat and prophet constants are declared but never
 wired to a kill (no trap; growth-chart warns cover them). Suite
 116/116. Ledgered before relaunch at step ~33,000 (<=500 steps cost)
 rather than letting a guaranteed false KILL spend a bank cycle.
+
+## 2026-08-21 — DEMOTION: JUDGMENT KILLS BECOME WARNINGS (user decision)
+
+Tally since launch: three battery-level kill events (07:45 fired; two
+more would have fired at 36,000) — all three instrument errors, zero
+true diseases; cost one bank cycle, two restarts, one dropped sleep
+pool. The diseases those criteria guard (collapse, conviction, CE
+divergence) are slow — hours to matter — while the watcher reads every
+15-minute pulse. The user's original protocol stands: "you watch; if
+something doesn't look right WE kill, fix, relaunch." Collapse,
+confident-wrong prevalence, and CE divergence now emit WARN lines in
+the row for manual action. Automatic stops remain where minutes matter
+and nothing is arguable: non-finite loss (trainer exit 4), tail-audit
+mismatch > 1% (plumbing integrity), three consecutive battery crashes
+(blind). Committed without a restart (each restart now drops the
+unreplayed sleep pool); goes live at the next restart or the
+childhood->adolescence boundary.

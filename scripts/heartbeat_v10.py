@@ -340,9 +340,15 @@ def main():
     prev_d3 = [r["distinct3"] for h in hist[-2:] for r in h.get("rows", [])
                if r.get("probe") == "collapse"]
     contracting = len(prev_d3) >= 2 and all(d3 < x for x in prev_d3)
+    # 2026-08-21 DEMOTION (user decision after three instrument false
+    # positives, zero true diseases): judgment criteria — collapse,
+    # conviction prevalence, CE divergence — are WARNS the watcher acts
+    # on manually. Automatic stops remain only where minutes matter
+    # and nothing is arguable: non-finite loss (trainer), tail-audit
+    # mismatch (plumbing), dead instruments (blind).
     if d3 < KILL["collapse_distinct3_floor"] and frac >= 0.10 \
             and contracting:
-        verdict, why = "KILL", why + [f"collapse distinct3 {d3}"]
+        why = why + [f"WARN collapse: distinct3 {d3} contracting"]
     elif d3 < KILL["collapse_distinct3_floor"] and frac >= 0.10:
         why = why + [f"warn: distinct3 {d3} below floor, not contracting"]
     # incumbent kill ARMS only once >=16 corrections have been lived
@@ -366,7 +372,7 @@ def main():
                         r["confident_wrong_frac"]
                         >= KILL["confident_wrong_frac"])
         if n_bad >= KILL["incumbent_rows"]:
-            verdict, why = "KILL", why + ["confident-wrong prevalence"]
+            why = why + [f"WARN conviction: confident-wrong prevalence {cwf}"]
     ta = rows[3]
     if ta.get("mismatch") is not None and \
             ta["mismatch"] > KILL["tail_audit_mismatch"]:
@@ -376,7 +382,7 @@ def main():
         rises = sum(1 for c in (prev_ce + [ce])[-KILL["ce_rise_rows"]:]
                     if c > best * (1 + KILL["ce_rise_margin"]))
         if rises >= KILL["ce_rise_rows"]:
-            verdict, why = "KILL", why + ["ce divergence"]
+            why = why + ["WARN ce divergence"]
 
     row = {"step": a.step, "tokens": a.tokens, "rows": rows,
            "verdict": verdict, "why": why}
