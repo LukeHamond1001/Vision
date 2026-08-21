@@ -4504,3 +4504,29 @@ CPU meanwhile runs the trunk-candidate arms (rope; modern = rope +
 QK-norm + SwiGLU) against bio on CE — binder bins are uninformative
 at this scale, CE is a fair trunk metric; a candidate enters the paid
 run only after its own mini-flash.
+
+## 2026-08-21 — MINI-FLASH LIVE ON THE MULE (17:58 UTC): SMOKE, PLAN, AND
+## WHAT THIS GATE CAN AND CANNOT SAY
+
+Mule 4gzvaq7jrokt31 (RTX 2000 Ada 16 GB, sha 92a317d): survivors ok
+(uc_simple 2G, uc_rest 7G), rebuild fetch 19 parquets (13 min), mini
+shard 17:55, mini eval 17:57, inline 40-step smoke MINISMOKE tok_s
+7775 / holds 4.4 per step / lam 0.05682 (A60f pairing on THIS diet:
+lam x holds ~ 0.25) / CE 9.90 -> 5.90 / peak 13.0 GiB. Mini-flash
+started 17:58:02 (pid 512); the full episodic build (8 lives, budget
+5,102,106,480) started on the CPU seven seconds later. PLAN: 4 lanes x
+50M-token lives, 24000 steps, 196.6M tokens, bf16, abs attention,
+GELU, band_lr_mult 1.0, battery every 3000 steps (hb_chunks 1000),
+lesions on even beats, bounds infancy 1500 / childhood 8000 /
+adolescence 17500 / tail 24000. At the smoke rate the mini life runs
+~7 h + batteries: first row ~19:00 UTC, last ~01:30 UTC 08-22.
+CAVEAT (pinned sha predates 88e6930): the mini runs the OLDER ladder
+(childhood 1:32, not the ratified 1:16) and the OLDER battery
+(per-band CE lesions only; no lesion_bands_all / lesion_store / recall
+by bin under lesion). Neither touches the gate question — in-ctx
+recall on unseen lives is read with sleep off the critical path and
+no lesion needed — so the mini is NOT restarted; the Act 2/3 organs
+are measured for the first time on the H100 run, which boots from
+HEAD. Deliverables still to land from the mule: mini_hb.jsonl rows
+(publisher every 10 min), the "cast:" beat of the full build,
+flash_eval_epi, smoke_l8_epi, the ship tar and ship_code2.txt.
