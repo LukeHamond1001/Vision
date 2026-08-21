@@ -4342,3 +4342,29 @@ per sleep, every 32 steps) compounds to x0.70 across childhood's
 decoupled weight decay of ~3e-5/step (AdamW wd ~0.8 at this lr);
 certified at debug, flagged here as the first suspect if sampled
 diversity contracts.
+
+## 2026-08-21 — THE SEAM LAW (sleeper frame across driver segments)
+
+Found while proving the harvest fix exact. v10_driver keeps ONE
+Sleeper across its train() segments; each train() builds a fresh Drive
+and calls sleep.bind(drive), which set start = drive.step_t — correct
+for an empty buffer (every fresh process), wrong when the buffer still
+holds the previous segment's tail: the head's true position is
+step_t - len(buffer), so from the SECOND segment of a process onward
+every replay window was shifted by the buffer length (the band-6 cap,
+~1.06M tokens): press-pay spans replayed real same-lane text from a
+million tokens before the pressed exchange, and correction pairs
+parsed turn boundaries in the wrong place (mostly no pair; any pair
+formed fails the w1 == tw law). EXPOSURE: infancy is sleepless and
+every childhood segment before 36000 was the first in its process
+(kills and restarts, ironically, kept the frame honest); segment
+36000-42000 on the bundle pod is the first shifted one (~190 sleeps
+of benign-but-misdirected CE replay, ~0 true pairs). Its trace row
+(pairs, pair_law_ok) is the in-vivo confirmation. FIX: bind anchors
+start = step_t - len(buffer); empty buffer = old line bit-exactly (all
+existing binds are empty-buffer binds; serve restores buffers AFTER
+binding). LAW: tests/test_lm_sleep_harvest.py::test_bind_seam_keeps_
+buffer_frame — tokens encode their own stream position; the frame is
+checked before and after a seam with the cap hit, and a span minted
+in segment 2 must read its own exchange; the pre-fix bind fails it
+(negative control run). Suite 206/206. Ships with the harvest fix.

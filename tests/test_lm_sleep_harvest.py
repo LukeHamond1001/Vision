@@ -216,3 +216,51 @@ def test_window_bounded_cost_does_not_grow_with_segment():
     sl = _sleeper(bufs, 380 * T)
     i0 = Sleeper._press_lo(ps, sl.start + MIN_REPLAY - T, T)
     assert len(ps) - i0 < 25 * LANES * 4   # ~window only, not 400 steps
+
+
+def test_bind_seam_keeps_buffer_frame():
+    """SEAM LAW: the driver's persistent Sleeper meets a fresh Drive
+    at every segment boundary; the buffer head must stay anchored to
+    its TRUE stream position. Tokens encode their own position, so a
+    frame error is visible as a token/position mismatch."""
+    import torch
+    from iga.lm_drive import Drive
+    Tt, lanes, M = 64, 2, 65536
+    hz = {b: 64 for b in range(1, 6)}
+    d1 = Drive(n_lanes=lanes, seed=0); d1._horizons = hz
+    sl = Sleeper(arm="C", every=4, block_chunks=2, seed=0)
+    sl.bind(d1)
+    assert sl.start == 0                      # fresh bind: old line exactly
+
+    def feed(drive, n):
+        for _ in range(n):
+            base = drive.step_t
+            x = torch.tensor([[(base + j) % M for j in range(Tt)]
+                              for _ in range(lanes)])
+            sl.observe(x)
+            drive.step_t += Tt
+
+    def frame_ok():
+        buf = sl.buffers[0]
+        return all(buf[i] == (sl.start + i) % M
+                   for i in range(0, len(buf), 37)) and \
+            sl.end == sl.start + len(buf)
+
+    feed(d1, 200)                             # cap (64 + 8192) is hit
+    assert len(sl.buffers[0]) == sl.cap and frame_ok()
+    # segment seam: a fresh Drive resumed at the same step
+    d2 = Drive(n_lanes=lanes, seed=1); d2._horizons = hz
+    d2.step_t = d1.step_t
+    sl.bind(d2)
+    assert sl.start == d2.step_t - len(sl.buffers[0])
+    assert frame_ok()
+    # the pre-fix line would have claimed the head at step_t: off by cap
+    assert d2.step_t - sl.start == sl.cap
+    feed(d2, 50)
+    assert frame_ok()
+    # a press-pay span minted in segment 2 reads its own exchange
+    d2.presses = [{"lane": 0, "v": 2, "t": d2.step_t - 5, "key": None}]
+    sl.harvest_presses(d2, 32, void_w=8)
+    sp = sl.spans[0]
+    lo, hi = sp["t0"] - sl.start, sp["t1"] - sl.start
+    assert sl.buffers[0][lo:hi] == [(p % M) for p in range(sp["t0"], sp["t1"])]

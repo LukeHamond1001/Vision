@@ -192,7 +192,19 @@ class Sleeper:
         return SleepTap(conveyor, self)
 
     def bind(self, drive):
-        self.start = drive.step_t
+        # SEAM LAW (2026-08-21, v10 flash): the driver keeps ONE Sleeper
+        # across its train() segments while every segment builds a
+        # fresh Drive, and the conveyor resumes contiguously — so at a
+        # seam the buffer still holds the previous segment's tail and
+        # its head sits len(buffer) tokens BEFORE drive.step_t. Taking
+        # start = drive.step_t shifted every replay window by the
+        # buffer length (~1.06M tokens at the band-6 cap) from the
+        # second segment of a process on: spans and pairs would read
+        # tokens a million back from the pressed exchange. Anchor the
+        # head by length; an empty buffer (every fresh bind) is the
+        # old line bit-exactly.
+        held = len(self.buffers[0]) if self.buffers else 0
+        self.start = drive.step_t - held
         # A70: the replay-reach cap covers every band the drive knows
         # a horizon for (band 6 arrives via drive._horizons); default
         # runs see exactly the old 1..5 computation.
