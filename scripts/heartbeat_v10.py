@@ -333,7 +333,9 @@ def main():
 
     row = {"step": a.step, "tokens": a.tokens, "rows": rows,
            "verdict": verdict, "why": why}
-    os.makedirs(os.path.dirname(a.out), exist_ok=True)
+    out_dir = os.path.dirname(a.out)
+    if out_dir:
+        os.makedirs(out_dir, exist_ok=True)
     with open(a.out, "a") as f:
         f.write(json.dumps(row) + "\n")
     print(json.dumps(row, indent=1))
