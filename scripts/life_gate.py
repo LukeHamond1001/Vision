@@ -114,17 +114,23 @@ def build_shards():
 def train_arm(tag, data, arch="hybrid", **kw):
     t0 = time.time()
     sl = None
+    # per-arm chunk length / step count (the CONVEYOR arm halves T and
+    # doubles the clocks and the steps: same tokens, same horizons,
+    # half the attention window — bands must carry the rest)
+    T_arm = kw.pop("T", T)
+    steps_arm = kw.pop("steps", STEPS)
     if arch == "hybrid":
         sl = Sleeper(arm="C", every=16, block_chunks=2, seed=1,
                      **{k: kw.pop(k) for k in
                         ("splice", "novelty", "homeostasis")
                         if k in kw})
-        sl.press_pay = (T, 64)
+        sl.press_pay = (T_arm, 64)
     model, drive, vocab, ce0, ce1 = train(
-        d=D, lanes=LANES, T=T, steps=STEPS, seed=0, device="cpu",
+        d=D, lanes=LANES, T=T_arm, steps=steps_arm, seed=0, device="cpu",
         arch=arch, store="matrix", keyed="logit", norm_mix=True,
         aux_trunk=0.2, use_xl=False, gate_init=-2.0, lam=0.02,
-        log_every=max(STEPS // 4, 1), data=data, sleep=sl, **kw)
+        log_every=max(steps_arm // 4, 1), data=data, sleep=sl, **kw)
+    model._gate_T = T_arm
     meta = {"ce_first": ce0, "ce_last": ce1,
             "secs": round(time.time() - t0),
             "params": sum(p.numel() for p in model.parameters())}
@@ -145,15 +151,17 @@ BINS = [(1, 256, "in-ctx"), (257, 2048, "short"),
 @torch.no_grad()
 def evaluate(model, arch="hybrid"):
     """Stream the eval shard: CE + probe accuracy binned by TRUE
-    gap (closed set = answer + distractors)."""
+    gap (closed set = answer + distractors). Walks at the model's own
+    chunk length (its clocks are in chunks)."""
+    Tm = getattr(model, "_gate_T", T)
     conv = UltraConveyor(EVAL, n_lanes=2)
     model.eval()
     st = model.init_state(2, "cpu")
     ce_sum, ce_n = 0.0, 0
     acc = {name: [0, 0] for _, _, name in BINS}
-    chunks = min(2500, len(conv.tokens) // (2 * T) - 2)
+    chunks = min(2500 * (T // Tm), len(conv.tokens) // (2 * Tm) - 2)
     for _ in range(chunks):
-        x, y, events = conv.chunk(T)
+        x, y, events = conv.chunk(Tm)
         out = model(x, st, None)
         logits, st = out[0], out[1]
         if hasattr(model, "pop_write_cost"):
@@ -199,6 +207,10 @@ def main():
         "rope": dict(data=BIO, attn="rope", qk_norm=True),
         "modern": dict(data=BIO, attn="rope", qk_norm=True, mlp="swiglu"),
         "bandlr": dict(data=BIO, band_lr_mult=3.0),
+        # the CONVEYOR (user hypothesis 2026-08-21): half the window,
+        # clocks x2 (same token horizons), steps x2 (same tokens)
+        "conveyor": dict(data=BIO, T=T // 2, steps=STEPS * 2,
+                         clocks={3: 2, 4: 16, 5: 128}),   # bio = {1, 8, 64}
         "a73": dict(data=BIO, splice=0.35),
         "a74": dict(data=BIO, novelty=0.5),
         "a75": dict(data=BIO, tie_embed=True),
@@ -253,7 +265,8 @@ def main():
     # attribution ban applies to organ deltas too; (2) the
     # cross-day bin (b5+) is IN the regression check — it is the
     # architecture's load-bearing bin, not an optional extra.
-    for organ in ("a71", "a73", "a74", "a75", "rope", "modern", "bandlr"):
+    for organ in ("a71", "a73", "a74", "a75", "rope", "modern", "bandlr",
+                  "conveyor"):
         if organ in a and "bio" in a:
             ce_o, ce_b = a[organ]["eval"]["ce"], a["bio"]["eval"]["ce"]
             ce_win = ce_o < ce_b * 0.99
