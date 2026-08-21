@@ -186,6 +186,53 @@ def probe_collapse(m, tok, T):
 
 
 @torch.no_grad()
+@torch.no_grad()
+def probe_store_health(m, tok):
+    """Is the contextual memory ABLE to carry a fact? The v9.4 final
+    battery found the store's learned key mix collapsed onto the
+    immediately preceding token (qmix softmax [0.999, ...]) — a bigram
+    cache that cannot retrieve "what colour was Mira's key". Read the
+    key mix and the read path every beat: qmix softmax (top offsets,
+    entropy), tok_u of the cast's entity words vs colours vs the
+    corpus mean (are entities key-worthy?), read scale alpha and the
+    read gate per band. Parameter reads only — no forward."""
+    from iga.lm_gen import NAMES, OBJECTS, COLORS
+    from iga.lm_data_life import EPISODIC_NAMES, EPISODIC_OBJECTS
+    out = {}
+    qm = getattr(m, "qmix", None)
+    if qm is not None:
+        w = torch.softmax(qm.detach().float(), 0)
+        top = torch.topk(w, min(3, w.numel()))
+        out["qmix_top"] = [[int(i), round(float(v), 4)]
+                           for v, i in zip(top.values, top.indices)]
+        out["qmix_entropy"] = round(float(-(w * (w + 1e-12).log()).sum()), 4)
+        out["qmix_len"] = int(w.numel())
+    tu = getattr(m, "tok_u", None)
+    if tu is not None:
+        tu = tu.detach().float()
+        def mean_u(words):
+            ids = []
+            for wd in words:
+                for form in (wd, " " + wd):
+                    i = tok.token_to_id(form)
+                    if i is not None and i < tu.numel():
+                        ids.append(i); break
+            return round(float(tu[ids].mean()), 4) if ids else None
+        out["tok_u"] = {"mean": round(float(tu.mean()), 4),
+                        "std": round(float(tu.std()), 4),
+                        "names": mean_u(list(NAMES) + list(EPISODIC_NAMES)),
+                        "objects": mean_u(list(OBJECTS) + list(EPISODIC_OBJECTS)),
+                        "colors": mean_u(list(COLORS))}
+    al = getattr(m, "alpha", None)
+    if al is not None:
+        out["alpha"] = {k: round(float(v.detach()), 4) for k, v in al.items()}
+    rg = getattr(m, "read_gate", None)
+    if rg is not None:
+        out["read_gate"] = {k: round(float(torch.sigmoid(v.detach())), 4)
+                            for k, v in rg.items()}
+    return out
+
+
 def probe_cast(m, tok, manifest):
     """Fresh-state bare asks over the manifest's cast facts:
     incumbent mass (max false-color prob where false beats true),
@@ -325,6 +372,10 @@ def main():
     col = probe_collapse(m, tok, a.T)
     d3 = col["distinct3"]
     rows.append({"probe": "collapse", **col})
+    try:
+        rows.append({"probe": "store_health", **probe_store_health(m, tok)})
+    except Exception as e:            # a diagnostic must never kill a beat
+        rows.append({"probe": "store_health", "error": repr(e)[:120]})
     cast = probe_cast(m, tok, manifest)
     # A67's incumbent DISEASE is conviction that resists CORRECTION —
     # it cannot exist before corrections have been experienced. Stamp

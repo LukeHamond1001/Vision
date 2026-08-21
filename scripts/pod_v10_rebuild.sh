@@ -121,33 +121,38 @@ sys.path.insert(0, ".")
 from iga.lm_train import train
 from iga.lm_sleep import Sleeper
 sl = Sleeper(arm="C", every=8, block_chunks=2, seed=1, homeostasis=1e-3)
-sl.press_pay = (2048, 256)
+T = int(os.environ.get("MINI_T", "2048")); CM = int(os.environ.get("MINI_CM", "1"))
+sl.press_pay = (T, T // 8)
 t0 = time.time()
 L = int(os.environ["MINI_LANES"])
 model, drive, vocab, ce0, ce1 = train(
-    d=512, n_layers=8, lanes=L, T=2048, steps=40, seed=0, device="cuda",
+    d=512, n_layers=8, lanes=L, T=T, steps=40, seed=0, device="cuda",
     arch="hybrid", store="matrix", keyed="logit", norm_mix=True,
     aux_trunk=0.2, use_xl=False, gate_init=-2.0, lam=0.02,
-    clocks={3: 1, 4: 8, 5: 64, 6: 512}, precision="bf16",
+    clocks={3: 1 * CM, 4: 8 * CM, 5: 64 * CM, 6: 512 * CM}, precision="bf16",
     attn=os.environ["MINI_ATTN"], qk_norm=(os.environ["MINI_QK"] == "1"),
     mlp=os.environ["MINI_MLP"], band_lr_mult=float(os.environ["MINI_BLR"]),
     data=os.environ["MINI_DATA"], sleep=sl, log_every=20)
 dt = time.time() - t0
 holds = len(drive.ledger) / 40
 lam = min(0.25, 0.25 / max(holds, 1))
-out = {"lanes": L, "tok_s": round(40 * L * 2048 / dt), "holds": round(holds, 2),
+out = {"lanes": L, "T": T, "clock_mult": CM, "tok_s": round(40 * L * T / dt), "holds": round(holds, 2),
        "lam": round(lam, 5), "ce": [round(ce0, 3), round(ce1, 3)],
        "peak_gib": round(torch.cuda.max_memory_allocated() / 2**30, 1)}
 json.dump(out, open(os.environ["MINI_SMOKE_OUT"], "w"))
 print("MINISMOKE", json.dumps(out))
 PY
   MINIPIDS=""
-  # start_mini TAG ATTN QK MLP BLR — lam smoke (A60f pairing on THIS
-  # config), then the real driver + battery in the background
+  # start_mini TAG ATTN QK MLP BLR [T] [CLOCK_MULT] — lam smoke (A60f
+  # pairing on THIS config), then the real driver + battery in the
+  # background. T/CLOCK_MULT = the conveyor arm (half window, clocks x2);
+  # the battery walk keeps the same tokens per lane (hb-chunks scaled).
   start_mini() {
-    local tag=$1 attn=$2 qk=$3 mlp=$4 blr=$5
+    local tag=$1 attn=$2 qk=$3 mlp=$4 blr=$5 T=${6:-2048} cm=${7:-1}
+    local hbc=$((1000 * 2048 / T))
     local outm=/workspace/v10_mini_out$tag; mkdir -p "$outm"
     MINI_ATTN="$attn" MINI_QK="$qk" MINI_MLP="$mlp" MINI_BLR="$blr" \
+    MINI_T="$T" MINI_CM="$cm" \
     MINI_SMOKE_OUT="mini_smoke$tag.json" MINI_DATA="$MINI" MINI_LANES="$ML" \
       python mini_smoke.py > mini_smoke$tag.log 2>&1
     hb "mini smoke$tag $(grep MINISMOKE mini_smoke$tag.log | tail -1 | cut -c1-200)"
@@ -156,15 +161,15 @@ PY
     python scripts/v10_driver.py \
       --data "$MINI" --eval-data "$DATA/mini_eval_epi" \
       --ckpt "$outm/mini.pt" --lam "$lam" \
-      --d 512 --n-layers 8 --T 2048 --lr 1e-4 --lr-warmup 1000 \
-      --hb-every 3000 --hb-chunks 1000 --lesion-every 2 \
+      --d 512 --n-layers 8 --T "$T" --clock-mult "$cm" --lr 1e-4 --lr-warmup 1000 \
+      --hb-every 3000 --hb-chunks "$hbc" --lesion-every 2 \
       --precision bf16 --attn "$attn" --qk-norm "$qk" \
       --mlp "$mlp" --band-lr-mult "$blr" \
       --device cuda --hb-out mini_hb$tag.jsonl --trace mini_driver$tag.jsonl \
       --log-every 100 > mini_train$tag.log 2>&1 &
     local pid=$!
     MINIPIDS="$MINIPIDS $pid"
-    hb "mini-flash$tag started (pid $pid, lam $lam, lanes $ML, attn $attn qk $qk mlp $mlp blr $blr)"
+    hb "mini-flash$tag started (pid $pid, lam $lam, lanes $ML, attn $attn qk $qk mlp $mlp blr $blr T $T cm $cm)"
     ( while kill -0 $pid 2>/dev/null; do sleep 600; hb "mini$tag inflight $(tail -1 mini_hb$tag.jsonl 2>/dev/null | head -c 240)"; done
       hb "mini-flash$tag ENDED rc=? rows: $(grep -c . mini_hb$tag.jsonl 2>/dev/null) tail: $(grep -v 'sleep@' mini_train$tag.log | tail -1 | cut -c1-160)" ) &
   }
@@ -180,6 +185,10 @@ PY
     if [ -n "${MINI3:-}" ]; then
       # shellcheck disable=SC2086
       start_mini $MINI3
+    fi
+    if [ -n "${MINI4:-}" ]; then
+      # shellcheck disable=SC2086
+      start_mini $MINI4
     fi
   fi
 fi

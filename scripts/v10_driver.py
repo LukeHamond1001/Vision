@@ -137,6 +137,11 @@ def main():
     ap.add_argument("--qk-norm", default="0")
     ap.add_argument("--band-lr-mult", type=float, default=1.0)
     ap.add_argument("--mlp", default="gelu", choices=["gelu", "swiglu"])
+    # the CONVEYOR arm (2026-08-21): a shorter window with the clocks
+    # multiplied so every band keeps its TOKEN horizon — attention holds
+    # less, the bands must carry more. --T 1024 --clock-mult 2 = half
+    # window, same horizons; 1 = the certified clocks bit-exactly.
+    ap.add_argument("--clock-mult", type=int, default=1)
     ap.add_argument("--hb-out", default="results/hb_v10.jsonl")
     ap.add_argument("--trace", default="results/v10_driver.jsonl")
     ap.add_argument("--log-every", type=int, default=100)
@@ -164,6 +169,7 @@ def main():
         lam = json.load(open(a.smoke))["lam"]
     ends = segment_ends(bounds, total, a.hb_every)
 
+    clocks = {k: v * a.clock_mult for k, v in BAND6_CLOCKS.items()}
     plan = {"lanes": lanes, "life_len": life_len,
             "total_steps": total,
             "total_tokens": total * a.T * lanes, "lam": lam,
@@ -171,6 +177,7 @@ def main():
             "segments": len(ends), "precision": a.precision,
             "attn": a.attn, "qk_norm": str(a.qk_norm) == "1",
             "band_lr_mult": a.band_lr_mult, "mlp": a.mlp,
+            "clock_mult": a.clock_mult, "clocks": clocks,
             "hb_every": a.hb_every,
             "hb_chunks": a.hb_chunks, "lesion_every": a.lesion_every}
     print("PLAN " + json.dumps(plan), flush=True)
@@ -180,7 +187,7 @@ def main():
     sl = Sleeper(arm="C", every=0, block_chunks=2, seed=1,
                  homeostasis=1e-3)
     sl.press_pay = (a.T, a.T // 8)
-    prophet = PressProphet(d=a.d, clocks=BAND6_CLOCKS,
+    prophet = PressProphet(d=a.d, clocks=clocks,
                            holdout_frac=0.1, device=a.device)
 
     cur = 0
@@ -204,7 +211,7 @@ def main():
             steps=end - cur, seed=1000 + seg_i, device=a.device,
             arch="hybrid", store="matrix", keyed="logit",
             norm_mix=True, aux_trunk=0.2, use_xl=False,
-            gate_init=-2.0, clocks=BAND6_CLOCKS,
+            gate_init=-2.0, clocks=clocks,
             data=a.data, eval_data=a.eval_data, ckpt=a.ckpt,
             resume=(a.ckpt if cur else None),
             offset_frac=cur * a.T / life_len,
