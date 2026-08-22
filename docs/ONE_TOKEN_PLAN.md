@@ -334,3 +334,20 @@ scan4 (05:24 UTC, zm2a7e7cw5ntnv): step 100 at 2.7k tok/s, holds 1.5k
 decayed to 1.5k), the step-6000 row (R1 with the corrected economy).
 Then scan5 = scan4 + store_exact; its store-off number is the
 hippocampus verdict for this hypothesis.
+
+## 18. Leak test and copyability (06:10 UTC)
+
+A local d=32/1-layer organism with scan3's cadence reached train CE
+0.30 by step 1500 on the local gate shard. Leak test on uniformly
+random tokens: CE = log V (6.253) under every cadence — nothing about
+token t reaches its own logits. The cause is the DATA: the local gate
+shard (life_gate_bio_epi) is 72% copyable at k=4/w=256 (95% precision
+on matches); its eval shard 10-26%. scripts/copyable.py measures it;
+pod_scan.sh now reports the train and eval shards' copyability at boot
+so every CE number carries its context. scan3's eval gain is not
+copying: the hybrid it beat by 1.4 nats had a 2048-token attention
+window and could copy anything within it.
+The pod's throughput decay has no local reproduction (drive, sleeper,
+prophet all bounded; the deque fixed only the capped-ledger part);
+IGA_TIMING=1 (3b4125f) prints per-component ms/step on the pod's step
+lines — scan5 runs with it.
