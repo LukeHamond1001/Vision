@@ -293,3 +293,26 @@ step-12000 lesion pass (STORE OFF must now cost nats).
 scan4 = scan3's model exactly + these two fixes + compile_read. Plan:
 read scan3's step-6000 eval row (R1), then relaunch as scan4 and take
 the step-12000 lesion pass (R2, store off) there, at full speed.
+
+## 16. scan3's step-6000 row (05:15 UTC) — R1 passed, the HPC hypothesis falsified
+
+  R1  eval CE 4.547 on unseen lives (scan1 6.192; hybrid mini with a
+      2048-token window 5.91). PASS by 1.65 nats.
+  R2  bands off +0.97 nats (scan1 +0.54). STORE OFF +0.003: the
+      hippocampus is inert even written every chunk and read every
+      token. The cadence hypothesis is FALSIFIED; scan3's gain over
+      scan1 is the fidelity fix freeing the PFC. Recall bins at floor
+      (in-ctx .196). Entropy 6.9 -> 1.2, greedy distinct-3 .58.
+Why the store is inert (from its write rule, LogitStore.write): the
+update is the strength-NORMALISED average of the chunk's pairs — one
+fact is written at 1/64 strength per chunk; the store accumulates
+frequent pairs (the hybrid's bigram-cache finding, same cause) and
+cannot hold a one-shot item at readable magnitude. Next HPC
+hypothesis (iteration 5): exact one-shot binding — the sequential
+delta rule at full per-pair strength via DeltaNet's chunkwise-exact
+algorithm (the A52 overshoot handled exactly, not by averaging),
+decay per band unchanged.
+scan3 killed at step 6700; scan4 = pod zm2a7e7cw5ntnv, sha 86b5011:
+scan3's model + the ledger/horizon fixes + compile_read. Reads: the
+speed at step 100 and at step 4000+ (no decay now), the step-12000
+per-band lesion pass.

@@ -1,0 +1,60 @@
+   "deltas_0_64": {
+    "thread_off": 0.9745,
+    "store_off": 0.003,
+    "both_off": 0.9779
+   }
+  },
+  {
+   "probe": "cast",
+   "n_facts": 192,
+   "incumbent_mass": 0.4143,
+   "confident_wrong_frac": 0.0,
+   "class_mean_p_true": {
+    "none": 0.0025,
+    "pos1": 0.0032,
+    "pos2": 0.0028,
+    "epi:pos2": 0.0508,
+    "epi:none": 0.0409,
+    "epi:pos1": 0.0524
+   },
+   "n_corr_seen": 0
+  },
+  {
+   "probe": "tail_audit",
+   "n": 120,
+   "clipped": 1,
+   "mismatch": 0.0
+  }
+ ],
+ "verdict": "ok",
+ "why": []
+}
+resumed /workspace/v10_scan_out_scan3/scan.pt at step 6000 (ema keys: ['fid:3', 'fid:4', 'fid:5', 'fid:6', 'fid:7', 'fid:8', 'recall:b0', 'recall:b1', 'recall:b2'])
+W0822 05:12:35.804000 126288457107008 torch/fx/experimental/symbolic_shapes.py:4449] [0/2] d0 is not in var_ranges, defaulting to unknown range.
+W0822 05:12:35.804000 126288457107008 torch/fx/experimental/symbolic_shapes.py:4449] [0/2] d2 is not in var_ranges, defaulting to unknown range.
+W0822 05:12:35.810000 126288457107008 torch/fx/experimental/symbolic_shapes.py:4449] [0/2] d1 is not in var_ranges, defaulting to unknown range.
+W0822 05:12:35.810000 126288457107008 torch/fx/experimental/symbolic_shapes.py:4449] [0/2] d0 is not in var_ranges, defaulting to unknown range.
+W0822 05:12:35.810000 126288457107008 torch/fx/experimental/symbolic_shapes.py:4449] [0/2] d2 is not in var_ranges, defaulting to unknown range.
+W0822 05:12:35.831000 126288457107008 torch/fx/experimental/symbolic_shapes.py:4449] [0/2] d0 is not in var_ranges, defaulting to unknown range.
+W0822 05:12:35.832000 126288457107008 torch/fx/experimental/symbolic_shapes.py:4449] [0/2] d2 is not in var_ranges, defaulting to unknown range.
+W0822 05:12:35.839000 126288457107008 torch/fx/experimental/symbolic_shapes.py:4449] [0/2] d1 is not in var_ranges, defaulting to unknown range.
+W0822 05:12:35.840000 126288457107008 torch/fx/experimental/symbolic_shapes.py:4449] [0/2] d0 is not in var_ranges, defaulting to unknown range.
+W0822 05:12:35.840000 126288457107008 torch/fx/experimental/symbolic_shapes.py:4449] [0/2] d2 is not in var_ranges, defaulting to unknown range.
+W0822 05:12:36.114000 126288457107008 torch/fx/experimental/symbolic_shapes.py:4449] [0/2] q0 is not in var_ranges, defaulting to unknown range.
+W0822 05:12:36.114000 126288457107008 torch/fx/experimental/symbolic_shapes.py:4449] [0/2] q2 is not in var_ranges, defaulting to unknown range.
+W0822 05:12:36.123000 126288457107008 torch/fx/experimental/symbolic_shapes.py:4449] [0/2] q0 is not in var_ranges, defaulting to unknown range.
+W0822 05:12:36.124000 126288457107008 torch/fx/experimental/symbolic_shapes.py:4449] [0/2] q2 is not in var_ranges, defaulting to unknown range.
+W0822 05:12:36.124000 126288457107008 torch/fx/experimental/symbolic_shapes.py:4449] [0/2] q1 is not in var_ranges, defaulting to unknown range.
+W0822 05:12:36.154000 126288457107008 torch/fx/experimental/symbolic_shapes.py:4449] [0/2] z0 is not in var_ranges, defaulting to unknown range.
+W0822 05:12:36.154000 126288457107008 torch/fx/experimental/symbolic_shapes.py:4449] [0/2] z1 is not in var_ranges, defaulting to unknown range.
+W0822 05:12:36.155000 126288457107008 torch/fx/experimental/symbolic_shapes.py:4449] [0/2] z2 is not in var_ranges, defaulting to unknown range.
+W0822 05:12:36.462000 126288457107008 torch/fx/experimental/symbolic_shapes.py:4449] [0/2] r2 is not in var_ranges, defaulting to unknown range.
+W0822 05:12:36.462000 126288457107008 torch/fx/experimental/symbolic_shapes.py:4449] [0/2] x0 is not in var_ranges, defaulting to unknown range.
+W0822 05:12:36.463000 126288457107008 torch/fx/experimental/symbolic_shapes.py:4449] [0/2] x1 is not in var_ranges, defaulting to unknown range.
+step  6100  ce 3.241  loss 3.339  holds 12672  2,795 tok/s (now 2,795)  [fid:3=+0.532 fid:4=+0.031 fid:5=+0.051 fid:6=+0.041 fid:7=+0.011 fid:8=+0.002 b0=+0.003 b1=+0.003 b2=+0.007]
+step  6200  ce 3.430  loss 4.262  holds 25472  2,799 tok/s (now 2,803)  [fid:3=+0.535 fid:4=+0.028 fid:5=+0.045 fid:6=+0.041 fid:7=+0.012 fid:8=+0.002 b0=+0.006 b1=+0.006 b2=+0.011]
+step  6300  ce 3.199  loss 3.976  holds 38272  2,772 tok/s (now 2,720)  [fid:3=+0.540 fid:4=+0.032 fid:5=+0.051 fid:6=+0.039 fid:7=+0.012 fid:8=+0.002 b0=+0.005 b1=+0.006 b2=+0.006]
+step  6400  ce 2.681  loss 2.784  holds 51072  2,730 tok/s (now 2,611)  [fid:3=+0.531 fid:4=+0.030 fid:5=+0.048 fid:6=+0.038 fid:7=+0.012 fid:8=+0.002 b0=+0.005 b1=+0.006 b2=+0.006]
+step  6500  ce 2.889  loss 2.985  holds 63872  2,699 tok/s (now 2,582)  [fid:3=+0.534 fid:4=+0.030 fid:5=+0.047 fid:6=+0.037 fid:7=+0.013 fid:8=+0.002 b0=+0.005 b1=+0.007 b2=+0.010]
+step  6600  ce 3.305  loss 3.408  holds 76672  2,629 tok/s (now 2,325)  [fid:3=+0.536 fid:4=+0.031 fid:5=+0.048 fid:6=+0.036 fid:7=+0.013 fid:8=+0.002 b0=+0.008 b1=+0.010 b2=+0.013]
+step  6700  ce 2.985  loss 3.084  holds 89472  2,630 tok/s (now 2,640)  [fid:3=+0.538 fid:4=+0.031 fid:5=+0.052 fid:6=+0.039 fid:7=+0.013 fid:8=+0.002 b0=+0.006 b1=+0.003 b2=+0.004]

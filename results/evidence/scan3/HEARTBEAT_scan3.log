@@ -1,0 +1,14 @@
+03:03:10 [scan3] boot SCAN sha=31184a2 gpu=NVIDIA GeForce RTX 4090, 24564 MiB vol=2190893G 466336G order=pfc_first lives=32 T=64 d=512 L=8 opts={"n_council":2,"slot_every":1,"write_every":1,"compile_council":true} clocks=3:1,4:8,5:64,6:512,7:4096,8:32768 prec=bf16
+03:03:20 [scan3] inventory: flash_epi=ok flash_eval_epi=ok mini_epi=ok mini_eval_epi=ok tar=24G parquets=19 judge=ok
+03:04:28 [scan3] smoke SCANSMOKE {"lanes": 32, "T": 64, "order": "pfc_first", "tok_s": 1368, "holds": 85.6, "lam": 0.00292, "ce": [9.841, 6.207], "peak_gib": 16.2, "params_m": 67.0}
+03:04:34 [scan3] run started pid 790 lam 0.00292: 
+03:06:39 [scan3] 2 min: step   100  ce 8.576  loss 8.715  holds 7104  2,462 tok/s (now 2,726)  [fid:3=-0.000 fid:4=+0.001 fid:5=+0.001 fid:6=-0.000]
+03:21:44 [scan3] inflight step  1300  ce 4.255  loss 4.360  holds 157536  2,625 tok/s (now 2,399)  [fid:3=+0.432 fid:4=+0.019 fid:5=+0.060 fid:6=+ | hb: 
+03:36:49 [scan3] inflight step  2200  ce 3.713  loss 4.618  holds 200000  2,406 tok/s (now 2,163)  [fid:3=+0.483 fid:4=+0.022 fid:5=+0.036 fid:6=+ | hb: 
+03:51:54 [scan3] inflight step  3000  ce 3.352  loss 4.175  holds 200000  2,238 tok/s (now 1,734)  [fid:3=+0.495 fid:4=+0.022 fid:5=+0.043 fid:6=+ | hb: 
+04:06:59 [scan3] inflight step  3800  ce 3.031  loss 3.132  holds 200000  2,089 tok/s (now 1,662)  [fid:3=+0.518 fid:4=+0.028 fid:5=+0.048 fid:6=+ | hb: 
+04:22:04 [scan3] inflight step  4400  ce 3.391  loss 4.215  holds 200000  1,988 tok/s (now 1,506)  [fid:3=+0.520 fid:4=+0.026 fid:5=+0.043 fid:6=+ | hb: 
+04:37:09 [scan3] inflight step  5100  ce 3.242  loss 4.029  holds 200000  1,899 tok/s (now 1,460)  [fid:3=+0.527 fid:4=+0.028 fid:5=+0.047 fid:6=+ | hb: 
+04:52:14 [scan3] inflight step  5700  ce 3.374  loss 4.186  holds 200000  1,846 tok/s (now 1,472)  [fid:3=+0.533 fid:4=+0.029 fid:5=+0.050 fid:6=+ | hb: 
+05:07:19 [scan3] inflight step  6000  ce 2.966  loss 3.700  holds 200000  1,825 tok/s (now 1,497)  [fid:3=+0.531 fid:4=+0.028 fid:5=+0.047 fid:6=+ | hb: 
+05:22:23 [scan3] inflight step  6700  ce 2.985  loss 3.084  holds 89472  2,630 tok/s (now 2,640)  [fid:3=+0.538 fid:4=+0.031 fid:5=+0.052 fid:6=+0 | hb: {"step": 6000, "tokens": 12288000, "rows": [{"probe": "ce_recall", "ce": 4.5474, "recall": {"in-ctx": {"acc": 0.196, "n": 1451}, "short": {"acc": 0.196, "n": 1792}, "b3": {"acc": null, "n": 0}, "b4": 
