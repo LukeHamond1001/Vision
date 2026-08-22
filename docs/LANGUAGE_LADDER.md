@@ -4797,3 +4797,35 @@ and store-read-off > 0 on in-ctx/short recall by 100M tokens; R3
 >= 8k tok/s at 32 lanes (else the next iteration is CUDA graphs);
 R4 health (no NaN, veto mean in (0.05, 0.95), fid moving — not at a
 floor or a ceiling).
+
+## 2026-08-22 — THE ONE-TOKEN ORGANISM DEPENDS ON BOTH ORGANS (scan1-scan5b, one 4090, ~$14)
+
+Five iterations of one model at a time (docs/ONE_TOKEN_PLAN.md 6-23),
+d=512/8L, T=64, 32 lives, the episodic shard (5% copyable at k4/w256;
+eval 14.5%), rows on unseen lives. What each iteration found:
+  scan1  cortex-keyed store, per-token decoder: eval CE 6.19 at 12.3M
+         (hybrid with a 2048 window: 5.91); bands off +0.54; store off
+         +0.003. Fidelity fake (+0.999: the EMA centring left the
+         training drift in the target).
+  scan2  honest fidelity, live paths: STALLED at 6.87 — the fidelity
+         loss bent the PFC and the decoder (pend and target live).
+  scan3  hippocampus every chunk/every token + fidelity confined to
+         the bands (S14): eval CE 4.547; bands off +0.97; store off
+         +0.003 — CADENCE FALSIFIED. The cause read off the write
+         rule: the strength-normalised average writes one item at 1/T.
+  scan5b the EXACT one-shot delta rule (LogitStore.write_exact, WY
+         chunkwise; S17/S18): eval CE 4.475 -> 4.347; STORE OFF +0.099
+         -> +0.114; recall .196 -> .297 -> .389 base; the step-7500
+         lesion pass: band 3 +1.79, bands 4-8 +.014..+.025 (ordered),
+         all bands +1.95 (recall .39 -> .14), hippocampus +.114
+         (recall .39 -> .26).
+Speed (the pod's 2.7k -> 1.5k tok/s decay): Python's GC over the
+conveyor's 2.2M event dicts (gc.freeze), detach_readings and the
+cutoff prune rebuilding every readings list every step (O(new)), the
+capped ledger list (deque), the economy horizon bug (clock tokens ->
+max(4 x clock, 512)); per-token op counts 21k -> 17k (bands batched,
+fidelity per band); compile_council / compile_read opt-ins. Laws S1-
+S19 (25 tests) + suite 270.
+Open, in order: the slow bands (4-8 carry little at 15M; fid .03-.05)
+-> the PFC depth (council 4) and a band-3 register; the hippocampus's
+write strength init (0.25/pair) and KD; bands 9/10 at 500M.
