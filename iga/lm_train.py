@@ -534,6 +534,8 @@ def train(d=64, lanes=4, T=256, steps=40, seed=0, device="cpu",
             else:
                 peval["seed_baseline"] = True
     if sleep is not None:
+        sleep.dreamer = None            # re-installed per train() call (new model/opt)
+        sleep._dream_cur = None
         sleep.bind(drive)   # A62: after resume, so the buffer's
                             # absolute offset matches drive.step_t
     # Python's cyclic GC (2026-08-22, the scan organism's 2.7k -> 1.5k
@@ -587,6 +589,25 @@ def train(d=64, lanes=4, T=256, steps=40, seed=0, device="cpu",
             sleep.note_ce(ce, drive.step_t - T, drive.step_t)
             if hasattr(sleep, "note_dopa") and hasattr(model, "dopa_trace"):
                 sleep.note_dopa(model.dopa_trace(), drive.step_t - T, drive.step_t)
+            if dream is not None and getattr(sleep, "couple_dream", False) \
+                    and sleep.dreamer is None and hasattr(vocab, "decode"):
+                # the coupled night: the Sleeper calls this after each
+                # cycle's SWS block with the span it just replayed
+                from .lm_dream import dream_block as _dream_block
+                from .lm_judge import grade_dialogue as _grade
+                _cur = {"step": step}
+
+                def _dreamer(span, _d=dream, _c=_cur):
+                    return _dream_block(
+                        model, opt, sleep, vocab, _grade, _c["step"],
+                        fact_check=_d.get("fact_check"),
+                        n=_d.get("n", 4), tau=_d.get("tau", .8),
+                        max_new=_d.get("max_new", 48),
+                        min_q=_d.get("min_q"), seed_span=span)
+                sleep.dreamer = _dreamer
+                sleep._dream_cur = _cur
+            if getattr(sleep, "_dream_cur", None) is not None:
+                sleep._dream_cur["step"] = step
             slept = sleep.maybe_sleep(model, opt, drive, step)
             if slept is not None and "cuda" in str(device):
                 # the mini-flash OOM (2026-08-21, 16 GB card): sleep
@@ -597,7 +618,8 @@ def train(d=64, lanes=4, T=256, steps=40, seed=0, device="cpu",
                 # the pod also runs with expandable segments.
                 torch.cuda.empty_cache()
             if dream is not None and slept is not None \
-                    and hasattr(vocab, "decode"):
+                    and hasattr(vocab, "decode") \
+                    and not getattr(sleep, "couple_dream", False):
                 # A77 (gated): a leashed dream rides every Nth night
                 _dn = dream.setdefault("_nights", 0) + 1
                 dream["_nights"] = _dn

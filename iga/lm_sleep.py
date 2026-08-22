@@ -114,7 +114,8 @@ class SleepTap:
 class Sleeper:
     def __init__(self, arm="B", every=0, block_chunks=4, seed=0,
                  min_step_loss=0.0, replay_twice=False,
-                 homeostasis=0.0, splice=0.0, novelty=0.0, saliency=0.0):
+                 homeostasis=0.0, splice=0.0, novelty=0.0, saliency=0.0,
+                 cycles=1, overlap=1, spacing=0.0, couple_dream=False):
         """every: one sleep block per this many wake steps (0 = never
         fire — the dose-0 parity arm). block_chunks: chunks per block;
         dose sleep:wake = block_chunks/every (A62 ladder {0, 1:16,
@@ -181,6 +182,28 @@ class Sleeper:
         # novelty — the night replays what the store wrote hardest.
         # saliency=0 is the certified path, bit-exact.
         self.saliency = float(saliency)
+        # THE NIGHT (2026-08-22, the user's design after the cycle
+        # review): the functional content of the brain's sleep cycles,
+        # not its plumbing. cycles: a night = this many [SWS block ->
+        # REM dream] cycles in one maybe_sleep call (the period `every`
+        # scales with the night's chunks — see dose_every — so the
+        # certified dose is unchanged). overlap: each SWS block replays
+        # the drawn span plus the overlap-1 pool spans that share the
+        # most rare tokens with it (IDF-weighted: cast names and
+        # objects are rare by construction — "the same entity across
+        # days", the gist-extraction mechanism), under one carried
+        # state. spacing: a span's lottery weight is multiplied by
+        # (1-spacing)^replays — revisited at expanding intervals, never
+        # hammered. couple_dream: the cycle's dream is seeded by the
+        # span the cycle just replayed (consolidate -> integrate, the
+        # sequential effect) through self.dreamer (set by the trainer).
+        # Defaults (1, 1, 0, False) are the certified night bit-exactly.
+        self.cycles = max(1, int(cycles))
+        self.overlap = max(1, int(overlap))
+        self.spacing = float(spacing)
+        self.couple_dream = bool(couple_dream)
+        self.dreamer = None      # callable(span) -> row | None, the trainer's dream_block
+        self.tok_count = {}      # token id -> wake count (overlap's IDF), kept when overlap > 1
         self.chunk_dopa = []     # (lane, t0, t1, mean |RPE|) wake stamps, capped
         self._dopa_max = 1e-9
         self.chunk_ce = []       # (t0, t1, ce) wake stamps, capped
@@ -234,6 +257,10 @@ class Sleeper:
         self.T = max(self.T or 0, x.shape[1])
         for lane, row in enumerate(x.tolist()):
             self.buffers[lane].extend(row)
+            if self.overlap > 1:
+                tc = self.tok_count
+                for t in row:
+                    tc[t] = tc.get(t, 0) + 1
         if self.cap is not None and len(self.buffers[0]) > self.cap:
             cut = len(self.buffers[0]) - self.cap
             for b in self.buffers:
@@ -281,11 +308,45 @@ class Sleeper:
         return (acc / n / self._ce_max) if n else 0.0
 
     def _span_weights(self):
-        if not self.novelty and not self.saliency:
+        if not self.novelty and not self.saliency and not self.spacing:
             return [s["pay"] for s in self.spans]
         nv, sa = self.novelty, self.saliency
-        return [s["pay"] * (1 - nv - sa) + nv * self._surprise(s) + sa * self._saliency(s)
-                for s in self.spans]
+        ws = [s["pay"] * (1 - nv - sa) + nv * self._surprise(s) + sa * self._saliency(s)
+              for s in self.spans]
+        if self.spacing:
+            ws = [w * (1 - self.spacing) ** s.get("n_rep", 0)
+                  for w, s in zip(ws, self.spans)]
+        return ws
+
+    def dose_every(self, base_every):
+        """The night period that keeps the certified dose (block_chunks
+        per base_every wake steps) when a night replays cycles x
+        max(block_chunks, overlap) chunks. (1, 1) -> base_every."""
+        if not base_every:
+            return 0
+        night = self.cycles * max(self.block_chunks, self.overlap)
+        return int(round(base_every * night / self.block_chunks))
+
+    def _overlap_set(self, span):
+        """The overlap-1 pool spans sharing the most rare tokens with
+        span (sum of 1/count over shared ids, the IDF overlap), in
+        score order; [] when overlap == 1 or the pool is alone."""
+        if self.overlap <= 1 or len(self.spans) < 2 or self.buffers is None:
+            return []
+        def toks(s_):
+            lo = max(s_["t0"], self.start); hi = min(s_["t1"], self.end)
+            return set(self.buffers[s_["lane"]][lo - self.start: hi - self.start])
+        base = toks(span)
+        tc = self.tok_count
+        scored = []
+        for s_ in self.spans:
+            if s_ is span:
+                continue
+            sc = sum(1.0 / max(tc.get(t, 1), 1) for t in base & toks(s_))
+            if sc > 0:
+                scored.append((sc, s_))
+        scored.sort(key=lambda z: -z[0])
+        return [s_ for _, s_ in scored[: self.overlap - 1]]
 
     def _downscale(self, model):
         """A76: one multiplicative downscale of the unfrozen slow
@@ -603,13 +664,34 @@ class Sleeper:
             # spans (wake CE already trains on every token — the
             # pair adds the contrastive signal CE cannot express)
             self.harvest(drive)
+        first = None
+        self._night_hot = set()          # each hot pair's guarantee is once per night
+        for _cycle in range(self.cycles):
+            row = self._cycle(model, opt, step)
+            if row is None:
+                break
+            first = first if first is not None else row
+            if self.couple_dream and self.dreamer is not None \
+                    and row.get("arm") != "PAIR" and "span" in row:
+                # REM after SWS: dream from what this cycle just replayed
+                sp = row.get("_span_obj")
+                if sp is not None:
+                    self.dreamer(sp)
+            row.pop("_span_obj", None)
+        return first
+
+    def _cycle(self, model, opt, step):
+        """One SWS block: a pair block (hot first, then the pair/span
+        lottery) or a span block. The certified single-block night
+        is exactly one cycle."""
         if self.arm == "C" and self.pairs:
-            hot = [p for p in self.pairs if p.get("hot")]
+            hot = [p for p in self.pairs if p.get("hot")
+                   and id(p) not in getattr(self, "_night_hot", set())]
             if hot:
                 # A72: guaranteed — no lottery draw for a hot pair
-                return self._pair_block(
-                    model, opt, step,
-                    pick=max(hot, key=lambda p: p["pay"]))
+                pk = max(hot, key=lambda p: p["pay"])
+                getattr(self, "_night_hot", set()).add(id(pk))
+                return self._pair_block(model, opt, step, pick=pk)
             wp = sum(p["pay"] for p in self.pairs)
             ws = sum(s["pay"] for s in self.spans)
             if not ws or self.rng.random() < wp / (wp + ws):
@@ -654,6 +736,13 @@ class Sleeper:
                                               hi - self.start]
             if len(toks) < MIN_REPLAY:
                 return None
+        partners = []            # overlap replay: one chunk from each related span
+        if splice_span is None and self.overlap > 1:
+            for ps_ in self._overlap_set(span):
+                plo_, phi_ = self._window(ps_, self.T + 1)
+                pt_ = self.buffers[ps_["lane"]][plo_ - self.start: phi_ - self.start]
+                if len(pt_) >= MIN_REPLAY:
+                    partners.append((plo_, pt_, ps_))
         device = next(model.parameters()).device
         saved = [(p, p.requires_grad)
                  for n, p in model.named_parameters()
@@ -678,6 +767,12 @@ class Sleeper:
                 if len(xs) < MIN_REPLAY and off > 0:
                     break        # trailing sliver: not worth a step
                 parts.append((lo + off, xs, span))
+            if partners:
+                # overlap > 1: the drawn span's first chunk, then one
+                # chunk of each related span, the state carried across
+                parts = parts[:1] + partners
+        for _, _, psp_ in parts:
+            psp_["n_rep"] = psp_.get("n_rep", 0) + 1
         try:
             for plo, xs, psp in parts:
                 x = torch.tensor([xs[:-1]], dtype=torch.long,
@@ -737,8 +832,10 @@ class Sleeper:
                "chunks": len(losses),
                "splice": (splice_span["t0"], splice_span["t1"])
                if splice_span is not None else None,
+               "overlap": [(p_["lane"], p_["t0"], p_["t1"]) for _, _, p_ in partners] or None,
                "loss": round(sum(losses) / max(len(losses), 1), 4)}
         self.stats.append(row)
+        row["_span_obj"] = span          # for the coupled dream; popped by maybe_sleep
         print(f"    sleep@{step} arm{self.arm} lane{span['lane']} "
               f"[{lo},{hi}) of span[{span['t0']},{span['t1']}] "
               f"pay {span['pay']:.3f}  chunks {len(losses)}  "

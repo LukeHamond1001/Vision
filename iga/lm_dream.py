@@ -60,7 +60,10 @@ def _generate(model, seed_ids, n, tau, max_new, device, gen):
                 model.pop_recon()
                 st = model.detach_state(st)
             probs = torch.softmax(lg[0, -1].float() / tau, -1)
-            nxt = int(torch.multinomial(probs, 1, generator=gen))
+            # sample on the CPU generator whatever device the model is
+            # on (scan8 died at its first dream: a CPU generator on
+            # CUDA probabilities); 48 tokens x n per dream, trivial
+            nxt = int(torch.multinomial(probs.cpu(), 1, generator=gen))
             cont.append(nxt)
             x = torch.tensor([[nxt]], device=device)
         outs.append(cont)
@@ -77,7 +80,7 @@ def _distinct3(ids):
 def dream_block(model, opt, sleeper, tok, judge_fn, step,
                 fact_check=None, n=4, tau=0.8, max_new=48,
                 ctx=96, min_q=None, min_step_loss=1e-4,
-                gen_seed=None):
+                gen_seed=None, seed_span=None):
     """One leashed dream. Returns a stats row or None (no seed /
     all candidates rejected — rejection is a feature)."""
     import random as _random
@@ -88,11 +91,15 @@ def dream_block(model, opt, sleeper, tok, judge_fn, step,
     # with the saliency channel on, the hippocampus's |RPE| stamp
     # (dreams start from what the day marked; weights == pay at
     # saliency 0, so the certified draw is unchanged)
-    weights = (sleeper._span_weights() if hasattr(sleeper, "_span_weights")
-               else [s["pay"] for s in sleeper.spans])
-    if not any(w > 0 for w in weights):
-        return None
-    span = rng.choices(sleeper.spans, weights=weights)[0]
+    if seed_span is not None:
+        # the coupled cycle: REM dreams from the span SWS just replayed
+        span = seed_span
+    else:
+        weights = (sleeper._span_weights() if hasattr(sleeper, "_span_weights")
+                   else [s["pay"] for s in sleeper.spans])
+        if not any(w > 0 for w in weights):
+            return None
+        span = rng.choices(sleeper.spans, weights=weights)[0]
     # the whole dreamed sequence [seed + continuation] must fit the
     # model's window (pos table = max_T + bands) — unless the model
     # streams tokens (ScanLM.windowless), where max_T is only the
@@ -132,6 +139,7 @@ def dream_block(model, opt, sleeper, tok, judge_fn, step,
     best_q, best, _ = scored[0]
     floor = min_q if min_q is not None else 0.5
     row = {"step": step, "arm": "DREAM", "seed": (lo, hi),
+           "coupled": seed_span is not None,
            "pay": span["pay"], "best_q": round(best_q, 4),
            "distinct3": round(sum(d3s) / len(d3s), 4),
            "stepped": False}

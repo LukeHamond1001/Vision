@@ -162,6 +162,15 @@ def main():
     ap.add_argument("--value-w", type=float, default=0.0)   # Phase 2: TD value loss weight
     ap.add_argument("--saliency", type=float, default=0.0)  # Phase 2: |RPE|-stamped replay share (Sleeper)
     ap.add_argument("--dream", default="")                  # Phase 2: REM, a JSON dict for train(dream=) ('' = none)
+    # THE NIGHT (2026-08-22): cycles of [SWS -> REM] per night, overlap
+    # replay, spaced re-replay, the dream coupled to the replayed span;
+    # --sleep-from-birth drops the sleepless infancy (every = ladder
+    # from token one; REM stays gated on childhood)
+    ap.add_argument("--cycles", type=int, default=1)
+    ap.add_argument("--overlap", type=int, default=1)
+    ap.add_argument("--spacing", type=float, default=0.0)
+    ap.add_argument("--couple-dream", type=int, default=0)
+    ap.add_argument("--sleep-from-birth", type=int, default=0)
     ap.add_argument("--lanes", type=int, default=0)
     # band repair (docs/MEMORY_MATH.md 5): credit routing, centred
     # fidelity, the tail memory token; 0/0/0 = certified bit-exactly
@@ -235,9 +244,14 @@ def main():
         return
 
     sl = Sleeper(arm="C", every=0, block_chunks=2, seed=1,
-                 homeostasis=1e-3, saliency=a.saliency)
+                 homeostasis=1e-3, saliency=a.saliency,
+                 cycles=a.cycles, overlap=a.overlap, spacing=a.spacing,
+                 couple_dream=bool(a.couple_dream))
     sl.press_pay = (a.T, a.T // 8)
     dream = json.loads(a.dream) if a.dream else None
+    ladder = dict(LADDER)
+    if a.sleep_from_birth:
+        ladder["infancy"] = LADDER["childhood"]
     # the prophet samples band states by CHUNK clocks; the scan's
     # clocks are in tokens
     pclocks = ({k: max(1, c // a.T) for k, c in clocks.items()}
@@ -259,13 +273,14 @@ def main():
             continue
         seg_i += 1
         stage = stage_at(bounds, cur)
-        sl.every = LADDER[stage]
+        sl.every = sl.dose_every(ladder[stage])   # the night period at the certified dose
         t0 = time.time()
         model, drive, vocab, ce0, ce1 = train(
             d=a.d, n_layers=a.n_layers, lanes=lanes, T=a.T,
             steps=end - cur, seed=1000 + seg_i, device=a.device,
             arch=a.arch, store="matrix", keyed=a.keyed,
-            scan=scan_opts, value_w=a.value_w, dream=dream,
+            scan=scan_opts, value_w=a.value_w,
+            dream=(dream if stage != "infancy" else None),   # REM gated on childhood
             norm_mix=True, aux_trunk=0.2, use_xl=False,
             gate_init=-2.0, clocks=clocks,
             data=a.data, eval_data=a.eval_data, ckpt=a.ckpt,

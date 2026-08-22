@@ -1021,3 +1021,140 @@ def test_S28_td_rewards_are_rates_across_the_ladder():
     b3 = 4.0 / T / 2                                          # 32 ticks, one of them 2^2, two lanes
     b4 = (2.0 / 8) ** 2 / (T // 8) / 2                         # 4 ticks, the one at 15 holds 2/8
     assert abs(vlo - (b3 + b4) / 2) < 1e-6, vlo               # bands 5/6 never tick in 32 tokens
+
+
+def _night_sleeper(**kw):
+    """A Sleeper with a one-lane day in its buffer and a pool of paid
+    spans: two spans share a rare 'entity' token with the first, one
+    shares nothing, one shares only common tokens."""
+    from iga.lm_sleep import Sleeper
+    sl = Sleeper(arm="A", every=0, block_chunks=1, seed=7, **kw)
+    sl.start = 0
+    g = torch.Generator().manual_seed(11)
+    day = torch.randint(20, 26, (1, 8 * T), generator=g)  # a day of COMMON tokens (six values, ~40 uses each)
+    day[0, 5] = 3                                                     # span A: common + entity 3 (+ 4 below)
+    day[0, T + 9] = 3                                                 # span B: entity 3 too
+    day[0, 2 * T:3 * T] = torch.randint(200, V, (T,), generator=g)    # span C: nothing shared
+    # span D (3T..4T): common only
+    # span E (4T..5T): entity 3 + entity 4
+    day[0, 4 * T + 2] = 3
+    day[0, 4 * T + 3] = 4
+    day[0, 3] = 4                                                     # A also holds entity 4
+    sl.observe(day)
+    sl.spans = [{"lane": 0, "t0": i * T, "t1": (i + 1) * T, "pay": 1.0, "i": i} for i in range(5)]
+    return sl
+
+
+def test_S29_night_defaults_are_the_certified_night():
+    """cycles=1, overlap=1, spacing=0, couple_dream=False: weights,
+    dose period and the block's parts are the certified night's —
+    bit-exact (the night knobs are additive)."""
+    sl = _night_sleeper()
+    assert sl._span_weights() == [1.0] * 5 and sl.dose_every(16) == 16
+    assert sl._overlap_set(sl.spans[0]) == [] and sl.tok_count == {}
+    m = _model(seed=71, order="pfc_first", n_council=1)
+    opt = torch.optim.AdamW(m.parameters(), lr=1e-3)
+    row = sl.maybe_sleep(m, opt, None, 0)                  # every=0: never fires
+    assert row is None
+    sl.every = 1
+    row = sl.maybe_sleep(m, opt, _FakeDrive(), 1)
+    assert row is not None and row["overlap"] is None and "_span_obj" not in row
+    assert len(sl.stats) == 1 and sl.stats[0] is row
+
+
+class _FakeDrive:
+    ledger = []
+    ledger_base = 0
+    step_t = 8 * T
+    presses = []
+    _horizons = {}
+
+    def horizon_for(self, b):
+        return 512
+
+
+def test_S30_cycles_keep_the_dose_and_hot_pairs_fire_once():
+    """A night of k cycles is k SWS blocks in one maybe_sleep call; the
+    period that keeps the certified dose scales with the night's
+    chunks (dose_every); a hot pair's guarantee fires once per night,
+    the other cycles fall to the lottery."""
+    sl = _night_sleeper(cycles=3)
+    assert sl.dose_every(16) == 48 and sl.dose_every(0) == 0
+    sl2 = _night_sleeper(cycles=2, overlap=3)
+    assert sl2.dose_every(16) == 16 * 2 * 3 // 1          # 2 cycles x max(1, 3) chunks
+    m = _model(seed=73, order="pfc_first", n_council=1)
+    opt = torch.optim.AdamW(m.parameters(), lr=1e-3)
+    sl.every = 1
+    n_calls = []
+    orig = sl._block
+    sl._block = lambda *a, **k: (n_calls.append(1), orig(*a, **k))[1]
+    row = sl.maybe_sleep(m, opt, _FakeDrive(), 1)
+    assert row is not None and len(n_calls) == 3 and len(sl.stats) == 3
+    # hot pairs: arm C with two hot pairs -> cycle 1 replays the hottest, cycle 2 the other, cycle 3 lottery
+    sl = _night_sleeper(cycles=3); sl.arm = "C"; sl.every = 1
+    sl.pairs = [{"hot": True, "pay": 3.0, "lane": 0}, {"hot": True, "pay": 2.0, "lane": 0}]
+    picks = []
+    sl._pair_block = lambda model, opt, step, beta=1.0, pick=None: (picks.append(pick), {"arm": "C", "step": step})[1]
+    sl._block = lambda *a, **k: {"arm": "A", "step": 0, "span": (0, T), "_span_obj": sl.spans[0]}
+    sl.maybe_sleep(m, opt, _FakeDrive(), 1)
+    assert picks[0]["pay"] == 3.0 and picks[1]["pay"] == 2.0 and len(picks) >= 2
+    assert all(p is not None for p in picks[:2])          # the guaranteed ones, not lottery Nones
+
+
+def test_S31_overlap_replays_the_related_spans_and_spacing_decays():
+    """overlap=3: the SWS block replays the drawn span's first chunk
+    plus one chunk of each of the two pool spans sharing the most
+    rare tokens with it (IDF overlap — the entity tokens 3/4 count,
+    common tokens ~0), under the carried state; replayed spans count
+    their replays; spacing halves a span's lottery weight per replay."""
+    sl = _night_sleeper(overlap=3, spacing=0.5)
+    A, B, C, D, E = sl.spans
+    part = sl._overlap_set(A)
+    assert [p["i"] for p in part] == [E["i"], B["i"]], [p["i"] for p in part]   # E shares 3 and 4, B shares 3
+    m = _model(seed=75, order="pfc_first", n_council=1)
+    opt = torch.optim.AdamW(m.parameters(), lr=1e-3)
+    sl.every = 1
+    sl.rng.seed(0)
+    # force the draw to A by making the others weightless for this call
+    for s_ in (B, C, D, E):
+        s_["pay"] = 1e-9
+    row = sl.maybe_sleep(m, opt, _FakeDrive(), 1)
+    for s_ in (B, C, D, E):
+        s_["pay"] = 1.0
+    assert row["span"] == (0, T) and row["chunks"] == 3
+    assert row["overlap"] == [(0, E["t0"], E["t1"]), (0, B["t0"], B["t1"])]
+    assert A["n_rep"] == 1 and E["n_rep"] == 1 and B["n_rep"] == 1 and "n_rep" not in C
+    w = sl._span_weights()
+    assert abs(w[0] - 0.5) < 1e-9 and abs(w[2] - 1.0) < 1e-9 and abs(w[4] - 0.5) < 1e-9
+    assert all(r["pay"] > 0 for r in sl.replayed) and sl.audit()["only_paid"]
+
+
+def test_S32_coupled_rem_dreams_from_the_replayed_span():
+    """couple_dream: after each cycle's SWS block the Sleeper calls its
+    dreamer with the span just replayed; dream_block(seed_span=) seeds
+    from exactly that span and says so (coupled=True); with no dreamer
+    installed the night is SWS only."""
+    from iga.lm_dream import dream_block
+    sl = _night_sleeper(cycles=2, couple_dream=True)
+    m = _model(seed=77, order="pfc_first", reward_slot=True, n_council=1); m.read_drop = 0.0
+    opt = torch.optim.AdamW(m.parameters(), lr=1e-3)
+    sl.every = 1
+    sl.maybe_sleep(m, opt, _FakeDrive(), 1)                 # no dreamer: fine, SWS only
+    assert len(sl.stats) == 2 and not any(r.get("arm") == "DREAM" for r in sl.stats)
+
+    class Tok:
+        def decode(self, ids):
+            return " ".join(str(i) for i in ids)
+    seeds = []
+
+    def dreamer(span):
+        r = dream_block(m, opt, sl, Tok(), lambda h, c: 1.0, step=2, n=1, tau=1.0,
+                        max_new=4, ctx=T, min_q=0.5, gen_seed=3, seed_span=span)
+        seeds.append((span["t0"], span["t1"], r["seed"], r["coupled"], r["stepped"]))
+        return r
+    sl.dreamer = dreamer
+    sl.maybe_sleep(m, opt, _FakeDrive(), 2)
+    assert len(seeds) == 2
+    for t0, t1, seed, coupled, stepped in seeds:
+        assert coupled and stepped and t0 <= seed[0] < seed[1] <= t1   # the dream starts inside its SWS span
+    assert sum(1 for r in sl.stats if r.get("arm") == "DREAM") == 2

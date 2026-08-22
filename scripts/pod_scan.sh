@@ -49,6 +49,11 @@ MAX_STEPS=${MAX_STEPS:-0}
 VALUE_W=${VALUE_W:-0}
 SALIENCY=${SALIENCY:-0}        # Phase 2: |RPE|-stamped share of the replay lottery
 DREAM=${DREAM:-}               # Phase 2: REM — JSON for train(dream=), e.g. {"every_nights":4,"n":4,"max_new":48,"min_q":0.55}
+CYCLES=${CYCLES:-1}            # the night: [SWS -> REM] cycles per night (period scales, dose fixed)
+OVERLAP=${OVERLAP:-1}          # spans per SWS block (the drawn one + most-overlapping partners)
+SPACING=${SPACING:-0}          # lottery decay per replay (0.5 = halve)
+COUPLE=${COUPLE:-0}            # 1: the cycle's dream seeds from the span it just replayed
+SLEEP_BIRTH=${SLEEP_BIRTH:-0}  # 1: nights from token one (REM still gated on childhood)
 
 hb() {
   echo "$(date -u '+%H:%M:%S') [$ITER] $1" >> HEARTBEAT.log
@@ -62,7 +67,7 @@ hb() {
     { sleep 20; git push -qf "$PUSH" results-v10 2>/dev/null; } || true
 }
 GPU=$(nvidia-smi --query-gpu=name,memory.total --format=csv,noheader 2>/dev/null | head -1)
-hb "boot SCAN sha=$(git rev-parse --short HEAD) gpu=${GPU:-none} vol=$(df -BG /workspace | awk 'NR==2{print $2,$4}') order=$ORDER lives=$ML T=$T d=$D L=$NL opts=$SCAN_OPTS clocks=$CLOCKS prec=$PRECISION"
+hb "boot SCAN sha=$(git rev-parse --short HEAD) gpu=${GPU:-none} vol=$(df -BG /workspace | awk 'NR==2{print $2,$4}') order=$ORDER lives=$ML T=$T d=$D L=$NL opts=$SCAN_OPTS clocks=$CLOCKS prec=$PRECISION value_w=$VALUE_W saliency=$SALIENCY dream=${DREAM:-none} night=c${CYCLES}/o${OVERLAP}/s${SPACING}/k${COUPLE}/b${SLEEP_BIRTH}"
 pip install -q numpy tokenizers pyarrow > pip.log 2>&1
 
 # ---- 1. inventory ----
@@ -145,6 +150,7 @@ python scripts/v10_driver.py \
   --ckpt "$OUTM/scan.pt" --lam "$LAM" \
   --arch scan --scan-order "$ORDER" --scan-opts "$SCAN_OPTS" --value-w "$VALUE_W" \
   --saliency "$SALIENCY" ${DREAM:+--dream "$DREAM"} \
+  --cycles "$CYCLES" --overlap "$OVERLAP" --spacing "$SPACING" --couple-dream "$COUPLE" --sleep-from-birth "$SLEEP_BIRTH" \
   --d "$D" --n-layers "$NL" --T "$T" --lanes "$ML" --clocks "$CLOCKS" \
   --keyed hidden --precision "$PRECISION" \
   --lr "$LR" --lr-warmup "$WARMUP" \
