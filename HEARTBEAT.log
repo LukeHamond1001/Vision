@@ -173,3 +173,4 @@
 21:37:56 [scan8] self-removing in 60s
 21:46:03 [scan8] boot SCAN sha=d0ea7e9 gpu=NVIDIA GeForce RTX 4090, 24564 MiB vol=2190893G 421781G order=pfc_first lives=32 T=64 d=512 L=8 opts={"n_council":2,"slot_every":1,"write_every":1,"compile_council":true,"compile_read":true,"store_exact":true,"reward_slot":true,"dopamine":1.0,"bg_w":0.05} clocks=3:1,4:8,5:64,6:512,7:4096,8:32768 prec=bf16 value_w=0.05 saliency=0.5 dream={"every_nights":4,"n":4,"max_new":48,"min_q":0.55} night=c1/o1/s0/k0/b0
 21:46:11 [scan8] inventory: flash_epi=ok flash_eval_epi=ok mini_epi=ok mini_eval_epi=ok tar=24G parquets=19 judge=ok
+21:46:18 [scan8] copyable train: COPYABLE {"shard": "/workspace/v10/scan_epi_l32", "lives": 32, "life_len": 6250000, "tokens_per_lane_measured": 200000, "lane0_k4_w256": {"copy_correct": 0.0502, "context_seen": 0.0785}, "lane0_k4_w4096": {"copy_correct": 0.1523, "context_seen": 0.2146}, "lane0_k8_w65536": {"copy_correct": 0.1195, "context_seen": 0.143}, "lane1_
