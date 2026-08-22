@@ -493,3 +493,22 @@ hippocampus's state (KD, free in params), and the binding constraint is
 sequential time (PFC blocks run per token; the decoder is batched).
 The depth curve 2 -> 4 -> 8 decides the 500M split (PFC 40-50%
 expected); scan8 = council 8.
+
+## 29. Phase 2 named (user, 16:00 UTC): rewards grounded in the PFC
+
+The user's next step: ground reward in the PFC, let higher layers
+learn to make lower layers show reward, then dopamine — complex
+rewards form. Mapping: (1) value heads on the PFC state (bands +
+council) that TRAIN it (today the prophet reads band states as a
+spectator and presses settle on the cortex's readings); the decoder
+stays value-blind. (2) TD across the ladder: band k's value predicts
+the discounted sum the faster bands see — secondary reinforcers form
+at each timescale. (3) Dopamine = reward prediction error gating
+plasticity: RPE scales the hippocampus's per-pair write strength
+(tok_u / beta) and the band gates at that moment. Caveat from scan2:
+a value gradient into the PFC is the kind of force that stalled
+training when the fidelity loss bent the council — small, measured
+against CE, confined if needed. Reads: prophet AUC per band, recall
+of pressed vs unpressed facts, the press-pay ledger. Order: after the
+three 78M levers settle the 500M shape. This is the ratified two-
+button design (graded +/- primary, band-built secondaries).
