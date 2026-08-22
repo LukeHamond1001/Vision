@@ -536,3 +536,11 @@ Recall's edge is inside the probe's noise (scan5b's .599 was the
 outlier: .516 at 18000); the lesion pass was identical. Depth 4: a
 small CE lever (+9% params, -7% speed). scan6 killed at 12100 (~$3.3).
 scan7 = register {3: 4} on the council-2 base (sha f9877cd).
+
+## 32. scan7 launch note (17:40 UTC)
+
+The first scan7 pod fell back to the RTX 2000 Ada (4090 stock low):
+991 tok/s, same cost per token, 2.7x the wall-clock — killed at step
+~500 and relaunched on a 4090 (dws3fxdq3uprot, sha 74159ab). The
+launcher's GPU order for iterations: 4090, L40S, RTX 6000 Ada, then
+the 2000 Ada.
