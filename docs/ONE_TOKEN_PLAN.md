@@ -411,3 +411,16 @@ Exact one-shot store (store_exact), 12.3M tokens, unseen lives:
 The one-shot-binding hypothesis holds at first read. Next: the step-
 12000 lesion pass (~09:15 UTC) — per band and store-off at 24.6M.
 Evidence results/evidence/scan5b/.
+
+## 23. scan5b's lesion pass (step 7500 = 15.4M tokens, 09:20 UTC): both demos exist
+
+dCE when removed / in-ctx recall (base .389): band 3 +1.79 / .249;
+bands 4,5,6,7,8 +.016 / +.014 / +.021 / +.024 / +.025 (all positive,
+ordered by timescale, small); ALL BANDS +1.95 / .143; HIPPOCAMPUS
++.114 / .263 (a third of in-context recall); thread +1.77. Eval CE
+4.347. The one-token organism depends on its PFC (band 3 carries the
+context) and on its hippocampus. Open: the slow bands carry little at
+15M tokens (fid 4-8 at .03-.05) — the PFC-depth / register question.
+Next: scan5b to its step-12000 pass (do the store and slow-band deltas
+GROW with tokens — the 500M sizing trend), then scan6 = readings fixes
++ council 4 (the PFC boost, measured against scan5b at matched steps).
