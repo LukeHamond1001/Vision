@@ -134,7 +134,7 @@ class ScanLM(nn.Module):
                  kd_base=1, slot_every=8, write_every=4, kd_max=4096,
                  compile_council=False, compile_mode="default", compile_read=False,
                  store_exact=False, register=None, reward_slot=False, value_gamma=0.9,
-                 dopamine=0.0, bg_w=0.0):
+                 dopamine=0.0, bg_w=0.0, dopamine_band=None):
         super().__init__()
         assert order in ("cortex_first", "pfc_first")
         self.order = order
@@ -237,6 +237,14 @@ class ScanLM(nn.Module):
         # surprising reward burns the episode in harder; an expected one
         # does nothing. kappa = 0 (default) is exact.
         self.dopamine = float(dopamine)
+        # which band's RPE is the dopamine: None = the per-token (clock
+        # 1) units, whose 10-token horizon cannot predict a press ~740
+        # tokens away, so every press stays a full surprise (scan8:
+        # value AUC .49 at band 3, .56/.71 at bands 5/6). A slower
+        # band's tick closes an interval: its |delta| stamps every
+        # token of that interval (the chunk's writes, when the clock
+        # divides T) — reward that the band predicted no longer fires.
+        self.dopamine_band = None if dopamine_band is None else int(dopamine_band)
         # Basal ganglia (the actor; the value heads are the critic): the
         # band gates g = sigmoid(z) * permission learn from the reward
         # prediction error at their own tick, not only from BPTT inside
@@ -560,11 +568,14 @@ class ScanLM(nn.Module):
                     v_pairs[u].append((h_prev, R, h_new, g_bg))
                     if self.clocks[k] == 1 and len(gtr) == t:
                         gtr.append(g.detach())
-                    if self.dopamine > 0 and self.clocks[k] == 1:
+                    if self.dopamine > 0 and (k == self.dopamine_band if self.dopamine_band is not None
+                                              else self.clocks[k] == 1):
                         with torch.no_grad():
                             hv = self.value[str(u)]
                             d_t = R + self.value_gamma * hv(h_new).squeeze(-1) - hv(h_prev).squeeze(-1)
-                        rpe[t] = d_t.abs() if rpe[t] is None else rpe[t] + d_t.abs()
+                        d_abs = d_t.abs()
+                        for t2 in range(v_from[u], t + 1):          # the interval this tick closed
+                            rpe[t2] = d_abs if rpe[t2] is None else rpe[t2] + d_abs
                     st["R_carry"][u] = rew.new_zeros(B)
                     v_from[u] = t + 1
                     # the prediction for the fidelity loss comes from the

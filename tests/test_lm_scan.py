@@ -1158,3 +1158,25 @@ def test_S32_coupled_rem_dreams_from_the_replayed_span():
     for t0, t1, seed, coupled, stepped in seeds:
         assert coupled and stepped and t0 <= seed[0] < seed[1] <= t1   # the dream starts inside its SWS span
     assert sum(1 for r in sl.stats if r.get("arm") == "DREAM") == 2
+
+
+def test_S33_dopamine_from_a_slower_band_stamps_its_interval():
+    """dopamine_band=k: the RPE at band k's tick stamps every token of
+    the interval it closed (the chunk's writes when clock | T), so
+    presses the band predicted stop firing; None = the per-token
+    units (S22, exact). At birth V = 0: a +2 press at token 12 under
+    band 4 (clock 8) gives |delta| = 2/8 on tokens 8..15 of that lane
+    and 0 elsewhere."""
+    m0 = _model(seed=81, order="pfc_first", reward_slot=True, write_every=1, dopamine=1.0); m0.eval()
+    m1 = _model(seed=81, order="pfc_first", reward_slot=True, write_every=1, dopamine=1.0,
+                dopamine_band=4); m1.eval()
+    m1.load_state_dict(m0.state_dict())
+    for m in (m0, m1):
+        m.set_reward_tokens({5: 1, 6: 2, 7: 3, 8: 4})
+    x = _toks(210, B=2); x[(x >= 5) & (x <= 8)] = 100; x[0, 12] = 6
+    with torch.no_grad():
+        _fwd(m0, x, m0.init_state(2, "cpu")); _fwd(m1, x, m1.init_state(2, "cpu"))
+    t0, t1 = m0.dopa_trace(), m1.dopa_trace()
+    assert float(t0[0, 12]) == 2.0 and float(t0[0].sum()) == 2.0            # band 3: the press token only
+    assert torch.allclose(t1[0, 8:16], torch.full((8,), 0.25)) and float(t1[0, :8].sum()) == 0.0 \
+        and float(t1[0, 16:].sum()) == 0.0 and float(t1[1].sum()) == 0.0   # band 4: its interval, that lane
