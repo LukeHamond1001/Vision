@@ -361,6 +361,8 @@ def probe_cast(m, tok, manifest):
     from iga.lm_data_ultrachat import COLORS
     cids = {c: tok.encode(" " + c).ids[0] for c in COLORS}
     rows = []
+    topk = []                 # what the mouth actually says there (diagnostic)
+    p_true_noreward = []      # the same asks with the reward slot zeroed
     for life in manifest["lives"][:4]:
         for f in life["cast"]:
             if not f["asks"]:
@@ -377,6 +379,19 @@ def probe_cast(m, tok, manifest):
             rows.append({**f, "p_true": probs[f["col"]],
                          "p_max_false": max(v for c, v in probs.items()
                                             if c != f["col"])})
+            if len(topk) < 6:
+                tv, ti = pr.topk(5)
+                topk.append([(tok.decode([int(i)]), round(float(v), 3))
+                             for v, i in zip(tv, ti)])
+            if getattr(m, "reward_slot", False) and hasattr(m, "reward_off"):
+                m.reward_off = True
+                try:
+                    lg2, _, _ = m(x, m.init_state(1, dev), None)
+                    m.pop_write_cost()
+                    m.pop_recon()
+                finally:
+                    m.reward_off = False
+                p_true_noreward.append(float(torch.softmax(lg2[0, -1].float(), -1)[cids[f["col"]]]))
     if not rows:
         return {}
     incumbent = max((r["p_max_false"] for r in rows
@@ -394,10 +409,15 @@ def probe_cast(m, tok, manifest):
     cw = sum(1 for r in rows
              if r["p_max_false"] > r["p_true"]
              and r["p_max_false"] >= KILL["incumbent_mass"])
-    return {"n_facts": len(rows),
-            "incumbent_mass": round(incumbent, 4),
-            "confident_wrong_frac": round(cw / len(rows), 4),
-            "class_mean_p_true": cls_mean}
+    out = {"n_facts": len(rows),
+           "incumbent_mass": round(incumbent, 4),
+           "confident_wrong_frac": round(cw / len(rows), 4),
+           "class_mean_p_true": cls_mean,
+           "top5": topk,
+           "color_mass": round(sum(r["p_true"] + r["p_max_false"] for r in rows) / len(rows), 4)}
+    if p_true_noreward:
+        out["p_true_reward_off"] = round(sum(p_true_noreward) / len(p_true_noreward), 4)
+    return out
 
 
 def probe_tail_audit(data_dir, manifest, tok, sample=120):
