@@ -424,3 +424,18 @@ context) and on its hippocampus. Open: the slow bands carry little at
 Next: scan5b to its step-12000 pass (do the store and slow-band deltas
 GROW with tokens — the 500M sizing trend), then scan6 = readings fixes
 + council 4 (the PFC boost, measured against scan5b at matched steps).
+
+## 24. scan5b step 12000 (24.6M tokens, 10:40 UTC): the hippocampus compounds
+
+            6000    7500    12000
+eval CE     4.475   4.347   4.163
+in-ctx      .297    .318    .599
+short       .297    .239    .384
+store off   +.099   +.128   +.232      alpha .23 -> .29 -> .49
+bands off   +1.01   +1.13   +.97
+Recall doubled in 12M tokens; the read gain doubled. (The 500M hybrid
+flash never armed its binder in 5B tokens.) scan5b runs to its step-
+18000 lesion pass (~12:20 UTC) for the per-band trend at 37M tokens —
+the input for the 500M band ladder — then scan6 = readings/sweep
+fixes + expandable segments + council 4 (sha c87fa53), read against
+this trace at matched steps.
