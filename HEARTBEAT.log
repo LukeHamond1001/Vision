@@ -178,3 +178,4 @@
 21:47:26 [scan8] smoke SCANSMOKE {"lanes": 32, "T": 64, "order": "pfc_first", "tok_s": 1483, "holds": 12.8, "lam": 0.01953, "ce": [9.949, 6.149], "peak_gib": 11.6, "params_m": 67.0}
 21:47:31 [scan8] run started pid 1302 lam 0.01953: 
 21:49:36 [scan8] 2 min:     timing ms/step: bwd=379 fwd=166 opt=9 loss_events=3 prophet=1 sweep=1 detach=0 data=0  total=559  gc2=16 gc1=504 objs=251211
+22:04:42 [scan8] inflight step  8900  ce 3.378  loss 4.170  holds 22272  2,876 tok/s (now 2,146)  [fid:3=+0.509 fid:4=+0.087 fid:5=+0.216 fid:6=+0 | hb: 

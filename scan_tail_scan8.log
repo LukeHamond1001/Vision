@@ -1,39 +1,60 @@
-PLAN {"lanes": 32, "life_len": 6250000, "total_steps": 97500, "total_tokens": 199680000, "lam": 0.01953, "bounds": [["infancy", 7500], ["childhood", 34000], ["adolescence", 71000], ["tail", 97500]], "ladder": {"infancy": 0, "childhood": 16, "adolescence": 16, "tail": 16}, "segments": 20, "precision": "bf16", "attn": "abs", "qk_norm": false, "band_lr_mult": 1.0, "mlp": "gelu", "clock_mult": 1, "clocks": {"3": 1, "4": 8, "5": 64, "6": 512, "7": 4096, "8": 32768}, "keyed": "hidden", "arch": "scan", "scan_order": "pfc_first", "scan": {"order": "pfc_first", "n_council": 2, "slot_every": 1, "write_every": 1, "compile_council": true, "compile_read": true, "store_exact": true, "reward_slot": true, "dopamine": 1.0, "bg_w": 0.05}, "value_w": 0.05, "band_credit": 0, "band_center": 0, "tail_tokens": 0, "hb_every": 6000, "hb_chunks": 4000, "lesion_every": 2}
-resuming at step 7500
-resumed /workspace/v10_scan_out_scan8/scan.pt at step 7500 (ema keys: ['fid:3', 'fid:4', 'fid:5', 'fid:6', 'fid:7', 'fid:8', 'fid:bg', 'fid:val', 'recall:b0', 'recall:b1', 'recall:b2'])
-warm resume: band states restored from checkpoint
-W0822 21:47:46.607000 128009585665600 torch/fx/experimental/symbolic_shapes.py:4449] [0/0] d0 is not in var_ranges, defaulting to unknown range.
-W0822 21:47:46.607000 128009585665600 torch/fx/experimental/symbolic_shapes.py:4449] [0/0] d2 is not in var_ranges, defaulting to unknown range.
-W0822 21:47:46.610000 128009585665600 torch/fx/experimental/symbolic_shapes.py:4449] [0/0] d0 is not in var_ranges, defaulting to unknown range.
-W0822 21:47:46.611000 128009585665600 torch/fx/experimental/symbolic_shapes.py:4449] [0/0] d2 is not in var_ranges, defaulting to unknown range.
-W0822 21:47:46.611000 128009585665600 torch/fx/experimental/symbolic_shapes.py:4449] [0/0] d1 is not in var_ranges, defaulting to unknown range.
-W0822 21:47:46.646000 128009585665600 torch/fx/experimental/symbolic_shapes.py:4449] [0/0] d0 is not in var_ranges, defaulting to unknown range.
-W0822 21:47:46.646000 128009585665600 torch/fx/experimental/symbolic_shapes.py:4449] [0/0] d2 is not in var_ranges, defaulting to unknown range.
-W0822 21:47:46.653000 128009585665600 torch/fx/experimental/symbolic_shapes.py:4449] [0/0] d0 is not in var_ranges, defaulting to unknown range.
-W0822 21:47:46.653000 128009585665600 torch/fx/experimental/symbolic_shapes.py:4449] [0/0] d2 is not in var_ranges, defaulting to unknown range.
-W0822 21:47:46.653000 128009585665600 torch/fx/experimental/symbolic_shapes.py:4449] [0/0] d1 is not in var_ranges, defaulting to unknown range.
-W0822 21:47:46.852000 128009585665600 torch/fx/experimental/symbolic_shapes.py:4449] [0/0] q0 is not in var_ranges, defaulting to unknown range.
-W0822 21:47:46.852000 128009585665600 torch/fx/experimental/symbolic_shapes.py:4449] [0/0] q2 is not in var_ranges, defaulting to unknown range.
-W0822 21:47:46.861000 128009585665600 torch/fx/experimental/symbolic_shapes.py:4449] [0/0] q0 is not in var_ranges, defaulting to unknown range.
-W0822 21:47:46.862000 128009585665600 torch/fx/experimental/symbolic_shapes.py:4449] [0/0] q1 is not in var_ranges, defaulting to unknown range.
-W0822 21:47:46.862000 128009585665600 torch/fx/experimental/symbolic_shapes.py:4449] [0/0] q2 is not in var_ranges, defaulting to unknown range.
-W0822 21:47:46.918000 128009585665600 torch/fx/experimental/symbolic_shapes.py:4449] [0/0] z1 is not in var_ranges, defaulting to unknown range.
-W0822 21:47:46.918000 128009585665600 torch/fx/experimental/symbolic_shapes.py:4449] [0/0] z0 is not in var_ranges, defaulting to unknown range.
-W0822 21:47:46.918000 128009585665600 torch/fx/experimental/symbolic_shapes.py:4449] [0/0] z2 is not in var_ranges, defaulting to unknown range.
-W0822 21:47:47.148000 128009585665600 torch/fx/experimental/symbolic_shapes.py:4449] [0/0] r2 is not in var_ranges, defaulting to unknown range.
-W0822 21:47:47.148000 128009585665600 torch/fx/experimental/symbolic_shapes.py:4449] [0/0] x0 is not in var_ranges, defaulting to unknown range.
-W0822 21:47:47.148000 128009585665600 torch/fx/experimental/symbolic_shapes.py:4449] [0/0] x1 is not in var_ranges, defaulting to unknown range.
-    sleep@7504 armC lane26 [480000,480031) of span[479966,480031] pay 1.000  chunks 1  loss 4.3983
-    sleep@7520 armC lane23 [481044,481109) of span[481044,481109] pay 1.000  chunks 1  loss 3.9955
-    sleep@7536 armC lane3 [481698,481763) of span[481698,481763] pay 1.000  chunks 1  loss 2.5450
-    sleep@7552 armC lane21 [480808,480873) of span[480808,480873] pay 1.000  chunks 1  loss 0.8650
-    sleep@7568 armC lane15 [481756,481821) of span[481756,481821] pay 2.000  chunks 1  loss 2.7055
-    sleep@7584 armC lane13 [483299,483364) of span[483299,483364] pay 2.000  chunks 1  loss 1.4469
-    sleep@7600 armC lane16 [484651,484716) of span[484651,484716] pay 1.000  chunks 1  loss 4.0240
-step  7600  ce 2.985  loss 3.071  holds 1536  3,204 tok/s (now 3,204)  [fid:3=+0.537 fid:4=+0.090 fid:5=+0.221 fid:6=+0.038 fid:7=+0.017 fid:8=+0.001 fid:bg=+0.001 fid:val=+0.003 b0=+0.024 b1=+0.014 b2=+0.017]
-    timing ms/step: bwd=379 fwd=166 opt=9 loss_events=3 prophet=1 sweep=1 detach=0 data=0  total=559  gc2=16 gc1=504 objs=251211
-    sleep@7616 armC lane6 [480629,480694) of span[480629,480694] pay 2.000  chunks 1  loss 1.8829
-    sleep@7632 armC lane30 [486939,487004) of span[486939,487004] pay 2.000  chunks 1  loss 1.5361
-    sleep@7648 armC lane7 [483659,483724) of span[483659,483724] pay 2.000  chunks 1  loss 0.8940
-    sleep@7664 armC lane14 [488047,488112) of span[488047,488112] pay 2.000  chunks 1  loss 1.6070
-    sleep@7680 armC lane23 [480000,480054) of span[479989,480054] pay 2.000  chunks 1  loss 1.5443
+    sleep@8208 armC lane23 [522889,522954) of span[522889,522954] pay 2.000  chunks 1  loss 2.1648
+    sleep@8224 armC lane3 [497435,497500) of span[497435,497500] pay 2.000  chunks 1  loss 1.5904
+    sleep@8240 armC lane12 [488070,488135) of span[488070,488135] pay 1.000  chunks 1  loss 3.6066
+    sleep@8256 armC lane13 [522356,522421) of span[522356,522421] pay 2.000  chunks 1  loss 0.7687
+    sleep@8272 armC lane4 [489417,489482) of span[489417,489482] pay 2.000  chunks 1  loss 1.3034
+    sleep@8288 armC lane19 [525517,525582) of span[525517,525582] pay 2.000  chunks 1  loss 2.4755
+step  8300  ce 3.227  loss 3.995  holds 12672  3,309 tok/s (now 3,034)  [fid:3=+0.499 fid:4=+0.077 fid:5=+0.231 fid:6=+0.048 fid:7=+0.020 fid:8=+0.001 fid:bg=+0.001 fid:val=+0.001 b0=+0.020 b1=+0.036 b2=+0.026 b3=+0.008]
+    timing ms/step: bwd=338 fwd=129 opt=9 loss_events=1 prophet=1 sweep=0 detach=0 data=0  total=479  gc2=31 gc1=1259 objs=317458
+    sleep@8304 armC pair[523840|523853] targets [10, 12]  margin -0.5601  loss 1.0119
+    sleep@8320 armC lane31 [519216,519281) of span[519216,519281] pay 1.000  chunks 1  loss 3.3006
+    sleep@8336 armC lane7 [497910,497975) of span[497910,497975] pay 1.000  chunks 1  loss 3.3956
+    sleep@8352 armC lane16 [494721,494786) of span[494721,494786] pay 2.000  chunks 1  loss 4.8023
+    sleep@8368 armC pair[532018|532031] targets [7, 12]  margin 0.2734  loss 0.5657
+    sleep@8384 armC lane23 [487663,487728) of span[487663,487728] pay 2.000  chunks 1  loss 4.3504
+    sleep@8400 armC lane10 [492912,492977) of span[492912,492977] pay 2.000  chunks 1  loss 0.6414
+step  8400  ce 3.547  loss 3.635  holds 14336  3,255 tok/s (now 2,882)  [fid:3=+0.497 fid:4=+0.080 fid:5=+0.199 fid:6=+0.050 fid:7=+0.020 fid:8=+0.001 fid:bg=+0.001 fid:val=+0.001 b0=+0.037 b1=+0.053 b2=+0.058 b3=+0.019]
+    timing ms/step: bwd=313 fwd=126 opt=9 loss_events=1 prophet=1 sweep=0 detach=0 data=0  total=451  gc2=33 gc1=1367 objs=320761
+    sleep@8416 armC lane9 [499638,499703) of span[499638,499703] pay 1.000  chunks 1  loss 2.3803
+    sleep@8432 armC lane4 [502640,502705) of span[502640,502705] pay 1.000  chunks 1  loss 3.5365
+    sleep@8448 armC lane0 [480976,481041) of span[480976,481041] pay 1.000  chunks 1  loss 3.8439
+    sleep@8464 armC lane13 [502099,502164) of span[502099,502164] pay 1.000  chunks 1  loss 4.0510
+    sleep@8480 armC lane20 [518825,518890) of span[518825,518890] pay 1.000  chunks 1  loss 3.3355
+    sleep@8496 armC lane16 [521786,521851) of span[521786,521851] pay 1.000  chunks 1  loss 2.7574
+step  8500  ce 3.279  loss 4.054  holds 15872  3,219 tok/s (now 2,926)  [fid:3=+0.504 fid:4=+0.086 fid:5=+0.215 fid:6=+0.051 fid:7=+0.020 fid:8=+0.001 fid:bg=+0.001 fid:val=+0.001 b0=+0.036 b1=+0.020 b2=+0.023 b3=+0.019]
+    timing ms/step: bwd=298 fwd=124 opt=9 loss_events=1 prophet=1 sweep=0 detach=0 data=0  total=435  gc2=35 gc1=1468 objs=323238
+    sleep@8512 armC lane1 [526430,526495) of span[526430,526495] pay 1.000  chunks 1  loss 2.2833
+    sleep@8528 armC lane6 [480629,480694) of span[480629,480694] pay 2.000  chunks 1  loss 1.5778
+    sleep@8544 armC pair[536665|536677] targets [8, 11]  margin -0.4819  loss 0.9628
+    sleep@8560 armC lane18 [484074,484139) of span[484074,484139] pay 1.000  chunks 1  loss 2.6296
+    sleep@8576 armC lane2 [493755,493820) of span[493755,493820] pay 1.000  chunks 1  loss 1.4333
+    sleep@8592 armC lane15 [501301,501366) of span[501301,501366] pay 2.000  chunks 1  loss 0.8877
+step  8600  ce 3.253  loss 4.019  holds 17536  3,129 tok/s (now 2,448)  [fid:3=+0.502 fid:4=+0.071 fid:5=+0.275 fid:6=+0.049 fid:7=+0.020 fid:8=+0.001 fid:bg=+0.001 fid:val=+0.001 b0=+0.030 b1=+0.016 b2=+0.018 b3=+0.014]
+    timing ms/step: bwd=342 fwd=130 opt=9 loss_events=2 prophet=1 sweep=0 detach=0 data=0  total=484  gc2=37 gc1=1580 objs=326190
+    sleep@8608 armC lane28 [491408,491473) of span[491408,491473] pay 2.000  chunks 1  loss 2.4386
+    sleep@8624 armC lane11 [498576,498641) of span[498576,498641] pay 2.000  chunks 1  loss 3.4546
+    sleep@8640 armC lane15 [499396,499461) of span[499396,499461] pay 2.000  chunks 1  loss 3.8161
+    sleep@8656 armC lane27 [497385,497450) of span[497385,497450] pay 2.000  chunks 1  loss 1.7645
+    sleep@8672 armC lane13 [484397,484462) of span[484397,484462] pay 2.000  chunks 1  loss 4.1467
+    sleep@8688 armC lane14 [501641,501706) of span[501641,501706] pay 1.000  chunks 1  loss 4.4571
+step  8700  ce 3.328  loss 4.113  holds 19072  3,063 tok/s (now 2,482)  [fid:3=+0.505 fid:4=+0.086 fid:5=+0.237 fid:6=+0.052 fid:7=+0.022 fid:8=+0.001 fid:bg=+0.000 fid:val=+0.001 b0=+0.021 b1=+0.032 b2=+0.015 b3=+0.014]
+    timing ms/step: bwd=338 fwd=131 opt=9 loss_events=2 prophet=1 sweep=0 detach=0 data=0  total=482  gc2=40 gc1=1688 objs=328945
+    sleep@8704 armC lane25 [507166,507231) of span[507166,507231] pay 1.000  chunks 1  loss 2.4270
+    sleep@8720 armC pair[502671|502683] targets [7, 11]  margin -0.1447  loss 0.7681
+    sleep@8736 armC lane24 [520912,520977) of span[520912,520977] pay 1.000  chunks 1  loss 4.0378
+    sleep@8752 armC lane15 [519784,519849) of span[519784,519849] pay 1.000  chunks 1  loss 2.6315
+    sleep@8768 armC lane10 [504127,504192) of span[504127,504192] pay 1.000  chunks 1  loss 2.4858
+    sleep@8784 armC lane11 [535454,535519) of span[535454,535519] pay 2.000  chunks 1  loss 2.1417
+    sleep@8800 armC lane26 [490460,490525) of span[490460,490525] pay 1.000  chunks 1  loss 0.9560
+step  8800  ce 3.194  loss 3.278  holds 20736  2,953 tok/s (now 2,065)  [fid:3=+0.507 fid:4=+0.088 fid:5=+0.227 fid:6=+0.050 fid:7=+0.022 fid:8=+0.001 fid:bg=+0.001 fid:val=+0.001 b0=+0.033 b1=+0.046 b2=+0.009 b3=+0.024]
+    timing ms/step: bwd=382 fwd=135 opt=10 loss_events=2 prophet=1 sweep=0 detach=0 data=0  total=530  gc2=42 gc1=1808 objs=332635
+    sleep@8816 armC lane8 [497692,497757) of span[497692,497757] pay 2.000  chunks 1  loss 4.4359
+    sleep@8832 armC lane24 [494444,494509) of span[494444,494509] pay 1.000  chunks 1  loss 2.2986
+    sleep@8848 armC pair[523654|523667] targets [7, 12]  margin -0.0568  loss 0.7220
+    sleep@8864 armC lane4 [550193,550258) of span[550193,550258] pay 2.000  chunks 1  loss 3.1088
+    sleep@8880 armC lane19 [548534,548599) of span[548534,548599] pay 2.000  chunks 1  loss 3.5224
+    sleep@8896 armC lane22 [561842,561907) of span[561842,561907] pay 2.000  chunks 1  loss 1.7502
+step  8900  ce 3.378  loss 4.170  holds 22272  2,876 tok/s (now 2,146)  [fid:3=+0.509 fid:4=+0.087 fid:5=+0.216 fid:6=+0.049 fid:7=+0.023 fid:8=+0.001 fid:bg=+0.001 fid:val=+0.001 b0=+0.037 b1=+0.052 b2=+0.023 b3=+0.024]
+    timing ms/step: bwd=350 fwd=131 opt=9 loss_events=2 prophet=1 sweep=0 detach=0 data=0  total=494  gc2=44 gc1=1921 objs=333301
+    sleep@8912 armC lane12 [492146,492211) of span[492146,492211] pay 2.000  chunks 1  loss 3.5542
+    sleep@8928 armC pair[564649|564662] targets [8, 12]  margin -0.1884  loss 0.7918
