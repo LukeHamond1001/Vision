@@ -659,3 +659,36 @@ def test_S18_store_exact_in_the_organism():
         loss.backward()
         st = m1.detach_state(st)
     assert torch.isfinite(st["M"][3]).all() and torch.isfinite(lg).all()
+
+
+def test_S19_readings_detach_and_prune_are_exact():
+    """detach_readings touches only the fresh tail (same result as a full
+    rebuild: every reading detached), and the amortised cutoff prune
+    leaves exactly the entries a per-sweep rebuild would keep."""
+    from iga.lm_drive import Drive, CLOCKS
+    d = Drive(2, seed=0)
+    T = 64
+    ref = {}
+    for step in range(1, 200):
+        for lane in range(2):
+            for gap in (10, 500, 3000):
+                pt = torch.rand(()) .requires_grad_(True) * 1.0
+                d.probe(lane, pt, gap)
+                key = f"recall:b{__import__('iga.lm_drive', fromlist=['gap_bin']).gap_bin(gap)}"
+                ref.setdefault((lane, key), []).append((d.step_t, pt))
+        d.step_t += T
+        d.sweep([])
+        d.detach_readings()
+        # every reading detached
+        assert all(not r.requires_grad for v in d.readings.values() for _, r in v)
+        # the same set of (t, value) entries as the reference after the reference prune
+        cutoff = d.step_t - 8 * max(CLOCKS)
+        ref = {k: [(t, r) for (t, r) in v if t > cutoff] for k, v in ref.items()}
+        if step % 64 == 0:
+            for k in ref:
+                assert [t for t, _ in d.readings[k]] == [t for t, _ in ref[k]], (step, k)
+                assert all(torch.equal(a.detach(), b.detach())
+                           for (_, a), (_, b) in zip(d.readings[k], ref[k]))
+    # between prunes the drive may hold EXTRA old entries, never fewer
+    for k in ref:
+        assert len(d.readings[k]) >= len(ref[k])

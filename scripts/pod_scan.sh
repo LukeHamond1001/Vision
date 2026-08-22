@@ -132,6 +132,10 @@ LAM=$(python -c "import json;print(json.load(open('scan_smoke_$ITER.json'))['lam
 # ---- 4. the one run ----
 OUTM=/workspace/v10_scan_out_$ITER; mkdir -p "$OUTM"
 MS=""; [ "$MAX_STEPS" != "0" ] && MS="--max-steps $MAX_STEPS"
+# the caching allocator with expandable segments: the per-token loop's
+# allocation pattern varies with the tick pattern; without it the
+# allocator fragments and cudaMalloc/free creep into every step
+export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
 # shellcheck disable=SC2086
 python scripts/v10_driver.py \
   --data "$MINI" --eval-data "$DATA/mini_eval_epi" \

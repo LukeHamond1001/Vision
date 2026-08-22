@@ -105,6 +105,8 @@ class Drive:
                                 # imagination gate's (R2 conflated them)
         self.holds = [[] for _ in range(n_lanes)]
         self.readings = {}             # (lane, key) -> [(t, tensor)]
+        self._fresh = set()            # keys appended to since the last detach
+        self._prune_n = 0
         self.last_key = [None] * n_lanes
         # the settled-hold ledger: a deque when capped — the list form's
         # `del ledger[:drop]` per settle shifted 200k entries hundreds of
@@ -135,6 +137,7 @@ class Drive:
         key = f"recall:b{gap_bin(gap)}"
         self.readings.setdefault((lane, key), []).append(
             (self.step_t, prob_tensor))
+        self._fresh.add((lane, key))
         self.last_key[lane] = key
         v = float(prob_tensor.detach())
         old = self.ema.get(key, v)
@@ -312,9 +315,20 @@ class Drive:
         for key, val in self.ema.items():
             if val > self.records.get(key, 0.0):
                 self.records[key] = val
-        cutoff = self.step_t - 8 * max(CLOCKS)
-        self.readings = {k: [(t, r) for (t, r) in v if t > cutoff]
-                         for k, v in self.readings.items()}
+        # the cutoff prune, amortised (2026-08-22): entries arrive in time
+        # order, so dropping the expired head every 64 sweeps gives the
+        # same lists as the per-sweep rebuild (a hold's t0 is never older
+        # than the cutoff: horizons < 8 x max clock), at 1/64 the cost —
+        # on the pod the per-sweep rebuild was ~25 ms/step and growing
+        self._prune_n += 1
+        if self._prune_n % 64 == 0:
+            cutoff = self.step_t - 8 * max(CLOCKS)
+            for k, v in self.readings.items():
+                i = 0
+                while i < len(v) and v[i][0] <= cutoff:
+                    i += 1
+                if i:
+                    del v[:i]
 
     def _settle(self, h, phi1, pay):
         if self.ledger_cap and len(self.ledger) >= self.ledger_cap:
@@ -324,8 +338,20 @@ class Drive:
                             "phi1": phi1, "pay": pay, "t1": self.step_t})
 
     def detach_readings(self):
-        self.readings = {k: [(t, r.detach()) for (t, r) in v]
-                         for k, v in self.readings.items()}
+        # only this step's readings carry a graph (everything older was
+        # detached by an earlier call): walk each touched key from its
+        # tail while entries still require grad. Same result as
+        # rebuilding every list, O(new) instead of O(all) — on the pod
+        # the rebuild was 110-130 ms/step and growing (2026-08-22)
+        for k in self._fresh:
+            v = self.readings.get(k)
+            if not v:
+                continue
+            i = len(v) - 1
+            while i >= 0 and v[i][1].requires_grad:
+                v[i] = (v[i][0], v[i][1].detach())
+                i -= 1
+        self._fresh.clear()
 
     # ---------- scheduler ----------
     def bin_weights(self):
