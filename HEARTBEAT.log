@@ -176,3 +176,4 @@
 21:46:18 [scan8] copyable train: COPYABLE {"shard": "/workspace/v10/scan_epi_l32", "lives": 32, "life_len": 6250000, "tokens_per_lane_measured": 200000, "lane0_k4_w256": {"copy_correct": 0.0502, "context_seen": 0.0785}, "lane0_k4_w4096": {"copy_correct": 0.1523, "context_seen": 0.2146}, "lane0_k8_w65536": {"copy_correct": 0.1195, "context_seen": 0.143}, "lane1_
 21:46:24 [scan8] copyable eval: COPYABLE {"shard": "/workspace/v10/mini_eval_epi", "lives": 2, "life_len": 10000000, "tokens_per_lane_measured": 200000, "lane0_k4_w256": {"copy_correct": 0.145, "context_seen": 0.1926}, "lane0_k4_w4096": {"copy_correct": 0.2444, "context_seen": 0.3234}, "lane0_k8_w65536": {"copy_correct": 0.1814, "context_seen": 0.2208}, "lane1
 21:47:26 [scan8] smoke SCANSMOKE {"lanes": 32, "T": 64, "order": "pfc_first", "tok_s": 1483, "holds": 12.8, "lam": 0.01953, "ce": [9.949, 6.149], "peak_gib": 11.6, "params_m": 67.0}
+21:47:31 [scan8] run started pid 1302 lam 0.01953: 
