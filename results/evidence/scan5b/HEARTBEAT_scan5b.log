@@ -1,0 +1,14 @@
+06:23:35 [scan5b] boot SCAN sha=51f6fb8 gpu=NVIDIA GeForce RTX 4090, 24564 MiB vol=2190893G 456418G order=pfc_first lives=32 T=64 d=512 L=8 opts={"n_council":2,"slot_every":1,"write_every":1,"compile_council":true,"compile_read":true,"store_exact":true} clocks=3:1,4:8,5:64,6:512,7:4096,8:32768 prec=bf16
+06:23:45 [scan5b] inventory: flash_epi=ok flash_eval_epi=ok mini_epi=ok mini_eval_epi=ok tar=24G parquets=19 judge=ok
+06:23:52 [scan5b] copyable train: COPYABLE {"shard": "/workspace/v10/scan_epi_l32", "lives": 32, "life_len": 6250000, "tokens_per_lane_measured": 200000, "lane0_k4_w256": {"copy_correct": 0.0502, "context_seen": 0.0785}, "lane0_k4_w4096": {"copy_correct": 0.1523, "context_seen": 0.2146}, "lane0_k8_w65536": {"copy_correct": 0.1195, "context_seen": 0.143}, "lane1_
+06:23:58 [scan5b] copyable eval: COPYABLE {"shard": "/workspace/v10/mini_eval_epi", "lives": 2, "life_len": 10000000, "tokens_per_lane_measured": 200000, "lane0_k4_w256": {"copy_correct": 0.145, "context_seen": 0.1926}, "lane0_k4_w4096": {"copy_correct": 0.2444, "context_seen": 0.3234}, "lane0_k8_w65536": {"copy_correct": 0.1814, "context_seen": 0.2208}, "lane1
+06:25:29 [scan5b] smoke SCANSMOKE {"lanes": 32, "T": 64, "order": "pfc_first", "tok_s": 988, "holds": 12.8, "lam": 0.01953, "ce": [9.841, 6.184], "peak_gib": 11.6, "params_m": 67.0}
+06:25:34 [scan5b] run started pid 1325 lam 0.01953: 
+06:27:39 [scan5b] 2 min:     timing ms/step: bwd=402 fwd=229 opt=9 prophet=3 loss_events=1 sweep=0 detach=0 data=0  total=646  gc2=15 gc1=458 objs=210330
+06:42:45 [scan5b] inflight step  1300  ce 4.257  loss 4.350  holds 20736  2,816 tok/s (now 2,744)  [fid:3=+0.435 fid:4=+0.020 fid:5=+0.062 fid:6=+0 | hb: 
+06:57:49 [scan5b] inflight step  2400  ce 4.392  loss 4.488  holds 38272  2,668 tok/s (now 2,375)  [fid:3=+0.482 fid:4=+0.021 fid:5=+0.041 fid:6=+0 | hb: 
+07:12:54 [scan5b] inflight step  3400  ce 3.693  loss 4.569  holds 54272  2,539 tok/s (now 2,318)  [fid:3=+0.510 fid:4=+0.025 fid:5=+0.044 fid:6=+0 | hb: 
+07:27:59 [scan5b] inflight step  4300  ce 2.812  loss 2.897  holds 68736  2,397 tok/s (now 2,028)  [fid:3=+0.521 fid:4=+0.024 fid:5=+0.043 fid:6=+0 | hb: 
+07:43:03 [scan5b] inflight step  5200  ce 2.790  loss 3.478  holds 83072  2,312 tok/s (now 2,022)  [fid:3=+0.526 fid:4=+0.026 fid:5=+0.042 fid:6=+0 | hb: 
+07:58:08 [scan5b] inflight step  6000  ce 2.932  loss 3.655  holds 95872  2,261 tok/s (now 1,995)  [fid:3=+0.532 fid:4=+0.025 fid:5=+0.046 fid:6=+0 | hb: 
+08:13:13 [scan5b] inflight step  6100  ce 3.230  loss 3.315  holds 1536  2,905 tok/s (now 2,905)  [fid:3=+0.534 fid:4=+0.028 fid:5=+0.049 fid:6=+0. | hb: {"step": 6000, "tokens": 12288000, "rows": [{"probe": "ce_recall", "ce": 4.4748, "recall": {"in-ctx": {"acc": 0.297, "n": 1451}, "short": {"acc": 0.297, "n": 1792}, "b3": {"acc": null, "n": 0}, "b4": 

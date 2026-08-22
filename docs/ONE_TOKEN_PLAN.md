@@ -398,3 +398,16 @@ every ~4 steps; tracked objects 298k->309k (post-freeze).
     (~20 ms) — a bisect on the time-ordered list; later.
 scan5b keeps running (a relaunch would cost more than it saves); the
 fixes ride scan6. CE trace scan5b = scan3's (4.257 @1300, 3.699 @2200).
+
+## 22. scan5b's step-6000 row (08:05 UTC): THE HIPPOCAMPUS IS LOAD-BEARING
+
+Exact one-shot store (store_exact), 12.3M tokens, unseen lives:
+  STORE OFF +0.099 nats (scan3's averaged store: +0.003) — 33x.
+  recall in-ctx .297 / short .297 (scan3 .196/.196; hybrid .20/.196):
+  the first lift off the floor in the program (+50% relative).
+  eval CE 4.475 (scan3 4.547); bands off +1.01; alpha .18 -> .23;
+  tok_u .039 -> .054 (write strengths growing); entropy .84; greedy
+  distinct-3 .42 (sampled .92).
+The one-shot-binding hypothesis holds at first read. Next: the step-
+12000 lesion pass (~09:15 UTC) — per band and store-off at 24.6M.
+Evidence results/evidence/scan5b/.
