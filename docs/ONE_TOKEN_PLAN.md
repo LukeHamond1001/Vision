@@ -761,3 +761,35 @@ speak; (8) serve-room press ban; sleep from birth + the night
 scan9 = scan8 - reward_slot + the night (cycles 4, overlap 3, spacing
 .5, coupled REM) + sleep from birth (REM from childhood) + dopamine
 from band 5 — after scan8's 12000 row.
+
+## 37. scan9 = FULL HUMAN MODE (user, 22:05 UTC: "get all those changes in there")
+
+Built and law-tested (f00b8ac, suite 287): the night (S29-S32), day-
+boundary nights (S34: the tap stamps the builder's day events; a
+night belongs to the lane whose day just closed and draws from that
+day's spans, partners from the whole pool), dopamine from band 5
+(S33), builder hot_frac (a quarter of corrections press <-2> — the
+amygdala's food; new shard scan_epi_l32_hot025, ~5 min build at
+boot), reward slot dropped (lesion 0.000), sleep from token one
+(REM gated on childhood). Local end-to-end clean.
+
+scan9 env:
+  CYCLES=4 OVERLAP=3 SPACING=0.5 COUPLE=1 SLEEP_BIRTH=1 DAY_SLEEP=1
+  HOT_FRAC=0.25 VALUE_W=0.05 SALIENCY=0.5
+  DREAM={"every_nights":4,"n":4,"max_new":48,"min_q":0.55}
+  SCAN_OPTS={"n_council":2,"slot_every":1,"write_every":1,
+    "compile_council":true,"compile_read":true,"store_exact":true,
+    "dopamine":1.0,"dopamine_band":5,"bg_w":0.05}
+  (rest = scan8's). Night period = 16 x (4 x max(2,3)) / 2 = 96 steps
+  (~98k wake tokens ~ 7 h of speech) at the certified dose; 4 coupled
+  dreams per night in childhood+ (~0.2% self-generated tokens).
+Controls: scan8 (Phase 2, old night) and scan5b (base). Reads: CE /
+recall at 6000/7500/12000; hot_pairs > 0 (the amygdala finally
+fires); dopa_gate with band-5 dopamine (rpe_press should FALL as the
+band learns to predict presses — habituation); nights.day_nights /
+overlap_blocks; dreams coupled/stepped/distinct3; cast p_true and
+top-5; recall_ema b0-b3 (the long-range instrument) vs scan5b's
+18500 (.044/.031/.015/.012). A64-R3 watch from token one: collapse
+probe + CE vs scan8's infancy (4.474 at 6000) — if sleep from birth
+hurts, the first drop-one is SLEEP_BIRTH=0.
+Launch: after scan8's 12000 row (one model at a time on the volume).
