@@ -190,3 +190,19 @@ cortex-side fallback and is user-gated; not built.
       the thing scan2 removes.
 scan1 killed at step ~7000 (train CE 4.85), ~2.6 h, ~$1.9. scan2 =
 pod qa1m3h985uaytt, sha e37e88e, launched 02:13 UTC.
+
+## 10. scan2 smoke (02:14 UTC): the decoder was not the bottleneck
+
+scan2 smoke: 2188 tok/s (scan1 2166), peak 14.9 GiB (17.9), holds 91
+-> lam 0.0027. The batched decoder removed 80% of the loop's kernel
+launches and changed nothing: the cost is in the council+band loop's
+per-op overhead and the drive economy's Python (scan1 ran 2840 tok/s
+at step 100 and decayed to ~1800 as its ledger filled to the 200k
+cap, then recovered to 2700 when the segment reset it). The batching
+stays (bit-exact, cheaper in memory, the structure we want).
+
+scan2 runs to its second beat (step 12000 ~ 04:45 UTC: the first
+per-band lesion pass = R2 proper, and R1 vs scan1's 6.192). Meanwhile,
+locally: count the ops per token with the profiler, batch the six
+bands' per-token work into single tensors (acc/cnt/slots/vetoes),
+measure; scan3 = hippocampus cadence + the bit-exact speedups.
