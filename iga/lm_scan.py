@@ -122,7 +122,8 @@ class ScanLM(nn.Module):
                  clocks=None, n_council=2, gate_init=-2.0,
                  fast_gate=None, veto=True, read_drop=0.5, aux_trunk=0.0,
                  mlp="gelu", band_center=True, order="cortex_first",
-                 kd_base=1, slot_every=8, write_every=4, kd_max=4096):
+                 kd_base=1, slot_every=8, write_every=4, kd_max=4096,
+                 compile_council=False, compile_mode="default"):
         super().__init__()
         assert order in ("cortex_first", "pfc_first")
         self.order = order
@@ -198,6 +199,13 @@ class ScanLM(nn.Module):
         nb = max(self.bands) + 1
         self.register_buffer("band_mu", torch.zeros(nb, d))
         self.register_buffer("band_mu_n", torch.zeros(nb))
+        # batched band bookkeeping (2026-08-22): the six bands' per-token
+        # work runs as single tensor ops on [B, K, d] — one add for the
+        # accumulators, one bmm for the slots, one matmul for every veto —
+        # instead of six Python-level passes (the step was launch-bound:
+        # ~1000 kernels per token, scan1/scan2 at 2.2-3.4k tok/s)
+        self.register_buffer("band_idx", torch.arange(len(self.bands)))
+        self.register_buffer("veto_eye", torch.eye(len(self.bands)))
         # the hippocampus: the certified content-keyed identity store,
         # capacity per band doubling up the ladder; half-life in WRITES
         # (one write per chunk) = the band's clock in chunks
@@ -224,6 +232,14 @@ class ScanLM(nn.Module):
         self._write_cost = None
         self._recon = None
         self._veto_mean = {}
+        # opt-in torch.compile of the council's blocks — the one fixed-
+        # shape, control-flow-free function called 64x per chunk; on
+        # CUDA the fused kernels (and, with mode="reduce-overhead",
+        # graph replay) cut the launch count the step is bound by.
+        # Default off = the eager path, bit-exact. (2026-08-22)
+        self.compile_council = bool(compile_council)
+        self._council_fn = (torch.compile(self._council_blocks, dynamic=False, mode=compile_mode)
+                            if compile_council else self._council_blocks)
 
     # ---------------- state ----------------
     def init_state(self, B, device):
@@ -262,13 +278,22 @@ class ScanLM(nn.Module):
 
     # ---------------- helpers ----------------
     def _band_slots(self, st, B):
-        toks = []
-        for k in self.bands:
-            h = st["h"][k]
-            if k in self.lesioned or self.mem_off:
-                h = torch.zeros_like(h)
-            toks.append(self.mem_proj[str(k)](h))
-        return torch.stack(toks, dim=1)                 # [B, K, d]
+        h_all = torch.stack([st["h"][k] for k in self.bands], dim=1)   # [B, K, d]
+        return self._slots_from(h_all, self._mem_W())
+
+    def _mem_W(self):
+        # the band projections stacked once per chunk: [K, d, d]
+        return torch.stack([self.mem_proj[str(k)].weight for k in self.bands])
+
+    def _slots_from(self, h_all, W):
+        """h_all [B, K, d] band states -> slots [B, K, d] = h_k W_k^T,
+        lesioned / mem_off bands silenced (same values as the per-band
+        Linear path, in one bmm)."""
+        if self.mem_off or self.lesioned:
+            keep = torch.tensor([0.0 if (self.mem_off or k in self.lesioned) else 1.0
+                                 for k in self.bands], device=h_all.device)
+            h_all = h_all * keep[None, :, None]
+        return torch.bmm(h_all.transpose(0, 1), W.transpose(1, 2)).transpose(0, 1)
 
     def _council(self, c, r, m, dev):
         """c [B,d] token hidden, r [B,d] store slot, m [B,K,d] bands ->
@@ -279,8 +304,12 @@ class ScanLM(nn.Module):
         # OFF here so a bf16 trunk never pulls the council with it
         with torch.autocast(device_type=dev.type, dtype=torch.bfloat16,
                             enabled=False):
-            for b in self.council:
-                S = b(S, None)
+            S = self._council_fn(S)
+        return S
+
+    def _council_blocks(self, S):
+        for b in self.council:
+            S = b(S, None)
         return S
 
     def _trunk(self, e, slots, dev):
@@ -327,7 +356,14 @@ class ScanLM(nn.Module):
         for key in ("lp", "lh", "lg"):
             st.setdefault(key, {})
         st.setdefault("wbuf", [])
-        m = self._band_slots(st, B)
+        W_mem = self._mem_W()
+        h_all = torch.stack([st["h"][k] for k in self.bands], dim=1)    # [B, K, d]
+        acc_all = torch.stack([st["acc"][k] for k in self.bands], dim=1)  # [B, K, d]
+        if self.veto and K > 1:
+            W_veto = torch.stack([self.veto_w[str(k)] for k in self.bands])   # [K, d]
+            b_veto = torch.stack([self.veto_b[str(k)] for k in self.bands])   # [K]
+            veto_sum = None
+        m = self._slots_from(h_all, W_mem)
         rd0 = self._read(st, st["prev_c"], read_ok) if st["chunk"] > 0 else None
         r_slot = self.store_in(rd0) if rd0 is not None \
             else torch.zeros(B, self.d, device=dev)
@@ -361,25 +397,31 @@ class ScanLM(nn.Module):
             # saturating at +0.98 even centred per band). The fidelity is
             # scored after the decoder has run (C is not known in the loop)
             st["tok"] += 1
-            ticked = False
+            acc_all = acc_all + S[:, 2:]                     # every band listens, one add
+            due = []
             for i, k in enumerate(self.bands):
-                s_k = S[:, 2 + i]
-                st["acc"][k] = st["acc"][k] + s_k
                 st["cnt"][k] += 1
                 if st["tok"] % self.clocks[k] == 0:
-                    pooled = st["acc"][k] / max(st["cnt"][k], 1)
+                    due.append(i)
+            if due:
+                P = None
+                if self.veto and K > 1:
+                    # every veto at once: v[b, j, k] = sigmoid(S'_j . w_k + b_k);
+                    # permission_k = prod_{j != k} (1 - v[b, j, k])
+                    v = torch.sigmoid(S[:, 2:] @ W_veto.t() + b_veto)      # [B, K, K]
+                    P = torch.prod(1 - v * (1 - self.veto_eye), dim=1)     # [B, K]
+                    vs = v.detach().sum(0)
+                    veto_sum = vs if veto_sum is None else veto_sum + vs
+                    for i in due:
+                        vetoes[self.bands[i]].append(None)               # counted below
+                for i in due:
+                    k = self.bands[i]
+                    pooled = acc_all[:, i] / max(st["cnt"][k], 1)
                     if st["pend"][k] is not None:
                         tick_log.append((t, k, st["pend"][k], seg_start[k],
                                          st["cnt"][k]))
                     seg_start[k] = t + 1
-                    p = None
-                    if self.veto and K > 1:
-                        others = torch.cat([S[:, 2 + j] for j in range(K) if j != i], 0)
-                        v = torch.sigmoid(others @ self.veto_w[str(k)]
-                                          + self.veto_b[str(k)])
-                        v = v.view(K - 1, B)
-                        p = torch.prod(1 - v, dim=0).unsqueeze(-1)  # [B, 1]
-                        vetoes[k].append(v.detach().mean())
+                    p = P[:, i].unsqueeze(-1) if P is not None else None   # [B, 1]
                     cell = self.cells[str(k)]
                     st["lp"][k] = pooled.detach()
                     st["lh"][k] = st["h"][k].detach()
@@ -390,11 +432,12 @@ class ScanLM(nn.Module):
                     st["pend"][k] = self.pred[str(k)](h_new)
                     if self.clocks[k] > 1:
                         wcost.append(g.mean())
-                    st["acc"][k] = torch.zeros_like(st["acc"][k])
                     st["cnt"][k] = 0
-                    ticked = True
-            if ticked:
-                m = self._band_slots(st, B)
+                    h_all = h_all.index_copy(1, self.band_idx[i:i + 1], h_new.unsqueeze(1))
+                    acc_all = acc_all.index_fill(1, self.band_idx[i:i + 1], 0.0)
+                m = self._slots_from(h_all, W_mem)
+        for i, k in enumerate(self.bands):                 # the open accumulators carry on
+            st["acc"][k] = acc_all[:, i]
         S0 = torch.stack(s0s, dim=1)                       # [B, T, d] the PFC's conclusions
         if self.order == "cortex_first":
             C = torch.stack(cs, dim=1)                     # [B, T, d]
@@ -403,15 +446,33 @@ class ScanLM(nn.Module):
             C = self._trunk(S0.reshape(B * T, self.d),
                             Bd.reshape(B * T, Bd.shape[2], self.d), dev)
             C = C.reshape(B, T, self.d)
-        # ---- band fidelity: pend (from the previous tick) vs the cortex
-        # stream pooled over the interval, centred per band; intervals
-        # that began in earlier chunks carry their partial sum in acc_c
-        for (t, k, pend, s_from, cnt) in tick_log:
-            pooled_c = (st["acc_c"][k] + C[:, s_from:t + 1].sum(1)) / max(cnt, 1)
+        # ---- band fidelity, batched per band: pend (from the previous
+        # tick) vs the cortex stream pooled over the interval, centred;
+        # intervals that began in earlier chunks carry their partial sum
+        # in acc_c. One (t_last, fid[B, n_ticks]) entry per band per chunk
+        # — every band weighs the same in the fidelity loss (the hybrid's
+        # one-tick-per-chunk semantics; per-tick entries had let band 3's
+        # 63 ticks outweigh band 5's one), and the scoring is a handful of
+        # ops per band instead of ~18 per tick (the step is launch-bound)
+        Ccum = torch.cat([C.new_zeros(B, 1, self.d), C.cumsum(1)], dim=1)  # [B, T+1, d]
+        for k in self.bands:
+            ent = [(t, pend, sf, cnt) for (t, kk, pend, sf, cnt) in tick_log if kk == k]
+            if not ent:
+                continue
+            ts = [e[0] for e in ent]
+            hi = torch.tensor([t + 1 for t in ts], device=dev)
+            lo = torch.tensor([e[2] for e in ent], device=dev)
+            cnts = torch.tensor([float(max(e[3], 1)) for e in ent], device=dev)
+            sums = Ccum[:, hi] - Ccum[:, lo]                          # [B, n, d]
+            if ent[0][2] == 0:                                        # the carried interval
+                sums = torch.cat([(sums[:, :1] + st["acc_c"][k].unsqueeze(1)),
+                                  sums[:, 1:]], dim=1)
+            pooled_c = sums / cnts[None, :, None]
+            pend_all = torch.stack([e[1] for e in ent], dim=1)        # [B, n, d]
             target = pooled_c
             if self.band_center:
-                # TRAINING centres by the batch mean at this very tick:
-                # a lagging running mean leaves the training DRIFT of the
+                # TRAINING centres by the batch mean at each tick: a
+                # lagging running mean leaves the training DRIFT of the
                 # cortex mean in the residual — one direction shared by
                 # every lane, matched by a predictor bias (scan1 measured
                 # fid:5 = +1.000 at step 1300). The instantaneous mean
@@ -424,19 +485,23 @@ class ScanLM(nn.Module):
                 else:
                     target = pooled_c - self.band_mu[k]
                 if self.training:
-                    with torch.no_grad():
-                        pm = pooled_c.detach().mean(0)
+                    with torch.no_grad():                             # EMA 0.99 per tick, in order
+                        pm = pooled_c.detach().mean(0)                # [n, d]
+                        n = pm.shape[0]
+                        w = 0.01 * torch.pow(0.99, torch.arange(n - 1, -1, -1,
+                                                                device=dev, dtype=pm.dtype))
                         if self.band_mu_n[k] == 0:
-                            self.band_mu[k] = pm
+                            w[0] = 0.99 ** (n - 1)                    # seeded by the first tick
+                            self.band_mu[k] = (w[:, None] * pm).sum(0)
                         else:
-                            self.band_mu[k].mul_(0.99).add_(0.01 * pm)
-                        self.band_mu_n[k] += 1
-            fid = nn.functional.cosine_similarity(pend, target, dim=-1)
-            ticks[k].append((t, fid))
+                            self.band_mu[k] = (0.99 ** n) * self.band_mu[k] + (w[:, None] * pm).sum(0)
+                        self.band_mu_n[k] += n
+            fid = nn.functional.cosine_similarity(pend_all, target, dim=-1)   # [B, n]
+            ticks[k].append((ts[-1], fid))
             st["acc_c"][k] = torch.zeros_like(st["acc_c"][k])
         for k in self.bands:                               # the open intervals' partial sums
             if seg_start[k] < T:
-                st["acc_c"][k] = st["acc_c"][k] + C[:, seg_start[k]:].sum(1)
+                st["acc_c"][k] = st["acc_c"][k] + (Ccum[:, T] - Ccum[:, seg_start[k]])
         logits = self.head(self.lnf(C))
         self._aux_hidden = None
         # the hippocampus is a PFC organ: keyed and queried by the
@@ -448,7 +513,12 @@ class ScanLM(nn.Module):
             logits = logits + R @ lg_E.t()
         if wcost:
             self._write_cost = torch.stack(wcost).mean()
-        self._veto_mean = {k: float(torch.stack(v).mean()) for k, v in vetoes.items() if v}
+        if self.veto and K > 1 and veto_sum is not None:
+            off = veto_sum * (1 - self.veto_eye)              # [K(j), K(k)], diagonal dropped
+            vm = off.sum(0) / (B * T * (K - 1))
+            self._veto_mean = {k: float(vm[i]) for i, k in enumerate(self.bands) if vetoes[k]}
+        else:
+            self._veto_mean = {}
         # ---- the carried band graphs (A38): the last write of each band
         # that ticked, recomputed through cloned params on detached
         # inputs, so the next chunk's CE and fidelity can credit it

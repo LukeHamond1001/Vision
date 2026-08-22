@@ -280,7 +280,7 @@ def test_S7_pfc_first_order():
     with torch.no_grad():
         st = m.init_state(1, "cpu")
         lg, st, ticks, _, _ = _fwd(m, x, st)
-        assert lg.shape == (1, T, V) and len(ticks[3]) == T - 1
+        assert lg.shape == (1, T, V) and len(ticks[3]) == 1 and ticks[3][0][1].shape == (1, T - 1)
         emb = m.embed(x)[0]
         K = len(m.bands)
         assert len(seen["council"]) == T
@@ -392,8 +392,8 @@ def test_S10_band_center_is_per_band():
     assert int(m.band_mu_n[6]) == 0 and m.band_mu[6].abs().sum() == 0
     # the fidelity target is the deviation: at band 3's tick the fid is
     # cos(pend, pooled_c - batch mean) — not saturated at 1 for a random net
-    fids = torch.stack([f for _, f in ticks[3]])
-    assert fids.abs().max() < 0.999
+    fids = ticks[3][0][1]                                 # [B, n_ticks]
+    assert fids.shape == (2, T - 1) and fids.abs().max() < 0.999
     # training centres by the batch mean at the tick: with 2 lanes the two
     # targets are exact negatives, so the two lanes' fids against the same
     # pend would be negatives — check the target itself through a tick of
@@ -403,8 +403,8 @@ def test_S10_band_center_is_per_band():
         torch.nn.init.zeros_(m2.pred[str(k)].weight); torch.nn.init.ones_(m2.pred[str(k)].bias)
     st2 = m2.init_state(2, "cpu")
     _, _, ticks2, _, _ = _fwd(m2, _toks(52, B=2), st2)
-    f = torch.stack([f for _, f in ticks2[3]])            # [n_ticks, 2]
-    assert torch.allclose(f[:, 0], -f[:, 1], atol=1e-5)
+    f = ticks2[3][0][1]                                   # [2, n_ticks]
+    assert torch.allclose(f[0], -f[1], atol=1e-5)
     # eval never moves the means
     m.eval()
     mu = m.band_mu.clone(); n = m.band_mu_n.clone()
@@ -470,3 +470,33 @@ def test_S12_hippocampus_is_a_pfc_organ(order):
         assert torch.equal(q[0], s0[8 * (j + 1) - 1])
     assert torch.equal(st["prev_c"][0], s0[-1])       # the write key for the next token
     m._council, m._read = council0, read0
+
+
+def test_S13_compiled_council_matches_eager():
+    """compile_council=True: the council's blocks through torch.compile
+    give the eager council's outputs (1e-4) and the chunk trains."""
+    pytest.importorskip("torch._dynamo")
+    import torch._dynamo
+    torch._dynamo.reset()
+    m0 = _model(seed=31, order="pfc_first"); m0.eval()
+    m1 = _model(seed=31, order="pfc_first", compile_council=True); m1.eval()
+    m1.load_state_dict(m0.state_dict())
+    x = _toks(80)
+    with torch.no_grad():
+        lg0, _, _, _, _ = _fwd(m0, x, m0.init_state(1, "cpu"))
+        try:
+            lg1, _, _, _, _ = _fwd(m1, x, m1.init_state(1, "cpu"))
+        except Exception as e:                        # no C++ toolchain for inductor here
+            pytest.skip(f"torch.compile unavailable on this host: {type(e).__name__}")
+    assert torch.allclose(lg0, lg1, atol=1e-4), (lg0 - lg1).abs().max()
+    m1.train()
+    st = m1.init_state(2, "cpu")
+    for i in range(3):
+        xb = _toks(81 + i, B=2)
+        lg, st, ticks, wc, rc = _fwd(m1, xb, st)
+        loss = torch.nn.functional.cross_entropy(lg.reshape(-1, V), xb.reshape(-1))
+        loss = loss + 0.1 * torch.stack([(1 - f).mean() for k in range(len(ticks))
+                                         for _, f in ticks[k] if f.requires_grad]).mean()
+        loss.backward()
+        st = m1.detach_state(st)
+    assert all(p.grad is not None for p in m1.council.parameters())
