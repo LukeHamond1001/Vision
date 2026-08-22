@@ -275,3 +275,21 @@ output. Leakage check: the logit read and the slot reads use st["M"]
 BEFORE this chunk's write block — only previous chunks' pairs.
 Pending: the step-6000 eval row (unseen lives, ~04:35 UTC) and the
 step-12000 lesion pass (STORE OFF must now cost nats).
+
+## 15. Two bugs found while scan3 runs (04:35 UTC) — scan4's reasons
+
+1. THE THROUGHPUT DECAY was the drive ledger: a Python list capped at
+   200k with `del ledger[:drop]` per settle. The scan settles hundreds
+   of holds per step, so once capped every step shifted 200k entries
+   hundreds of times (scan1/scan2/scan3 all decayed 2.7k -> 1.5k tok/s
+   by step ~4000; scan1 recovered at its segment boundary = a fresh
+   drive). Now a deque(maxlen): identical entries, order and
+   ledger_base (S16), O(1).
+2. SCAN ECONOMY HORIZONS: the scan branch set the economy's horizon to
+   the clock itself in tokens — band 3's holds were due after ONE token
+   (< a step) and expired unpaid every step; the hybrid's rule is
+   max(4 x clock, 512) tokens. Fixed (S8). This changes the press
+   economy's holds, not the model.
+scan4 = scan3's model exactly + these two fixes + compile_read. Plan:
+read scan3's step-6000 eval row (R1), then relaunch as scan4 and take
+the step-12000 lesion pass (R2, store off) there, at full speed.
