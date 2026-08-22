@@ -316,3 +316,21 @@ scan3 killed at step 6700; scan4 = pod zm2a7e7cw5ntnv, sha 86b5011:
 scan3's model + the ledger/horizon fixes + compile_read. Reads: the
 speed at step 100 and at step 4000+ (no decay now), the step-12000
 per-band lesion pass.
+
+## 17. Iteration 5 built (05:40 UTC): the exact hippocampus
+
+Commit 9336d3e: LogitStore.write_exact — the sequential delta rule
+M_t = M_{t-1} + b_t (v_t - M_{t-1} k_t) k_t^T computed exactly for the
+chunk ((I + L) U = b (V - K M0^T), M_T = M0 + U^T K; a 64 x 64
+triangular solve, same cost as the averaged rule). ScanLM(store_exact
+=True); default off keeps the hybrid bit-exact. Laws S17 (equals the
+token-by-token rule to 1e-8; repeated keys without overshoot; one item
+among 64 pairs read back at > 0.6 vs < 0.25 averaged) and S18 (in the
+organism). Init strength b_t = sigmoid(beta=0) x sigmoid(tok_u=0) =
+0.25 per pair (learnable; a stronger init is a later knob).
+
+scan4 (05:24 UTC, zm2a7e7cw5ntnv): step 100 at 2.7k tok/s, holds 1.5k
+(scan3 7.1k — the horizon fix). Read: the rate at step 4400 (scan3 had
+decayed to 1.5k), the step-6000 row (R1 with the corrected economy).
+Then scan5 = scan4 + store_exact; its store-off number is the
+hippocampus verdict for this hypothesis.
