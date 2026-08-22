@@ -673,3 +673,16 @@ Caveat ledgered: lm_judge.grade_dialogue gave 0.74 to a d=32 model's
 gibberish — the external judge is lenient at this scale; the dream
 dose is small (1 step per 4 nights ~ 1.5% of steps) and the collapse
 probe is the backstop.
+
+scan8 launch note (19:55 UTC): the first pod (pjlnfelfbrfv04,
+a5df4a3) was killed at 2 minutes — the TD reward at a slow band's
+tick was the interval's SUM (band 8: ~32k tokens of presses, one
+raw TD term ~1e5 x CE; band 6 ~2 nats every 8 chunks) — fixed to the
+reward RATE (sum / clock; S28, suite 280, c7f7bac) and relaunched:
+pod 3b6nnsifqu2o51 (4090). Ops note: each pod force-pushes
+results-v10, so the previous iteration's jsonl files vanish from the
+branch at the next launch — save evidence to results/evidence/<iter>/
+BEFORE launching (scan7's were recovered from the reflog, 95b0de4).
+Also seen at a5df4a3's step 1: bwd 321 ms / fwd 134 ms (2.2k tok/s vs
+scan7's 3.5k) — the TD/BG terms add backward work at every tick;
+read the sustained rate at the 2-minute line.
