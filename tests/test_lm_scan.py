@@ -28,7 +28,7 @@
       band states; band removal changes logits only through the PFC.
   S8  train() runs end to end in fp32 and bf16 (states, stores and
       logits stay fp32 under bf16); arch, clocks and the scan options
-      ride the checkpoint cfg; horizons = clocks in tokens.
+      ride the checkpoint cfg; economy horizons = max(4 x clock, 512) tokens.
   S11 The batched decoder is the per-token decoder: pfc_first logits
       from the one-call neocortex equal a token-by-token reference run
       of the same blocks on the same bundles (fp32, 1e-5).
@@ -327,7 +327,8 @@ def test_S8_train_runs_both_precisions(tmp_path, precision):
     cfg = blob["cfg"]
     assert cfg["arch"] == "scan" and cfg["scan"] == {"n_council": 1, "write_every": 2}
     assert {int(k): v for k, v in cfg["clocks"].items()} == CLK
-    assert dict(drive._horizons) == CLK
+    # the economy's horizons in tokens follow the hybrid's rule, max(4 x clock, 512)
+    assert dict(drive._horizons) == {k: max(4 * v, 512) for k, v in CLK.items()}
 
 
 @pytest.mark.parametrize("order", ["cortex_first", "pfc_first"])
@@ -561,3 +562,28 @@ def test_S15_compiled_read_matches_eager():
     # is exactly zero until alpha grows — in eager and compiled alike; the
     # read path is live when alpha itself receives gradient
     assert any(p.grad is not None and float(p.grad.abs()) > 0 for p in m1.alpha.parameters())
+
+
+def test_S16_ledger_deque_matches_list_semantics():
+    """The capped ledger (a deque) holds exactly the entries the list
+    version kept, in order, with ledger_base counting the evictions —
+    and settling at the cap no longer shifts the whole ledger."""
+    from iga.lm_drive import Drive
+    import time
+    d = Drive(2, seed=0, ledger_cap=50)
+    ref, base = [], 0
+    for i in range(300):
+        h = {"lane": i % 2, "band": 3, "key": "recall:b0", "phi0": 0.5, "w": 1.0, "t0": i}
+        d._settle(h, 0.25, 0.25)
+        ref.append({**h, "phi1": 0.25, "pay": 0.25, "t1": d.step_t})
+        if len(ref) > 50:
+            ref = ref[1:]; base += 1
+    assert list(d.ledger) == ref and d.ledger_base == base == 250 and len(d.ledger) == 50
+    assert d.ledger[len(d.ledger) - 1]["t0"] == 299      # index access near the end
+    big = Drive(1, seed=0, ledger_cap=200_000)
+    for i in range(200_000):
+        big.ledger.append({"t0": i})
+    t0 = time.time()
+    for i in range(2000):
+        big._settle({"lane": 0, "band": 3, "key": "k", "phi0": 0.0, "w": 0.0, "t0": i}, 0.0, 0.0)
+    assert time.time() - t0 < 0.5                         # 2000 settles at the cap: O(1) each

@@ -346,8 +346,13 @@ def train(d=64, lanes=4, T=256, steps=40, seed=0, device="cpu",
                      "store": "matrix", "keyed": "hidden",
                      "aux_trunk": aux_trunk, "gate_init": gate_init}
         drive.bin_band = {0: 3, 1: 3, 2: 4, 3: 5}
+        # the economy's horizon per band follows the hybrid's rule in
+        # tokens, max(4 x clock, 512): a hold must outlive at least one
+        # chunk to see a reading (the first cut used clock itself — band
+        # 3's holds were due after ONE token and expired unpaid every
+        # step; ledgered 2026-08-22)
         for k in model.bands:
-            drive._horizons[k] = int(clocks[k])
+            drive._horizons[k] = max(4 * int(clocks[k]), 512)
     elif arch == "hybrid":
         from .lm_hybrid import HybridLM
         model = HybridLM(vocab_size, d=d, n_layers=n_layers, max_T=T,

@@ -23,6 +23,7 @@ learning progress — the drive layer choosing what rides the belt.
 
 import random
 import torch
+from collections import deque
 
 from .lm_bands import N_BANDS, CLOCKS
 
@@ -105,7 +106,12 @@ class Drive:
         self.holds = [[] for _ in range(n_lanes)]
         self.readings = {}             # (lane, key) -> [(t, tensor)]
         self.last_key = [None] * n_lanes
-        self.ledger = []
+        # the settled-hold ledger: a deque when capped — the list form's
+        # `del ledger[:drop]` per settle shifted 200k entries hundreds of
+        # times per step once the cap was reached (the scan organism's
+        # 2.7k -> 1.5k tok/s decay, 2026-08-22); entries, order and
+        # ledger_base are identical
+        self.ledger = deque(maxlen=ledger_cap) if ledger_cap else []
         # A54e F6 (v10): the append-only ledger costs 2-4GB host RAM
         # by 488k steps; an ~800k-step flash must prune. ledger_base
         # counts dropped rows so sleep's absolute indices stay valid.
@@ -311,13 +317,11 @@ class Drive:
                          for k, v in self.readings.items()}
 
     def _settle(self, h, phi1, pay):
+        if self.ledger_cap and len(self.ledger) >= self.ledger_cap:
+            self.ledger_base += 1                     # the deque evicts the oldest
         self.ledger.append({**{k: h[k] for k in
                                ("lane", "band", "key", "phi0", "w", "t0")},
                             "phi1": phi1, "pay": pay, "t1": self.step_t})
-        if self.ledger_cap and len(self.ledger) > self.ledger_cap:
-            drop = len(self.ledger) - self.ledger_cap
-            del self.ledger[:drop]
-            self.ledger_base += drop
 
     def detach_readings(self):
         self.readings = {k: [(t, r.detach()) for (t, r) in v]
