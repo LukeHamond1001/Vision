@@ -512,3 +512,16 @@ against CE, confined if needed. Reads: prophet AUC per band, recall
 of pressed vs unpressed facts, the press-pay ledger. Order: after the
 three 78M levers settle the 500M shape. This is the ratified two-
 button design (graded +/- primary, band-built secondaries).
+
+## 30. The reward slot (user, 16:20 UTC) — Phase 2's front door
+
+Reward levels as a dedicated council slot at the lowest PFC level:
+slots [token, REWARD (5-level embedding: none/+-1/+-2), hippocampus,
+bands...]. Input only — observed, gated on (RPE = level - predicted
+value scales tok_u/beta and the band gates at that token), read by the
+value heads — NEVER a generation target (A64: a press never pays
+itself; a model rewarded for emitting <+2> hallucinates approval) and
+never seen by the decoder except through the PFC bundle. The pulse's
+job on a reward token: open the gates, write the pre-reward context
+hard, pull the slow bands toward it — credit assignment, not token
+production. First Phase-2 iteration after the three shape levers.
