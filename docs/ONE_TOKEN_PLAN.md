@@ -704,3 +704,60 @@ fresh-state bare ask (scan5b: p_true ~.01-.07 with a wrong-colour
 incumbent .29 at 6000, ~.0003 at 7500, .04-.09 at 12000). Not a
 verdict before 12000; if it stays zero, add a top-k diagnostic + a
 reward_off cast variant to the probe (next launch).
+
+## 36. scan8 step 7500 (21:37 UTC): recall up, two organs idle, one crash
+
+vs scan5b: CE 4.363 / 4.347; in-ctx .403 / .318; short .277 / .239;
+b4 .184 / .151; store_off .134 / .128; lesion_store costs -.167
+recall in scan8 vs -.126 (the store carries more of the recall —
+dopamine-scaled writes landing pressed facts harder; one row). Band
+lesions ~0.25 nats smaller across the board (b3 1.52 / 1.79, thread
+1.50 / 1.77, bands_all 1.68 / 1.95): the organism leans less on the
+band thread at the same CE. dopa_gate: gate .56 at presses / .43
+elsewhere; |RPE| 1.18 / .024. value_auc {3:.49, 4:.52, 5:.56, 6:.71}
+vs prophet {3:.63, 4:.50, 5:.54, 6:.49}: band 3 cannot predict a
+press 740 tokens away at a 10-token horizon (its delta is the raw
+press, forever a surprise); bands 5/6 anticipate. Collapse healthy
+(sampled d3 .98, entropy 2.03). Cast p_true ~.0001, incumbent .0009
+(scan5b .0003-.0034 / .218) — the diagnostic rides the resumed run.
+ORGAN VERDICTS: lesion_reward = 0.000 (CE and recall identical with
+the slot zeroed) — the reward slot is REDUNDANT: the press token's
+own embedding already tells the PFC; drop it from scan9+ (the LUT
+feeding TD/dopamine/BG stays). lesion_veto = -0.002 — the lateral
+vetoes are idle at this scale (bands 4-8 carry .015-.037 each).
+CRASH at step 7564, the first dream: torch.multinomial with a CPU
+generator on CUDA probabilities (A77's gate ran on CPU; S26 too).
+Fixed (sample on CPU whatever the device), suite 284, sha d0ea7e9;
+relaunched as pod oeclndaxgxn5wp — resumes at 7500 from the volume
+(the driver's normal segment mechanics; scan5b's own segments
+resumed the same way), carrying the night code at defaults (exact)
+and the cast diagnostic.
+
+THE NIGHT, built (S29-S32, commit d0ea7e9): Sleeper(cycles, overlap,
+spacing, couple_dream) — k [SWS -> REM] cycles per night with the
+period scaled to hold the certified dose; overlap replay by IDF
+token overlap (the same entity across days) under one carried state;
+spaced re-replay (weight x (1-spacing)^replays); the dream seeded by
+the span the cycle just replayed; hot pairs once per night; driver
+--cycles/--overlap/--spacing/--couple-dream/--sleep-from-birth (REM
+gated on childhood), pod CYCLES/OVERLAP/SPACING/COUPLE/SLEEP_BIRTH.
+
+GAPS FOR THE THREE SYSTEMS (user's question, 21:50 UTC):
+measured — (1) the amygdala never fires: hot_pairs 0 in every scan
+row; the judge emits no -2 presses in this shard (+2 53%, +1 39%, -1
+8%) — A72 and the BG's NoGo side are starved by the data; fix in the
+judge/builder for the 500M shard. (2) dopamine does not habituate:
+delta from band 3 (10-token horizon) cannot predict presses; take it
+from band 5 or run band 3 at gamma .99 — scan9 candidate. (3) long-
+range recall unmeasured: bins beyond ~24k tokens read n=0 in every
+scan row (the battery's 256k-token window); a warmed full-life eval
+pass before 500M. (4) reward slot, vetoes idle (above).
+design — (5) a state-valued hippocampus (values = the PFC state, not
+the next token: episodic context recall for the council); (6)
+pattern separation, measurable once (5) exists; (7) output gating
+(a "hold" action) only if the served life should decide whether to
+speak; (8) serve-room press ban; sleep from birth + the night
+(scan9); stable lr at 500M.
+scan9 = scan8 - reward_slot + the night (cycles 4, overlap 3, spacing
+.5, coupled REM) + sleep from birth (REM from childhood) + dopamine
+from band 5 — after scan8's 12000 row.
