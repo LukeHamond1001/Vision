@@ -351,3 +351,17 @@ The pod's throughput decay has no local reproduction (drive, sleeper,
 prophet all bounded; the deque fixed only the capped-ledger part);
 IGA_TIMING=1 (3b4125f) prints per-component ms/step on the pod's step
 lines — scan5 runs with it.
+
+## 19. scan4 cut at step 3000 (06:20 UTC); scan5 launched
+
+scan4 reproduced scan3 exactly (CE 3.707 @2200, 3.351 @3000) and
+decayed exactly the same (1,726 tok/s @3000) with its ledger at 48k —
+the capped ledger was never the cause. Nothing more to learn from it;
+cut. scan5 = pod obs1x8bc9psc3k, sha 6160c76: scan4's model +
+store_exact (the exact one-shot hippocampus) + IGA_TIMING=1 (per-
+component ms/step and gc counters on every step line) + copyability
+of both shards at boot. Reads: the smoke, the timing lines at steps
+100 / 1300 / 3000 (where the seconds go and whether gc2 grows), train
+CE vs scan3's trace (4.26 @1300, 3.71 @2200, 3.35 @3000, 2.97 @6000),
+the step-6000 row (R1 + recall bins), the step-12000 lesion pass
+(STORE OFF — the verdict on one-shot binding).

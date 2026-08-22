@@ -1,0 +1,8 @@
+05:24:42 [scan4] boot SCAN sha=86b5011 gpu=NVIDIA GeForce RTX 4090, 24564 MiB vol=2190893G 460975G order=pfc_first lives=32 T=64 d=512 L=8 opts={"n_council":2,"slot_every":1,"write_every":1,"compile_council":true,"compile_read":true} clocks=3:1,4:8,5:64,6:512,7:4096,8:32768 prec=bf16
+05:24:51 [scan4] inventory: flash_epi=ok flash_eval_epi=ok mini_epi=ok mini_eval_epi=ok tar=24G parquets=19 judge=ok
+05:26:24 [scan4] smoke SCANSMOKE {"lanes": 32, "T": 64, "order": "pfc_first", "tok_s": 964, "holds": 12.8, "lam": 0.01953, "ce": [9.841, 6.207], "peak_gib": 16.2, "params_m": 67.0}
+05:26:28 [scan4] run started pid 1167 lam 0.01953: 
+05:28:33 [scan4] 2 min: step   100  ce 8.576  loss 8.715  holds 1536  2,271 tok/s (now 2,706)  [fid:3=-0.000 fid:4=+0.001 fid:5=+0.001 fid:6=-0.000]
+05:43:37 [scan4] inflight step  1200  ce 4.298  loss 4.406  holds 19072  2,621 tok/s (now 2,514)  [fid:3=+0.420 fid:4=+0.021 fid:5=+0.065 fid:6=+0 | hb: 
+05:58:41 [scan4] inflight step  2200  ce 3.707  loss 4.612  holds 35072  2,398 tok/s (now 2,156)  [fid:3=+0.484 fid:4=+0.020 fid:5=+0.037 fid:6=+0 | hb: 
+06:13:45 [scan4] inflight step  3000  ce 3.351  loss 4.175  holds 47872  2,236 tok/s (now 1,726)  [fid:3=+0.496 fid:4=+0.020 fid:5=+0.042 fid:6=+0 | hb: 
