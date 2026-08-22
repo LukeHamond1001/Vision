@@ -229,3 +229,22 @@ council (default mode; if the pod's torch.compile fails, the smoke
 dies in ~2 min and scan3 relaunches without it). The pod's smoke
 reports tok/s: scan2 3.4k is the reference. Launch after scan2's
 step-12000 row (~05:00 UTC) — never two pods on the volume.
+
+## 12. scan2 behind scan1 on train CE (02:46 UTC) — the fidelity coupling
+
+scan2 train CE 6.87 at step 2500 vs scan1 6.17 at 2300. Diagnosis,
+verified by law S14: once the fidelity target was honest (batch-mean
+centred), the fidelity loss — satisfied for free in scan1 by the drift
+artifact — pulled the PFC and the decoder through two live paths the
+port had left open: the tick's pend (live pooled -> council) and the
+target (live cortex output). The certified hybrid trained the cell and
+predictor on DETACHED inputs (band_credit) and its live target sat at
+the anisotropy floor, so neither force mattered there. Fix (0929965):
+the fidelity prediction comes from the tick on detached inputs and the
+target is detached — fidelity trains the band's cell and predictor
+only; CE credit still flows into the council through the live state.
+
+scan2's step-6000 eval row decides the cut: eval CE >> 6.19 confirms
+the drag -> scan2 killed at once and scan3 launched (cadence + this
+fix + the speed work + compile_council); eval CE ~ 6.19 -> the gap was
+lam/noise, scan2 runs to its step-12000 lesion pass first.
