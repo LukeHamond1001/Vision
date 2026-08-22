@@ -513,6 +513,17 @@ def train(d=64, lanes=4, T=256, steps=40, seed=0, device="cpu",
     if sleep is not None:
         sleep.bind(drive)   # A62: after resume, so the buffer's
                             # absolute offset matches drive.step_t
+    # Python's cyclic GC (2026-08-22, the scan organism's 2.7k -> 1.5k
+    # tok/s decay): the conveyor holds the shard's event dicts — ~2.2M
+    # tracked objects at 32 lanes — and every full collection walks
+    # them all (~0.4 s), more and more often as the ledger, readings and
+    # holds grow. Those objects live for the whole run: freeze them once
+    # so later collections never touch them, and make full collections
+    # 5x rarer. Pure performance; nothing about training changes.
+    import gc as _gc
+    _gc.collect()
+    _gc.freeze()
+    _gc.set_threshold(700, 10, 50)
     t0 = time.time()
     t_log, step_log = t0, step0     # windowed rate since the last log line
     step_log_t = step0
