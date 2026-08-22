@@ -263,6 +263,14 @@ class ScanLM(nn.Module):
         # graph replay) cut the launch count the step is bound by.
         # Default off = the eager path, bit-exact. (2026-08-22)
         self.compile_council = bool(compile_council)
+        if compile_council or compile_read:
+            # the read is compiled per band shape x batch size (6 bands x
+            # train/eval/collapse batches > dynamo's default 8 variants,
+            # after which it silently falls back to eager — scan6's
+            # heartbeat, 2026-08-22)
+            import torch._dynamo
+            torch._dynamo.config.cache_size_limit = max(
+                torch._dynamo.config.cache_size_limit, 64)
         self._council_fn = (torch.compile(self._council_blocks, dynamic=False, mode=compile_mode)
                             if compile_council else self._council_blocks)
         # same treatment for one band's hippocampus read (lift + read +
