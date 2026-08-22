@@ -596,11 +596,15 @@ def train(d=64, lanes=4, T=256, steps=40, seed=0, device="cpu",
                   f"(now {now_s:,.0f})  "
                   f"[{emas}]", flush=True)
             if TIMING and _tm:
+                import gc as _gc
                 tot = sum(_tm.values())
+                gs = _gc.get_stats()
                 print("    timing ms/step: " + " ".join(
                     f"{k}={1000 * v / max(step - step_log_t, 1):.0f}"
                     for k, v in sorted(_tm.items(), key=lambda kv: -kv[1]))
-                    + f"  total={1000 * tot / max(step - step_log_t, 1):.0f}", flush=True)
+                    + f"  total={1000 * tot / max(step - step_log_t, 1):.0f}"
+                    + f"  gc2={gs[2]['collections']} gc1={gs[1]['collections']}"
+                    + f" objs={len(_gc.get_objects())}", flush=True)
                 _tm.clear()
                 step_log_t = step
             row = {"step": step, "ce": round(ce, 4),
