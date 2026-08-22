@@ -156,3 +156,19 @@ hippocampus + instantaneous centring. Everything else identical to
 scan1. Reads: R3 first (tok/s at the smoke), then R1 against scan1's
 step-6000 row (the one A/B we get for free: cortex-keyed vs PFC-keyed
 hippocampus, per-token vs batched decoder being exact).
+
+## 8. Iteration 3 (named with the user, 00:20 UTC): the hippocampus in the PFC cycle
+
+Option 4 (the cortex attending over past PFC outputs) is OUT: cortex
+in the brain reads its own recent activity, the PFC biases it, the
+hippocampus binds the immediate past — a PFC log in the cortex would
+relieve the pressure that makes the PFC learn to guide. The user's
+bet stands: no crutch.
+
+Iteration 3 = scan2 + two cadence knobs, nothing else:
+  write_every 4 -> 1   (the hippocampus written every chunk; per
+                        token afterwards if the cost allows)
+  slot_every  8 -> 1   (the PFC reads the hippocampus every token)
+The only change between scan2 and scan3, so a CE move is attributable.
+A 2-second (8-token) cortex self-window is the ONLY brain-faithful
+cortex-side fallback and is user-gated; not built.
