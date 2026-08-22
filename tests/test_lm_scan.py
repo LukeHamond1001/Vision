@@ -692,3 +692,52 @@ def test_S19_readings_detach_and_prune_are_exact():
     # between prunes the drive may hold EXTRA old entries, never fewer
     for k in ref:
         assert len(d.readings[k]) >= len(ref[k])
+
+
+def test_S20_registers_give_a_band_several_slots():
+    """register={3: 4}: band 3 has four units (cell/gate/veto/predictor/
+    council slot each) on its clock; the council sees 2 + U slots; the
+    fidelity entry for band 3 carries every unit's ticks; lesioning band
+    3 silences all four; register=None is bit-exact with no register."""
+    m0 = _model(seed=47, order="pfc_first"); m0.eval()
+    m1 = _model(seed=47, order="pfc_first", register={3: 1}); m1.eval()
+    x = _toks(130)
+    with torch.no_grad():
+        lg0, _, _, _, _ = _fwd(m0, x, m0.init_state(1, "cpu"))
+        lg1, _, _, _, _ = _fwd(m1, x, m1.init_state(1, "cpu"))
+    assert torch.equal(lg0, lg1)                              # register 1 = today, bit-exact
+    m = _model(seed=47, order="pfc_first", register={3: 4}); m.eval()
+    assert m.ukeys[:4] == [3, "3r1", "3r2", "3r3"] and len(m.units) == len(m.bands) + 3
+    assert m.slot.weight.shape[0] == 2 + len(m.units)
+    assert all(k in m.cells and k in m.pred and k in m.mem_proj for k in ("3r1", "3r2", "3r3"))
+    seen = []
+    council0 = m._council
+
+    def council(c, r, mm, dev):
+        S = council0(c, r, mm, dev); seen.append(S.shape[1]); return S
+    m._council = council
+    with torch.no_grad():
+        st = m.init_state(2, "cpu")
+        lg, st, ticks, _, _ = _fwd(m, _toks(131, B=2), st)
+    m._council = council0
+    assert set(seen) == {2 + len(m.units)}
+    # band 3's entry list holds its four units' fid matrices, each [B, T-1]
+    assert len(ticks[3]) == 4 and all(f.shape == (2, T - 1) for _, f in ticks[3])
+    assert all(st["h"][u].shape == (2, m.d) for u in m.ukeys)
+    # lesioning band 3 silences all four units in the slots
+    W = m._mem_W()
+    h_all = torch.stack([st["h"][u] for u in m.ukeys], dim=1)
+    m.lesioned = {3}
+    slots = m._slots_from(h_all, W)
+    assert slots[:, :4].abs().sum() == 0 and slots[:, 4:].abs().sum() > 0
+    m.lesioned = set()
+    # trains
+    m.train(); m.read_drop = 0.0
+    st = m.init_state(2, "cpu")
+    for i in range(3):
+        xb = _toks(140 + i, B=2)
+        lg, st, ticks, wc, rc = _fwd(m, xb, st)
+        loss = _loss(m, lg, xb, ticks, wc, rc)
+        loss.backward()
+        st = m.detach_state(st)
+    assert all(m.cells[u].z.weight.grad is not None for u in ("3", "3r1", "3r2", "3r3"))
