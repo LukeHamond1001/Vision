@@ -262,3 +262,16 @@ may fail -> relaunch without it), then train CE vs scan1 at matched
 steps (6.5 @1300, 6.17 @2300, 5.77 @3300, 5.02 @6000), the step-6000
 eval row vs 6.192 (R1), the step-12000 lesion pass (R2: per band and
 STORE OFF — the hippocampus question).
+
+## 14. scan3 step 1300 (03:21 UTC): the hippocampus in the cycle
+
+scan3 train CE 4.255 at step 1300 (2.7M tokens); scan1 6.505, scan2
+6.900 at the same step; the hybrid mini (full 2048-token attention)
+reached 4.38 at 12M tokens. Speed 2.6k tok/s (the read every token
+costs ~58 forward ops; compile_read a66dfeb is ready for scan4).
+fid:3 = +0.43 honest (batch-centred; scan2 0.001): the band-3
+predictor now forecasts the per-lane deviation of the next cortex
+output. Leakage check: the logit read and the slot reads use st["M"]
+BEFORE this chunk's write block — only previous chunks' pairs.
+Pending: the step-6000 eval row (unseen lives, ~04:35 UTC) and the
+step-12000 lesion pass (STORE OFF must now cost nats).
