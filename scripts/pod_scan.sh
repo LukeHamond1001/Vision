@@ -54,6 +54,8 @@ OVERLAP=${OVERLAP:-1}          # spans per SWS block (the drawn one + most-overl
 SPACING=${SPACING:-0}          # lottery decay per replay (0.5 = halve)
 COUPLE=${COUPLE:-0}            # 1: the cycle's dream seeds from the span it just replayed
 SLEEP_BIRTH=${SLEEP_BIRTH:-0}  # 1: nights from token one (REM still gated on childhood)
+DAY_SLEEP=${DAY_SLEEP:-0}      # 1: nights at the stream's day boundaries (the lane whose day closed)
+HOT_FRAC=${HOT_FRAC:-0}        # builder: fraction of corrections pressing <-2> (a new shard name when > 0)
 
 hb() {
   echo "$(date -u '+%H:%M:%S') [$ITER] $1" >> HEARTBEAT.log
@@ -67,7 +69,7 @@ hb() {
     { sleep 20; git push -qf "$PUSH" results-v10 2>/dev/null; } || true
 }
 GPU=$(nvidia-smi --query-gpu=name,memory.total --format=csv,noheader 2>/dev/null | head -1)
-hb "boot SCAN sha=$(git rev-parse --short HEAD) gpu=${GPU:-none} vol=$(df -BG /workspace | awk 'NR==2{print $2,$4}') order=$ORDER lives=$ML T=$T d=$D L=$NL opts=$SCAN_OPTS clocks=$CLOCKS prec=$PRECISION value_w=$VALUE_W saliency=$SALIENCY dream=${DREAM:-none} night=c${CYCLES}/o${OVERLAP}/s${SPACING}/k${COUPLE}/b${SLEEP_BIRTH}"
+hb "boot SCAN sha=$(git rev-parse --short HEAD) gpu=${GPU:-none} vol=$(df -BG /workspace | awk 'NR==2{print $2,$4}') order=$ORDER lives=$ML T=$T d=$D L=$NL opts=$SCAN_OPTS clocks=$CLOCKS prec=$PRECISION value_w=$VALUE_W saliency=$SALIENCY dream=${DREAM:-none} night=c${CYCLES}/o${OVERLAP}/s${SPACING}/k${COUPLE}/b${SLEEP_BIRTH}/d${DAY_SLEEP} hot=$HOT_FRAC"
 pip install -q numpy tokenizers pyarrow > pip.log 2>&1
 
 # ---- 1. inventory ----
@@ -83,6 +85,7 @@ hb "inventory:$inv"
 # ---- 2. the scan shard: LIVES lives (one per lane), BUDGET_MINI tokens,
 # the mini_epi tokenizer so the mini eval shard stays comparable ----
 MINI=$DATA/scan_epi_l$ML
+[ "$HOT_FRAC" != "0" ] && MINI="${MINI}_hot${HOT_FRAC//./}"     # e.g. scan_epi_l32_hot025
 UC_SIMPLE=$DATA/uc_simple.jsonl; UC_REST=$DATA/uc_rest.jsonl
 STG="--stages flash --st2-epochs 2 --magpie-epochs 2"
 UCARGS="--ultrachat $UC_REST --ultrachat-simple $UC_SIMPLE --ultrachat-rest $UC_REST"
@@ -95,8 +98,8 @@ if [ ! -f "$MINI/manifest.json" ]; then
     --budget "$BUDGET_MINI" --lives "$ML" --seed 20 \
     $STG $UCARGS --st2-dir "$RAW" --magpie-dir "$RAW" \
     --judge-thresholds "$DATA/judge_freeze.json" \
-    --tokenizer "$DATA/mini_epi/tokenizer.json" --episodic > "scan_build_$ITER.log" 2>&1
-  hb "scan shard l$ML $( [ -f "$MINI/manifest.json" ] && echo ok || echo FAILED) $(tail -1 "scan_build_$ITER.log" | cut -c1-160)"
+    --tokenizer "$DATA/mini_epi/tokenizer.json" --episodic --hot-frac "$HOT_FRAC" > "scan_build_$ITER.log" 2>&1
+  hb "scan shard $MINI $( [ -f "$MINI/manifest.json" ] && echo ok || echo FAILED) $(tail -1 "scan_build_$ITER.log" | cut -c1-160)"
 fi
 [ -f "$MINI/manifest.json" ] || { hb "ABORT no shard"; sleep 30; [ "${KEEP_POD:-0}" = "1" ] || runpodctl remove pod "$RUNPOD_POD_ID"; exit 1; }
 
@@ -150,7 +153,7 @@ python scripts/v10_driver.py \
   --ckpt "$OUTM/scan.pt" --lam "$LAM" \
   --arch scan --scan-order "$ORDER" --scan-opts "$SCAN_OPTS" --value-w "$VALUE_W" \
   --saliency "$SALIENCY" ${DREAM:+--dream "$DREAM"} \
-  --cycles "$CYCLES" --overlap "$OVERLAP" --spacing "$SPACING" --couple-dream "$COUPLE" --sleep-from-birth "$SLEEP_BIRTH" \
+  --cycles "$CYCLES" --overlap "$OVERLAP" --spacing "$SPACING" --couple-dream "$COUPLE" --sleep-from-birth "$SLEEP_BIRTH" --day-sleep "$DAY_SLEEP" \
   --d "$D" --n-layers "$NL" --T "$T" --lanes "$ML" --clocks "$CLOCKS" \
   --keyed hidden --precision "$PRECISION" \
   --lr "$LR" --lr-warmup "$WARMUP" \
@@ -158,7 +161,7 @@ python scripts/v10_driver.py \
   --device cuda --hb-out "scan_hb_$ITER.jsonl" --trace "scan_driver_$ITER.jsonl" \
   --log-every 100 > "scan_train_$ITER.log" 2>&1 &
 PID=$!
-hb "run started pid $PID lam $LAM: $(grep -o 'PLAN {.*' "scan_train_$ITER.log" | head -1 | cut -c1-300)"
+hb "run started pid $PID lam $LAM shard=$MINI: $(grep -o 'PLAN {.*' "scan_train_$ITER.log" | head -1 | cut -c1-300)"
 sleep 120
 hb "2 min: $(grep -v 'sleep@' "scan_train_$ITER.log" | grep 'step' | tail -1 | cut -c1-200)"
 while kill -0 $PID 2>/dev/null; do

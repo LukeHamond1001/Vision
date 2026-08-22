@@ -105,6 +105,15 @@ class SleepTap:
     def chunk(self, T):
         x, y, events = self.inner.chunk(T)
         self.sleeper.observe(x)
+        if self.sleeper.day_sleep:
+            # the builder's {"kind":"day"} events: a lane's day closed at
+            # chunk-local p -> absolute position (the buffer's head minus
+            # this chunk, plus p)
+            base = self.sleeper.end - x.shape[1]
+            for lane, evs in enumerate(events):
+                for p, kind, _d in evs:
+                    if kind == "day":
+                        self.sleeper.note_day(lane, base + p)
         return x, y, events
 
     def __getattr__(self, name):
@@ -115,7 +124,8 @@ class Sleeper:
     def __init__(self, arm="B", every=0, block_chunks=4, seed=0,
                  min_step_loss=0.0, replay_twice=False,
                  homeostasis=0.0, splice=0.0, novelty=0.0, saliency=0.0,
-                 cycles=1, overlap=1, spacing=0.0, couple_dream=False):
+                 cycles=1, overlap=1, spacing=0.0, couple_dream=False,
+                 day_sleep=False):
         """every: one sleep block per this many wake steps (0 = never
         fire — the dose-0 parity arm). block_chunks: chunks per block;
         dose sleep:wake = block_chunks/every (A62 ladder {0, 1:16,
@@ -203,6 +213,19 @@ class Sleeper:
         self.spacing = float(spacing)
         self.couple_dream = bool(couple_dream)
         self.dreamer = None      # callable(span) -> row | None, the trainer's dream_block
+        # day_sleep: nights fall at the stream's DAY boundaries (the
+        # builder's close rituals) — when the dose allows a night, it
+        # belongs to the lane whose day closed most recently and its
+        # SWS draws from THAT lane's spans of THAT day (today's episodes,
+        # like a human), partners (overlap) from the whole pool (related
+        # older memories), the step cadence only a dose cap. With 16
+        # lives in parallel a day closes somewhere every few steps, so
+        # the cap is what paces nights. False = step-cadenced, exact.
+        self.day_sleep = bool(day_sleep)
+        self._day_ends = {}      # lane -> [abs positions of closed days] (last two kept)
+        self._pending_days = []  # (lane, pos) closed since the last night
+        self._night_lane = None  # the lane whose day this night consolidates
+        self._night_day = None   # (day_start, day_end) of that lane
         self.tok_count = {}      # token id -> wake count (overlap's IDF), kept when overlap > 1
         self.chunk_dopa = []     # (lane, t0, t1, mean |RPE|) wake stamps, capped
         self._dopa_max = 1e-9
@@ -288,6 +311,15 @@ class Sleeper:
             self._dopa_max = max(self._dopa_max, float(v))
         if len(self.chunk_dopa) > 4096 * max(1, len(means)):
             del self.chunk_dopa[:len(self.chunk_dopa) - 4096 * len(means)]
+
+    def note_day(self, lane, pos):
+        """A lane's day closed at absolute token pos."""
+        ends = self._day_ends.setdefault(lane, [])
+        ends.append(int(pos))
+        del ends[:-2]
+        self._pending_days.append((lane, int(pos)))
+        if len(self._pending_days) > 4096:
+            del self._pending_days[:-4096]
 
     def _saliency(self, s):
         """Mean stamped |RPE| of the span's lane overlapping it, in [0,1]."""
@@ -666,6 +698,13 @@ class Sleeper:
             self.harvest(drive)
         first = None
         self._night_hot = set()          # each hot pair's guarantee is once per night
+        self._night_lane = self._night_day = None
+        if self.day_sleep and self._pending_days:
+            lane, end = self._pending_days[-1]
+            ends = self._day_ends.get(lane, [])
+            start = ends[-2] + 1 if len(ends) >= 2 else self.start
+            self._night_lane, self._night_day = lane, (start, end)
+            self._pending_days = []
         for _cycle in range(self.cycles):
             row = self._cycle(model, opt, step)
             if row is None:
@@ -709,8 +748,19 @@ class Sleeper:
         return lo0, hi0
 
     def _block(self, model, opt, step):
-        span = self.rng.choices(
-            self.spans, weights=self._span_weights())[0]
+        pool, weights = self.spans, self._span_weights()
+        if self._night_lane is not None:
+            # today's episodes of the lane whose day closed; then that
+            # lane's recent episodes; then everybody's
+            d0, d1 = self._night_day
+            idx = [i for i, s_ in enumerate(self.spans)
+                   if s_["lane"] == self._night_lane and s_["t1"] > d0 and s_["t0"] <= d1]
+            if not idx:
+                idx = [i for i, s_ in enumerate(self.spans) if s_["lane"] == self._night_lane]
+            if idx and any(weights[i] > 0 for i in idx):
+                pool = [self.spans[i] for i in idx]
+                weights = [weights[i] for i in idx]
+        span = self.rng.choices(pool, weights=weights)[0]
         # A73 (gated): splice — one chunk each from TWO spans under
         # one carried state (cross-episode adjacency, real tokens
         # only). CE arms only; arm B keeps its certified teacher.
@@ -833,6 +883,7 @@ class Sleeper:
                "splice": (splice_span["t0"], splice_span["t1"])
                if splice_span is not None else None,
                "overlap": [(p_["lane"], p_["t0"], p_["t1"]) for _, _, p_ in partners] or None,
+               "day": (self._night_lane, self._night_day) if self._night_lane is not None else None,
                "loss": round(sum(losses) / max(len(losses), 1), 4)}
         self.stats.append(row)
         row["_span_obj"] = span          # for the coupled dream; popped by maybe_sleep

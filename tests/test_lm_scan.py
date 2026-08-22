@@ -1180,3 +1180,56 @@ def test_S33_dopamine_from_a_slower_band_stamps_its_interval():
     assert float(t0[0, 12]) == 2.0 and float(t0[0].sum()) == 2.0            # band 3: the press token only
     assert torch.allclose(t1[0, 8:16], torch.full((8,), 0.25)) and float(t1[0, :8].sum()) == 0.0 \
         and float(t1[0, 16:].sum()) == 0.0 and float(t1[1].sum()) == 0.0   # band 4: its interval, that lane
+
+
+def test_S34_day_sleep_consolidates_the_lane_whose_day_closed():
+    """day_sleep: the tap stamps the builder's {"kind":"day"} events;
+    when the dose allows a night it belongs to the lane whose day
+    closed most recently and its SWS draws from THAT lane's spans of
+    THAT day (falling back to the lane's spans, then everybody's);
+    overlap partners still come from the whole pool; the stats row
+    names the day. day_sleep=False ignores day events (exact)."""
+    from iga.lm_sleep import Sleeper, SleepTap
+
+    class Conv:
+        def __init__(self, events):
+            self.events = events
+            self.i = 0
+        def chunk(self, T_):
+            g = torch.Generator().manual_seed(100 + self.i)
+            x = torch.randint(20, 26, (2, T_), generator=g)
+            ev = self.events[self.i] if self.i < len(self.events) else [[], []]
+            self.i += 1
+            return x, x, ev
+    # lane 1 closes a day at chunk 1, p=5; lane 0 closes one at chunk 2, p=3
+    evs = [[[], []], [[], [(5, "day", {})]], [[(3, "day", {})], []], [[], []]]
+    sl0 = Sleeper(arm="A", every=0, block_chunks=1, seed=5)
+    sl1 = Sleeper(arm="A", every=0, block_chunks=1, seed=5, day_sleep=True)
+    for sl in (sl0, sl1):
+        sl.start = 0
+        tap = SleepTap(Conv(evs), sl)
+        for _ in range(4):
+            tap.chunk(T)
+    assert sl0._pending_days == [] and sl0._day_ends == {}
+    assert sl1._pending_days == [(1, T + 5), (0, 2 * T + 3)] and sl1._day_ends == {1: [T + 5], 0: [2 * T + 3]}
+    # spans: lane 0 has one inside its day (0..2T+3) and one after; lane 1 has one
+    for sl in (sl0, sl1):
+        sl.spans = [{"lane": 0, "t0": T, "t1": 2 * T, "pay": 1.0, "i": 0},
+                    {"lane": 0, "t0": 3 * T, "t1": 4 * T, "pay": 5.0, "i": 1},
+                    {"lane": 1, "t0": 0, "t1": T, "pay": 5.0, "i": 2}]
+    m = _model(seed=83, order="pfc_first", n_council=1)
+    opt = torch.optim.AdamW(m.parameters(), lr=1e-3)
+    for sl in (sl0, sl1):
+        sl.every = 1
+    row1 = sl1.maybe_sleep(m, opt, _FakeDrive(), 1)
+    assert row1["lane"] == 0 and row1["span"] == (T, 2 * T)               # today's span of lane 0, not the heavier ones
+    assert row1["day"] == (0, (0, 2 * T + 3)) and sl1._pending_days == []
+    row0 = sl0.maybe_sleep(m, opt, _FakeDrive(), 1)
+    assert row0["day"] is None                                            # step-cadenced: the global lottery
+    # no pending day: the night falls back to the global lottery
+    row2 = sl1.maybe_sleep(m, opt, _FakeDrive(), 2)
+    assert row2["day"] is None
+    # a lane whose day holds no span: its other spans, then everybody's
+    sl1.note_day(1, 6 * T)                                                # lane 1's second day (T+5 .. 6T], no spans in it
+    row3 = sl1.maybe_sleep(m, opt, _FakeDrive(), 3)
+    assert row3["lane"] == 1 and row3["span"] == (0, T)

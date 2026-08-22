@@ -93,3 +93,29 @@ def test_st2_order_is_curriculum():
     assert order.index("OpenHermes_2.5.parquet") < \
         order.index("Mixture_of_Thoughts_science.parquet")
     assert ST2_ORDER[-1] == "LongAlign"
+
+
+def test_hot_frac_presses_minus_two_on_a_fraction_of_corrections():
+    """hot_frac: that fraction of correction episodes presses <-2> on
+    the wrong answer (A72's hot press); 0 = the certified grammar
+    bit-exactly (no <-2> anywhere); the manifest records it. Measured
+    on the ask grammar directly (the full build is the episodic test's
+    job)."""
+    import random
+    from iga.lm_data_life import LifeCast, STAGES_V10
+    stage = STAGES_V10[1]                                   # childhood: corrections exist
+    def presses(hot_frac, seed=3):
+        cast = LifeCast(random.Random(seed), 99, hot_frac=hot_frac)
+        vs = []
+        for f in cast.roster:
+            turns, _ = cast.ask_unit(f, stage, correct=False)
+            vs.append([e[1]["v"] for t in turns for e in t[2] if e[0] == "button"])
+        return vs
+    v0 = presses(0.0)
+    assert all(v == [-1, 2] for v in v0)                     # the certified correction episode
+    v1 = presses(0.5)
+    assert all(v in ([-1, 2], [-2, 2]) for v in v1)
+    n_hot = sum(1 for v in v1 if v[0] == -2)
+    assert 4 <= n_hot <= 20, n_hot                           # ~half of 24, seed-stable
+    assert presses(1.0) == [[-2, 2]] * 24
+    assert presses(0.5) == v1                                # deterministic under the cast rng

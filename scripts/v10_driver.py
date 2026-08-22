@@ -171,6 +171,7 @@ def main():
     ap.add_argument("--spacing", type=float, default=0.0)
     ap.add_argument("--couple-dream", type=int, default=0)
     ap.add_argument("--sleep-from-birth", type=int, default=0)
+    ap.add_argument("--day-sleep", type=int, default=0)      # nights at the stream's day boundaries
     ap.add_argument("--lanes", type=int, default=0)
     # band repair (docs/MEMORY_MATH.md 5): credit routing, centred
     # fidelity, the tail memory token; 0/0/0 = certified bit-exactly
@@ -246,7 +247,7 @@ def main():
     sl = Sleeper(arm="C", every=0, block_chunks=2, seed=1,
                  homeostasis=1e-3, saliency=a.saliency,
                  cycles=a.cycles, overlap=a.overlap, spacing=a.spacing,
-                 couple_dream=bool(a.couple_dream))
+                 couple_dream=bool(a.couple_dream), day_sleep=bool(a.day_sleep))
     sl.press_pay = (a.T, a.T // 8)
     dream = json.loads(a.dream) if a.dream else None
     ladder = dict(LADDER)
@@ -328,6 +329,11 @@ def main():
                "ledger": len(drive.ledger),
                "prophet_auc": aucs,
                "value_auc": vaucs,
+               "recall_ema": {k.replace("recall:", ""): round(float(v), 4)
+                              for k, v in drive.ema.items() if k.startswith("recall:")},
+               "nights": {"n": sum(1 for r in sl.stats if r.get("arm") != "DREAM"),
+                          "day_nights": sum(1 for r in sl.stats if r.get("day")),
+                          "overlap_blocks": sum(1 for r in sl.stats if r.get("overlap"))},
                "dreams": {"n": len(dreams),
                           "stepped": sum(1 for r in dreams if r.get("stepped")),
                           "best_q": round(sum(r.get("best_q", 0) for r in dreams)

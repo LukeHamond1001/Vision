@@ -274,7 +274,14 @@ class LifeCast:
     CLS_P = (("pos2", 0.15), ("pos1", 0.10), ("none", 0.75))
 
     def __init__(self, rng, world_seed, n_roster=24, n_era=4,
-                 episodic=None):
+                 episodic=None, hot_frac=0.0):
+        # hot_frac: this fraction of correction episodes presses <-2>
+        # on the wrong answer instead of <-1> — the HOT press A72's
+        # amygdala tag waits for (scan runs 2026-08-22: hot_pairs 0 in
+        # every row; the frozen judge never reaches -2 on ordinary
+        # exchanges, so the organ and the BG's NoGo side were starved
+        # by the data). 0.0 = every certified shard bit-exact.
+        self.hot_frac = float(hot_frac)
         wrng = random.Random(world_seed)
         pairs = [(n, o) for n in NAMES for o in OBJECTS]
         wrng.shuffle(pairs)
@@ -407,7 +414,8 @@ class LifeCast:
             if v > 0:
                 turns.append(self._press(v))
         else:
-            turns.append(self._press(-1))
+            hot = self.hot_frac > 0 and self.rng.random() < self.hot_frac
+            turns.append(self._press(-2 if hot else -1))
             turns.append((f"not right . the {fact['obj']} was "
                           f"{fact['col']} .", "human", []))
             turns.append(self._press(2))
@@ -434,7 +442,7 @@ def prepare_life(out_dir, budget_tokens, n_lives, seed=0,
                  world_seed=None, vocab=16384, tokenizer_path=None,
                  stages=STAGES_V10, sources=None, tok_sample=1200,
                  spill=4_000_000, shuffle_sessions=False,
-                 episodic=None):
+                 episodic=None, hot_frac=0.0):
     """Writes tokenizer.json, tokens.bin (n_lives equal lives,
     back-to-back), events.jsonl (sorted, absolute pos), manifest.json,
     judge_audit.jsonl.
@@ -492,6 +500,7 @@ def prepare_life(out_dir, budget_tokens, n_lives, seed=0,
                 "shuffle_sessions": bool(shuffle_sessions),
                 "cast_mode": ("episodic_v1" if episodic is not None
                               else "roster_v10"),
+                "hot_frac": float(hot_frac),
                 "episodic": (dict(EPISODIC_DEFAULT, **episodic,
                                   n_names=len(EPISODIC_NAMES),
                                   n_objects=len(EPISODIC_OBJECTS))
@@ -576,7 +585,7 @@ def prepare_life(out_dir, budget_tokens, n_lives, seed=0,
         sched = StageScheduler(life_budget, stages)
         cast = LifeCast(random.Random(seed * 1000 + life_i + 1),
                         world_seed * 1000 + life_i + 1,
-                        episodic=episodic)
+                        episodic=episodic, hot_frac=hot_frac)
         if shuffle_sessions:
             for f in cast.roster:
                 f["era"] = False
@@ -947,6 +956,8 @@ if __name__ == "__main__":
     ap.add_argument("--episodic", action="store_true",
                     help="v10.1 episodic cast (novel facts, quotas, "
                          "retirement; roster demoted to long gaps)")
+    ap.add_argument("--hot-frac", type=float, default=0.0,
+                    help="fraction of corrections pressing <-2> (A72 hot)")
     ap.add_argument("--epi-asks", default="2,6",
                     help="episodic ask quota range lo,hi")
     ap.add_argument("--st2-dir", default=None,
@@ -1052,6 +1063,7 @@ if __name__ == "__main__":
                      stages=stages_sel,
                      tok_sample=a.tok_sample,
                      shuffle_sessions=a.shuffle_sessions,
+                     hot_frac=a.hot_frac,
                      episodic=({"n_asks": tuple(int(x) for x in
                                                 a.epi_asks.split(","))}
                                if a.episodic else None))
