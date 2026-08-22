@@ -500,3 +500,29 @@ def test_S13_compiled_council_matches_eager():
         loss.backward()
         st = m1.detach_state(st)
     assert all(p.grad is not None for p in m1.council.parameters())
+
+
+def test_S14_fidelity_trains_the_band_only():
+    """The fidelity loss reaches the band's cell and predictor and
+    nothing else (not the council, not the vetoes, not the embedding);
+    the CE loss reaches the council THROUGH the band state (the state
+    path is live). The certified band_credit split, per tick."""
+    m = _model(seed=37, order="pfc_first"); m.train()
+    x = _toks(90, B=2)
+    st = m.init_state(2, "cpu")
+    lg, st, ticks, wc, rc = _fwd(m, x, st)
+    fid_loss = torch.stack([(1 - f).mean() for k in range(len(ticks))
+                            for _, f in ticks[k] if f.requires_grad]).mean()
+    fid_loss.backward(retain_graph=True)
+    def gnorm(params):
+        return sum(float(p.grad.abs().sum()) for p in params if p.grad is not None)
+    assert gnorm(m.council.parameters()) == 0.0
+    assert gnorm(m.veto_w.parameters()) == 0.0 and gnorm(m.veto_b.parameters()) == 0.0
+    assert gnorm([m.embed.weight]) == 0.0 and gnorm(m.blocks.parameters()) == 0.0
+    assert gnorm(m.cells["3"].parameters()) > 0 and gnorm(m.pred["3"].parameters()) > 0
+    m.zero_grad()
+    ce = torch.nn.functional.cross_entropy(lg.reshape(-1, V), x.reshape(-1))
+    ce.backward()
+    assert gnorm(m.council.parameters()) > 0
+    assert gnorm(m.cells["3"].parameters()) > 0          # CE credit through the live state
+    assert gnorm(m.veto_w.parameters()) > 0

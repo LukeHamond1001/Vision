@@ -429,7 +429,16 @@ class ScanLM(nn.Module):
                     h_new, g = cell(pooled, st["h"][k], p)
                     st["h"][k] = h_new
                     st["fresh"][k] = True
-                    st["pend"][k] = self.pred[str(k)](h_new)
+                    # the prediction for the fidelity loss comes from the
+                    # same tick on DETACHED inputs (the certified band_credit
+                    # semantics): fidelity trains the band's cell and
+                    # predictor only — it never bends the PFC or the veto.
+                    # The state path above stays live, so CE credit still
+                    # flows into what the council tells the band. (scan2
+                    # measured the live variant 0.7 nats behind at step 2500
+                    # once the target was honest.)
+                    h_fid, _ = cell(st["lp"][k], st["lh"][k], st["lg"][k])
+                    st["pend"][k] = self.pred[str(k)](h_fid)
                     if self.clocks[k] > 1:
                         wcost.append(g.mean())
                     st["cnt"][k] = 0
@@ -467,7 +476,12 @@ class ScanLM(nn.Module):
             if ent[0][2] == 0:                                        # the carried interval
                 sums = torch.cat([(sums[:, :1] + st["acc_c"][k].unsqueeze(1)),
                                   sums[:, 1:]], dim=1)
-            pooled_c = sums / cnts[None, :, None]
+            # the target is DETACHED: the band predicts the cortex; the
+            # cortex is not bent toward being predictable (a live target
+            # pulled the decoder and the council with a force unrelated to
+            # CE — in the hybrid the anisotropy floor kept it tiny, here the
+            # honest centred target made it full-strength)
+            pooled_c = (sums / cnts[None, :, None]).detach()
             pend_all = torch.stack([e[1] for e in ent], dim=1)        # [B, n, d]
             target = pooled_c
             if self.band_center:
