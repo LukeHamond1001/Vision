@@ -72,6 +72,27 @@ def cap_gate_norms(model, max_norm=1.0):
                 lin.weight.mul_(max_norm / n)
 
 
+# IGA_TIMING=1 (2026-08-22): per-component wall time accumulated over
+# the log window and printed on the step line — the scan organism's
+# throughput decayed 2.7k -> 1.5k tok/s over ~4000 steps on the pod
+# with no local reproduction; this says where the seconds go. Syncs
+# the device at each boundary ONLY when enabled (default off = no
+# cost, no sync).
+import os as _os
+TIMING = _os.environ.get("IGA_TIMING", "0") == "1"
+_tm = {}
+
+
+def _tmark(key, t0, device):
+    if TIMING:
+        if "cuda" in str(device):
+            torch.cuda.synchronize()
+        now = time.time()
+        _tm[key] = _tm.get(key, 0.0) + (now - t0)
+        return now
+    return t0
+
+
 def process_chunk(model, drive, conveyor, T, device, opt=None,
                   bf16=False):
     x, y, events = conveyor.chunk(T)
@@ -129,8 +150,10 @@ def process_chunk(model, drive, conveyor, T, device, opt=None,
         ce_blind = ce_blind.detach()
         del logits_a
         model._st = real_st
+    _t = _tmark("data", time.time(), device) if TIMING else 0.0
     with ac:
         logits, model._st, ticks = model(x, model._st, None)
+    _t = _tmark("fwd", _t, device)
     if getattr(model, "gate_mode", "") == "entropy":
         model.entropy_gate = None
     ce = torch.nn.functional.cross_entropy(
@@ -190,17 +213,21 @@ def process_chunk(model, drive, conveyor, T, device, opt=None,
                 # absent field = certified weaver path bit-exactly
                 drive.button(lane, d["v"], at=drive.step_t + p,
                              attribute=d.get("attr", True))
+    _t = _tmark("loss_events", _t, device)
     drive.step_t += T
     drive.sweep(losses)
+    _t = _tmark("sweep", _t, device)
     loss = torch.stack([(l if l.dim() == 0 else l.mean()).float()
                         for l in losses]).sum()
     if opt is not None:
         if ce_blind is None:
             opt.zero_grad()          # entropy branch already zeroed
         loss.backward()
+        _t = _tmark("bwd", _t, device)
         torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
         opt.step()
         cap_gate_norms(model)
+        _t = _tmark("opt", _t, device)
     model._st = model.detach_state(model._st)
     if bf16:
         st = model._st
@@ -212,6 +239,7 @@ def process_chunk(model, drive, conveyor, T, device, opt=None,
     # reading tensors retained across the boundary leave the graph here:
     # pay gradients flow through settlement-chunk readings only
     drive.detach_readings()
+    _tmark("detach", _t, device)
     return float(ce.detach()), float(loss.detach())
 
 
@@ -487,6 +515,7 @@ def train(d=64, lanes=4, T=256, steps=40, seed=0, device="cpu",
                             # absolute offset matches drive.step_t
     t0 = time.time()
     t_log, step_log = t0, step0     # windowed rate since the last log line
+    step_log_t = step0
     ce_first = None
     trace = (ckpt + ".trace.jsonl") if ckpt else None
     for step in range(step0 + 1, step0 + steps + 1):
@@ -545,8 +574,10 @@ def train(d=64, lanes=4, T=256, steps=40, seed=0, device="cpu",
                         n=dream.get("n", 4), tau=dream.get("tau", .8),
                         max_new=dream.get("max_new", 48),
                         min_q=dream.get("min_q"))
+        _tp = time.time() if TIMING else 0.0
         if prophet is not None:
             prophet.observe(model, drive)   # A64 spectator (B5)
+        _tmark("prophet", _tp, device)
         ce_first = ce_first or ce
         if step % log_every == 0 or step == 1:
             now = time.time()
@@ -564,6 +595,14 @@ def train(d=64, lanes=4, T=256, steps=40, seed=0, device="cpu",
                   f"holds {len(drive.ledger):4d}  {tok_s:,.0f} tok/s "
                   f"(now {now_s:,.0f})  "
                   f"[{emas}]", flush=True)
+            if TIMING and _tm:
+                tot = sum(_tm.values())
+                print("    timing ms/step: " + " ".join(
+                    f"{k}={1000 * v / max(step - step_log_t, 1):.0f}"
+                    for k, v in sorted(_tm.items(), key=lambda kv: -kv[1]))
+                    + f"  total={1000 * tot / max(step - step_log_t, 1):.0f}", flush=True)
+                _tm.clear()
+                step_log_t = step
             row = {"step": step, "ce": round(ce, 4),
                    "ema": {k: round(float(v), 5)
                            for k, v in drive.ema.items()},
