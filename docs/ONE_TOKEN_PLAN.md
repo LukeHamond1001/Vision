@@ -381,3 +381,20 @@ tracked objects 370k -> ~600, step 167 -> 100 ms. scan5 cut; scan5b =
 pod 162vgnlfdvjco8, sha 51f6fb8 — the same model (store_exact) with
 the fix. Shards' copyability (pod): train 5.0% @k4/w256 (15% @w4096),
 eval 14.5% — the CE numbers are language, not copying.
+
+## 21. scan5b timing (07:05 UTC) — the rest of the decay, itemised
+
+Steps 2100-2400, ms/step: bwd 381->432, fwd 217->242, detach 110->133,
+sweep 20-26, opt 11, prophet 3, loss/events 5; total 748->846; gc2
+every ~4 steps; tracked objects 298k->309k (post-freeze).
+  - detach_readings rebuilt every readings list every step (only the
+    fresh tail carries a graph) and sweep rebuilt them again for the
+    cutoff prune: now O(new) + an amortised prune (2f3c8b6, S19 exact).
+  - fwd/bwd creep: GC (gen-2 every ~4 steps over ~300k objects) and,
+    likely, caching-allocator fragmentation (the tick pattern varies
+    the allocation sequence; the pod ran without expandable segments)
+    -> pod_scan.sh sets PYTORCH_CUDA_ALLOC_CONF=expandable_segments.
+  - still O(all readings per key) per hold in the sweep's rs filter
+    (~20 ms) — a bisect on the time-ordered list; later.
+scan5b keeps running (a relaunch would cost more than it saves); the
+fixes ride scan6. CE trace scan5b = scan3's (4.257 @1300, 3.699 @2200).
