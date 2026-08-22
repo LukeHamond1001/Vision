@@ -248,3 +248,17 @@ scan2's step-6000 eval row decides the cut: eval CE >> 6.19 confirms
 the drag -> scan2 killed at once and scan3 launched (cadence + this
 fix + the speed work + compile_council); eval CE ~ 6.19 -> the gap was
 lam/noise, scan2 runs to its step-12000 lesion pass first.
+
+## 13. scan2 cut at step 3400 (03:05 UTC); scan3 launched
+
+scan2 was flat: train CE 6.90 / 6.87 / 6.87 at steps 1500 / 2500 / 3400
+(scan1: 6.5 -> 5.8 over the same steps). Cut without waiting for the
+eval row (~$0.7, 50 min). Evidence results/evidence/scan2/.
+scan3 = pod et5a01eby0eb9p, sha 31184a2: write_every 1 + slot_every 1
+(the hippocampus in the PFC cycle), fidelity trains the band only
+(0929965), batched bands/fidelity, compile_council (default mode).
+Reads: the smoke's tok/s (scan2 3.4k at step 100 = reference; compile
+may fail -> relaunch without it), then train CE vs scan1 at matched
+steps (6.5 @1300, 6.17 @2300, 5.77 @3300, 5.02 @6000), the step-6000
+eval row vs 6.192 (R1), the step-12000 lesion pass (R2: per band and
+STORE OFF — the hippocampus question).
