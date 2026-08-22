@@ -1,60 +1,60 @@
-    sleep@12208 armC lane26 [776830,776895) of span[776830,776895] pay 2.000  chunks 1  loss 3.3888
-    sleep@12224 armC pair[774593|774606] targets [7, 12]  margin 0.0167  loss 0.6848
-    sleep@12240 armC lane28 [778136,778201) of span[778136,778201] pay 2.000  chunks 1  loss 1.7019
-    sleep@12256 armC lane4 [778955,779020) of span[778955,779020] pay 2.000  chunks 1  loss 0.9417
-    sleep@12272 armC lane24 [771928,771993) of span[771928,771993] pay 2.000  chunks 1  loss 2.6255
-    sleep@12288 armC lane15 [783878,783943) of span[783878,783943] pay 1.000  chunks 1  loss 3.1108
-step 12300  ce 3.360  loss 3.447  holds 4736  2,803 tok/s (now 2,816)  [fid:3=+0.517 fid:4=+0.015 fid:5=+0.029 fid:6=+0.030 fid:7=+0.023 fid:8=+0.002 b0=+0.036 b1=+0.026 b2=+0.027 b3=+0.022]
-    timing ms/step: bwd=422 fwd=236 opt=14 detach=4 prophet=2 loss_events=2 sweep=2 data=0  total=683  gc2=2521 gc1=128152 objs=79374
-    sleep@12304 armC lane4 [769709,769774) of span[769709,769774] pay 2.000  chunks 1  loss 1.5584
-    sleep@12320 armC lane16 [778098,778163) of span[778098,778163] pay 2.000  chunks 1  loss 3.1797
-    sleep@12336 armC lane4 [778443,778508) of span[778443,778508] pay 2.000  chunks 1  loss 3.7698
-    sleep@12352 armC lane3 [772079,772144) of span[772079,772144] pay 1.000  chunks 1  loss 1.1338
-    sleep@12368 armC lane30 [784340,784405) of span[784340,784405] pay 2.000  chunks 1  loss 1.5595
-    sleep@12384 armC lane2 [774890,774955) of span[774890,774955] pay 1.000  chunks 1  loss 0.8463
-    sleep@12400 armC lane31 [774191,774256) of span[774191,774256] pay 2.000  chunks 1  loss 2.6752
-step 12400  ce 3.100  loss 3.840  holds 6272  2,781 tok/s (now 2,716)  [fid:3=+0.514 fid:4=+0.014 fid:5=+0.027 fid:6=+0.031 fid:7=+0.023 fid:8=+0.002 b0=+0.035 b1=+0.011 b2=+0.016 b3=+0.011]
-    timing ms/step: bwd=437 fwd=243 opt=14 detach=6 prophet=3 loss_events=2 sweep=2 data=0  total=707  gc2=2523 gc1=128263 objs=82170
-    sleep@12416 armC lane24 [772795,772860) of span[772795,772860] pay 2.000  chunks 1  loss 2.1479
-    sleep@12432 armC lane7 [791674,791739) of span[791674,791739] pay 1.000  chunks 1  loss 2.5286
-    sleep@12448 armC lane24 [774504,774569) of span[774504,774569] pay 2.000  chunks 1  loss 2.9758
-    sleep@12464 armC lane11 [788697,788762) of span[788697,788762] pay 1.000  chunks 1  loss 3.1009
-    sleep@12480 armC lane1 [769085,769150) of span[769085,769150] pay 2.000  chunks 1  loss 2.5370
-    sleep@12496 armC lane7 [787254,787319) of span[787254,787319] pay 1.000  chunks 1  loss 2.7689
-step 12500  ce 3.113  loss 3.854  holds 7936  2,766 tok/s (now 2,711)  [fid:3=+0.515 fid:4=+0.015 fid:5=+0.029 fid:6=+0.031 fid:7=+0.024 fid:8=+0.002 b0=+0.036 b1=+0.017 b2=+0.032 b3=+0.017]
-    timing ms/step: bwd=438 fwd=246 opt=14 detach=8 prophet=3 loss_events=2 sweep=2 data=0  total=712  gc2=2525 gc1=128391 objs=85461
-    sleep@12512 armC lane24 [781387,781452) of span[781387,781452] pay 2.000  chunks 1  loss 1.8737
-    sleep@12528 armC lane12 [794769,794834) of span[794769,794834] pay 2.000  chunks 1  loss 0.7014
-    sleep@12544 armC lane6 [790129,790194) of span[790129,790194] pay 2.000  chunks 1  loss 3.3341
-    sleep@12560 armC pair[802700|802711] targets [6, 10]  margin -0.1726  loss 0.7832
-    sleep@12576 armC lane26 [801540,801605) of span[801540,801605] pay 1.000  chunks 1  loss 4.2229
-    sleep@12592 armC lane3 [790694,790759) of span[790694,790759] pay 2.000  chunks 1  loss 2.6726
-step 12600  ce 3.129  loss 3.880  holds 9472  2,755 tok/s (now 2,699)  [fid:3=+0.516 fid:4=+0.015 fid:5=+0.029 fid:6=+0.030 fid:7=+0.023 fid:8=+0.002 b0=+0.033 b1=+0.011 b2=+0.014 b3=+0.017]
-    timing ms/step: bwd=401 fwd=227 opt=14 detach=8 sweep=3 prophet=2 loss_events=2 data=0  total=658  gc2=2528 gc1=128533 objs=88698
-    sleep@12608 armC lane21 [788307,788372) of span[788307,788372] pay 1.000  chunks 1  loss 2.2266
-    sleep@12624 armC pair[772846|772857] targets [6, 10]  margin -0.1003  loss 0.7445
-    sleep@12640 armC lane24 [782247,782312) of span[782247,782312] pay 2.000  chunks 1  loss 1.7225
-    sleep@12656 armC lane1 [777548,777613) of span[777548,777613] pay 2.000  chunks 1  loss 1.6993
-    sleep@12672 armC lane23 [799234,799299) of span[799234,799299] pay 2.000  chunks 1  loss 1.6323
-    sleep@12688 armC lane11 [772830,772895) of span[772830,772895] pay 2.000  chunks 1  loss 3.4637
-step 12700  ce 3.142  loss 3.229  holds 11136  2,759 tok/s (now 2,785)  [fid:3=+0.520 fid:4=+0.015 fid:5=+0.029 fid:6=+0.032 fid:7=+0.024 fid:8=+0.002 b0=+0.032 b1=+0.024 b2=+0.018 b3=+0.017]
-    timing ms/step: bwd=424 fwd=236 opt=14 detach=10 sweep=3 prophet=2 loss_events=2 data=0  total=691  gc2=2531 gc1=128698 objs=92166
-    sleep@12704 armC lane6 [789753,789818) of span[789753,789818] pay 2.000  chunks 1  loss 2.4367
-    sleep@12720 armC pair[774152|774163] targets [6, 10]  margin -0.1764  loss 0.7852
-    sleep@12736 armC pair[794376|794389] targets [9, 12]  margin -0.3138  loss 0.8623
-    sleep@12752 armC lane26 [777620,777685) of span[777620,777685] pay 2.000  chunks 1  loss 1.5146
-    sleep@12768 armC pair[799663|799675] targets [8, 11]  margin -0.3982  loss 0.9119
-    sleep@12784 armC lane6 [816478,816543) of span[816478,816543] pay 2.000  chunks 1  loss 1.2757
-    sleep@12800 armC lane29 [784879,784944) of span[784879,784944] pay 1.000  chunks 1  loss 2.0186
-step 12800  ce 3.015  loss 3.110  holds 12672  2,759 tok/s (now 2,754)  [fid:3=+0.522 fid:4=+0.018 fid:5=+0.036 fid:6=+0.034 fid:7=+0.024 fid:8=+0.003 b0=+0.029 b1=+0.023 b2=+0.009 b3=+0.005]
-    timing ms/step: bwd=421 fwd=235 opt=14 detach=12 sweep=3 prophet=2 loss_events=2 data=0  total=690  gc2=2535 gc1=128886 objs=95194
-    sleep@12816 armC lane26 [774374,774439) of span[774374,774439] pay 1.000  chunks 1  loss 2.8705
-    sleep@12832 armC lane29 [773294,773359) of span[773294,773359] pay 2.000  chunks 1  loss 1.6134
-    sleep@12848 armC lane12 [794769,794834) of span[794769,794834] pay 2.000  chunks 1  loss 0.6886
-    sleep@12864 armC lane26 [776852,776917) of span[776852,776917] pay 2.000  chunks 1  loss 2.2305
-    sleep@12880 armC lane29 [814612,814677) of span[814612,814677] pay 2.000  chunks 1  loss 1.6111
-    sleep@12896 armC lane18 [801150,801215) of span[801150,801215] pay 2.000  chunks 1  loss 3.0042
-step 12900  ce 3.339  loss 4.122  holds 14336  2,759 tok/s (now 2,765)  [fid:3=+0.520 fid:4=+0.016 fid:5=+0.031 fid:6=+0.031 fid:7=+0.023 fid:8=+0.003 b0=+0.025 b1=+0.014 b2=+0.005 b3=+0.007]
-    timing ms/step: bwd=426 fwd=238 opt=14 detach=13 sweep=4 prophet=2 loss_events=2 data=0  total=701  gc2=2539 gc1=129092 objs=98581
-    sleep@12912 armC lane30 [809816,809881) of span[809816,809881] pay 1.000  chunks 1  loss 0.9683
-    sleep@12928 armC lane22 [802589,802654) of span[802589,802654] pay 1.000  chunks 1  loss 4.6682
+W0822 12:38:29.137000 124609441556032 torch/fx/experimental/symbolic_shapes.py:4449] [0/9] d0 is not in var_ranges, defaulting to unknown range.
+W0822 12:38:29.157000 124609441556032 torch/fx/experimental/symbolic_shapes.py:4449] [0/9] d2 is not in var_ranges, defaulting to unknown range.
+W0822 12:38:29.157000 124609441556032 torch/fx/experimental/symbolic_shapes.py:4449] [0/9] d0 is not in var_ranges, defaulting to unknown range.
+W0822 12:38:29.165000 124609441556032 torch/fx/experimental/symbolic_shapes.py:4449] [0/9] d2 is not in var_ranges, defaulting to unknown range.
+W0822 12:38:29.166000 124609441556032 torch/fx/experimental/symbolic_shapes.py:4449] [0/9] d1 is not in var_ranges, defaulting to unknown range.
+W0822 12:38:29.166000 124609441556032 torch/fx/experimental/symbolic_shapes.py:4449] [0/9] d0 is not in var_ranges, defaulting to unknown range.
+W0822 12:38:29.432000 124609441556032 torch/fx/experimental/symbolic_shapes.py:4449] [0/9] q2 is not in var_ranges, defaulting to unknown range.
+W0822 12:38:29.432000 124609441556032 torch/fx/experimental/symbolic_shapes.py:4449] [0/9] q0 is not in var_ranges, defaulting to unknown range.
+W0822 12:38:29.441000 124609441556032 torch/fx/experimental/symbolic_shapes.py:4449] [0/9] q2 is not in var_ranges, defaulting to unknown range.
+W0822 12:38:29.441000 124609441556032 torch/fx/experimental/symbolic_shapes.py:4449] [0/9] q0 is not in var_ranges, defaulting to unknown range.
+W0822 12:38:29.441000 124609441556032 torch/fx/experimental/symbolic_shapes.py:4449] [0/9] q1 is not in var_ranges, defaulting to unknown range.
+W0822 12:38:29.473000 124609441556032 torch/fx/experimental/symbolic_shapes.py:4449] [0/9] z2 is not in var_ranges, defaulting to unknown range.
+W0822 12:38:29.473000 124609441556032 torch/fx/experimental/symbolic_shapes.py:4449] [0/9] z0 is not in var_ranges, defaulting to unknown range.
+W0822 12:38:29.473000 124609441556032 torch/fx/experimental/symbolic_shapes.py:4449] [0/9] z1 is not in var_ranges, defaulting to unknown range.
+W0822 12:38:29.781000 124609441556032 torch/fx/experimental/symbolic_shapes.py:4449] [0/9] x0 is not in var_ranges, defaulting to unknown range.
+W0822 12:38:29.782000 124609441556032 torch/fx/experimental/symbolic_shapes.py:4449] [0/9] x1 is not in var_ranges, defaulting to unknown range.
+W0822 12:38:29.782000 124609441556032 torch/fx/experimental/symbolic_shapes.py:4449] [0/9] r2 is not in var_ranges, defaulting to unknown range.
+    sleep@18016 armC lane3 [1152708,1152773) of span[1152708,1152773] pay 2.000  chunks 1  loss 0.7867
+    sleep@18032 armC lane20 [1153370,1153435) of span[1153370,1153435] pay 2.000  chunks 1  loss 0.8920
+    sleep@18048 armC lane22 [1152355,1152420) of span[1152355,1152420] pay 2.000  chunks 1  loss 1.6757
+    sleep@18064 armC lane20 [1153370,1153435) of span[1153370,1153435] pay 2.000  chunks 1  loss 0.5507
+    sleep@18080 armC lane23 [1154251,1154316) of span[1154251,1154316] pay 1.000  chunks 1  loss 1.2660
+    sleep@18096 armC pair[1152886|1152900] targets [7, 13]  margin -0.1540  loss 0.7731
+step 18100  ce 2.865  loss 3.547  holds 1536  2,712 tok/s (now 2,712)  [fid:3=+0.515 fid:4=+0.018 fid:5=+0.029 fid:6=+0.028 fid:7=+0.020 fid:8=+0.003 b0=+0.035 b1=+0.018 b2=+0.017 b3=+0.015]
+    timing ms/step: bwd=418 fwd=248 opt=14 prophet=2 loss_events=2 sweep=1 detach=1 data=0  total=687  gc2=3215 gc1=163543 objs=72470
+    sleep@18112 armC lane28 [1153315,1153380) of span[1153315,1153380] pay 1.000  chunks 1  loss 2.8804
+    sleep@18128 armC lane21 [1156543,1156608) of span[1156543,1156608] pay 2.000  chunks 1  loss 0.7075
+    sleep@18144 armC lane18 [1155975,1156040) of span[1155975,1156040] pay 1.000  chunks 1  loss 1.4095
+    sleep@18160 armC lane2 [1158457,1158522) of span[1158457,1158522] pay 2.000  chunks 1  loss 4.3297
+    sleep@18176 armC lane0 [1156616,1156681) of span[1156616,1156681] pay 1.000  chunks 1  loss 3.1864
+    sleep@18192 armC lane11 [1159961,1160026) of span[1159961,1160026] pay 2.000  chunks 1  loss 2.0717
+step 18200  ce 3.133  loss 3.879  holds 3072  2,782 tok/s (now 2,855)  [fid:3=+0.515 fid:4=+0.016 fid:5=+0.026 fid:6=+0.028 fid:7=+0.020 fid:8=+0.003 b0=+0.036 b1=+0.025 b2=+0.015 b3=+0.013]
+    timing ms/step: bwd=418 fwd=234 opt=14 detach=3 prophet=2 loss_events=2 sweep=1 data=0  total=675  gc2=3217 gc1=163634 objs=75913
+    sleep@18208 armC pair[1162930|1162944] targets [7, 13]  margin -0.0768  loss 0.7323
+    sleep@18224 armC pair[1163274|1163286] targets [9, 11]  margin -0.5089  loss 0.9796
+    sleep@18240 armC lane27 [1162633,1162698) of span[1162633,1162698] pay 1.000  chunks 1  loss 3.0053
+    sleep@18256 armC lane9 [1154305,1154370) of span[1154305,1154370] pay 2.000  chunks 1  loss 2.0230
+    sleep@18272 armC lane9 [1153467,1153532) of span[1153467,1153532] pay 1.000  chunks 1  loss 2.9615
+    sleep@18288 armC lane23 [1159682,1159747) of span[1159682,1159747] pay 2.000  chunks 1  loss 0.8843
+step 18300  ce 2.919  loss 3.006  holds 4736  2,787 tok/s (now 2,798)  [fid:3=+0.513 fid:4=+0.017 fid:5=+0.028 fid:6=+0.026 fid:7=+0.019 fid:8=+0.003 b0=+0.032 b1=+0.032 b2=+0.025 b3=+0.014]
+    timing ms/step: bwd=421 fwd=236 opt=14 detach=4 prophet=3 loss_events=2 sweep=2 data=0  total=682  gc2=3219 gc1=163735 objs=78774
+    sleep@18304 armC lane17 [1165712,1165777) of span[1165712,1165777] pay 2.000  chunks 1  loss 1.4932
+    sleep@18320 armC lane3 [1160056,1160121) of span[1160056,1160121] pay 1.000  chunks 1  loss 4.0558
+    sleep@18336 armC lane19 [1157467,1157532) of span[1157467,1157532] pay 2.000  chunks 1  loss 3.0865
+    sleep@18352 armC lane0 [1160209,1160274) of span[1160209,1160274] pay 2.000  chunks 1  loss 1.7909
+    sleep@18368 armC lane23 [1154251,1154316) of span[1154251,1154316] pay 1.000  chunks 1  loss 0.9681
+    sleep@18384 armC lane3 [1157794,1157859) of span[1157794,1157859] pay 2.000  chunks 1  loss 2.9418
+    sleep@18400 armC lane11 [1159961,1160026) of span[1159961,1160026] pay 2.000  chunks 1  loss 1.5611
+step 18400  ce 2.907  loss 3.598  holds 6272  2,801 tok/s (now 2,842)  [fid:3=+0.515 fid:4=+0.017 fid:5=+0.028 fid:6=+0.026 fid:7=+0.019 fid:8=+0.003 b0=+0.045 b1=+0.037 b2=+0.023 b3=+0.015]
+    timing ms/step: bwd=414 fwd=234 opt=14 detach=6 prophet=2 loss_events=2 sweep=2 data=0  total=675  gc2=3221 gc1=163840 objs=81606
+    sleep@18416 armC lane11 [1167779,1167844) of span[1167779,1167844] pay 2.000  chunks 1  loss 1.5959
+    sleep@18432 armC lane17 [1172030,1172095) of span[1172030,1172095] pay 2.000  chunks 1  loss 3.2535
+    sleep@18448 armC lane30 [1153633,1153698) of span[1153633,1153698] pay 1.000  chunks 1  loss 1.6646
+    sleep@18464 armC lane11 [1161488,1161553) of span[1161488,1161553] pay 2.000  chunks 1  loss 1.4965
+    sleep@18480 armC lane27 [1181552,1181617) of span[1181552,1181617] pay 1.000  chunks 1  loss 2.5430
+    sleep@18496 armC lane29 [1155570,1155635) of span[1155570,1155635] pay 1.000  chunks 1  loss 3.4422
+step 18500  ce 2.776  loss 3.443  holds 7936  2,802 tok/s (now 2,810)  [fid:3=+0.515 fid:4=+0.018 fid:5=+0.029 fid:6=+0.026 fid:7=+0.019 fid:8=+0.003 b0=+0.044 b1=+0.031 b2=+0.015 b3=+0.012]
+    timing ms/step: bwd=421 fwd=238 opt=14 detach=7 prophet=3 loss_events=2 sweep=2 data=0  total=687  gc2=3223 gc1=163959 objs=85042
+    sleep@18512 armC lane17 [1172030,1172095) of span[1172030,1172095] pay 2.000  chunks 1  loss 2.3412
+    sleep@18528 armC lane5 [1159626,1159691) of span[1159626,1159691] pay 2.000  chunks 1  loss 3.1270

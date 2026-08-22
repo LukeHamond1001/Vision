@@ -451,3 +451,20 @@ Each is read against scan5b's trace at matched steps: eval CE 4.475 /
 4.347 / 4.163 at 6000 / 7500 / 12000; in-ctx .297 / .318 / .599;
 store off .099 / .128 / .232; the 7500 lesion pass (band 3 +1.79,
 bands 4-8 +.014..+.025, store +.114).
+
+## 26. scan5b step 18000 (36.9M tokens, 12:45 UTC): everything compounds, the ladder is ordered
+
+dCE removed    @15.4M   @36.9M        in-ctx without it @36.9M (base .491)
+hippocampus    +.114    +.315 (3x)    .184
+band 3         +1.79    +1.53         .208
+band 4         +.016    +.025         .461
+band 5         +.014    +.035         .457
+band 6         +.021    +.053         .396
+band 7         +.024    +.061         .379
+band 8         +.025    +.066         .372
+all bands      +1.95    +1.89         .150
+eval CE 4.347 -> 4.080; b4-gap recall .151 -> .292. The slow bands
+doubled-tripled and are strictly ordered by timescale; load shifts
+from band 3 to the slower bands and the store. scan5b killed at step
+18500 (~$7.5, 6.3 h); scan6 launched = council 4 + readings/sweep
+fixes + expandable segments (sha a7fd049).
