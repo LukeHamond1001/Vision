@@ -686,3 +686,21 @@ BEFORE launching (scan7's were recovered from the reflog, 95b0de4).
 Also seen at a5df4a3's step 1: bwd 321 ms / fwd 134 ms (2.2k tok/s vs
 scan7's 3.5k) — the TD/BG terms add backward work at every tick;
 read the sustained rate at the 2-minute line.
+
+## 35. scan8 step 6000 (20:52 UTC): Phase 2 costs nothing; BG and dopamine are live
+
+vs scan5b (same shard/seed/steps): CE 4.474 / 4.475; in-ctx .295 /
+.297; short .254 / .297; store_off .101 / .099; thread_off .82 / 1.01;
+collapse healthy (sampled d3 .94, entropy 1.40 vs .84). dopa_gate:
+band-3 gate .594 at presses vs .447 elsewhere (the BG opens the
+stripe at reward); |RPE| 1.04 at presses vs .03 elsewhere (dopamine
+fires at presses; V predicts ~0.3 of the press so far); rpe>0.5 on
+0.65% of tokens; vetoes b4/5/6 .28/.18/.16, b3 .0004. value_auc
+{3:.53, 4:.50, 5:.51, 6:.64 thin} vs prophet {3:.57, 4:.49, 5:.51,
+6:.42} — chance at 12M tokens. Sleep/REM/saliency not yet (infancy).
+Speed 4.0-4.2k tok/s (2-min timing 463 ms/step vs 646-756 before).
+WATCH: cast p_true 0.000 with incumbent .0003 — no colour mass at the
+fresh-state bare ask (scan5b: p_true ~.01-.07 with a wrong-colour
+incumbent .29 at 6000, ~.0003 at 7500, .04-.09 at 12000). Not a
+verdict before 12000; if it stays zero, add a top-k diagnostic + a
+reward_off cast variant to the probe (next launch).
