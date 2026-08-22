@@ -1,0 +1,16 @@
+23:33:21 [scan1] boot SCAN sha=14c9bbb gpu=NVIDIA GeForce RTX 4090, 24564 MiB vol=2190893G 469639G order=pfc_first lives=32 T=64 d=512 L=8 opts={"n_council": 2, "slot_every": 8, "write_every": 4} clocks=3:1,4:8,5:64,6:512,7:4096,8:32768 prec=bf16
+23:33:28 [scan1] inventory: flash_epi=ok flash_eval_epi=ok mini_epi=ok mini_eval_epi=ok tar=24G parquets=19 judge=ok
+23:38:26 [scan1] scan shard l32 ok wrote 200,000,000 tokens, 32 lives x 6,250,000, 765003 events, kept/dropped 510663/21, presses {'2': 124109, '1': 97663, '-1': 19871}, corrections 19871 -> /wor
+23:39:09 [scan1] smoke SCANSMOKE {"lanes": 32, "T": 64, "order": "pfc_first", "tok_s": 2166, "holds": 23.2, "lam": 0.01078, "ce": [9.841, 6.812], "peak_gib": 17.9, "params_m": 67.0}
+23:39:14 [scan1] run started pid 279 lam 0.01078: 
+23:41:18 [scan1] 2 min: step   100  ce 8.591  loss 8.730  holds 7776  2,840 tok/s (now 2,853)  [fid:3=+0.027 fid:4=+0.378 fid:5=+0.172 fid:6=-0.027]
+23:56:23 [scan1] inflight step  1300  ce 6.505  loss 6.568  holds 119840  2,769 tok/s (now 2,497)  [fid:3=+0.844 fid:4=+0.394 fid:5=+1.000 fid:6=+ | hb: 
+00:11:28 [scan1] inflight step  2300  ce 6.167  loss 7.472  holds 200000  2,565 tok/s (now 2,138)  [fid:3=+0.829 fid:4=+0.349 fid:5=+0.452 fid:6=+ | hb: 
+00:26:33 [scan1] inflight step  3300  ce 5.773  loss 5.840  holds 200000  2,403 tok/s (now 2,020)  [fid:3=+0.768 fid:4=+0.262 fid:5=+0.450 fid:6=+ | hb: 
+00:41:37 [scan1] inflight step  4100  ce 5.854  loss 5.919  holds 200000  2,279 tok/s (now 1,762)  [fid:3=+0.774 fid:4=+0.295 fid:5=+0.371 fid:6=+ | hb: 
+00:56:42 [scan1] inflight step  4900  ce 5.118  loss 5.182  holds 200000  2,185 tok/s (now 1,793)  [fid:3=+0.785 fid:4=+0.262 fid:5=+0.287 fid:6=+ | hb: 
+01:11:46 [scan1] inflight step  5700  ce 5.257  loss 6.392  holds 200000  2,121 tok/s (now 1,799)  [fid:3=+0.774 fid:4=+0.276 fid:5=+0.298 fid:6=+ | hb: 
+01:26:51 [scan1] inflight step  6000  ce 5.023  loss 6.111  holds 200000  2,102 tok/s (now 1,816)  [fid:3=+0.764 fid:4=+0.292 fid:5=+0.311 fid:6=+ | hb: 
+01:41:56 [scan1] inflight step  6000  ce 5.023  loss 6.111  holds 200000  2,102 tok/s (now 1,816)  [fid:3=+0.764 fid:4=+0.292 fid:5=+0.311 fid:6=+ | hb: 
+01:57:01 [scan1] inflight step  6000  ce 5.023  loss 6.111  holds 200000  2,102 tok/s (now 1,816)  [fid:3=+0.764 fid:4=+0.292 fid:5=+0.311 fid:6=+ | hb: 
+02:12:06 [scan1] inflight step  7000  ce 4.854  loss 5.906  holds 99872  2,696 tok/s (now 2,504)  [fid:3=+0.782 fid:4=+0.280 fid:5=+0.269 fid:6=+0 | hb: {"step": 6000, "tokens": 12288000, "rows": [{"probe": "ce_recall", "ce": 6.1921, "recall": {"in-ctx": {"acc": 0.195, "n": 4906}, "short": {"acc": 0.205, "n": 6330}, "b3": {"acc": 0.218, "n": 193}, "b4

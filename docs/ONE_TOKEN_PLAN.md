@@ -172,3 +172,21 @@ Iteration 3 = scan2 + two cadence knobs, nothing else:
 The only change between scan2 and scan3, so a CE move is attributable.
 A 2-second (8-token) cortex self-window is the ONLY brain-faithful
 cortex-side fallback and is user-gated; not built.
+
+## 9. scan1's first row (step 6000, 12.3M tokens, 02:10 UTC) — evidence results/evidence/scan1/
+
+  R1  eval CE 6.192 (bar 6.2: PASS; hybrid mini 5.91 at the same point,
+      gap +0.28). Recall bins equal the hybrid's (in-ctx .195 vs .20,
+      short .205 vs .196, b3 .218, b4 .188) — both at floor this early.
+  R2  (early, from the boundary probe) bands off = +0.54 nats over the
+      chunk. The hybrid's lifetime all-bands removal cost +0.26 PERCENT.
+      The organism depends on its bands by construction, and they carry
+      real information already. Chunk-boundary deficit 0.08 (hybrid
+      1.55). Store alpha 0.045 -> 0.20: the hippocampus vote is used.
+  R3  2.1-2.7k tok/s (FAIL, known) — the battery at 2 lanes took ~45
+      min at HBC=16000; scan2 runs HBC=4000.
+  R4  clean: no NaN, collapse sampled .99 / greedy .19, entropy 6.9;
+      the drift artifact (fid:5 1.000, fid:6 .998 at the record) is
+      the thing scan2 removes.
+scan1 killed at step ~7000 (train CE 4.85), ~2.6 h, ~$1.9. scan2 =
+pod qa1m3h985uaytt, sha e37e88e, launched 02:13 UTC.

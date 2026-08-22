@@ -1,0 +1,60 @@
+   },
+   "thread_off": {
+    "0-16": 7.5885,
+    "16-64": 7.6222,
+    "late": 7.6165
+   },
+   "store_off": {
+    "0-16": 7.1222,
+    "16-64": 7.01,
+    "late": 7.041
+   },
+   "both_off": {
+    "0-16": 7.5891,
+    "16-64": 7.6224,
+    "late": 7.6166
+   },
+   "deficit_0_16": 0.0808,
+   "deficit_16_64": -0.031,
+   "deltas_0_64": {
+    "thread_off": 0.5407,
+    "store_off": 0.0015,
+    "both_off": 0.5412
+   }
+  },
+  {
+   "probe": "cast",
+   "n_facts": 192,
+   "incumbent_mass": 0.0,
+   "confident_wrong_frac": 0.0,
+   "class_mean_p_true": {
+    "none": 0.0,
+    "pos1": 0.0,
+    "pos2": 0.0,
+    "epi:pos2": 0.0,
+    "epi:none": 0.0,
+    "epi:pos1": 0.0
+   },
+   "n_corr_seen": 0
+  },
+  {
+   "probe": "tail_audit",
+   "n": 120,
+   "clipped": 1,
+   "mismatch": 0.0
+  }
+ ],
+ "verdict": "ok",
+ "why": []
+}
+resumed /workspace/v10_scan_out_scan1/scan.pt at step 6000 (ema keys: ['fid:3', 'fid:4', 'fid:5', 'fid:6', 'fid:7', 'fid:8', 'recall:b0', 'recall:b1', 'recall:b2'])
+step  6100  ce 4.997  loss 5.062  holds 9888  2,861 tok/s (now 2,861)  [fid:3=+0.759 fid:4=+0.286 fid:5=+0.290 fid:6=+0.886 fid:7=+0.738 fid:8=+0.038 b0=+0.003 b1=+0.003 b2=+0.002]
+step  6200  ce 5.342  loss 6.494  holds 19872  2,876 tok/s (now 2,892)  [fid:3=+0.752 fid:4=+0.297 fid:5=+0.311 fid:6=+0.887 fid:7=+0.741 fid:8=+0.046 b0=+0.003 b1=+0.004 b2=+0.006]
+step  6300  ce 5.081  loss 6.179  holds 29888  2,860 tok/s (now 2,829)  [fid:3=+0.769 fid:4=+0.279 fid:5=+0.277 fid:6=+0.889 fid:7=+0.747 fid:8=+0.046 b0=+0.004 b1=+0.003 b2=+0.002]
+step  6400  ce 4.395  loss 4.458  holds 39872  2,821 tok/s (now 2,709)  [fid:3=+0.787 fid:4=+0.260 fid:5=+0.294 fid:6=+0.892 fid:7=+0.752 fid:8=+0.046 b0=+0.006 b1=+0.012 b2=+0.011]
+step  6500  ce 4.674  loss 4.737  holds 49888  2,805 tok/s (now 2,740)  [fid:3=+0.785 fid:4=+0.250 fid:5=+0.291 fid:6=+0.894 fid:7=+0.754 fid:8=+0.046 b0=+0.003 b1=+0.003 b2=+0.003]
+step  6600  ce 5.234  loss 5.294  holds 59872  2,771 tok/s (now 2,614)  [fid:3=+0.782 fid:4=+0.273 fid:5=+0.286 fid:6=+0.896 fid:7=+0.759 fid:8=+0.046 b0=+0.005 b1=+0.009 b2=+0.006]
+step  6700  ce 4.857  loss 4.921  holds 69888  2,754 tok/s (now 2,656)  [fid:3=+0.763 fid:4=+0.291 fid:5=+0.305 fid:6=+0.897 fid:7=+0.761 fid:8=+0.053 b0=+0.005 b1=+0.003 b2=+0.004]
+step  6800  ce 4.959  loss 6.032  holds 79872  2,738 tok/s (now 2,635)  [fid:3=+0.772 fid:4=+0.287 fid:5=+0.286 fid:6=+0.895 fid:7=+0.765 fid:8=+0.053 b0=+0.004 b1=+0.002 b2=+0.002]
+step  6900  ce 4.977  loss 5.036  holds 89888  2,719 tok/s (now 2,573)  [fid:3=+0.793 fid:4=+0.296 fid:5=+0.308 fid:6=+0.895 fid:7=+0.766 fid:8=+0.053 b0=+0.006 b1=+0.004 b2=+0.004]
+step  7000  ce 4.854  loss 5.906  holds 99872  2,696 tok/s (now 2,504)  [fid:3=+0.782 fid:4=+0.280 fid:5=+0.269 fid:6=+0.894 fid:7=+0.769 fid:8=+0.053 b0=+0.005 b1=+0.003 b2=+0.002]
