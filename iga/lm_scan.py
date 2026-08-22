@@ -547,7 +547,12 @@ class ScanLM(nn.Module):
                     # last tick (live, or the carried one-op graph at the
                     # chunk start) predicts the rewards of the interval
                     # plus the discounted value of the new state
-                    R = st["R_carry"][u] + (rew_cum[:, t + 1] - rew_cum[:, v_from[u]])
+                    # the interval's reward RATE (sum / clock): scale-free
+                    # across the ladder — a band-8 tick sums ~32k tokens of
+                    # presses, and a raw sum there would make one TD term
+                    # ~1e5 x CE; band 3 (clock 1) is unchanged, so the
+                    # dopamine trace is the raw press value
+                    R = (st["R_carry"][u] + (rew_cum[:, t + 1] - rew_cum[:, v_from[u]])) / float(self.clocks[k])
                     g_bg = None
                     if bg_on:
                         z_bg = torch.sigmoid(cell.z(torch.cat([h_prev.detach(), pooled.detach()], dim=-1)))

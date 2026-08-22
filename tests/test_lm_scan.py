@@ -1002,3 +1002,22 @@ def test_S27_eval_lesions_for_the_reward_slot_and_the_vetoes():
         m.veto_off = False
         lg_i, _, _, _, _ = _fwd(m_nv, x, m_nv.init_state(1, "cpu"))
         assert not torch.equal(lg_g, lg_h) and torch.allclose(lg_h, lg_i, atol=1e-6)
+
+
+def test_S28_td_rewards_are_rates_across_the_ladder():
+    """The TD reward at a unit's tick is the interval's reward RATE
+    (sum / clock), so a band's value loss is scale-free: at birth
+    (V = 0) one +2 press makes band 3's term 4 at that token and band
+    4's (clock 8) (2/8)^2 at its tick — never the raw 4 a sum would
+    give, which at band 8 (clock 32768) would be ~1e5 x CE once per
+    tick. The carried sum itself stays raw (S21)."""
+    m = _model(seed=69, order="pfc_first", reward_slot=True); m.eval()
+    m.set_reward_tokens({5: 1, 6: 2, 7: 3, 8: 4})
+    x = _toks(200, B=2); x[(x >= 5) & (x <= 8)] = 100
+    x[0, 10] = 6                                             # one +2 press, lane 0, token 10
+    with torch.no_grad():
+        _fwd(m, x, m.init_state(2, "cpu"))
+    vlo = float(m.pop_value_loss())
+    b3 = 4.0 / T / 2                                          # 32 ticks, one of them 2^2, two lanes
+    b4 = (2.0 / 8) ** 2 / (T // 8) / 2                         # 4 ticks, the one at 15 holds 2/8
+    assert abs(vlo - (b3 + b4) / 2) < 1e-6, vlo               # bands 5/6 never tick in 32 tokens
