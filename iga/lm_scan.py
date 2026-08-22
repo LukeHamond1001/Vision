@@ -268,9 +268,8 @@ class ScanLM(nn.Module):
             # train/eval/collapse batches > dynamo's default 8 variants,
             # after which it silently falls back to eager — scan6's
             # heartbeat, 2026-08-22)
-            import torch._dynamo
-            torch._dynamo.config.cache_size_limit = max(
-                torch._dynamo.config.cache_size_limit, 64)
+            from torch import _dynamo as _dyn
+            _dyn.config.cache_size_limit = max(_dyn.config.cache_size_limit, 64)
         self._council_fn = (torch.compile(self._council_blocks, dynamic=False, mode=compile_mode)
                             if compile_council else self._council_blocks)
         # same treatment for one band's hippocampus read (lift + read +
