@@ -133,7 +133,7 @@ class ScanLM(nn.Module):
                  mlp="gelu", band_center=True, order="cortex_first",
                  kd_base=1, slot_every=8, write_every=4, kd_max=4096,
                  compile_council=False, compile_mode="default", compile_read=False,
-                 store_exact=False, register=None):
+                 store_exact=False, register=None, reward_slot=False, value_gamma=0.9):
         super().__init__()
         assert order in ("cortex_first", "pfc_first")
         self.order = order
@@ -189,7 +189,27 @@ class ScanLM(nn.Module):
         self.council = nn.ModuleList(
             [Block(d, n_heads, mlp=mlp) for _ in range(n_council)])
         # slot tags: 0 = the token, 1 = the hippocampus read, 2.. = bands
-        self.slot = nn.Embedding(2 + len(self.units), d)
+        # PHASE 2 (2026-08-22, the user's design): rewards grounded in the
+        # PFC. reward_slot adds a council slot fed by the press token at
+        # this position (none / +1 / +2 / -1 / -2: a 5-level embedding) —
+        # input only, never a target, seen by the decoder only through
+        # the PFC bundle. Value heads V_u(h_u) per unit are trained by TD
+        # across the ladder at each unit's own tick cadence:
+        #   V(h_prev_tick) -> R(rewards since that tick) + gamma V(h_now)
+        # (target detached), gamma per TICK, so band 3 values the next
+        # ~10 tokens and band 8 the next ~10 hours — secondary reinforcers
+        # form at each timescale. The TD gradient flows into the band
+        # states (the PFC learns to carry value); pop_value_loss() hands
+        # the trainer the loss (VALUE_W, default 0 = off, bit-exact).
+        self.reward_slot = bool(reward_slot)
+        self.n_fixed = 3 if reward_slot else 2           # token, [reward,] hippocampus
+        self.slot = nn.Embedding(self.n_fixed + len(self.units), d)
+        self.reward_emb = nn.Embedding(5, d)
+        nn.init.zeros_(self.reward_emb.weight)            # silent at init
+        self.register_buffer("reward_lut", torch.zeros(vocab_size, dtype=torch.long))
+        self.register_buffer("reward_val", torch.tensor([0.0, 1.0, 2.0, -1.0, -2.0]))
+        self.value_gamma = float(value_gamma)
+        self._value_loss = None
         self.lnf = nn.LayerNorm(d)
         self.head = nn.Linear(d, vocab_size)
         self.store_in = nn.Linear(d, d, bias=False)       # read -> slot
@@ -203,6 +223,8 @@ class ScanLM(nn.Module):
             {str(u): ScanCell(d, fast.get(self.unit_band[u], gate_init)) for u in self.ukeys})
         self.pred = nn.ModuleDict(
             {str(u): nn.Linear(d, d) for u in self.ukeys})
+        self.value = nn.ModuleDict(
+            {str(u): nn.Linear(d, 1) for u in self.ukeys})
         self.mem_proj = nn.ModuleDict(
             {str(u): nn.Linear(d, d, bias=False) for u in self.ukeys})
         if self.veto:
@@ -332,10 +354,15 @@ class ScanLM(nn.Module):
             h_all = h_all * keep[None, :, None]
         return torch.bmm(h_all.transpose(0, 1), W.transpose(1, 2)).transpose(0, 1)
 
-    def _council(self, c, r, m, dev):
-        """c [B,d] token hidden, r [B,d] store slot, m [B,K,d] bands ->
-        S' [B, 2+K, d] after the exchange."""
-        S = torch.cat([c.unsqueeze(1), r.unsqueeze(1), m], dim=1)
+    def _council(self, c, r, m, dev, rw=None):
+        """c [B,d] token hidden, r [B,d] store slot, m [B,K,d] bands,
+        rw [B,d] the reward slot (reward_slot only) -> S' [B, n_fixed+K, d]
+        after the exchange."""
+        parts = [c.unsqueeze(1)]
+        if rw is not None:
+            parts.append(rw.unsqueeze(1))
+        parts += [r.unsqueeze(1), m]
+        S = torch.cat(parts, dim=1)
         S = S + self.slot.weight[None, : S.shape[1]]
         # the PFC is fp32 always (precision law); autocast is switched
         # OFF here so a bf16 trunk never pulls the council with it
@@ -390,6 +417,14 @@ class ScanLM(nn.Module):
         ticks = [[] for _ in range(max(N_BANDS, max(self.bands) + 1))]
         wcost, vetoes = [], {u: [] for u in self.ukeys}
         emb = self.embed(tokens)                         # [B, T, d]
+        lev = self.reward_lut[tokens]                    # [B, T] press level per token
+        rew = self.reward_val[lev]                       # [B, T] its value
+        rew_cum = torch.cat([rew.new_zeros(B, 1), rew.cumsum(1)], dim=1)   # [B, T+1]
+        rslots = self.reward_emb(lev) if self.reward_slot else None        # [B, T, d]
+        v_pairs = {u: [] for u in self.ukeys}            # (h_prev, R, h_now) per tick
+        v_from = {u: 0 for u in self.ukeys}              # chunk-local start of the open TD interval
+        st.setdefault("R_carry", {u: rew.new_zeros(B) for u in self.ukeys})   # rewards since the last tick, earlier chunks
+        nf = self.n_fixed
         for key in ("lp", "lh", "lg"):
             st.setdefault(key, {})
         st.setdefault("wbuf", [])
@@ -408,16 +443,19 @@ class ScanLM(nn.Module):
         seg_start = {u: 0 for u in self.ukeys}   # chunk-local start of each unit's open interval
         for t in range(T):
             e = emb[:, t]
+            rw_t = rslots[:, t] if rslots is not None else None
             if self.order == "cortex_first":
                 c = self._trunk(e, torch.cat([m, r_slot.unsqueeze(1)], 1), dev)
-                S = self._council(c, r_slot, m, dev)
+                S = (self._council(c, r_slot, m, dev) if rw_t is None
+                     else self._council(c, r_slot, m, dev, rw_t))
                 cs.append(S[:, 0])
             else:
                 # PFC first: the council deliberates on the raw token; the
                 # neocortex is OFF the recurrent path and decodes the whole
                 # chunk's bundles at once after the loop (same math, one
                 # batched call — the per-token decoder was launch-bound)
-                S = self._council(e, r_slot, m, dev)
+                S = (self._council(e, r_slot, m, dev) if rw_t is None
+                     else self._council(e, r_slot, m, dev, rw_t))
                 bundles.append(S[:, 1:])
             s0 = S[:, 0]
             s0s.append(s0)
@@ -434,7 +472,7 @@ class ScanLM(nn.Module):
             # saturating at +0.98 even centred per band). The fidelity is
             # scored after the decoder has run (C is not known in the loop)
             st["tok"] += 1
-            acc_all = acc_all + S[:, 2:]                     # every band listens, one add
+            acc_all = acc_all + S[:, nf:]                    # every band listens, one add
             due = []
             for i, u in enumerate(self.ukeys):
                 st["cnt"][u] += 1
@@ -445,7 +483,7 @@ class ScanLM(nn.Module):
                 if self.veto and K > 1:
                     # every veto at once: v[b, j, k] = sigmoid(S'_j . w_k + b_k);
                     # permission_k = prod_{j != k} (1 - v[b, j, k])
-                    v = torch.sigmoid(S[:, 2:] @ W_veto.t() + b_veto)      # [B, K, K]
+                    v = torch.sigmoid(S[:, nf:] @ W_veto.t() + b_veto)     # [B, K, K]
                     P = torch.prod(1 - v * (1 - self.veto_eye), dim=1)     # [B, K]
                     vs = v.detach().sum(0)
                     veto_sum = vs if veto_sum is None else veto_sum + vs
@@ -463,9 +501,18 @@ class ScanLM(nn.Module):
                     st["lp"][u] = pooled.detach()
                     st["lh"][u] = st["h"][u].detach()
                     st["lg"][u] = p.detach() if p is not None else None
-                    h_new, g = cell(pooled, st["h"][u], p)
+                    h_prev = st["h"][u]
+                    h_new, g = cell(pooled, h_prev, p)
                     st["h"][u] = h_new
                     st["fresh"][u] = True
+                    # the TD pair for this tick: the state held since the
+                    # last tick (live, or the carried one-op graph at the
+                    # chunk start) predicts the rewards of the interval
+                    # plus the discounted value of the new state
+                    R = st["R_carry"][u] + (rew_cum[:, t + 1] - rew_cum[:, v_from[u]])
+                    v_pairs[u].append((h_prev, R, h_new))
+                    st["R_carry"][u] = rew.new_zeros(B)
+                    v_from[u] = t + 1
                     # the prediction for the fidelity loss comes from the
                     # same tick on DETACHED inputs (the certified band_credit
                     # semantics): fidelity trains the band's cell and
@@ -484,6 +531,22 @@ class ScanLM(nn.Module):
                 m = self._slots_from(h_all, W_mem)
         for i, u in enumerate(self.ukeys):                 # the open accumulators carry on
             st["acc"][u] = acc_all[:, i]
+        # ---- value, TD across the ladder (per unit, per tick) ----
+        vl = []
+        for u in self.ukeys:
+            if not v_pairs[u]:
+                continue
+            hp = torch.stack([a for a, _, _ in v_pairs[u]], dim=1)         # [B, n, d]
+            Rr = torch.stack([b for _, b, _ in v_pairs[u]], dim=1)         # [B, n]
+            hn = torch.stack([c for _, _, c in v_pairs[u]], dim=1)
+            head = self.value[str(u)]
+            v_prev = head(hp).squeeze(-1)
+            with torch.no_grad():
+                v_next = head(hn).squeeze(-1)
+            vl.append(((v_prev - (Rr + self.value_gamma * v_next)) ** 2).mean())
+        self._value_loss = torch.stack(vl).mean() if vl else None
+        for u in self.ukeys:                               # the open TD intervals carry on
+            st["R_carry"][u] = st["R_carry"][u] + (rew_cum[:, T] - rew_cum[:, v_from[u]])
         S0 = torch.stack(s0s, dim=1)                       # [B, T, d] the PFC's conclusions
         if self.order == "cortex_first":
             C = torch.stack(cs, dim=1)                     # [B, T, d]
@@ -631,6 +694,18 @@ class ScanLM(nn.Module):
         self._recon = torch.stack(recon).mean()
         st["M_fresh"] = True
         return logits, st, ticks
+
+    def pop_value_loss(self):
+        c = self._value_loss
+        self._value_loss = None
+        return c
+
+    def set_reward_tokens(self, levels):
+        """levels: {token_id: level} with level 1..4 = <+1>, <+2>, <-1>, <-2>."""
+        self.reward_lut.zero_()
+        for tid, lv in levels.items():
+            if tid is not None and 0 <= int(tid) < self.reward_lut.shape[0]:
+                self.reward_lut[int(tid)] = int(lv)
 
     def pop_write_cost(self):
         c = self._write_cost

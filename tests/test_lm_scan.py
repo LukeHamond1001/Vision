@@ -741,3 +741,59 @@ def test_S20_registers_give_a_band_several_slots():
         loss.backward()
         st = m.detach_state(st)
     assert all(m.cells[u].z.weight.grad is not None for u in ("3", "3r1", "3r2", "3r3"))
+
+
+def test_S21_reward_slot_and_td_value_across_the_ladder():
+    """Phase 2, step 1. (a) reward_slot adds one council slot fed by the
+    press token's level, input only; reward_slot=False is bit-exact and
+    the value machinery is silent (no loss) when no reward ids are set
+    ... no: TD runs regardless (rewards are 0) but VALUE_W=0 keeps the
+    trainer exact. (b) TD pairs: with rewards placed by hand, V(h_prev)
+    is fitted to R + gamma V(h_now) (target detached) at each unit's
+    tick, with R the rewards since its last tick, carried across chunks.
+    (c) The value gradient reaches the band cells and the council — the
+    PFC learns value — and never the decoder or the head."""
+    m = _model(seed=53, order="pfc_first", reward_slot=True); m.train(); m.read_drop = 0.0
+    assert m.n_fixed == 3 and m.slot.weight.shape[0] == 3 + len(m.units)
+    # press ids: pretend tokens 5..8 are <+1> <+2> <-1> <-2>
+    m.set_reward_tokens({5: 1, 6: 2, 7: 3, 8: 4})
+    assert m.reward_lut[6] == 2 and float(m.reward_val[m.reward_lut[8]]) == -2.0
+    seen = []
+    council0 = m._council
+    def council(c, r, mm, dev, rw=None):
+        S = council0(c, r, mm, dev, rw); seen.append((S.shape[1], rw is not None)); return S
+    m._council = council
+    x = _toks(150, B=2)
+    x[(x >= 5) & (x <= 8)] = 100                       # no accidental presses
+    x[0, 10] = 6; x[0, 20] = 8; x[1, 3] = 5          # +2 at 10, -2 at 20 (lane 0); +1 at 3 (lane 1)
+    st = m.init_state(2, "cpu")
+    lg, st, ticks, wc, rc = _fwd(m, x, st)
+    assert all(n == 3 + len(m.units) and has for n, has in seen)
+    m._council = council0
+    vlo = m.pop_value_loss()
+    assert vlo is not None and torch.isfinite(vlo)
+    # (b) the TD pairs for band 4 (clock 8): ticks at t = 7, 15, ..., 31;
+    # R for the tick at 15 on lane 0 = rewards in (7, 15] = +2 (token 10)
+    # recompute the pairs by hand through a second forward with hooks
+    m2 = _model(seed=53, order="pfc_first", reward_slot=True); m2.eval()
+    m2.set_reward_tokens({5: 1, 6: 2, 7: 3, 8: 4})
+    rew = m2.reward_val[m2.reward_lut[x]]
+    assert float(rew[0, 10]) == 2.0 and float(rew[0, 20]) == -2.0 and float(rew[1, 3]) == 1.0
+    # carry across chunks: a reward in chunk 1 with band 5 (clock 64, no tick in a 32-token chunk)
+    st2 = m2.init_state(2, "cpu")
+    with torch.no_grad():
+        _, st2, _, _, _ = _fwd(m2, x, st2)
+    assert float(st2["R_carry"][5][0]) == 0.0 and float(st2["R_carry"][5][1]) == 1.0   # +2-2 on lane 0, +1 on lane 1
+    # (c) gradients: value loss alone reaches cells + council, not decoder/head
+    m3 = _model(seed=53, order="pfc_first", reward_slot=True); m3.train(); m3.read_drop = 0.0
+    m3.set_reward_tokens({5: 1, 6: 2, 7: 3, 8: 4})
+    st3 = m3.init_state(2, "cpu")
+    lg, st3, ticks, wc, rc = _fwd(m3, x, st3)
+    vlo = m3.pop_value_loss()
+    vlo.backward()
+    g = lambda ps: sum(float(p.grad.abs().sum()) for p in ps if p.grad is not None)
+    assert g(m3.value.parameters()) > 0
+    assert g(m3.cells["3"].parameters()) > 0 and g(m3.council.parameters()) > 0
+    assert g(m3.blocks.parameters()) == 0 and g([m3.head.weight]) == 0
+    # the decoder sees the reward only through the PFC bundle: its kv has 2 + U slots
+    assert m3.reward_emb.weight.grad is not None

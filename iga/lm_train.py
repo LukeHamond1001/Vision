@@ -51,6 +51,9 @@ from .lm_drive import Drive
 
 FID_W = 0.1
 WRITE_W = 0.01   # A24: gentle pressure to keep band writes sparse
+VALUE_W = 0.0    # Phase 2 (2026-08-22): TD value loss on the PFC's band
+                 # states (ScanLM.pop_value_loss); set per run via
+                 # train(value_w=...) — 0 keeps every certified path exact
 RECON_W = 0.05   # A28: write-fidelity — read back what was just
                  # written; the in-chunk gradient path for the write
                  # head (cross-chunk detachment blocks the other one)
@@ -94,7 +97,7 @@ def _tmark(key, t0, device):
 
 
 def process_chunk(model, drive, conveyor, T, device, opt=None,
-                  bf16=False):
+                  bf16=False, value_w=0.0):
     x, y, events = conveyor.chunk(T)
     x, y = x.to(device), y.to(device)
     # A49: bf16 autocast covers forward + loss build; backward and
@@ -188,6 +191,10 @@ def process_chunk(model, drive, conveyor, T, device, opt=None,
         rc = model.pop_recon()
         if rc is not None:
             losses.append(RECON_W * rc)
+    if hasattr(model, "pop_value_loss"):
+        vlo = model.pop_value_loss()
+        if vlo is not None and value_w > 0:
+            losses.append(value_w * vlo)
     logp = torch.log_softmax(logits.float(), dim=-1)
     for lane, evs in enumerate(events):
         for p, kind, d in sorted(evs, key=lambda e: e[0]):
@@ -298,6 +305,7 @@ def train(d=64, lanes=4, T=256, steps=40, seed=0, device="cpu",
           hold_cap=None, sleep=None, buttons=None, prophet=None,
           life=None, clocks=None, band_widths=None,
           tie_embed=False, dream=None, n_layers=6, ledger_cap=None,
+          value_w=0.0,
           attn="abs", qk_norm=False, band_lr_mult=1.0, precision="fp32",
           band_credit=False, band_center=False, tail_tokens=0,
           mlp="gelu", horizon_rule="fixed", scan=None,
@@ -368,6 +376,13 @@ def train(d=64, lanes=4, T=256, steps=40, seed=0, device="cpu",
                        read_drop=read_drop, aux_trunk=aux_trunk, mlp=mlp,
                        **scan_opts).to(device)
         model.autocast_bf16 = (precision == "bf16")
+        # Phase 2: the press tokens' levels for the reward slot / TD
+        # rewards (a tokenizer without them leaves the LUT at zero)
+        if hasattr(model, "set_reward_tokens"):
+            _tid = (vocab.token_to_id if hasattr(vocab, "token_to_id")
+                    else lambda s_: vocab.idx.get(s_))
+            model.set_reward_tokens({_tid(s_): lv for s_, lv in
+                                     (("<+1>", 1), ("<+2>", 2), ("<-1>", 3), ("<-2>", 4))})
         model_cfg = {"arch": "scan", "d": d, "n_layers": n_layers,
                      "n_heads": 8, "T": T, "precision": precision,
                      "clocks": clocks, "scan": scan_opts, "mlp": mlp,
@@ -557,7 +572,7 @@ def train(d=64, lanes=4, T=256, steps=40, seed=0, device="cpu",
             frac = (step - step0) / max(steps, 1)
             model.read_drop = read_drop + (read_drop_end - read_drop) * frac
         ce, loss = process_chunk(model, drive, conveyor, T, device,
-                                 opt, bf16=bf16)
+                                 opt, bf16=bf16, value_w=value_w)
         if sleep is not None:
             # A74: stamp the wake step's CE over its token range —
             # append-only, no RNG, no graph; only novelty>0 reads it

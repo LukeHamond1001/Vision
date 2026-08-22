@@ -46,6 +46,7 @@ HB_EVERY=${HB_EVERY:-6000}
 HBC=${HBC:-16000}
 BUDGET_MINI=${BUDGET_MINI:-200000000}
 MAX_STEPS=${MAX_STEPS:-0}
+VALUE_W=${VALUE_W:-0}
 
 hb() {
   echo "$(date -u '+%H:%M:%S') [$ITER] $1" >> HEARTBEAT.log
@@ -140,7 +141,7 @@ export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
 python scripts/v10_driver.py \
   --data "$MINI" --eval-data "$DATA/mini_eval_epi" \
   --ckpt "$OUTM/scan.pt" --lam "$LAM" \
-  --arch scan --scan-order "$ORDER" --scan-opts "$SCAN_OPTS" \
+  --arch scan --scan-order "$ORDER" --scan-opts "$SCAN_OPTS" --value-w "$VALUE_W" \
   --d "$D" --n-layers "$NL" --T "$T" --lanes "$ML" --clocks "$CLOCKS" \
   --keyed hidden --precision "$PRECISION" \
   --lr "$LR" --lr-warmup "$WARMUP" \

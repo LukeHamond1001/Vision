@@ -159,6 +159,7 @@ def main():
     # extra ScanLM kwargs as JSON, e.g. '{"n_council": 2, "slot_every": 8,
     # "write_every": 4}' (docs/ONE_TOKEN_PLAN.md: one knob per iteration)
     ap.add_argument("--scan-opts", default="")
+    ap.add_argument("--value-w", type=float, default=0.0)   # Phase 2: TD value loss weight
     ap.add_argument("--lanes", type=int, default=0)
     # band repair (docs/MEMORY_MATH.md 5): credit routing, centred
     # fidelity, the tail memory token; 0/0/0 = certified bit-exactly
@@ -222,6 +223,7 @@ def main():
             "band_lr_mult": a.band_lr_mult, "mlp": a.mlp,
             "clock_mult": a.clock_mult, "clocks": clocks, "keyed": a.keyed,
             "arch": a.arch, "scan_order": a.scan_order, "scan": scan_opts,
+            "value_w": a.value_w,
             "band_credit": a.band_credit, "band_center": a.band_center,
             "tail_tokens": a.tail_tokens,
             "hb_every": a.hb_every,
@@ -260,7 +262,7 @@ def main():
             d=a.d, n_layers=a.n_layers, lanes=lanes, T=a.T,
             steps=end - cur, seed=1000 + seg_i, device=a.device,
             arch=a.arch, store="matrix", keyed=a.keyed,
-            scan=scan_opts,
+            scan=scan_opts, value_w=a.value_w,
             norm_mix=True, aux_trunk=0.2, use_xl=False,
             gate_init=-2.0, clocks=clocks,
             data=a.data, eval_data=a.eval_data, ckpt=a.ckpt,
