@@ -525,3 +525,14 @@ never seen by the decoder except through the PFC bundle. The pulse's
 job on a reward token: open the gates, write the pre-reward context
 hard, pull the slow bands toward it — credit assignment, not token
 production. First Phase-2 iteration after the three shape levers.
+
+## 31. scan6 verdict (17:10 UTC): council 4 = a small, consistent CE gain
+
+            6000            7500            12000
+CE    4.441 vs 4.475   4.309 vs 4.347   4.127 vs 4.163   (-.035 each)
+inctx  .417 vs .297     .380 vs .318     .501 vs .599
+store  .101 vs .099     .129 vs .128     .240 vs .232
+Recall's edge is inside the probe's noise (scan5b's .599 was the
+outlier: .516 at 18000); the lesion pass was identical. Depth 4: a
+small CE lever (+9% params, -7% speed). scan6 killed at 12100 (~$3.3).
+scan7 = register {3: 4} on the council-2 base (sha f9877cd).
