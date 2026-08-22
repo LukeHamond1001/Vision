@@ -468,3 +468,13 @@ doubled-tripled and are strictly ordered by timescale; load shifts
 from band 3 to the slower bands and the store. scan5b killed at step
 18500 (~$7.5, 6.3 h); scan6 launched = council 4 + readings/sweep
 fixes + expandable segments (sha a7fd049).
+
+## 27. scan6 (council 4) vs scan5b (council 2) at step 6000 (14:35 UTC)
+
+eval CE 4.441 vs 4.475; in-ctx recall .417 vs .297 (+40%); short .292
+vs .297; b4 .165 vs .10; store off .101 vs .099; bands off 1.02 vs
+1.01; entropy 1.43 vs .84. 73.3M params (+9%), 2.46k tok/s (-7%),
+flat (the readings fixes hold: detach/sweep 1 ms). A deeper PFC buys
+recall more than CE. scan6 runs to 7500 (lesions) and 12000 (scan5b:
+4.163 / .599 / .232); then scan7 = register {3:4} on the council-2
+base, the two PFC levers measured independently before combining.
