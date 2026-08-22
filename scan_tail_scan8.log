@@ -1,0 +1,39 @@
+PLAN {"lanes": 32, "life_len": 6250000, "total_steps": 97500, "total_tokens": 199680000, "lam": 0.01953, "bounds": [["infancy", 7500], ["childhood", 34000], ["adolescence", 71000], ["tail", 97500]], "ladder": {"infancy": 0, "childhood": 16, "adolescence": 16, "tail": 16}, "segments": 20, "precision": "bf16", "attn": "abs", "qk_norm": false, "band_lr_mult": 1.0, "mlp": "gelu", "clock_mult": 1, "clocks": {"3": 1, "4": 8, "5": 64, "6": 512, "7": 4096, "8": 32768}, "keyed": "hidden", "arch": "scan", "scan_order": "pfc_first", "scan": {"order": "pfc_first", "n_council": 2, "slot_every": 1, "write_every": 1, "compile_council": true, "compile_read": true, "store_exact": true, "reward_slot": true, "dopamine": 1.0, "bg_w": 0.05}, "value_w": 0.05, "band_credit": 0, "band_center": 0, "tail_tokens": 0, "hb_every": 6000, "hb_chunks": 4000, "lesion_every": 2}
+resuming at step 7500
+resumed /workspace/v10_scan_out_scan8/scan.pt at step 7500 (ema keys: ['fid:3', 'fid:4', 'fid:5', 'fid:6', 'fid:7', 'fid:8', 'fid:bg', 'fid:val', 'recall:b0', 'recall:b1', 'recall:b2'])
+warm resume: band states restored from checkpoint
+W0822 21:47:46.607000 128009585665600 torch/fx/experimental/symbolic_shapes.py:4449] [0/0] d0 is not in var_ranges, defaulting to unknown range.
+W0822 21:47:46.607000 128009585665600 torch/fx/experimental/symbolic_shapes.py:4449] [0/0] d2 is not in var_ranges, defaulting to unknown range.
+W0822 21:47:46.610000 128009585665600 torch/fx/experimental/symbolic_shapes.py:4449] [0/0] d0 is not in var_ranges, defaulting to unknown range.
+W0822 21:47:46.611000 128009585665600 torch/fx/experimental/symbolic_shapes.py:4449] [0/0] d2 is not in var_ranges, defaulting to unknown range.
+W0822 21:47:46.611000 128009585665600 torch/fx/experimental/symbolic_shapes.py:4449] [0/0] d1 is not in var_ranges, defaulting to unknown range.
+W0822 21:47:46.646000 128009585665600 torch/fx/experimental/symbolic_shapes.py:4449] [0/0] d0 is not in var_ranges, defaulting to unknown range.
+W0822 21:47:46.646000 128009585665600 torch/fx/experimental/symbolic_shapes.py:4449] [0/0] d2 is not in var_ranges, defaulting to unknown range.
+W0822 21:47:46.653000 128009585665600 torch/fx/experimental/symbolic_shapes.py:4449] [0/0] d0 is not in var_ranges, defaulting to unknown range.
+W0822 21:47:46.653000 128009585665600 torch/fx/experimental/symbolic_shapes.py:4449] [0/0] d2 is not in var_ranges, defaulting to unknown range.
+W0822 21:47:46.653000 128009585665600 torch/fx/experimental/symbolic_shapes.py:4449] [0/0] d1 is not in var_ranges, defaulting to unknown range.
+W0822 21:47:46.852000 128009585665600 torch/fx/experimental/symbolic_shapes.py:4449] [0/0] q0 is not in var_ranges, defaulting to unknown range.
+W0822 21:47:46.852000 128009585665600 torch/fx/experimental/symbolic_shapes.py:4449] [0/0] q2 is not in var_ranges, defaulting to unknown range.
+W0822 21:47:46.861000 128009585665600 torch/fx/experimental/symbolic_shapes.py:4449] [0/0] q0 is not in var_ranges, defaulting to unknown range.
+W0822 21:47:46.862000 128009585665600 torch/fx/experimental/symbolic_shapes.py:4449] [0/0] q1 is not in var_ranges, defaulting to unknown range.
+W0822 21:47:46.862000 128009585665600 torch/fx/experimental/symbolic_shapes.py:4449] [0/0] q2 is not in var_ranges, defaulting to unknown range.
+W0822 21:47:46.918000 128009585665600 torch/fx/experimental/symbolic_shapes.py:4449] [0/0] z1 is not in var_ranges, defaulting to unknown range.
+W0822 21:47:46.918000 128009585665600 torch/fx/experimental/symbolic_shapes.py:4449] [0/0] z0 is not in var_ranges, defaulting to unknown range.
+W0822 21:47:46.918000 128009585665600 torch/fx/experimental/symbolic_shapes.py:4449] [0/0] z2 is not in var_ranges, defaulting to unknown range.
+W0822 21:47:47.148000 128009585665600 torch/fx/experimental/symbolic_shapes.py:4449] [0/0] r2 is not in var_ranges, defaulting to unknown range.
+W0822 21:47:47.148000 128009585665600 torch/fx/experimental/symbolic_shapes.py:4449] [0/0] x0 is not in var_ranges, defaulting to unknown range.
+W0822 21:47:47.148000 128009585665600 torch/fx/experimental/symbolic_shapes.py:4449] [0/0] x1 is not in var_ranges, defaulting to unknown range.
+    sleep@7504 armC lane26 [480000,480031) of span[479966,480031] pay 1.000  chunks 1  loss 4.3983
+    sleep@7520 armC lane23 [481044,481109) of span[481044,481109] pay 1.000  chunks 1  loss 3.9955
+    sleep@7536 armC lane3 [481698,481763) of span[481698,481763] pay 1.000  chunks 1  loss 2.5450
+    sleep@7552 armC lane21 [480808,480873) of span[480808,480873] pay 1.000  chunks 1  loss 0.8650
+    sleep@7568 armC lane15 [481756,481821) of span[481756,481821] pay 2.000  chunks 1  loss 2.7055
+    sleep@7584 armC lane13 [483299,483364) of span[483299,483364] pay 2.000  chunks 1  loss 1.4469
+    sleep@7600 armC lane16 [484651,484716) of span[484651,484716] pay 1.000  chunks 1  loss 4.0240
+step  7600  ce 2.985  loss 3.071  holds 1536  3,204 tok/s (now 3,204)  [fid:3=+0.537 fid:4=+0.090 fid:5=+0.221 fid:6=+0.038 fid:7=+0.017 fid:8=+0.001 fid:bg=+0.001 fid:val=+0.003 b0=+0.024 b1=+0.014 b2=+0.017]
+    timing ms/step: bwd=379 fwd=166 opt=9 loss_events=3 prophet=1 sweep=1 detach=0 data=0  total=559  gc2=16 gc1=504 objs=251211
+    sleep@7616 armC lane6 [480629,480694) of span[480629,480694] pay 2.000  chunks 1  loss 1.8829
+    sleep@7632 armC lane30 [486939,487004) of span[486939,487004] pay 2.000  chunks 1  loss 1.5361
+    sleep@7648 armC lane7 [483659,483724) of span[483659,483724] pay 2.000  chunks 1  loss 0.8940
+    sleep@7664 armC lane14 [488047,488112) of span[488047,488112] pay 2.000  chunks 1  loss 1.6070
+    sleep@7680 armC lane23 [480000,480054) of span[479989,480054] pay 2.000  chunks 1  loss 1.5443
