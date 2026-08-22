@@ -264,6 +264,49 @@ def probe_boundary(m, eval_dir, T, chunks=64):
 
 
 @torch.no_grad()
+@torch.no_grad()
+def probe_dopa_gate(m, eval_dir, T, chunks=64):
+    """Phase 2 vitals of the one-token organism on unseen lives: the
+    band-3 gate (the BG's stripe) and the reward prediction error
+    (dopamine) at press tokens vs everywhere else, plus the lateral
+    veto means. A reward slot that matters shows a gate and an |RPE|
+    that move at presses; a flat split means the organ is idle."""
+    if not hasattr(m, "gate_trace"):
+        return None
+    conv = UltraConveyor(eval_dir, n_lanes=2)
+    dev = next(m.parameters()).device
+    st = m.init_state(2, dev)
+    acc = {"gate_press": [0.0, 0], "gate_other": [0.0, 0],
+           "rpe_press": [0.0, 0], "rpe_other": [0.0, 0], "rpe_hi": [0.0, 0]}
+    n_chunks = min(chunks, len(conv.tokens) // (2 * T) - 2)
+    for _ in range(n_chunks):
+        x, y, _ev = conv.chunk(T)
+        x = x.to(dev)
+        _lg, st, _ = m(x, st, None)
+        m.pop_write_cost(); m.pop_recon()
+        if hasattr(m, "pop_value_loss"):
+            m.pop_value_loss()
+        if hasattr(m, "pop_bg_loss"):
+            m.pop_bg_loss()
+        st = m.detach_state(st)
+        press = m.reward_lut[x] > 0                          # [B, T]
+        g = m.gate_trace()
+        if g is not None:
+            acc["gate_press"][0] += float(g[press].sum()); acc["gate_press"][1] += int(press.sum())
+            acc["gate_other"][0] += float(g[~press].sum()); acc["gate_other"][1] += int((~press).sum())
+        r = m.dopa_trace()
+        if r is not None:
+            acc["rpe_press"][0] += float(r[press].sum()); acc["rpe_press"][1] += int(press.sum())
+            acc["rpe_other"][0] += float(r[~press].sum()); acc["rpe_other"][1] += int((~press).sum())
+            acc["rpe_hi"][0] += float((r > 0.5).sum()); acc["rpe_hi"][1] += r.numel()
+    out = {k: (round(v[0] / v[1], 4) if v[1] else None) for k, v in acc.items()}
+    vm = getattr(m, "_veto_mean", None)
+    if vm:
+        out["veto_mean"] = {str(k): round(float(v), 4) for k, v in vm.items()}
+    out["n_press"] = acc["gate_press"][1]
+    return out
+
+
 def probe_store_health(m, tok):
     """Is the contextual memory ABLE to carry a fact? The v9.4 final
     battery found the store's learned key mix collapsed onto the
@@ -467,6 +510,9 @@ def main():
     lane_toks = a.tokens // max(manifest.get("n_lives", 1), 1)
     cast["n_corr_seen"] = sum(
         1 for p in manifest.get("correction_pos", []) if p <= lane_toks)
+    dg = probe_dopa_gate(m, a.eval_data, a.T, chunks=max(a.chunks // 4, 50))
+    if dg is not None:
+        rows.append({"probe": "dopa_gate", **dg})
     rows.append({"probe": "cast", **cast})
     rows.append({"probe": "tail_audit",
                  **probe_tail_audit(a.data, manifest, tok)})
@@ -514,6 +560,26 @@ def main():
         rows.append({"probe": "lesion_thread",
                      "ce_delta": round(ce_l - ce_b, 4),
                      "recall": _racc(rec_l)})
+        # Phase 2 organs with an eval-time switch: the reward slot
+        # (zeroed) and the lateral vetoes (permissions = 1)
+        if getattr(m, "reward_slot", False) and hasattr(m, "reward_off"):
+            m.reward_off = True
+            try:
+                ce_l, rec_l = probe_ce_recall(m, a.eval_data, a.T, small)
+            finally:
+                m.reward_off = False
+            rows.append({"probe": "lesion_reward",
+                         "ce_delta": round(ce_l - ce_b, 4),
+                         "recall": _racc(rec_l)})
+        if getattr(m, "veto", False) and hasattr(m, "veto_off"):
+            m.veto_off = True
+            try:
+                ce_l, rec_l = probe_ce_recall(m, a.eval_data, a.T, small)
+            finally:
+                m.veto_off = False
+            rows.append({"probe": "lesion_veto",
+                         "ce_delta": round(ce_l - ce_b, 4),
+                         "recall": _racc(rec_l)})
         rows.append({"probe": "lesion_base", "ce": round(ce_b, 4),
                      "recall": _racc(rec_b)})
     if isinstance(blob, dict) and "sleeper" in blob:

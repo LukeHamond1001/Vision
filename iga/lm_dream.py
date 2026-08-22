@@ -31,17 +31,34 @@ from .lm_sleep import FREEZE_EXACT, FREEZE_PREFIXES, MIN_REPLAY
 
 
 @torch.no_grad()
+def _feed(model, st, ids, device):
+    """Run ids through the model in <= max_T chunks (the one-token
+    organism has no window; max_T is its batching unit), returning the
+    last logits and the advanced, detached state."""
+    step = model.max_T if getattr(model, "windowless", False) else len(ids)
+    lg = None
+    for i in range(0, len(ids), step):
+        x = torch.tensor([ids[i:i + step]], dtype=torch.long, device=device)
+        lg, st, _ = model(x, st, None)
+        model.pop_write_cost()
+        model.pop_recon()
+        st = model.detach_state(st)
+    return lg, st
+
+
 def _generate(model, seed_ids, n, tau, max_new, device, gen):
     outs = []
     for _ in range(n):
         st = model.init_state(1, device)
-        x = torch.tensor([seed_ids], dtype=torch.long, device=device)
         cont = []
+        lg, st = _feed(model, st, list(seed_ids), device)
+        x = None
         for _ in range(max_new):
-            lg, st, _ = model(x, st, None)
-            model.pop_write_cost()
-            model.pop_recon()
-            st = model.detach_state(st)
+            if x is not None:
+                lg, st, _ = model(x, st, None)
+                model.pop_write_cost()
+                model.pop_recon()
+                st = model.detach_state(st)
             probs = torch.softmax(lg[0, -1].float() / tau, -1)
             nxt = int(torch.multinomial(probs, 1, generator=gen))
             cont.append(nxt)
@@ -67,11 +84,21 @@ def dream_block(model, opt, sleeper, tok, judge_fn, step,
     if not sleeper.spans or sleeper.buffers is None:
         return None
     rng = sleeper.rng
-    span = rng.choices(sleeper.spans,
-                       weights=[s["pay"] for s in sleeper.spans])[0]
+    # the seed draw follows the night's replay weights — pay, and
+    # with the saliency channel on, the hippocampus's |RPE| stamp
+    # (dreams start from what the day marked; weights == pay at
+    # saliency 0, so the certified draw is unchanged)
+    weights = (sleeper._span_weights() if hasattr(sleeper, "_span_weights")
+               else [s["pay"] for s in sleeper.spans])
+    if not any(w > 0 for w in weights):
+        return None
+    span = rng.choices(sleeper.spans, weights=weights)[0]
     # the whole dreamed sequence [seed + continuation] must fit the
-    # model's window (pos table = max_T + bands)
-    ctx = min(ctx, model.max_T - max_new - 1)
+    # model's window (pos table = max_T + bands) — unless the model
+    # streams tokens (ScanLM.windowless), where max_T is only the
+    # batching unit and the seed is fed in chunks
+    if not getattr(model, "windowless", False):
+        ctx = min(ctx, model.max_T - max_new - 1)
     if ctx < MIN_REPLAY:
         return None
     hi = min(span["t1"], sleeper.end)
@@ -118,18 +145,38 @@ def dream_block(model, opt, sleeper, tok, judge_fn, step,
         p.requires_grad_(False)
     model.store_read_off = True
     try:
-        x = torch.tensor([ids[:-1]], dtype=torch.long, device=device)
-        y = torch.tensor([ids[1:]], dtype=torch.long, device=device)
+        xs, ys = ids[:-1], ids[1:]
+        step_len = model.max_T if getattr(model, "windowless", False) else len(xs)
         with torch.enable_grad():
-            lg, _, _ = model(x, model.init_state(1, device), None)
-            model.pop_write_cost()
-            model.pop_recon()
             # the seed is real replay; the dream part carries the
             # gradient story — train on the WHOLE sequence (the
-            # accumulate regime: real anchor inside every step)
-            loss = torch.nn.functional.cross_entropy(
-                lg.float().reshape(-1, model.vocab_size),
-                y.reshape(-1))
+            # accumulate regime: real anchor inside every step). A
+            # windowless model takes it in wake-sized chunks with the
+            # state detached between them (wake semantics), one
+            # backward over the summed CE.
+            st = model.init_state(1, device)
+            tot, n_tok = None, 0
+            for i in range(0, len(xs), step_len):
+                x = torch.tensor([xs[i:i + step_len]], dtype=torch.long, device=device)
+                y = torch.tensor([ys[i:i + step_len]], dtype=torch.long, device=device)
+                lg, st, _ = model(x, st, None)
+                model.pop_write_cost()
+                model.pop_recon()
+                if hasattr(model, "pop_value_loss"):
+                    model.pop_value_loss()
+                if hasattr(model, "pop_bg_loss"):
+                    model.pop_bg_loss()
+                st = model.detach_state(st)
+                l_i = torch.nn.functional.cross_entropy(
+                    lg.float().reshape(-1, model.vocab_size),
+                    y.reshape(-1), reduction="sum")
+                tot = l_i if tot is None else tot + l_i
+                n_tok += y.numel()
+            loss = tot / n_tok
+            if hasattr(model, "value") and "3" in getattr(model, "value", {}) \
+                    and isinstance(st, dict) and 3 in st.get("h", {}):
+                with torch.no_grad():      # logged, never used to select (no self-grading)
+                    row["v_end"] = round(float(model.value["3"](st["h"][3]).mean()), 4)
             if abs(float(loss.detach())) >= min_step_loss:
                 opt.zero_grad()
                 loss.backward()

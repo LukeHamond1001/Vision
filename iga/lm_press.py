@@ -124,15 +124,18 @@ class PressProphet:
             if s["steps"] > 1 else float(loss.detach())
 
     @torch.no_grad()
-    def auc(self, k):
+    def auc(self, k, head=None):
         """Rank AUC of press-value predictions, positive vs zero,
-        on the held-out eval ring — the value-function vital sign."""
+        on the held-out eval ring — the value-function vital sign.
+        head: a scorer over the band state (default the prophet's own
+        spectator head; the organism's value head V_k scores the same
+        ring — the Phase-2 read of whether the PFC values its future)."""
         ring = self.eval_ring.get(k, [])
         pos = [p for p in ring if p[1] > 0]
         zero = [p for p in ring if p[1] == 0]
         if len(pos) < 5 or len(zero) < 5:
             return None
-        head = self.heads[str(k)]
+        head = self.heads[str(k)] if head is None else head
         sp = [float(head(v.unsqueeze(0))) for v, _ in pos]
         sz = [float(head(v.unsqueeze(0))) for v, _ in zero]
         wins = sum((a > b) + 0.5 * (a == b) for a in sp for b in sz)

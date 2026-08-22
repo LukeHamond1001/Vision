@@ -133,7 +133,8 @@ class ScanLM(nn.Module):
                  mlp="gelu", band_center=True, order="cortex_first",
                  kd_base=1, slot_every=8, write_every=4, kd_max=4096,
                  compile_council=False, compile_mode="default", compile_read=False,
-                 store_exact=False, register=None, reward_slot=False, value_gamma=0.9):
+                 store_exact=False, register=None, reward_slot=False, value_gamma=0.9,
+                 dopamine=0.0, bg_w=0.0):
         super().__init__()
         assert order in ("cortex_first", "pfc_first")
         self.order = order
@@ -210,6 +211,8 @@ class ScanLM(nn.Module):
         self.register_buffer("reward_val", torch.tensor([0.0, 1.0, 2.0, -1.0, -2.0]))
         self.value_gamma = float(value_gamma)
         self._value_loss = None
+        self._bg_loss = None
+        self._gate_trace = None
         self.lnf = nn.LayerNorm(d)
         self.head = nn.Linear(d, vocab_size)
         self.store_in = nn.Linear(d, d, bias=False)       # read -> slot
@@ -225,6 +228,30 @@ class ScanLM(nn.Module):
             {str(u): nn.Linear(d, d) for u in self.ukeys})
         self.value = nn.ModuleDict(
             {str(u): nn.Linear(d, 1) for u in self.ukeys})
+        for head in self.value.values():                  # V = 0 at birth: the RPE IS the reward
+            nn.init.zeros_(head.weight); nn.init.zeros_(head.bias)
+        # DOPAMINE (Phase 2, step 2): the reward prediction error of the
+        # per-token units (band 3: delta_t = R_t + gamma V(h_now) -
+        # V(h_prev), detached) scales the hippocampus's write strength
+        # at that token, s_t <- min(1, s_t (1 + kappa |delta_t|)) — a
+        # surprising reward burns the episode in harder; an expected one
+        # does nothing. kappa = 0 (default) is exact.
+        self.dopamine = float(dopamine)
+        # Basal ganglia (the actor; the value heads are the critic): the
+        # band gates g = sigmoid(z) * permission learn from the reward
+        # prediction error at their own tick, not only from BPTT inside
+        # the chunk — delta > 0 (the update led somewhere better than
+        # expected) pulls the gate that made it toward open, delta < 0
+        # toward shut, |delta|-weighted (PBWM Go/NoGo; a DA burst
+        # strengthens Go, a dip NoGo). The regression runs on a gate
+        # recomputed from DETACHED inputs, so the force lands on the
+        # gate and veto parameters only — never on the council (the
+        # scan2 lesson). bg_w = 0 (default) is exact.
+        self.bg_w = float(bg_w)
+        # eval-time lesions for the battery (exact when False)
+        self.reward_off = False          # the reward slot zeroed
+        self.veto_off = False            # permissions = 1 (no lateral vetoes)
+        self.windowless = True           # tokens stream; max_T is the batching unit, not a window
         self.mem_proj = nn.ModuleDict(
             {str(u): nn.Linear(d, d, bias=False) for u in self.ukeys})
         if self.veto:
@@ -421,7 +448,12 @@ class ScanLM(nn.Module):
         rew = self.reward_val[lev]                       # [B, T] its value
         rew_cum = torch.cat([rew.new_zeros(B, 1), rew.cumsum(1)], dim=1)   # [B, T+1]
         rslots = self.reward_emb(lev) if self.reward_slot else None        # [B, T, d]
+        if rslots is not None and self.reward_off:
+            rslots = torch.zeros_like(rslots)
+        gtr = []                                         # band-3 gate means per token (the BG trace)
+        bg_on = self.bg_w > 0
         v_pairs = {u: [] for u in self.ukeys}            # (h_prev, R, h_now) per tick
+        rpe = [None] * T                                 # |RPE| per token (dopamine), summed over clock-1 units
         v_from = {u: 0 for u in self.ukeys}              # chunk-local start of the open TD interval
         st.setdefault("R_carry", {u: rew.new_zeros(B) for u in self.ukeys})   # rewards since the last tick, earlier chunks
         nf = self.n_fixed
@@ -480,7 +512,8 @@ class ScanLM(nn.Module):
                     due.append(i)
             if due:
                 P = None
-                if self.veto and K > 1:
+                P_bg = None
+                if self.veto and K > 1 and not self.veto_off:
                     # every veto at once: v[b, j, k] = sigmoid(S'_j . w_k + b_k);
                     # permission_k = prod_{j != k} (1 - v[b, j, k])
                     v = torch.sigmoid(S[:, nf:] @ W_veto.t() + b_veto)     # [B, K, K]
@@ -489,6 +522,11 @@ class ScanLM(nn.Module):
                     veto_sum = vs if veto_sum is None else veto_sum + vs
                     for i in due:
                         vetoes[self.ukeys[i]].append(None)               # counted below
+                    if bg_on:
+                        # the same permissions from a detached council:
+                        # the BG force reaches the veto weights, not S
+                        v_bg = torch.sigmoid(S[:, nf:].detach() @ W_veto.t() + b_veto)
+                        P_bg = torch.prod(1 - v_bg * (1 - self.veto_eye), dim=1)
                 for i in due:
                     u = self.ukeys[i]; k = self.unit_band[u]
                     pooled = acc_all[:, i] / max(st["cnt"][u], 1)
@@ -510,7 +548,18 @@ class ScanLM(nn.Module):
                     # chunk start) predicts the rewards of the interval
                     # plus the discounted value of the new state
                     R = st["R_carry"][u] + (rew_cum[:, t + 1] - rew_cum[:, v_from[u]])
-                    v_pairs[u].append((h_prev, R, h_new))
+                    g_bg = None
+                    if bg_on:
+                        z_bg = torch.sigmoid(cell.z(torch.cat([h_prev.detach(), pooled.detach()], dim=-1)))
+                        g_bg = z_bg if P_bg is None else z_bg * P_bg[:, i].unsqueeze(-1)
+                    v_pairs[u].append((h_prev, R, h_new, g_bg))
+                    if self.clocks[k] == 1 and len(gtr) == t:
+                        gtr.append(g.detach())
+                    if self.dopamine > 0 and self.clocks[k] == 1:
+                        with torch.no_grad():
+                            hv = self.value[str(u)]
+                            d_t = R + self.value_gamma * hv(h_new).squeeze(-1) - hv(h_prev).squeeze(-1)
+                        rpe[t] = d_t.abs() if rpe[t] is None else rpe[t] + d_t.abs()
                     st["R_carry"][u] = rew.new_zeros(B)
                     v_from[u] = t + 1
                     # the prediction for the fidelity loss comes from the
@@ -532,19 +581,29 @@ class ScanLM(nn.Module):
         for i, u in enumerate(self.ukeys):                 # the open accumulators carry on
             st["acc"][u] = acc_all[:, i]
         # ---- value, TD across the ladder (per unit, per tick) ----
-        vl = []
+        vl, bgl = [], []
         for u in self.ukeys:
             if not v_pairs[u]:
                 continue
-            hp = torch.stack([a for a, _, _ in v_pairs[u]], dim=1)         # [B, n, d]
-            Rr = torch.stack([b for _, b, _ in v_pairs[u]], dim=1)         # [B, n]
-            hn = torch.stack([c for _, _, c in v_pairs[u]], dim=1)
+            hp = torch.stack([a for a, _, _, _ in v_pairs[u]], dim=1)      # [B, n, d]
+            Rr = torch.stack([b for _, b, _, _ in v_pairs[u]], dim=1)      # [B, n]
+            hn = torch.stack([c for _, _, c, _ in v_pairs[u]], dim=1)
             head = self.value[str(u)]
             v_prev = head(hp).squeeze(-1)
             with torch.no_grad():
                 v_next = head(hn).squeeze(-1)
-            vl.append(((v_prev - (Rr + self.value_gamma * v_next)) ** 2).mean())
+            td = Rr + self.value_gamma * v_next - v_prev                    # [B, n]
+            vl.append((td ** 2).mean())
+            if bg_on:
+                gb = torch.stack([q for _, _, _, q in v_pairs[u]], dim=1)  # [B, n, d] gates on detached inputs
+                delta = td.detach()
+                target = (delta > 0).float().unsqueeze(-1).expand_as(gb)
+                bce = nn.functional.binary_cross_entropy(
+                    gb.clamp(1e-6, 1 - 1e-6), target, reduction="none")
+                bgl.append((delta.abs().unsqueeze(-1) * bce).mean())
         self._value_loss = torch.stack(vl).mean() if vl else None
+        self._bg_loss = self.bg_w * torch.stack(bgl).mean() if bgl else None
+        self._gate_trace = torch.stack(gtr, dim=1).mean(-1) if gtr else None   # [B, T]
         for u in self.ukeys:                               # the open TD intervals carry on
             st["R_carry"][u] = st["R_carry"][u] + (rew_cum[:, T] - rew_cum[:, v_from[u]])
         S0 = torch.stack(s0s, dim=1)                       # [B, T, d] the PFC's conclusions
@@ -663,6 +722,12 @@ class ScanLM(nn.Module):
         smask = torch.ones(B, T, device=dev)
         if st["chunk"] == 0:
             smask[:, 0] = 0.0                              # nothing before
+        if self.dopamine > 0:
+            # the dopamine gain per token rides the write mask: values > 1
+            # are applied after the strength sigmoid (clamped to 1 below)
+            dopa = torch.stack([torch.zeros(B, device=dev) if r is None else r for r in rpe], dim=1)
+            smask = smask * (1.0 + self.dopamine * dopa)
+        self._dopa_trace = None if self.dopamine <= 0 else dopa.detach()
         st["prev_c"] = S0[:, -1].detach()
         st["chunk"] += 1
         if st["chunk"] % self.write_every != 0:
@@ -681,7 +746,7 @@ class ScanLM(nn.Module):
             Wk = self.key_proj.weight.clone() if pass2 else self.key_proj.weight
             hp = hp_det if pass2 else hp_live
             k_d = nn.functional.normalize(hp @ Wk.t(), dim=-1)
-            sv = torch.sigmoid(tu[toks_all]) * sm_all
+            sv = (torch.sigmoid(tu[toks_all]) * sm_all).clamp(max=1.0)
             for k in self.bands:
                 stn = self.stores[str(k)]
                 M_in = st["M"][k].detach()
@@ -695,10 +760,24 @@ class ScanLM(nn.Module):
         st["M_fresh"] = True
         return logits, st, ticks
 
+    def dopa_trace(self):
+        """[B, T] |RPE| per token of the last chunk (dopamine), or None."""
+        return getattr(self, "_dopa_trace", None)
+
     def pop_value_loss(self):
         c = self._value_loss
         self._value_loss = None
         return c
+
+    def pop_bg_loss(self):
+        """The basal-ganglia actor term, already weighted by bg_w (None at bg_w=0)."""
+        c = getattr(self, "_bg_loss", None)
+        self._bg_loss = None
+        return c
+
+    def gate_trace(self):
+        """[B, T] mean band-3 gate per token of the last chunk, or None."""
+        return getattr(self, "_gate_trace", None)
 
     def set_reward_tokens(self, levels):
         """levels: {token_id: level} with level 1..4 = <+1>, <+2>, <-1>, <-2>."""

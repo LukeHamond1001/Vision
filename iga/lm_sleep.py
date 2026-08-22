@@ -114,7 +114,7 @@ class SleepTap:
 class Sleeper:
     def __init__(self, arm="B", every=0, block_chunks=4, seed=0,
                  min_step_loss=0.0, replay_twice=False,
-                 homeostasis=0.0, splice=0.0, novelty=0.0):
+                 homeostasis=0.0, splice=0.0, novelty=0.0, saliency=0.0):
         """every: one sleep block per this many wake steps (0 = never
         fire — the dose-0 parity arm). block_chunks: chunks per block;
         dose sleep:wake = block_chunks/every (A62 ladder {0, 1:16,
@@ -174,6 +174,15 @@ class Sleeper:
         # (note_ce), normalized by the running max. 0.0 = certified
         # pay-only lottery bit-exactly.
         self.novelty = float(novelty)
+        # Phase 2 (2026-08-22): HIPPOCAMPUS-INDEXED replay. The trainer
+        # stamps each wake step's dopamine trace (|RPE| per token, the
+        # organism's own write-strength gain) per lane; saliency>0 mixes
+        # a span's mean |RPE| into its replay weight beside pay and
+        # novelty — the night replays what the store wrote hardest.
+        # saliency=0 is the certified path, bit-exact.
+        self.saliency = float(saliency)
+        self.chunk_dopa = []     # (lane, t0, t1, mean |RPE|) wake stamps, capped
+        self._dopa_max = 1e-9
         self.chunk_ce = []       # (t0, t1, ce) wake stamps, capped
         self._ce_max = 1e-9
         self.rng = random.Random(seed)
@@ -241,6 +250,27 @@ class Sleeper:
         if self.cap is not None and len(self.chunk_ce) > 4096:
             del self.chunk_ce[:len(self.chunk_ce) - 4096]
 
+    def note_dopa(self, trace, t0, t1):
+        """trace [lanes, T] |RPE| per token (ScanLM.dopa_trace), stamped
+        per lane over the step's token range; only saliency>0 reads it."""
+        if trace is None:
+            return
+        means = trace.float().mean(dim=1).tolist()
+        for lane, v in enumerate(means):
+            self.chunk_dopa.append((lane, int(t0), int(t1), float(v)))
+            self._dopa_max = max(self._dopa_max, float(v))
+        if len(self.chunk_dopa) > 4096 * max(1, len(means)):
+            del self.chunk_dopa[:len(self.chunk_dopa) - 4096 * len(means)]
+
+    def _saliency(self, s):
+        """Mean stamped |RPE| of the span's lane overlapping it, in [0,1]."""
+        acc, n = 0.0, 0
+        for lane, t0, t1, v in self.chunk_dopa:
+            if lane == s["lane"] and t1 > s["t0"] and t0 < s["t1"]:
+                acc += v
+                n += 1
+        return (acc / n / self._dopa_max) if (n and self._dopa_max > 0) else 0.0
+
     def _surprise(self, s):
         """Mean stamped CE overlapping span s, normalized to [0,1]."""
         acc, n = 0.0, 0
@@ -251,10 +281,10 @@ class Sleeper:
         return (acc / n / self._ce_max) if n else 0.0
 
     def _span_weights(self):
-        if not self.novelty:
+        if not self.novelty and not self.saliency:
             return [s["pay"] for s in self.spans]
-        nv = self.novelty
-        return [s["pay"] * (1 - nv) + nv * self._surprise(s)
+        nv, sa = self.novelty, self.saliency
+        return [s["pay"] * (1 - nv - sa) + nv * self._surprise(s) + sa * self._saliency(s)
                 for s in self.spans]
 
     def _downscale(self, model):

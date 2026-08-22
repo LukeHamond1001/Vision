@@ -47,6 +47,8 @@ HBC=${HBC:-16000}
 BUDGET_MINI=${BUDGET_MINI:-200000000}
 MAX_STEPS=${MAX_STEPS:-0}
 VALUE_W=${VALUE_W:-0}
+SALIENCY=${SALIENCY:-0}        # Phase 2: |RPE|-stamped share of the replay lottery
+DREAM=${DREAM:-}               # Phase 2: REM — JSON for train(dream=), e.g. {"every_nights":4,"n":4,"max_new":48,"min_q":0.55}
 
 hb() {
   echo "$(date -u '+%H:%M:%S') [$ITER] $1" >> HEARTBEAT.log
@@ -142,6 +144,7 @@ python scripts/v10_driver.py \
   --data "$MINI" --eval-data "$DATA/mini_eval_epi" \
   --ckpt "$OUTM/scan.pt" --lam "$LAM" \
   --arch scan --scan-order "$ORDER" --scan-opts "$SCAN_OPTS" --value-w "$VALUE_W" \
+  --saliency "$SALIENCY" ${DREAM:+--dream "$DREAM"} \
   --d "$D" --n-layers "$NL" --T "$T" --lanes "$ML" --clocks "$CLOCKS" \
   --keyed hidden --precision "$PRECISION" \
   --lr "$LR" --lr-warmup "$WARMUP" \

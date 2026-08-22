@@ -544,3 +544,132 @@ The first scan7 pod fell back to the RTX 2000 Ada (4090 stock low):
 ~500 and relaunched on a 4090 (dws3fxdq3uprot, sha 74159ab). The
 launcher's GPU order for iterations: 4090, L40S, RTX 6000 Ada, then
 the 2000 Ada.
+
+## 33. scan7 verdict + the user's five questions (2026-08-22 19:25 UTC)
+
+scan7 (register {3:4}) at 7500: CE 4.352 vs scan5b 4.347; lesions
+the same shape (b3 +1.58/+1.79, store +.117/+.114, b4-b8 .014-.026
+both); recall .356/.318 inside noise. The 6000 edge (-.022) was gone
+by 7500. REGISTER = NULL: dropped from the 500M shape. Council 4
+stays (-.035 on three rows).
+
+The user asked (verbatim intent): multiple sleep cycles? the whole
+architecture together on a 4090 with probes, one conveyor vs the
+add-one approach? the complete PFC / basal ganglia / HPC; frontier
+embedding numbers for tokens? does the PFC have the bandwidth to
+feed the neocortex? Answers, ledgered:
+
+SLEEP CYCLES. The organism naps: every 16 steps in childhood one
+2-chunk block (pair block or pay-weighted span) + homeostasis;
+scan5b took 657 nights by step 18000. The brain's 4-6 cycles exist
+for alternation (SWS replays hippocampus -> cortex; REM integrates
+what SWS just stabilised; iterating lets REM work on fresh
+consolidation) and for sleep pressure (covered by H=1e-3). Alternation
+only means something once REM exists. A64-R3: the sleep FRACTION is
+what helps/hurts; cycle count at fixed dose is a spacing question
+(every=8/block=1 vs every=16/block=2, one env var; not a priority).
+Decision: a night = replay block then dream block (k = 1); cycles
+become a knob only if REM proves it teaches.
+
+ONE CONVEYOR VS ADD-ONE. Both, in order. Add-one was right for the
+shape levers (council -.035, register null). Phase 2's organs are a
+chain — reward slot -> value heads -> RPE -> dopamine on writes and
+gates -> saliency replay -> REM seeds — and each is inert alone, so
+add-one would read a string of meaningless nulls. scan8 = everything
+on, over the scan5b base, scan5b the control (same shard/seed/steps).
+Rigor comes from a per-organ probe that says "doing its job"
+independent of CE (dopa_gate: band-3 gate and |RPE| at presses vs
+elsewhere, veto means; lesion_reward; lesion_veto; value_auc per band
+on the prophet's held-out ring; dreams n/stepped/best_q/distinct3/
+v_end; cast p_true by press class; the existing band/store/thread
+lesions). Drop-one runs (~$3 each) only for organs whose probes say
+active, only if scan8 moves CE/recall.
+
+THE THREE SYSTEMS, COMPLETE. Census at 78M: neocortex blocks 43%,
+vocab 29%, PFC 27% (council 10.8, cells 10.8, pred 2.7, mem_proj
+2.7), hippocampus ~1% of params (its state is the KD matrices).
+  PFC: token/reward/hippocampus slots, ladder 3-8 (9/10 built),
+  lateral vetoes, value heads, predictors — complete at this scale.
+  BASAL GANGLIA — the missing organ, now built (S25): in the brain the
+  BG gate PFC working-memory updates (Go/NoGo -> thalamus -> stripe
+  update) and those gates are trained by dopamine, not backprop. We
+  had the gates (g = sigmoid(z) * prod(1 - veto)) and the dopamine
+  (RPE from the value heads) but the gates learned only by BPTT inside
+  a 64-token chunk. bg_w adds the actor: at each unit's tick, delta =
+  R + gamma V(h_new) - V(h_prev); the gate recomputed on DETACHED
+  inputs is regressed toward open when delta > 0 and shut when
+  delta < 0, |delta|-weighted (PBWM: a DA burst strengthens Go, a dip
+  NoGo). The force lands on cells.*.z and the veto parameters only —
+  never the council (the scan2 lesson). bg_w = 0 exact. The
+  hippocampus write gate already takes dopamine (kappa).
+  HPC: exact delta-rule stores per band keyed by the PFC, read every
+  token, dopamine-scaled writes, encode/retrieve separated by chunk —
+  complete; its last piece is indexing replay (saliency = ripple
+  selection; S24).
+  SLEEP: SWS replay + corrections + homeostasis + amygdala tag run
+  today. REM had a real bug for this organism: dream_block capped the
+  seed at max_T - max_new - 1 = 15 tokens at T=64 and silently never
+  dreamed. Now windowless (S26): the seed is fed in chunks, the step
+  runs chunked with wake semantics, the seed draw follows the night's
+  replay weights (saliency), selection stays with the EXTERNAL judge
+  (scoring dreams with our own value heads would be the self-grading
+  A77's safety argument forbids) — V is logged per dream, never used
+  to pick.
+
+FRONTIER EMBEDDING NUMBERS. Dimension: d=512 at 78M; d=1280 at 500M,
+the frontier band for that size (Qwen2.5-0.5B 896/24L, SmolLM2-360M
+960/32L, GPT-2-medium 1024/24L, Llama-3.2-1B 2048/16L) — shallower
+cortex because 40-50% goes to the PFC. Vocab 16k vs 32k-151k:
+Qwen2.5-0.5B spends ~136M of 494M on its embedding table; ours ~42M
+at d=1280 (8%); the bigger/tied variant (A75) broke the binder at
+debug (+18% CE). Pretrained frontier embeddings as init: no —
+different tokenizer, and it smuggles a frontier model's knowledge
+into a demo whose claim is that THIS organism learned it.
+
+PFC -> NEOCORTEX BANDWIDTH. Per token the cortex gets 8 slots x d =
+4,096 numbers (query = the PFC token slot; 7 key/values = reward,
+hippocampus read, bands 3-8; the same bundle at all 8 layers). Not
+binding, three ways: scan7 widened it to 11 slots — null; scan6
+deepened the PFC at the same width — -.035 (content moves, width
+doesn't); at 12M tokens the organism seeing one token per step is
+1.4 nats ahead of the hybrid with a 2048-token attention window at
+matched d/L (4.475 vs 5.91). The real constraint: the bundle is
+one-shot — the cortex cannot re-query the past (option 4, out by the
+user's call) — so the PFC must pre-fetch. 500M keeps 8 slots at
+d=1280 (~10k numbers); if the depth curve stalls, the lever is a
+second token slot, not wider bands.
+
+## 34. scan8 = THE ORGANISM (launch spec)
+
+Built this hour (laws S24-S27; suite green): BG actor (bg_w), gate
+trace, eval lesions reward_off/veto_off, windowless REM, saliency
+replay, Prophet.auc(head=) for the value heads, driver --saliency/
+--dream + value_auc + dream vitals in the segment row, heartbeat
+dopa_gate probe + lesion_reward/lesion_veto, pod SALIENCY/DREAM env.
+Local end-to-end smoke (d=32, 120 steps, every=8): 14 nights, 7
+dreams stepped (best_q .74, distinct3 1.0, v_end logged), 480 dopamine
+stamps, fid:val/fid:bg moving, saliency weights live; compiled
+council/read + reward slot + BG smoke clean.
+
+scan8 config = scan5b base + Phase 2, all on:
+  SCAN_OPTS {"n_council":2,"slot_every":1,"write_every":1,
+             "compile_council":true,"compile_read":true,
+             "store_exact":true,"reward_slot":true,"dopamine":1.0,
+             "bg_w":0.05}
+  VALUE_W=0.05  SALIENCY=0.5
+  DREAM={"every_nights":4,"n":4,"max_new":48,"min_q":0.55}
+  HBC=4000; everything else scan5b's (d 512 / 8L / T 64 / 16 lanes x 64,
+  bf16 trunk, lr 1e-4, warmup 1000, clocks 3:1..8:32768).
+Control: scan5b (6000: 4.475/.297/store .099; 7500: 4.347/.318/.128,
+b3 +1.79; 12000: 4.163/.599/.232; 18000: 4.080/.516/.347).
+Reads: (1) CE/recall vs scan5b at 6000/7500/12000; (2) dopa_gate —
+gate_press vs gate_other, rpe_press vs rpe_other (idle organ = flat);
+(3) lesion_reward / lesion_veto deltas; (4) value_auc per band vs
+prophet_auc (scan5b seg1 {3:.56, 4:.51, 5:.51, 6:.34}); (5) dreams:
+stepped share, distinct3 (collapse backstop), CE not worse than
+scan5b in childhood; (6) cast p_true by press class (pressed facts
+recalled better than unpressed = dopamine doing its job).
+Caveat ledgered: lm_judge.grade_dialogue gave 0.74 to a d=32 model's
+gibberish — the external judge is lenient at this scale; the dream
+dose is small (1 step per 4 nights ~ 1.5% of steps) and the collapse
+probe is the backstop.

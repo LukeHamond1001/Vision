@@ -160,6 +160,8 @@ def main():
     # "write_every": 4}' (docs/ONE_TOKEN_PLAN.md: one knob per iteration)
     ap.add_argument("--scan-opts", default="")
     ap.add_argument("--value-w", type=float, default=0.0)   # Phase 2: TD value loss weight
+    ap.add_argument("--saliency", type=float, default=0.0)  # Phase 2: |RPE|-stamped replay share (Sleeper)
+    ap.add_argument("--dream", default="")                  # Phase 2: REM, a JSON dict for train(dream=) ('' = none)
     ap.add_argument("--lanes", type=int, default=0)
     # band repair (docs/MEMORY_MATH.md 5): credit routing, centred
     # fidelity, the tail memory token; 0/0/0 = certified bit-exactly
@@ -233,8 +235,9 @@ def main():
         return
 
     sl = Sleeper(arm="C", every=0, block_chunks=2, seed=1,
-                 homeostasis=1e-3)
+                 homeostasis=1e-3, saliency=a.saliency)
     sl.press_pay = (a.T, a.T // 8)
+    dream = json.loads(a.dream) if a.dream else None
     # the prophet samples band states by CHUNK clocks; the scan's
     # clocks are in tokens
     pclocks = ({k: max(1, c // a.T) for k, c in clocks.items()}
@@ -262,7 +265,7 @@ def main():
             d=a.d, n_layers=a.n_layers, lanes=lanes, T=a.T,
             steps=end - cur, seed=1000 + seg_i, device=a.device,
             arch=a.arch, store="matrix", keyed=a.keyed,
-            scan=scan_opts, value_w=a.value_w,
+            scan=scan_opts, value_w=a.value_w, dream=dream,
             norm_mix=True, aux_trunk=0.2, use_xl=False,
             gate_init=-2.0, clocks=clocks,
             data=a.data, eval_data=a.eval_data, ckpt=a.ckpt,
@@ -279,14 +282,22 @@ def main():
             tail_tokens=a.tail_tokens,
             horizon_rule=("clock" if a.clocks else "fixed"))
         carry = model._st
-        aucs = {}
+        aucs, vaucs = {}, {}
         for k in sorted(prophet.clocks):
             try:
                 v = prophet.auc(k)
                 if v is not None:
                     aucs[str(k)] = round(float(v), 4)
+                # the organism's own value head on the same held-out ring
+                vh = getattr(model, "value", None)
+                if vh is not None and str(k) in vh:
+                    with torch.no_grad():
+                        v2 = prophet.auc(k, head=vh[str(k)])
+                    if v2 is not None:
+                        vaucs[str(k)] = round(float(v2), 4)
             except Exception:
                 pass
+        dreams = [r for r in sl.stats if r.get("arm") == "DREAM"]
         row = {"seg": seg_i, "from": cur, "to": end, "stage": stage,
                "every": sl.every, "ce_first": round(ce0 or 0, 4),
                "ce_last": round(ce1 or 0, 4),
@@ -301,6 +312,15 @@ def main():
                "vetoes": drive.vetoes,
                "ledger": len(drive.ledger),
                "prophet_auc": aucs,
+               "value_auc": vaucs,
+               "dreams": {"n": len(dreams),
+                          "stepped": sum(1 for r in dreams if r.get("stepped")),
+                          "best_q": round(sum(r.get("best_q", 0) for r in dreams)
+                                          / len(dreams), 4) if dreams else None,
+                          "distinct3": round(sum(r.get("distinct3", 0) for r in dreams)
+                                             / len(dreams), 4) if dreams else None,
+                          "v_end": round(sum(r.get("v_end", 0) for r in dreams if "v_end" in r)
+                                         / max(1, sum(1 for r in dreams if "v_end" in r)), 4)},
                "secs": round(time.time() - t0)}
         with open(a.trace, "a") as f:
             f.write(json.dumps(row) + "\n")

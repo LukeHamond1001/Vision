@@ -195,6 +195,14 @@ def process_chunk(model, drive, conveyor, T, device, opt=None,
         vlo = model.pop_value_loss()
         if vlo is not None and value_w > 0:
             losses.append(value_w * vlo)
+            if hasattr(drive, "tick_fid"):
+                drive.tick_fid("val", vlo)            # TD loss on the step line (ema key fid:val)
+    if hasattr(model, "pop_bg_loss"):
+        blo = model.pop_bg_loss()                     # already weighted by the model's bg_w
+        if blo is not None:
+            losses.append(blo)
+            if hasattr(drive, "tick_fid"):
+                drive.tick_fid("bg", blo)
     logp = torch.log_softmax(logits.float(), dim=-1)
     for lane, evs in enumerate(events):
         for p, kind, d in sorted(evs, key=lambda e: e[0]):
@@ -577,6 +585,8 @@ def train(d=64, lanes=4, T=256, steps=40, seed=0, device="cpu",
             # A74: stamp the wake step's CE over its token range —
             # append-only, no RNG, no graph; only novelty>0 reads it
             sleep.note_ce(ce, drive.step_t - T, drive.step_t)
+            if hasattr(sleep, "note_dopa") and hasattr(model, "dopa_trace"):
+                sleep.note_dopa(model.dopa_trace(), drive.step_t - T, drive.step_t)
             slept = sleep.maybe_sleep(model, opt, drive, step)
             if slept is not None and "cuda" in str(device):
                 # the mini-flash OOM (2026-08-21, 16 GB card): sleep
