@@ -439,3 +439,15 @@ flash never armed its binder in 5B tokens.) scan5b runs to its step-
 the input for the 500M band ladder — then scan6 = readings/sweep
 fixes + expandable segments + council 4 (sha c87fa53), read against
 this trace at matched steps.
+
+## 25. The next two levers, built (11:20 UTC)
+
+- scan6 = council 4 (PFC depth; SCAN_OPTS n_council 4) + the readings/
+  sweep fixes + expandable segments (sha a7fd049 or later).
+- scan7 = register {3: 4} (a7fd049: band 3 as four working-memory
+  units, S20) — the PFC's fast capacity; or both if scan6 is a clear
+  win. Hippocampus strength/KD after that.
+Each is read against scan5b's trace at matched steps: eval CE 4.475 /
+4.347 / 4.163 at 6000 / 7500 / 12000; in-ctx .297 / .318 / .599;
+store off .099 / .128 / .232; the 7500 lesion pass (band 3 +1.79,
+bands 4-8 +.014..+.025, store +.114).
