@@ -478,3 +478,18 @@ flat (the readings fixes hold: detach/sweep 1 ms). A deeper PFC buys
 recall more than CE. scan6 runs to 7500 (lesions) and 12000 (scan5b:
 4.163 / .599 / .232); then scan7 = register {3:4} on the council-2
 base, the two PFC levers measured independently before combining.
+
+## 28. scan6 at 7500 (15:55 UTC): council 4 vs 2, lesion pass
+
+eval CE 4.309 vs 4.347; in-ctx .38 vs .318 (lesion base .468 vs .389);
+short .283 vs .239; b4 .178 vs .151; store off .129 vs .128; lesions
+b3 +1.73 vs +1.79, bands 4-8 identical, all bands +1.90 vs +1.95,
+store +.116 vs +.114. Depth buys recall (+20-40%) and a little CE;
+the organ dependence is unchanged. User's framing (15:45): the PFC
+should hold most of the parameters because it does attention's job —
+agreed for INTEGRATION (depth; recurrent LMs put all params in the
+recurrent path), with the correction that attention's RETRIEVAL is the
+hippocampus's state (KD, free in params), and the binding constraint is
+sequential time (PFC blocks run per token; the decoder is batched).
+The depth curve 2 -> 4 -> 8 decides the 500M split (PFC 40-50%
+expected); scan8 = council 8.
