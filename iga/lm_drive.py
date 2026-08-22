@@ -283,8 +283,14 @@ class Drive:
                 if self.step_t < h["due"]:
                     keep.append(h)
                     continue
-                rs = [r for (t, r) in self.readings.get((lane, h["key"]), [])
-                      if t > h["t0"]]  # only progress made DURING the hold
+                # only progress made DURING the hold: the list is in time
+                # order, so walk back from the tail (O(readings since t0),
+                # not O(all readings on the key) — exact, 2026-08-22)
+                lst = self.readings.get((lane, h["key"]), [])
+                i = len(lst)
+                while i > 0 and lst[i - 1][0] > h["t0"]:
+                    i -= 1
+                rs = [r for (_, r) in lst[i:]]
                 if h["key"].startswith("fid:"):
                     phi1 = max(0.0, h["target"] - self.ema.get(h["key"], 0.0)) \
                         / max(h["target"], 1e-6)
