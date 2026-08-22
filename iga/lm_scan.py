@@ -68,6 +68,15 @@ from .lm_transformer import Block, make_mlp
 SCAN_CLOCKS = {3: 1, 4: 8, 5: 64, 6: 512, 7: 4096, 8: 32768}   # tokens
 
 
+def _lift_read(M, q, proj, phase, alpha):
+    """one band's hippocampus read: alpha * M . lift(q); M [B, d, D],
+    q [B, T, d] unit queries, proj [D, d], phase [D] -> [B, T, d].
+    Same math as LogitStore.lift + LogitStore.read (a free function so
+    torch.compile can fuse the elementwise tail; see compile_read)."""
+    k = nn.functional.normalize(torch.cos(nn.functional.linear(q, proj) + phase), dim=-1)
+    return alpha * torch.einsum("bij,btj->bti", M, k)
+
+
 class ScanBlock(nn.Module):
     """Pre-LN block whose attention QUERY is the token slot alone;
     keys/values are the token slot and the organ slots."""
@@ -123,7 +132,7 @@ class ScanLM(nn.Module):
                  fast_gate=None, veto=True, read_drop=0.5, aux_trunk=0.0,
                  mlp="gelu", band_center=True, order="cortex_first",
                  kd_base=1, slot_every=8, write_every=4, kd_max=4096,
-                 compile_council=False, compile_mode="default"):
+                 compile_council=False, compile_mode="default", compile_read=False):
         super().__init__()
         assert order in ("cortex_first", "pfc_first")
         self.order = order
@@ -240,6 +249,11 @@ class ScanLM(nn.Module):
         self.compile_council = bool(compile_council)
         self._council_fn = (torch.compile(self._council_blocks, dynamic=False, mode=compile_mode)
                             if compile_council else self._council_blocks)
+        # same treatment for one band's hippocampus read (lift + read +
+        # alpha: ~9 small ops per band per token at slot_every=1)
+        self.compile_read = bool(compile_read)
+        self._lift_read_fn = (torch.compile(_lift_read, dynamic=False, mode=compile_mode)
+                              if compile_read else _lift_read)
 
     # ---------------- state ----------------
     def init_state(self, B, device):
@@ -336,7 +350,7 @@ class ScanLM(nn.Module):
             if k in self.lesioned:
                 continue
             stn = self.stores[str(k)]
-            r = self.alpha[str(k)] * stn.read(st["M"][k], stn.lift(q))
+            r = self._lift_read_fn(st["M"][k], q, stn.proj, stn.phase, self.alpha[str(k)])
             rsum = r if rsum is None else rsum + r
         if rsum is not None and one:
             rsum = rsum.squeeze(1)

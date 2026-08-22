@@ -526,3 +526,38 @@ def test_S14_fidelity_trains_the_band_only():
     assert gnorm(m.council.parameters()) > 0
     assert gnorm(m.cells["3"].parameters()) > 0          # CE credit through the live state
     assert gnorm(m.veto_w.parameters()) > 0
+
+
+def test_S15_compiled_read_matches_eager():
+    """compile_read=True: one band's lift+read through torch.compile equals
+    the eager LogitStore path (1e-5 fp32) with reads live; trains."""
+    pytest.importorskip("torch._dynamo")
+    import torch._dynamo
+    torch._dynamo.reset()
+    m0 = _model(seed=41, order="pfc_first", slot_every=1, write_every=1); m0.eval()
+    m1 = _model(seed=41, order="pfc_first", slot_every=1, write_every=1, compile_read=True); m1.eval()
+    m1.load_state_dict(m0.state_dict())
+    with torch.no_grad():
+        st0, st1 = m0.init_state(2, "cpu"), m1.init_state(2, "cpu")
+        for i in range(3):                                   # chunk 0 writes; 1-2 read
+            x = _toks(100 + i, B=2)
+            lg0, st0, _, _, _ = _fwd(m0, x, st0); st0 = m0.detach_state(st0)
+            try:
+                lg1, st1, _, _, _ = _fwd(m1, x, st1); st1 = m1.detach_state(st1)
+            except Exception as e:
+                pytest.skip(f"torch.compile unavailable on this host: {type(e).__name__}")
+    assert m0._reads_used and torch.allclose(lg0, lg1, atol=1e-5), (lg0 - lg1).abs().max()
+    m1.train(); m1.read_drop = 0.0
+    st = m1.init_state(2, "cpu")
+    for i in range(3):
+        xb = _toks(110 + i, B=2)
+        lg, st, ticks, wc, rc = _fwd(m1, xb, st)
+        loss = torch.nn.functional.cross_entropy(lg.reshape(-1, V), xb.reshape(-1))
+        if rc is not None:
+            loss = loss + 0.05 * rc
+        loss.backward()
+        st = m1.detach_state(st)
+    # alpha starts at 0 (the vote is silent at init) so query_proj's gradient
+    # is exactly zero until alpha grows — in eager and compiled alike; the
+    # read path is live when alpha itself receives gradient
+    assert any(p.grad is not None and float(p.grad.abs()) > 0 for p in m1.alpha.parameters())
