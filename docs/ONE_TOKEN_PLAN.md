@@ -206,3 +206,26 @@ per-band lesion pass = R2 proper, and R1 vs scan1's 6.192). Meanwhile,
 locally: count the ops per token with the profiler, batch the six
 bands' per-token work into single tensors (acc/cnt/slots/vetoes),
 measure; scan3 = hippocampus cadence + the bit-exact speedups.
+
+## 11. The speed work, measured properly (03:10 UTC)
+
+My first profiles ran the DEFAULT order (cortex_first, per-token
+decoder) — wrong organism; corrected. At the pod's order (pfc_first):
+~97 forward ops per token, ~21k kernels per step with backward, ~29 us
+each on the 4090 = the 0.6 s/step observed (3.4k tok/s). Shares:
+council 29%, hippocampus read 8%, loop bookkeeping 60% (the fidelity
+scored tick by tick was ~20 ops/token by itself).
+
+Commit d74b356: bands batched (one add / one bmm / one veto matmul),
+fidelity scored per band in one shot, opt-in compile_council (S13).
+Ops per step 21.0k -> 17.2k. One SEMANTIC correction rides along and
+is ledgered as a fix, not a design change: the fidelity loss now has
+one entry per band per chunk (the hybrid's equal-weight semantics);
+the per-tick port had let band 3's 63 ticks outweigh band 5's one
+(63:1), starving the slow bands' objective.
+
+scan3 = cadence (write_every 1, slot_every 1) + d74b356 + compile_
+council (default mode; if the pod's torch.compile fails, the smoke
+dies in ~2 min and scan3 relaunches without it). The pod's smoke
+reports tok/s: scan2 3.4k is the reference. Launch after scan2's
+step-12000 row (~05:00 UTC) — never two pods on the volume.
