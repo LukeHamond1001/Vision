@@ -172,3 +172,4 @@
 21:37:50 [scan8] run ENDED rc=1 rows=2 segs=2 tail: RuntimeError: Expected a 'cuda' device type for generator but found 'cpu'
 21:37:56 [scan8] self-removing in 60s
 21:46:03 [scan8] boot SCAN sha=d0ea7e9 gpu=NVIDIA GeForce RTX 4090, 24564 MiB vol=2190893G 421781G order=pfc_first lives=32 T=64 d=512 L=8 opts={"n_council":2,"slot_every":1,"write_every":1,"compile_council":true,"compile_read":true,"store_exact":true,"reward_slot":true,"dopamine":1.0,"bg_w":0.05} clocks=3:1,4:8,5:64,6:512,7:4096,8:32768 prec=bf16 value_w=0.05 saliency=0.5 dream={"every_nights":4,"n":4,"max_new":48,"min_q":0.55} night=c1/o1/s0/k0/b0
+21:46:11 [scan8] inventory: flash_epi=ok flash_eval_epi=ok mini_epi=ok mini_eval_epi=ok tar=24G parquets=19 judge=ok
