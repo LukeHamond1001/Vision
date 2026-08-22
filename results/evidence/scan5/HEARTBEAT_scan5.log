@@ -1,0 +1,7 @@
+06:15:48 [scan5] boot SCAN sha=6160c76 gpu=NVIDIA GeForce RTX 4090, 24564 MiB vol=2190893G 457216G order=pfc_first lives=32 T=64 d=512 L=8 opts={"n_council":2,"slot_every":1,"write_every":1,"compile_council":true,"compile_read":true,"store_exact":true} clocks=3:1,4:8,5:64,6:512,7:4096,8:32768 prec=bf16
+06:15:55 [scan5] inventory: flash_epi=ok flash_eval_epi=ok mini_epi=ok mini_eval_epi=ok tar=24G parquets=19 judge=ok
+06:16:01 [scan5] copyable train: COPYABLE {"shard": "/workspace/v10/scan_epi_l32", "lives": 32, "life_len": 6250000, "tokens_per_lane_measured": 200000, "lane0_k4_w256": {"copy_correct": 0.0502, "context_seen": 0.0785}, "lane0_k4_w4096": {"copy_correct": 0.1523, "context_seen": 0.2146}, "lane0_k8_w65536": {"copy_correct": 0.1195, "context_seen": 0.143}, "lane1_
+06:16:06 [scan5] copyable eval: COPYABLE {"shard": "/workspace/v10/mini_eval_epi", "lives": 2, "life_len": 10000000, "tokens_per_lane_measured": 200000, "lane0_k4_w256": {"copy_correct": 0.145, "context_seen": 0.1926}, "lane0_k4_w4096": {"copy_correct": 0.2444, "context_seen": 0.3234}, "lane0_k8_w65536": {"copy_correct": 0.1814, "context_seen": 0.2208}, "lane1
+06:17:01 [scan5] smoke SCANSMOKE {"lanes": 32, "T": 64, "order": "pfc_first", "tok_s": 1684, "holds": 12.8, "lam": 0.01953, "ce": [9.841, 6.184], "peak_gib": 11.6, "params_m": 67.0}
+06:17:05 [scan5] run started pid 1219 lam 0.01953: 
+06:19:10 [scan5] 2 min:     timing ms/step: bwd=318 fwd=113 opt=7 loss_events=1 prophet=1 sweep=0 detach=0 data=0  total=441  gc2=15 gc1=539 objs=2203647

@@ -365,3 +365,19 @@ of both shards at boot. Reads: the smoke, the timing lines at steps
 CE vs scan3's trace (4.26 @1300, 3.71 @2200, 3.35 @3000, 2.97 @6000),
 the step-6000 row (R1 + recall bins), the step-12000 lesion pass
 (STORE OFF — the verdict on one-shot binding).
+
+## 20. THE DECAY FOUND (06:30 UTC): Python's garbage collector
+
+scan5's first timing line: bwd 318 ms, fwd 113, everything else ~0 —
+and 2,203,647 tracked Python objects with 15 full collections by step
+100. The conveyor holds the shard's 765k event dicts; every gen-2
+collection walks all of them (~0.4 s), and the collector fires more
+often as the ledger, readings and holds grow — the cost lands inside
+whatever phase allocates (fwd/bwd), which is why no component ever
+showed it and no local run reproduced it at scale. Fix 51f6fb8:
+gc.collect() + gc.freeze() once before the loop (the events, model and
+optimizer live for the whole run) and gen-2 threshold x5. Local check:
+tracked objects 370k -> ~600, step 167 -> 100 ms. scan5 cut; scan5b =
+pod 162vgnlfdvjco8, sha 51f6fb8 — the same model (store_exact) with
+the fix. Shards' copyability (pod): train 5.0% @k4/w256 (15% @w4096),
+eval 14.5% — the CE numbers are language, not copying.
