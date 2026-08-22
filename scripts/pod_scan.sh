@@ -92,6 +92,10 @@ if [ ! -f "$MINI/manifest.json" ]; then
 fi
 [ -f "$MINI/manifest.json" ] || { hb "ABORT no shard"; sleep 30; [ "${KEEP_POD:-0}" = "1" ] || runpodctl remove pod "$RUNPOD_POD_ID"; exit 1; }
 
+# ---- 2b. how copyable are the shards (context for every CE number) ----
+hb "copyable train: $(python scripts/copyable.py "$MINI" 200000 2>/dev/null | cut -c1-330)"
+hb "copyable eval: $(python scripts/copyable.py "$DATA/mini_eval_epi" 200000 2>/dev/null | cut -c1-330)"
+
 # ---- 3. lam smoke at the exact config (40 steps) ----
 cat > scan_smoke.py <<'PY'
 import json, os, sys, time, torch
