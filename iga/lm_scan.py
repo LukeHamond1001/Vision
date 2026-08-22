@@ -132,7 +132,8 @@ class ScanLM(nn.Module):
                  fast_gate=None, veto=True, read_drop=0.5, aux_trunk=0.0,
                  mlp="gelu", band_center=True, order="cortex_first",
                  kd_base=1, slot_every=8, write_every=4, kd_max=4096,
-                 compile_council=False, compile_mode="default", compile_read=False):
+                 compile_council=False, compile_mode="default", compile_read=False,
+                 store_exact=False):
         super().__init__()
         assert order in ("cortex_first", "pfc_first")
         self.order = order
@@ -235,6 +236,9 @@ class ScanLM(nn.Module):
         self.read_gate = nn.ParameterDict(
             {str(k): nn.Parameter(torch.tensor(0.0), requires_grad=False)
              for k in self.bands})                      # battery compat
+        self.store_exact = bool(store_exact)
+        for stn in self.stores.values():
+            stn.exact = self.store_exact
         self.lesioned = set()
         self.store_read_off = False
         self.mem_off = False

@@ -152,6 +152,15 @@ class LogitStore(nn.Module):
         self.D = D
         self.decay = decay
         self.beta = nn.Parameter(torch.tensor(0.0))
+        # exact=True (2026-08-22, the one-token organism's hippocampus):
+        # the chunk's pairs are written by the TRUE sequential delta rule
+        # in chunkwise-exact form (Yang et al. 2024's WY representation —
+        # a T x T triangular solve), each pair at its own full strength.
+        # The certified default averages the chunk's corrections (the
+        # A52 NaN law's convex mix): one fact is written at 1/T strength,
+        # which is why the store accumulated frequent pairs and never
+        # held a one-shot item (scan3: store off = +0.003 nats).
+        self.exact = False
         g = torch.Generator().manual_seed(seed)
         # NONLINEAR lift (random Fourier features). A linear
         # projection of d-dim keys spans a d-dim subspace of R^D —
@@ -179,12 +188,40 @@ class LogitStore(nn.Module):
         Convex strength-normalized delta rule (A52 NaN law); recon
         weights detached (A52b anti-gaming law)."""
         beta = self.beta.clone() if stale_ok else self.beta
+        if self.exact:
+            return self.write_exact(M, K, V, s, beta)
         pred = torch.einsum("bij,btj->bti", M, K)
         upd = torch.einsum("bti,btj->bij",
                            s.unsqueeze(-1) * (V - pred), K)
         denom = s.sum(dim=1).clamp(min=1e-3)
         M = (1 - self.decay) * M + torch.sigmoid(beta) * \
             upd / denom.unsqueeze(-1).unsqueeze(-1)
+        back = torch.einsum("bij,btj->bti", M, K)
+        w = (s / (s.sum(dim=1, keepdim=True) + 1e-6)).detach()
+        recon = ((1 - nn.functional.cosine_similarity(back, V,
+                                                      dim=-1))
+                 * w).sum(dim=1).mean()
+        return M, recon
+
+    def write_exact(self, M, K, V, s, beta):
+        """The sequential delta rule M_t = M_{t-1} + b_t (v_t - M_{t-1} k_t)
+        k_t^T for t = 1..T, b_t = sigmoid(beta) s_t, computed exactly for
+        the whole chunk: with u_t the rank-1 increment at t,
+            (I + L) U = b * (V - K M0^T),  L_ts = b_t k_t.k_s (s < t),
+            M_T = M0 + U^T K
+        (decay applied once per write, before the chunk, as the
+        certified rule does). A repeated key inside the chunk is handled
+        exactly — no overshoot, no averaging."""
+        B, T, _ = K.shape
+        b = torch.sigmoid(beta) * s                              # [B, T]
+        M0 = (1 - self.decay) * M
+        pred = torch.einsum("bij,btj->bti", M0, K)               # M0 k_t
+        R = b.unsqueeze(-1) * (V - pred)                         # [B, T, d]
+        G = torch.einsum("bti,bsi->bts", K, K)                   # k_t . k_s
+        L = torch.tril(b.unsqueeze(-1) * G, diagonal=-1)
+        A = torch.eye(T, device=K.device, dtype=K.dtype).unsqueeze(0) + L
+        U = torch.linalg.solve_triangular(A, R, upper=False)     # [B, T, d]
+        M = M0 + torch.einsum("bti,btj->bij", U, K)
         back = torch.einsum("bij,btj->bti", M, K)
         w = (s / (s.sum(dim=1, keepdim=True) + 1e-6)).detach()
         recon = ((1 - nn.functional.cosine_similarity(back, V,

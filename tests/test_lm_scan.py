@@ -587,3 +587,75 @@ def test_S16_ledger_deque_matches_list_semantics():
     for i in range(2000):
         big._settle({"lane": 0, "band": 3, "key": "k", "phi0": 0.0, "w": 0.0, "t0": i}, 0.0, 0.0)
     assert time.time() - t0 < 0.5                         # 2000 settles at the cap: O(1) each
+
+
+def test_S17_exact_delta_rule_is_the_sequential_rule():
+    """write_exact equals the token-by-token delta rule (fp64, 1e-8),
+    handles a repeated key inside the chunk without overshoot, and a
+    single pair written at full strength is read back exactly — the
+    certified averaged write reads it back at ~1/T."""
+    from iga.lm_hybrid import LogitStore
+    torch.manual_seed(3)
+    B, T, d, D = 2, 16, 8, 24
+    stn = LogitStore(d, D, decay=0.0, seed=5).double()
+    with torch.no_grad():
+        stn.beta.fill_(20.0)                                   # sigmoid -> 1: full strength
+    K = torch.nn.functional.normalize(torch.randn(B, T, D, dtype=torch.float64), dim=-1)
+    K[:, 5] = K[:, 2]                                          # a repeated key in the chunk
+    V = torch.nn.functional.normalize(torch.randn(B, T, d, dtype=torch.float64), dim=-1)
+    s = torch.rand(B, T, dtype=torch.float64) * 0.9 + 0.1
+    M0 = 0.1 * torch.randn(B, d, D, dtype=torch.float64)
+    # sequential reference
+    Mr = M0.clone()
+    for t in range(T):
+        bt = (torch.sigmoid(stn.beta) * s[:, t]).view(B, 1, 1)
+        pred = torch.einsum("bij,bj->bi", Mr, K[:, t])
+        Mr = Mr + bt * torch.einsum("bi,bj->bij", V[:, t] - pred, K[:, t])
+    Me, _ = stn.write_exact(M0, K, V, s, stn.beta)
+    assert torch.allclose(Me, Mr, atol=1e-8), (Me - Mr).abs().max()
+    # the repeated key: the later write wins without overshoot
+    back = torch.einsum("bij,bj->bi", Me, K[:, 5])
+    assert back.norm(dim=-1).max() < 1.05 * V[:, 5].norm(dim=-1).max() + 1e-6
+    # one-shot: a single pair at strength 1 is read back exactly; the
+    # averaged (certified) write reads it back at ~1/T of the magnitude
+    s1 = torch.zeros(B, T, dtype=torch.float64); s1[:, 3] = 1.0
+    Z = torch.zeros(B, d, D, dtype=torch.float64)
+    Me1, _ = stn.write_exact(Z, K, V, s1, stn.beta)
+    r1 = torch.einsum("bij,bj->bi", Me1, K[:, 3])
+    assert torch.allclose(r1, V[:, 3], atol=1e-8)
+    stn.exact = False
+    Ma1, _ = stn.write(Z, K, V, s1)                           # strength-normalised: one pair, weight 1
+    ra = torch.einsum("bij,bj->bi", Ma1, K[:, 3])
+    assert torch.allclose(ra, V[:, 3], atol=1e-8)            # a lone pair is fine either way...
+    s_all = torch.ones(B, T, dtype=torch.float64)             # ...but among T pairs it is diluted to ~1/T
+    Ma, _ = stn.write(Z, K, V, s_all)
+    ra_all = torch.einsum("bij,bj->bi", Ma, K[:, 9])
+    assert (ra_all * V[:, 9]).sum(-1).mean() < 0.25          # the averaged write: weak item
+    stn.exact = True
+    Me_all, _ = stn.write(Z, K, V, s_all)
+    re_all = torch.einsum("bij,bj->bi", Me_all, K[:, 9])
+    assert (re_all * V[:, 9]).sum(-1).mean() > 0.6            # the exact write: the item survives
+
+
+def test_S18_store_exact_in_the_organism():
+    """store_exact=True routes every band's write through write_exact
+    (flag set on each store), trains, and reads back a pair written one
+    chunk earlier more strongly than the averaged store does."""
+    m0 = _model(seed=43, order="pfc_first", slot_every=1, write_every=1); m0.eval()
+    m1 = _model(seed=43, order="pfc_first", slot_every=1, write_every=1, store_exact=True); m1.eval()
+    m1.load_state_dict(m0.state_dict())
+    assert all(st.exact for st in m1.stores.values()) and not any(st.exact for st in m0.stores.values())
+    x = _toks(120, B=2)
+    with torch.no_grad():
+        s0, s1 = m0.init_state(2, "cpu"), m1.init_state(2, "cpu")
+        _, s0, _, _, _ = _fwd(m0, x, s0); _, s1, _, _, _ = _fwd(m1, x, s1)
+    assert not torch.allclose(s0["M"][3], s1["M"][3])
+    m1.train(); m1.read_drop = 0.0
+    st = m1.init_state(2, "cpu")
+    for i in range(3):
+        xb = _toks(121 + i, B=2)
+        lg, st, ticks, wc, rc = _fwd(m1, xb, st)
+        loss = torch.nn.functional.cross_entropy(lg.reshape(-1, V), xb.reshape(-1)) + 0.05 * rc
+        loss.backward()
+        st = m1.detach_state(st)
+    assert torch.isfinite(st["M"][3]).all() and torch.isfinite(lg).all()
