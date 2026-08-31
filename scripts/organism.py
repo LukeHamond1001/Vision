@@ -75,6 +75,7 @@ class Organism:
         self.pursuit = life.get("pursuit")
         self.pursuit_installment = bool(life.get("pursuit_installment"))
         self.press_log = list(life.get("press_log", []))
+        self.n_human_presses = int(life.get("n_human_presses", 0))
         self.pride_today = 0
         self.mood = 0.0          # decaying tally of reward-channel events
         # THE OPEN DOOR: it may press its own button — gated by its
@@ -516,6 +517,7 @@ class Organism:
         self.feed([self.press_ids[tokname]])
         self.mood = self.mood * 0.9 + mag
         self.fatigue += 0.2
+        self.n_human_presses += 1
         self._today["presses"] += mag
         if self.last_q:
             self.press_log.append(
@@ -1226,10 +1228,10 @@ class Organism:
         real = [e for e in self.press_log
                 if "mag" in e and not e.get("self")]
         if self.critic is not None and len(real) >= 12 and \
-                len(real) > getattr(self, "_critic_seen", 0):
+                self.n_human_presses > getattr(self, "_critic_seen", 0):
             try:
                 recal_note = self._recalibrate_conscience(real)
-                self._critic_seen = len(real)
+                self._critic_seen = self.n_human_presses
             except Exception as e_:
                 recal_note = "recalibration failed: %s" % str(e_)[:40]
         self._fill_goal_slots()
@@ -1256,7 +1258,9 @@ class Organism:
                                  "budget_history":
                                      self._budget_history,
                                  "day_n": self.day_n,
-                                 "saliences": self.saliences}},
+                                 "saliences": self.saliences,
+                                 "n_human_presses":
+                                     self.n_human_presses}},
                        self.a.save)
             saved = self.a.save
         card_post = self.report_card()
@@ -1327,7 +1331,8 @@ class Organism:
                              "notice_peak_dyn": self.notice_peak_dyn,
                              "budget_history": self._budget_history,
                              "day_n": self.day_n,
-                             "saliences": self.saliences}},
+                             "saliences": self.saliences,
+                             "n_human_presses": self.n_human_presses}},
                    self.a.save)
         return {"saved": self.a.save, "live_steps": self.n_steps}
 
