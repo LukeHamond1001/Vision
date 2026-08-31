@@ -1385,7 +1385,7 @@ button.quiet{background:#eef2f6;color:#51677e;border:1px solid #d5dde5;padding:6
 .val{fill:#b45309;font-size:7.5px;font-family:menlo,monospace}
 .wire{stroke:#ccd7e1;stroke-width:1.3;fill:none}
 .dot{fill:#2563eb}
-#events{max-height:64px;overflow-y:auto;font-size:11px;color:#51677e;margin-bottom:6px}
+#events{max-height:96px;overflow-y:auto;font-size:11px;color:#51677e;margin-bottom:6px}
 #night{max-height:96px;overflow-y:auto;font-size:11px;color:#51677e;margin-top:6px}
 #tslider{width:100%;accent-color:#2563eb}
 #frameinfo{font-size:11px;color:#2563eb;min-height:15px;font-weight:500}
@@ -1410,6 +1410,11 @@ button.quiet{background:#eef2f6;color:#51677e;border:1px solid #d5dde5;padding:6
   <span style="font-size:12px;color:#15803d">+6</span>
   <span id=rwval>0</span>
   <button onclick=pressSlider()>press</button>
+ </div>
+ <div style="display:flex;gap:8px;padding:0 18px 6px;background:#ffffff">
+  <button class=quiet onclick=sleepy()>sleep</button>
+  <button class=quiet onclick=saveLife()>save</button>
+  <button class=quiet onclick="fetch('/reset',{method:'POST'}).then(()=>add('sys','~ fresh wake ~'))">reset</button>
  </div>
  <div style="padding:0 18px 10px;font-size:11px;color:#8aa0b5">set the slider before sending — the press applies to its previous answer, then your message goes</div>
 </div>
@@ -1483,11 +1488,6 @@ button.quiet{background:#eef2f6;color:#51677e;border:1px solid #d5dde5;padding:6
   <span id=moodfx style="color:#7d92a8"></span>
  </div>
  <div id=night>no night yet this session</div>
- <div style="display:flex;gap:8px;margin-top:8px">
-  <button class=quiet onclick=sleepy()>sleep</button>
-  <button class=quiet onclick=saveLife()>save</button>
-  <button class=quiet onclick="fetch('/reset',{method:'POST'}).then(()=>add('sys','~ fresh wake ~'))">reset</button>
- </div>
  </div>
 </div>
 </div>
@@ -1505,11 +1505,19 @@ function rwShow(){const v=parseFloat(document.getElementById('rw').value);
  const e=document.getElementById('rwval');e.textContent=(v>0?'+':'')+v;
  e.style.color=v>0?'#15803d':(v<0?'#c2410c':'#7d92a8')}
 let evN=0;
-function evt(txt,color){const e=document.getElementById('events');
+function evt(txt,color,fi){const e=document.getElementById('events');
  if(evN===0)e.innerHTML='';evN++;
- const d=document.createElement('div');d.textContent=txt;
- if(color)d.style.color=color;e.appendChild(d);
- while(e.children.length>60)e.removeChild(e.firstChild);
+ const d=document.createElement('div');
+ const now=new Date();
+ const hh=('0'+now.getHours()).slice(-2)+':'+('0'+now.getMinutes()).slice(-2)+':'+('0'+now.getSeconds()).slice(-2);
+ d.innerHTML='<span style="color:#b5c2ce;font-family:menlo,monospace;font-size:9.5px">'+hh+
+  '</span> <span style="color:'+(color||'#9db0c2')+'">●</span> ';
+ const t=document.createElement('span');t.textContent=txt;
+ if(color)t.style.color=color;d.appendChild(t);
+ if(fi!=null){d.style.cursor='pointer';d.title='click to replay this moment';
+  d.onclick=()=>{document.getElementById('tslider').value=fi;scrub(fi)}}
+ e.appendChild(d);
+ while(e.children.length>100)e.removeChild(e.firstChild);
  e.scrollTop=1e9}
 
 // ---- the anatomy ----
@@ -1640,9 +1648,14 @@ function rewardPanel(mood,val){
  if(val)valueBars(val);
  document.getElementById('selfpresses').textContent=
   selfPressesToday?('self-pressed x'+selfPressesToday+' today'):''}
+let lastDr={f:0,l:0,b:0};
 function drivesPanel(d){const el=document.getElementById('drives');if(!el||!d)return;
  el.innerHTML='fatigue <b>'+d.fatigue+'</b> · novelty '+d.bored_s+'s · alone '+d.lonely_s+'s'+
- (d.may_speak!=null?(' · may speak ×'+d.may_speak):'')}
+ (d.may_speak!=null?(' · may speak ×'+d.may_speak):'');
+ if(d.fatigue>=10&&lastDr.f<10)evt('it is getting sleepy (fatigue '+d.fatigue+')','#8b5cf6');
+ if(d.lonely_s>=400&&lastDr.l<400)evt('it has been alone a while — it may speak first soon','#2563eb');
+ if(d.bored_s>=200&&lastDr.b<200)evt('nothing new for a while — it may start ruminating');
+ lastDr={f:d.fatigue,l:d.lonely_s,b:d.bored_s}}
 
 async function doPress(m){
  const r=await fetch('/press',{method:'POST',body:JSON.stringify({mag:m})}).then(r=>r.json());
@@ -1651,7 +1664,7 @@ async function doPress(m){
  evt((m>0?'+':'')+m+' pressed · felt as '+r.felt+
   (r.absorbed_steps?(' · absorbed x'+r.absorbed_steps):'')+
   (r.corrected_steps?(' · corrective unlearning x'+r.corrected_steps):''),
-  m>0?'#15803d':'#c2410c');
+  m>0?'#15803d':'#c2410c',frames.length);
  addFrames([{k:'press',m:(m>0?'+':'')+m}]);
  rewardPanel(r.mood,null);
  document.getElementById('rw').value=0;rwShow();return r}
@@ -1684,7 +1697,10 @@ async function send(){
    words:words,tokens:words,pauses:r.pauses,
    vote:r.hpc?r.hpc.vote_max:null,suggests:r.hpc?r.hpc.suggests:null,
    noticed:!!r.noticed,value:r.value};
+  const f0=frames.length;
   addFrames(turnFrames(turnN,t,snap));
+  evt('turn '+turnN+' · «'+t.slice(0,30)+'» → '+words+' words · surp '+r.surprise+
+   (snap.vote>0.05?' · store voted '+snap.vote:''),'#2563eb',f0);
   if(liveMode){turnBase(snap);
    for(let j=0;j<13;j++)setTimeout(()=>{setFill('tl'+j,'#bcd3f0');setTimeout(()=>setFill('tl'+j,'#eef3f8'),300)},j*40);
    flow('w_in',Math.min(12,2+Math.ceil(snap.qlen/3)));
@@ -1706,9 +1722,17 @@ async function sleepy(){
  flow('w_hpc_w',10,'#8b5cf6');flow('w_plan',10,'#8b5cf6');
  const r=await fetch('/sleep',{method:'POST'}).then(r=>r.json());
  document.getElementById('v_plan').textContent=r.rem!=null?('REM x'+r.rem):'—';
- if(!r.error)addFrames(nightFrames({nrem:r.nrem,rem:r.rem,woke:r.woke_thinking,
-  story:(r.night_story||[]).map(x=>({q:x.q,pre:x.pre,post:x.post,verdict:x.verdict})),
-  pairs:r.rem_pairs||[]}));
+ if(!r.error){const nf0=frames.length;
+  addFrames(nightFrames({nrem:r.nrem,rem:r.rem,woke:r.woke_thinking,
+   story:(r.night_story||[]).map(x=>({q:x.q,pre:x.pre,post:x.post,verdict:x.verdict})),
+   pairs:r.rem_pairs||[]}));
+  (r.night_story||[]).forEach((x,i)=>evt('night · '+x.verdict+': «'+x.q.slice(0,26)+'»'+
+   (x.post!=null?(' '+x.pre+' → '+x.post):''),'#8b5cf6',nf0+i));
+  (r.rem_pairs||[]).forEach((p,i)=>evt('dream · «'+p.a.slice(0,18)+'» × «'+p.b.slice(0,18)+'» charge '+p.charge,
+   '#8b5cf6',nf0+(r.night_story||[]).length+i));
+  if(r.conscience)evt(r.conscience,'#b45309');
+  if(r.pursuit)evt('pursuit: '+r.pursuit.state+(r.pursuit.items?(' — '+r.pursuit.items.join(' · ').slice(0,40)):''),'#b45309');
+  if(r.genome)evt('genome: '+r.genome,'#b45309')}
  document.getElementById('night').innerHTML=r.error?r.error:
   'last night: NREM '+r.nrem+' + REM '+r.rem+(r.excited_night?' · <b>earned a longer night</b>':'')+' · '+r.lived_tokens+' lived tokens'+
   (r.conscience?('<br>'+r.conscience):'')+
