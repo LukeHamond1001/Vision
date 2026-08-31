@@ -1371,15 +1371,13 @@ body{font:15px -apple-system,sans-serif;margin:0;display:flex;flex-direction:col
 #msg{flex:1;background:#f2f5f8;border:1px solid #d5dde5;color:#1c2733;padding:11px 13px;border-radius:9px;font-size:15px}
 button{background:#2563eb;color:#fff;border:0;border-radius:9px;padding:11px 18px;cursor:pointer;font-size:14px}
 button:hover{background:#1d4fd7}
-button.quiet{background:#eef2f6;color:#51677e;border:1px solid #d5dde5}
-#rewardrow{display:flex;align-items:center;gap:12px;padding:10px 18px 14px;background:#ffffff}
+button.quiet{background:#eef2f6;color:#51677e;border:1px solid #d5dde5;padding:6px 12px;font-size:12px}
+#rewardrow{display:flex;align-items:center;gap:12px;padding:10px 18px 6px;background:#ffffff}
 #rw{flex:1;accent-color:#2563eb}
 #rwval{min-width:44px;text-align:center;font-weight:600;font-size:15px;color:#7d92a8}
-#brain{width:48%;min-width:360px;max-width:680px;padding:14px;overflow-y:auto;background:#f6f7f9;border-left:1px solid #e3e8ee;display:none}
-.panel{background:#ffffff;border:1px solid #e3e8ee;border-radius:10px;padding:12px;margin-bottom:12px}
+#brain{width:48%;min-width:380px;max-width:700px;padding:14px;overflow-y:auto;background:#f6f7f9;border-left:1px solid #e3e8ee;display:none}
+.panel{background:#ffffff;border:1px solid #e3e8ee;border-radius:10px;padding:12px}
 .panel h3{margin:0 0 8px;font-size:11px;letter-spacing:1.5px;color:#7d92a8}
-.rowb{display:flex;justify-content:space-between;font-size:12.5px;margin:2px 0}
-.suggest{color:#b45309}
 .blk{fill:#ffffff;stroke:#b9c6d4;stroke-width:1.1}
 .cell{fill:#eef3f8;stroke:#b9c6d4;stroke-width:0.8}
 .lbl{fill:#51677e;font-size:8.5px;font-family:-apple-system,sans-serif;letter-spacing:.4px}
@@ -1387,11 +1385,11 @@ button.quiet{background:#eef2f6;color:#51677e;border:1px solid #d5dde5}
 .val{fill:#b45309;font-size:7.5px;font-family:menlo,monospace}
 .wire{stroke:#ccd7e1;stroke-width:1.3;fill:none}
 .dot{fill:#2563eb}
-#tlstrip{display:flex;gap:2px;overflow-x:auto;padding:4px 0;flex:1}
-.tlb{min-width:10px;height:18px;border-radius:2px;background:#c9d6e2;cursor:pointer;border:1px solid transparent}
-.tlb.turn{background:#8fb4e8}.tlb.press{background:#7cc596}.tlb.presn{background:#e39a86}
-.tlb.night{background:#b9a5ec}.tlb.speaks{background:#5b8def}
-.tlb.sel{border-color:#1c2733}
+#events{max-height:64px;overflow-y:auto;font-size:11px;color:#51677e;margin-bottom:6px}
+#night{max-height:96px;overflow-y:auto;font-size:11px;color:#51677e;margin-top:6px}
+#tslider{width:100%;accent-color:#2563eb}
+#frameinfo{font-size:11px;color:#2563eb;min-height:15px;font-weight:500}
+#footer{display:flex;gap:12px;align-items:center;font-size:11px;color:#51677e;margin-top:4px;flex-wrap:wrap}
 </style>
 <div id=top>
  <span class=tgl>
@@ -1413,13 +1411,12 @@ button.quiet{background:#eef2f6;color:#51677e;border:1px solid #d5dde5}
   <span id=rwval>0</span>
   <button onclick=pressSlider()>press</button>
  </div>
- <div style="padding:0 18px 10px;font-size:11px;color:#8aa0b5">set the slider before sending and the press applies to its previous answer, then your message goes</div>
+ <div style="padding:0 18px 10px;font-size:11px;color:#8aa0b5">set the slider before sending — the press applies to its previous answer, then your message goes</div>
 </div>
 <div id=brain>
- <div class=panel><h3>LIVE EVENTS — what just happened inside</h3>
-  <div id=events style="max-height:130px;overflow-y:auto;font-size:11.5px;color:#51677e">—</div>
- </div>
- <div class=panel><h3>THE ARCHITECTURE — live</h3>
+ <div class=panel>
+ <h3>INSIDE — live</h3>
+ <div id=events>—</div>
  <svg id=chip viewBox="0 0 560 436" width="100%">
   <path id=w_in class=wire d="M52,200 L70,200"/>
   <path id=w_tc class=wire d="M178,200 L192,200"/>
@@ -1434,15 +1431,12 @@ button.quiet{background:#eef2f6;color:#51677e;border:1px solid #d5dde5}
   <text class=tiny x=200 y=43>surprise-gated write</text>
   <text class=tiny x=390 y=33>decode-free read → logits</text>
   <text class=tiny x=492 y=236>goal bias</text>
-
   <rect class=blk x=8 y=180 width=44 height=40 rx=3 />
   <text class=lbl x=13 y=194>YOU</text><text class=val x=13 y=208 id=v_in>—</text>
-
   <rect class=blk x=70 y=150 width=108 height=100 rx=3 />
   <text class=lbl x=76 y=163>TRUNK · 13 layers</text>
   <g id=trunk></g>
   <text class=val x=76 y=243 id=v_trunk>—</text>
-
   <rect class=blk x=188 y=58 width=228 height=298 rx=3 />
   <text class=lbl x=194 y=71>COUNCIL · six clocks</text>
   <text class=tiny x=228 y=86>acc</text><text class=tiny x=262 y=86>cortex</text>
@@ -1450,67 +1444,60 @@ button.quiet{background:#eef2f6;color:#51677e;border:1px solid #d5dde5}
   <g id=bands></g>
   <text class=val x=194 y=350 id=v_hpc>store quiet</text>
   <text class=val x=290 y=350 id=v_hpc2 style="fill:#15803d"></text>
-
   <rect class=blk x=432 y=140 width=54 height=56 rx=3 />
   <text class=lbl x=438 y=154>PFC</text>
   <text class=tiny x=438 y=164>route·ponder</text>
   <text class=val x=438 y=186 id=v_pfc>—</text>
-
   <rect class=blk x=498 y=140 width=54 height=56 rx=3 />
   <text class=lbl x=504 y=154>LEXICON</text>
   <text class=val x=504 y=172 id=v_head>—</text>
-
   <rect class=blk x=432 y=220 width=54 height=48 rx=3 />
   <text class=lbl x=438 y=233>GOAL</text>
   <g id=goals></g>
-
   <rect class=blk x=70 y=376 width=150 height=48 rx=3 />
   <text class=lbl x=76 y=389>PLAN / DREAMER · 8 steps</text>
   <g id=plan></g>
   <text class=val x=180 y=417 id=v_plan>—</text>
-
   <rect class=blk x=240 y=376 width=172 height=48 rx=3 />
   <text class=lbl x=246 y=389>BG · DA — value per band</text>
   <g id=vbars></g>
   <text class=val x=370 y=417 id=v_bg>—</text>
-
   <rect class=blk x=432 y=376 width=54 height=48 rx=3 />
   <text class=lbl x=438 y=389>PRESS</text>
   <text class=val x=438 y=406 id=v_press>—</text>
  </svg>
- <div style="display:flex;gap:8px;align-items:center;margin-top:6px">
-  <button id=livebtn class=quiet style="padding:4px 10px;font-size:11px" onclick=goLive()>LIVE</button>
-  <div id=tlstrip></div>
+ <div id=frameinfo>live</div>
+ <input id=tslider type=range min=0 max=0 value=0 oninput="scrub(parseInt(this.value))">
+ <div style="display:flex;gap:8px;align-items:center">
+  <button class=quiet onclick=playPause()><span id=playic>▶</span></button>
+  <button class=quiet onclick=goLive()>LIVE</button>
+  <span style="font-size:10.5px;color:#8aa0b5">every token is a frame — bands tick on their real clocks; nights play replay-by-replay</span>
  </div>
- <div id=tlinfo style="font-size:10.5px;color:#8aa0b5;margin-top:2px">timeline — every message, press, and night; click to scrub</div>
- </div>
- <div class=panel><h3>REWARD — what it feels right now</h3>
-  <div class=rowb><span>mood</span><span id=moodnum>0</span></div>
-  <div style="background:#eef2f6;border-radius:4px;height:10px;position:relative;margin:3px 0 8px">
-   <div id=moodbar style="position:absolute;top:0;height:10px;border-radius:4px;background:#15803d;left:50%;width:0"></div>
-   <div style="position:absolute;left:50%;top:-2px;width:1px;height:14px;background:#b9c6d4"></div>
+ <div id=footer>
+  <span>mood <b id=moodnum>0</b></span>
+  <div style="background:#eef2f6;border-radius:4px;height:8px;position:relative;width:90px">
+   <div id=moodbar style="position:absolute;top:0;height:8px;border-radius:4px;background:#15803d;left:50%;width:0"></div>
   </div>
-  <div class=rowb><span>its own reward forecast (value heads)</span><span id=selfpresses style="color:#b45309"></span></div>
-  <div id=valheads style="display:flex;gap:4px;margin-top:4px">—</div>
-  <div class=rowb style="margin-top:8px"><span>drives</span><span id=moodfx style="color:#7d92a8"></span></div>
-  <div id=drives style="font-size:11.5px;color:#51677e">—</div>
+  <span id=selfpresses style="color:#b45309"></span>
+  <span id=drives>—</span>
+  <span id=moodfx style="color:#7d92a8"></span>
  </div>
- <div class=panel><h3>NIGHT</h3><div id=night>—</div></div>
- <div class=panel><h3>CARETAKER</h3>
+ <div id=night>no night yet this session</div>
+ <div style="display:flex;gap:8px;margin-top:8px">
   <button class=quiet onclick=sleepy()>sleep</button>
   <button class=quiet onclick=saveLife()>save</button>
   <button class=quiet onclick="fetch('/reset',{method:'POST'}).then(()=>add('sys','~ fresh wake ~'))">reset</button>
+ </div>
  </div>
 </div>
 </div>
 <script>
 const log=document.getElementById('log');
 function add(cls,txt){const d=document.createElement('div');d.className=cls;d.textContent=txt;log.appendChild(d);log.scrollTop=1e9}
-let contOn=false, intOn=false, selfPressesToday=0, busy=false;
+let contOn=false,intOn=false,selfPressesToday=0,busy=false;
 function toggleCont(){contOn=!contOn;const b=document.getElementById('contTgl');
  b.textContent='continuous time: '+(contOn?'on':'off');b.classList.toggle('on',contOn);
- add('sys',contOn?'~ continuous time on — it may speak first when it has been alone ~'
-  :'~ continuous time off ~')}
+ add('sys',contOn?'~ continuous time on — it may speak first when it has been alone ~':'~ continuous time off ~')}
 function toggleInt(){intOn=!intOn;const b=document.getElementById('intTgl');
  b.textContent='internals: '+(intOn?'on':'off');b.classList.toggle('on',intOn);
  document.getElementById('brain').style.display=intOn?'block':'none'}
@@ -1522,41 +1509,42 @@ function evt(txt,color){const e=document.getElementById('events');
  if(evN===0)e.innerHTML='';evN++;
  const d=document.createElement('div');d.textContent=txt;
  if(color)d.style.color=color;e.appendChild(d);
- while(e.children.length>80)e.removeChild(e.firstChild);
+ while(e.children.length>60)e.removeChild(e.firstChild);
  e.scrollTop=1e9}
 
-// ---- build the architecture: real structure, real dimensions ----
+// ---- the anatomy ----
 const BANDS=[3,4,5,6,7,8];
-const CLK={3:'1',4:'8',5:'64',6:'512',7:'4k',8:'32k'};
+const CLK={3:1,4:8,5:64,6:512,7:4096,8:32768};
+const CLKL={3:'1',4:'8',5:'64',6:'512',7:'4k',8:'32k'};
 const KD={3:512,4:1024,5:2048,6:4096,7:4096,8:4096};
 const trunkG=document.getElementById('trunk');
-for(let i=0;i<13;i++){
- trunkG.innerHTML+='<rect id=tl'+i+' class=cell x='+(76+i*7.6)+' y=170 width=6 height=56 rx=1 />';}
+for(let i=0;i<13;i++){trunkG.innerHTML+='<rect id=tl'+i+' class=cell x='+(76+i*7.6)+' y=170 width=6 height=56 rx=1 />';}
 const bandG=document.getElementById('bands');
-BANDS.forEach((b,i)=>{
- const y=94+i*40;
+BANDS.forEach((b,i)=>{const y=94+i*40;
  bandG.innerHTML+=
   '<text class=lbl x=194 y='+(y+15)+' style="font-size:8px">B'+b+'</text>'+
-  '<text class=tiny x=194 y='+(y+24)+'>clk '+CLK[b]+'</text>'+
+  '<text class=tiny x=194 y='+(y+24)+'>clk '+CLKL[b]+'</text>'+
   '<rect id=bnd'+b+' class=cell x=224 y='+y+' width=30 height=22 rx=2 />'+
   '<rect id=bndc'+b+' class=cell x=258 y='+y+' width=30 height=22 rx=2 />'+
   '<rect id=mc'+b+' class=cell x=294 y='+y+' width='+(14+Math.round(KD[b]/128))+' height=22 rx=2 />'+
   '<text class=tiny x='+(298+Math.round(KD[b]/128)+14)+' y='+(y+14)+'>'+KD[b]+'</text>'+
   '<text class=val id=bndv'+b+' x=224 y='+(y+32)+' style="font-size:6.5px"></text>';});
 const goalG=document.getElementById('goals');
-for(let i=0;i<4;i++){
- goalG.innerHTML+='<rect id=gs'+i+' class=cell x='+(438+(i%2)*22)+' y='+(238+Math.floor(i/2)*13)+' width=18 height=10 rx=2 />';}
+for(let i=0;i<4;i++){goalG.innerHTML+='<rect id=gs'+i+' class=cell x='+(438+(i%2)*22)+' y='+(238+Math.floor(i/2)*13)+' width=18 height=10 rx=2 />';}
 const planG=document.getElementById('plan');
 let pl='';for(let i=0;i<8;i++){
  if(i>0)pl+='<line x1='+(84+(i-1)*17+4)+' y1=402 x2='+(84+i*17-4)+' y2=402 stroke="#ccd7e1" stroke-width="1"/>';
  pl+='<circle id=pn'+i+' cx='+(84+i*17)+' cy=402 r=4 fill="#eef3f8" stroke="#b9c6d4"/>';}
 planG.innerHTML=pl;
 const vbG=document.getElementById('vbars');
-BANDS.forEach((b,i)=>{
- vbG.innerHTML+='<line x1='+(252+i*26)+' y1=406 x2='+(252+i*26+18)+' y2=406 stroke="#d5dde5"/>'+
-  '<rect id=vb'+b+' x='+(252+i*26)+' y=406 width=18 height=0 fill="#15803d"/>'+
-  '<text class=tiny x='+(254+i*26)+' y=420>B'+b+'</text>';});
+BANDS.forEach((b,i)=>{vbG.innerHTML+='<line x1='+(252+i*26)+' y1=406 x2='+(252+i*26+18)+' y2=406 stroke="#d5dde5"/>'+
+ '<rect id=vb'+b+' x='+(252+i*26)+' y=406 width=18 height=0 fill="#15803d"/>'+
+ '<text class=tiny x='+(254+i*26)+' y=420>B'+b+'</text>';});
 
+function setFill(id,c){const e=document.getElementById(id);if(e)e.style.fill=c}
+function clearTicks(){BANDS.forEach(b=>{setFill('bnd'+b,'#eef3f8');setFill('bndc'+b,'#eef3f8');setFill('mc'+b,'#eef3f8')});
+ for(let i=0;i<13;i++)setFill('tl'+i,'#eef3f8');
+ for(let i=0;i<8;i++)setFill('pn'+i,'#eef3f8')}
 function glow(id,mag){const e=document.getElementById(id);if(!e)return;
  const g=Math.min(1,mag);e.style.fill='rgb('+(238-100*g)+','+(243-45*g)+','+(248-12*g)+')';
  setTimeout(()=>{e.style.fill='#eef3f8'},2600)}
@@ -1565,70 +1553,82 @@ function flow(wireId,n,color){const svg=document.getElementById('chip');const w=
   const c=document.createElementNS('http://www.w3.org/2000/svg','circle');
   c.setAttribute('r',2.2);c.setAttribute('class','dot');if(color)c.setAttribute('fill',color);
   const m=document.createElementNS('http://www.w3.org/2000/svg','animateMotion');
-  m.setAttribute('dur',(1.1+Math.random()*0.9)+'s');m.setAttribute('begin',(i*0.12)+'s');
+  m.setAttribute('dur',(1.0+Math.random()*0.8)+'s');m.setAttribute('begin',(i*0.11)+'s');
   m.setAttribute('path',w.getAttribute('d'));m.setAttribute('fill','freeze');
-  c.appendChild(m);svg.appendChild(c);setTimeout(()=>c.remove(),3200+i*120)}}
-function sweep(){for(let i=0;i<13;i++){setTimeout(()=>{const e=document.getElementById('tl'+i);
- if(e){e.style.fill='#bcd3f0';setTimeout(()=>{e.style.fill='#eef3f8'},350)}},i*45)}}
+  c.appendChild(m);svg.appendChild(c);setTimeout(()=>c.remove(),3000+i*110)}}
 function fmtD(d){return d>=1000?Math.round(d/1000)+'k':d>=100?Math.round(d):d>=1?d.toFixed(1):d.toFixed(2)}
 function valueBars(val){if(!val)return;
- Object.entries(val).forEach(([u,v])=>{
-  const e=document.getElementById('vb'+u);if(!e)return;
-  const h=Math.min(16,Math.abs(v)*4);
-  e.setAttribute('height',h);
-  e.setAttribute('y',v>=0?406-h:406);
-  e.setAttribute('fill',v>=0?'#15803d':'#c2410c')});}
-
-function renderSnap(s){
+ Object.entries(val).forEach(([u,v])=>{const e=document.getElementById('vb'+u);if(!e)return;
+  const h=Math.min(16,Math.abs(v)*4);e.setAttribute('height',h);
+  e.setAttribute('y',v>=0?406-h:406);e.setAttribute('fill',v>=0?'#15803d':'#c2410c')});}
+function turnBase(s){
  document.getElementById('v_in').textContent=s.qlen+' tok';
  document.getElementById('v_trunk').textContent='surp '+(s.surprise!=null?s.surprise:'—');
- sweep();flow('w_in',Math.min(12,2+Math.ceil(s.qlen/3)));
- let mx=1,tot=0;(s.moved||[]).forEach(x=>{mx=Math.max(mx,x.delta);tot+=x.delta});
  BANDS.forEach(b=>{const e=document.getElementById('bndv'+b);if(e)e.textContent=''});
+ let mx=1;(s.moved||[]).forEach(x=>{mx=Math.max(mx,x.delta)});
  (s.moved||[]).forEach(x=>{const m=x.part.match(/(acc(?:_c)?)\\/(\\d)/);
-  if(m){glow((m[1]==='acc_c'?'bndc':'bnd')+m[2],x.delta/mx);
-   const e=document.getElementById('bndv'+m[2]);
-   if(e)e.textContent='Δ'+fmtD(x.delta)}});
- const cf=Math.min(12,2+Math.round(Math.log10(1+tot)*3));
- flow('w_tc',cf);flow('w_cp',cf);
- flow('w_ph',Math.min(12,1+Math.ceil((s.words||0)/3)));
- document.getElementById('v_head').textContent=(s.words||0)+' words';
+  if(m){const e=document.getElementById('bndv'+m[2]);if(e)e.textContent='Δ'+fmtD(x.delta)}});
  document.getElementById('v_pfc').textContent='pauses '+s.pauses;
  if(s.vote!=null&&s.vote>0.05){
   document.getElementById('v_hpc').textContent='store vote '+s.vote;
-  document.getElementById('v_hpc2').textContent=(s.suggests||[]).slice(0,2).join(' ');
-  BANDS.forEach(b=>glow('mc'+b,Math.min(1,s.vote/2)));
-  flow('w_hpc_r',Math.min(10,1+Math.round(s.vote*3)),'#b45309')}
- else{document.getElementById('v_hpc').textContent='store quiet';
-  document.getElementById('v_hpc2').textContent=''}
- if(s.noticed){BANDS.forEach(b=>glow('mc'+b,0.8));flow('w_hpc_w',8,'#15803d')}
+  document.getElementById('v_hpc2').textContent=(s.suggests||[]).slice(0,2).join(' ')}
+ else{document.getElementById('v_hpc').textContent='store quiet';document.getElementById('v_hpc2').textContent=''}
  valueBars(s.value);
  if(s.value){const vs=Object.values(s.value);
-  document.getElementById('v_bg').textContent='val '+(vs.reduce((a,c)=>a+c,0)/vs.length).toFixed(2)}
-}
+  document.getElementById('v_bg').textContent='val '+(vs.reduce((a,c)=>a+c,0)/vs.length).toFixed(2)}}
 
-// ---- timeline ----
-let hist=[],viewing=null;
-function record(kind,snap){hist.push({kind,snap});
- const st=document.getElementById('tlstrip');
- const d=document.createElement('div');
- d.className='tlb '+kind;d.title=kind+' '+hist.length;
- const idx=hist.length-1;
- d.onclick=()=>view(idx);
- st.appendChild(d);st.scrollLeft=1e9;
- while(st.children.length>200){st.removeChild(st.firstChild);}}
-function view(i){viewing=i;
- Array.from(document.getElementById('tlstrip').children).forEach((c,j)=>
-  c.classList.toggle('sel',j===i-(hist.length-document.getElementById('tlstrip').children.length)));
- const h=hist[i];
- document.getElementById('tlinfo').textContent='viewing #'+(i+1)+' of '+hist.length+' ('+h.kind+') — LIVE to return';
- if(h.kind==='turn')renderSnap(h.snap);
- else if(h.kind==='press'||h.kind==='presn'){document.getElementById('v_press').textContent=h.snap.m;flow('w_da',6,h.snap.m[0]==='+'?'#15803d':'#c2410c')}
- else if(h.kind==='night'){flow('w_plan',8,'#8b5cf6');for(let i2=0;i2<8;i2++){setTimeout(()=>{const e=document.getElementById('pn'+i2);
-  if(e){e.style.fill='#c9b8f5';setTimeout(()=>{e.style.fill='#eef3f8'},500)}},i2*80)}}}
-function goLive(){viewing=null;
- Array.from(document.getElementById('tlstrip').children).forEach(c=>c.classList.remove('sel'));
- document.getElementById('tlinfo').textContent='timeline — every message, press, and night; click to scrub'}
+// ---- the film: every token a frame ----
+let frames=[],playing=null,liveMode=true;
+function slider(){return document.getElementById('tslider')}
+function addFrames(fs){const atEnd=liveMode;frames.push(...fs);
+ const s=slider();s.max=frames.length-1;
+ if(atEnd){s.value=frames.length-1}}
+function turnFrames(turnN,q,s){
+ const fs=[{k:'t0',turnN,q,s}];
+ const total=(s.tokens||s.words||1)+(s.pauses||0);
+ for(let i=1;i<=total;i++)fs.push({k:'tok',turnN,q,s,i,total});
+ return fs}
+function nightFrames(n){
+ const fs=[];
+ (n.story||[]).forEach(it=>fs.push({k:'nItem',n,it}));
+ (n.pairs||[]).forEach(p=>fs.push({k:'nRem',n,p}));
+ fs.push({k:'nWake',n});
+ return fs}
+function renderFrame(i){
+ const f=frames[i];if(!f)return;clearTicks();
+ const info=document.getElementById('frameinfo');
+ if(f.k==='t0'){turnBase(f.s);
+  for(let j=0;j<13;j++)setFill('tl'+j,'#bcd3f0');
+  if(f.s.vote>0.05)BANDS.forEach(b=>setFill('mc'+b,'#f4e4c8'));
+  info.textContent='turn '+f.turnN+' · «'+f.q.slice(0,38)+'» · trunk pass, store '+(f.s.vote>0.05?'votes '+f.s.vote:'quiet')}
+ else if(f.k==='tok'){turnBase(f.s);
+  BANDS.forEach(b=>{if((f.i-1)%CLK[b]===0){setFill('bnd'+b,'#9cc3ef');setFill('bndc'+b,'#c4dbf5')}});
+  setFill('tl'+((f.i-1)%13),'#bcd3f0');
+  document.getElementById('v_head').textContent=Math.min(f.i,f.s.words||0)+' / '+(f.s.words||0)+' words';
+  info.textContent='turn '+f.turnN+' · cycle '+f.i+'/'+f.total+' — bands ticking: '+
+   BANDS.filter(b=>(f.i-1)%CLK[b]===0).map(b=>'B'+b).join(' ')}
+ else if(f.k==='press'){document.getElementById('v_press').textContent=f.m;
+  info.textContent='press '+f.m+' — dopamine to BG';flow('w_da',5,f.m[0]==='+'?'#15803d':'#c2410c')}
+ else if(f.k==='nItem'){
+  BANDS.forEach(b=>setFill('mc'+b,'#d9c8f2'));
+  flow('w_hpc_w',6,'#8b5cf6');
+  info.textContent='night · replaying: «'+(f.it.q||'').slice(0,34)+'» '+(f.it.pre!=null?f.it.pre+' → '+(f.it.post!=null?f.it.post:'…'):'')+' ('+(f.it.verdict||'')+')'}
+ else if(f.k==='nRem'){
+  setFill('mc'+(3+(Math.abs(f.p.a.length)%6)),'#d9c8f2');setFill('mc'+(3+(Math.abs(f.p.b.length)%6)),'#d9c8f2');
+  for(let j=0;j<8;j++)setFill('pn'+j,'#c9b8f5');
+  info.textContent='night · dream: «'+f.p.a.slice(0,20)+'» × «'+f.p.b.slice(0,20)+'» charge '+f.p.charge}
+ else if(f.k==='nWake'){info.textContent='morning — NREM '+f.n.nrem+' + REM '+f.n.rem+(f.n.woke?' · woke thinking: '+f.n.woke:'')}
+ else if(f.k==='speaks'){info.textContent='it spoke first — nobody asked'}}
+function scrub(i){liveMode=false;renderFrame(i)}
+function playPause(){if(playing){clearInterval(playing);playing=null;document.getElementById('playic').textContent='▶';return}
+ liveMode=false;document.getElementById('playic').textContent='⏸';
+ playing=setInterval(()=>{const s=slider();let v=parseInt(s.value);
+  if(v>=frames.length-1){clearInterval(playing);playing=null;document.getElementById('playic').textContent='▶';return}
+  s.value=v+1;renderFrame(v+1)},260)}
+function goLive(){liveMode=true;if(playing){clearInterval(playing);playing=null;document.getElementById('playic').textContent='▶'}
+ const s=slider();s.value=frames.length-1;clearTicks();
+ document.getElementById('frameinfo').textContent='live';
+ if(frames.length)renderFrame(frames.length-1)}
 
 function rewardPanel(mood,val){
  if(mood!=null){const m=Math.max(-8,Math.min(8,mood));
@@ -1637,18 +1637,12 @@ function rewardPanel(mood,val){
   b.style.background=m>=0?'#15803d':'#c2410c';
   if(m>=0){b.style.left='50%';b.style.width=(m/8*50)+'%'}
   else{b.style.left=(50+m/8*50)+'%';b.style.width=(-m/8*50)+'%'}}
- if(val){const vh=document.getElementById('valheads');
-  vh.innerHTML=Object.entries(val).map(([u,v])=>{
-   const c=v>0.5?'#15803d':v<-0.5?'#c2410c':'#7d92a8';
-   return '<div style="flex:1;text-align:center;font-size:10px;color:'+c+
-    '">B'+u+'<br><b>'+v.toFixed(1)+'</b></div>'}).join('')}
+ if(val)valueBars(val);
  document.getElementById('selfpresses').textContent=
-  selfPressesToday?('self-pressed x'+selfPressesToday+' today'):'';
-}
+  selfPressesToday?('self-pressed x'+selfPressesToday+' today'):''}
 function drivesPanel(d){const el=document.getElementById('drives');if(!el||!d)return;
- el.innerHTML='fatigue <b>'+d.fatigue+'</b> · without novelty <b>'+d.bored_s+
- 's</b> · alone <b>'+d.lonely_s+'s</b>'+
- (d.may_speak!=null?(' · may speak first ×'+d.may_speak):'')}
+ el.innerHTML='fatigue <b>'+d.fatigue+'</b> · novelty '+d.bored_s+'s · alone '+d.lonely_s+'s'+
+ (d.may_speak!=null?(' · may speak ×'+d.may_speak):'')}
 
 async function doPress(m){
  const r=await fetch('/press',{method:'POST',body:JSON.stringify({mag:m})}).then(r=>r.json());
@@ -1658,14 +1652,14 @@ async function doPress(m){
   (r.absorbed_steps?(' · absorbed x'+r.absorbed_steps):'')+
   (r.corrected_steps?(' · corrective unlearning x'+r.corrected_steps):''),
   m>0?'#15803d':'#c2410c');
- record(m>0?'press':'presn',{m:(m>0?'+':'')+m});
+ addFrames([{k:'press',m:(m>0?'+':'')+m}]);
  rewardPanel(r.mood,null);
- document.getElementById('rw').value=0;rwShow();
- return r}
+ document.getElementById('rw').value=0;rwShow();return r}
 async function pressSlider(){
  const m=parseFloat(document.getElementById('rw').value)||0;
  if(m===0){add('sys','~ move the slider first — zero is not a judgment ~');return}
  await doPress(m)}
+let turnN=0;
 async function send(){
  if(busy)return;
  const mEl=document.getElementById('msg');const t=mEl.value.trim();if(!t)return;
@@ -1673,84 +1667,72 @@ async function send(){
  try{
   const mv=parseFloat(document.getElementById('rw').value)||0;
   if(mv!==0)await doPress(mv);
-  mEl.value='';
-  add('you','you: '+t);add('sys','…thinking');
+  mEl.value='';add('you','you: '+t);add('sys','…thinking');
   const r=await fetch('/chat',{method:'POST',body:JSON.stringify({text:t})}).then(r=>r.json());
   log.lastChild.remove();if(r.reply)add('bot',r.reply);else add('sys','~ it said nothing ~');
   if(r.pride)evt('conscience approved ('+r.pride+')','#15803d');
   if(r.self_press){if(r.self_press.mag>0){selfPressesToday++;
     document.getElementById('v_press').textContent='self +1';
-    evt('IT PRESSED ITS OWN BUTTON +1 — conscience '+
-     r.self_press.conscience+' · '+r.self_press.left_today+' left today','#15803d');
+    evt('IT PRESSED ITS OWN BUTTON +1 — conscience '+r.self_press.conscience+' · '+r.self_press.left_today+' left today','#15803d');
     flow('w_da',8,'#15803d')}
    else{document.getElementById('v_press').textContent='self −1';
-    evt('it felt its own miss (self −1, feeling only)','#c2410c');
-    flow('w_da',5,'#c2410c')}}
-  if(r.noticed)evt('kept that (surprise '+r.noticed.surprise+
-   ' nats, dose x'+r.noticed.dose+') — it will dream it tonight','#15803d');
+    evt('it felt its own miss (self −1, feeling only)','#c2410c');flow('w_da',5,'#c2410c')}}
+  if(r.noticed)evt('kept that (surprise '+r.noticed.surprise+' nats, dose x'+r.noticed.dose+') — it will dream it tonight','#15803d');
+  turnN++;
+  const words=(r.reply||'').split(' ').filter(Boolean).length;
   const snap={qlen:t.split(' ').length,surprise:r.surprise,moved:r.moved,
-   words:(r.reply||'').split(' ').filter(Boolean).length,pauses:r.pauses,
+   words:words,tokens:words,pauses:r.pauses,
    vote:r.hpc?r.hpc.vote_max:null,suggests:r.hpc?r.hpc.suggests:null,
    noticed:!!r.noticed,value:r.value};
-  record('turn',snap);
-  if(viewing===null)renderSnap(snap);
+  addFrames(turnFrames(turnN,t,snap));
+  if(liveMode){turnBase(snap);
+   for(let j=0;j<13;j++)setTimeout(()=>{setFill('tl'+j,'#bcd3f0');setTimeout(()=>setFill('tl'+j,'#eef3f8'),300)},j*40);
+   flow('w_in',Math.min(12,2+Math.ceil(snap.qlen/3)));
+   flow('w_tc',6);flow('w_cp',6);flow('w_ph',Math.min(12,1+Math.ceil(words/3)));
+   document.getElementById('v_head').textContent=words+' words';
+   let mx=1;(r.moved||[]).forEach(x=>{mx=Math.max(mx,x.delta)});
+   (r.moved||[]).forEach(x=>{const m2=x.part.match(/(acc(?:_c)?)\\/(\\d)/);
+    if(m2)glow((m2[1]==='acc_c'?'bndc':'bnd')+m2[2],x.delta/mx)});
+   if(snap.vote>0.05)flow('w_hpc_r',Math.min(10,1+Math.round(snap.vote*3)),'#b45309');
+   if(snap.noticed)flow('w_hpc_w',8,'#15803d');
+   document.getElementById('frameinfo').textContent='live · turn '+turnN}
   rewardPanel(r.mood,r.value);
   if(r.drives)drivesPanel(r.drives);
   document.getElementById('moodfx').textContent=r.mood_fx?
-   ('mood retunes: temp '+r.mood_fx.temp+' · bar '+(r.mood_fx.bar_shift>0?'+':'')+r.mood_fx.bar_shift):'';
+   ('temp '+r.mood_fx.temp+' · bar '+(r.mood_fx.bar_shift>0?'+':'')+r.mood_fx.bar_shift):'';
  }finally{busy=false;document.getElementById('sendbtn').disabled=false}}
 async function sleepy(){
  evt('falling asleep…','#8b5cf6');
  flow('w_hpc_w',10,'#8b5cf6');flow('w_plan',10,'#8b5cf6');
  const r=await fetch('/sleep',{method:'POST'}).then(r=>r.json());
  document.getElementById('v_plan').textContent=r.rem!=null?('REM x'+r.rem):'—';
- record('night',{nrem:r.nrem,rem:r.rem});
- for(let i=0;i<8;i++){setTimeout(()=>{const e=document.getElementById('pn'+i);
-  if(e){e.style.fill='#c9b8f5';setTimeout(()=>{e.style.fill='#eef3f8'},500)}},i*90)}
+ if(!r.error)addFrames(nightFrames({nrem:r.nrem,rem:r.rem,woke:r.woke_thinking,
+  story:(r.night_story||[]).map(x=>({q:x.q,pre:x.pre,post:x.post,verdict:x.verdict})),
+  pairs:r.rem_pairs||[]}));
  document.getElementById('night').innerHTML=r.error?r.error:
-  'NREM '+r.nrem+' + REM '+r.rem+(r.excited_night?' · <b>earned a longer night</b>':'')+' over '+r.lived_tokens+' lived tokens'+
-  (r.genome?('<br>~ genome: '+r.genome+' ~'):'')+
-  (r.conscience?('<br>~ '+r.conscience+' ~'):'')+
-  (r.pursuit?('<br><b>PURSUIT '+r.pursuit.state+'</b>'+
-   (r.pursuit.items?(': '+r.pursuit.items.join(' · ')):'')+
-   (r.pursuit.progress!=null?(' · progress '+r.pursuit.progress+' — installment earned'):'')+
-   (r.pursuit.nights!=null?(' · night '+r.pursuit.nights):'')):'')+
-  (r.rem_pairs&&r.rem_pairs.length?('<br>~ dreams tonight (picked by charge): '+
-   r.rem_pairs.map(p=>p.a+' × '+p.b+' ('+p.charge+')').join(' · ')+' ~'):'')+
-  (r.maintenance&&r.maintenance.length?('<br>~ retention: '+
-   r.maintenance.map(m=>m.q.slice(0,18)+' — '+m.verdict).join(' · ')+' ~'):'')+
-  (r.tail_dropped?('<br>~ '+r.tail_dropped+' degenerate turn(s) kept out of the dreams ~'):'')+
-  (r.store_carried?('<br>~ episodes from the day carried in its store (faded) ~'):'')+
-  (r.woke_thinking?('<br>~ it woke thinking about: '+r.woke_thinking+' ~'):'')+
-  (r.woke_feeling?('<br>~ <b>it woke and pressed its own button '+r.woke_feeling+'</b> ~'):'')+
-  (r.woke_hungry?'<br>~ learning felt good — it woke hungrier ~':'')+
-  (r.progress?('<br><b>felt progress: '+r.progress.gained+' nats</b>'+
-   (r.progress.graduated.length?' · graduated: '+r.progress.graduated.join(', '):'')+
-   (r.progress.faded.length?' · let go: '+r.progress.faded.join(', '):'')):'')+
-  '<br><br><b>its own study plan tonight:</b>'+
-  (r.night_story||[]).map(x=>'<div class=rowb><span>'+
-   (x.verdict=='mastered'?'🎓 ':x.verdict=='stuck'?'💤 ':x.verdict=='rest'?'😴 ':'📖 ')+x.q.slice(0,24)+'</span><span>'+
-   (x.post!=null?(x.pre+' → '+x.post+' ('+(x.delta<=0?'▼ ':'▲ ')+Math.abs(x.delta)+')'):(x.pre+' · '+x.verdict))+
-   '</span></div>').join('');
+  'last night: NREM '+r.nrem+' + REM '+r.rem+(r.excited_night?' · <b>earned a longer night</b>':'')+' · '+r.lived_tokens+' lived tokens'+
+  (r.conscience?('<br>'+r.conscience):'')+
+  (r.genome?('<br>genome: '+r.genome):'')+
+  (r.pursuit?('<br><b>pursuit '+r.pursuit.state+'</b>'+(r.pursuit.items?(': '+r.pursuit.items.join(' · ')):'')):'')+
+  (r.woke_thinking?('<br>woke thinking about: '+r.woke_thinking):'')+
+  (r.woke_feeling?('<br><b>woke and pressed its own button '+r.woke_feeling+'</b>'):'')+
+  (r.tail_dropped?('<br>'+r.tail_dropped+' degenerate turn(s) kept out of the dreams'):'');
  evt(r.error||('woke: NREM '+r.nrem+' + REM '+r.rem),'#8b5cf6');
- if(!r.error){selfPressesToday=0;rewardPanel(r.woke_feeling?2:0,null)}
-}
+ if(!r.error){selfPressesToday=0;rewardPanel(r.woke_feeling?2:0,null)}}
 async function saveLife(){
  const r=await fetch('/save',{method:'POST'}).then(r=>r.json());
- add('sys','saved -> '+r.saved+' ('+r.live_steps+' live steps)');
-}
+ add('sys','saved -> '+r.saved+' ('+r.live_steps+' live steps)')}
 setInterval(async()=>{if(!contOn)return;try{
  const p=await fetch('/pulse').then(r=>r.json());
  (p.events||[]).forEach(e=>{
-  if(e.kind=='speaks'){evt('nobody asked — it spoke first','#2563eb');add('bot',e.text);record('speaks',{})}
+  if(e.kind=='speaks'){evt('nobody asked — it spoke first','#2563eb');add('bot',e.text);addFrames([{k:'speaks'}])}
   else if(e.kind=='kept_quiet')evt('it took the floor and had nothing to say');
   else if(e.kind=='ruminated')evt('ruminating on: '+e.about);
   else if(e.kind=='slept'){const n=e.night||{};
    evt('fell asleep on its own — NREM '+n.nrem+' over '+n.lived_tokens+' lived tokens','#8b5cf6');
-   record('night',{nrem:n.nrem,rem:n.rem});
+   addFrames(nightFrames({nrem:n.nrem,rem:n.rem,woke:n.woke_thinking,story:[],pairs:[]}));
    if(n.woke_feeling)evt('it woke and pressed its own button '+n.woke_feeling,'#15803d');
    if(n.conscience)evt(n.conscience);
-   if(n.pursuit)evt('pursuit: '+n.pursuit.state);
    selfPressesToday=0;rewardPanel(0,null)}});
  if(p.drives){drivesPanel(p.drives);rewardPanel(p.drives.mood,null)}
 }catch(e){}},5000);
