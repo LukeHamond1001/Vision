@@ -1409,6 +1409,11 @@ button.quiet:hover{opacity:1;border-color:var(--mut);color:var(--ink)}
 #night{max-height:96px;overflow-y:auto;font-size:11px;color:#5a6672;margin-top:6px}
 #tslider{width:100%;accent-color:var(--acc)}
 #frameinfo{font-size:11px;color:var(--acc);min-height:15px;font-weight:600}
+#stream{font-family:menlo,monospace;font-size:9.5px;line-height:1.5;color:#48525c;
+ max-height:78px;overflow:hidden;margin:6px 0 2px;font-variant-numeric:tabular-nums}
+#stream>div{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#stream>div:nth-child(1){color:#20242b}
+#stream>div:nth-child(3){opacity:.75}#stream>div:nth-child(4){opacity:.5}#stream>div:nth-child(5){opacity:.3}
 #footer{display:flex;gap:12px;align-items:center;font-size:11px;color:#5a6672;margin-top:4px;flex-wrap:wrap}
 </style>
 <div id=top>
@@ -1448,14 +1453,14 @@ button.quiet:hover{opacity:1;border-color:var(--mut);color:var(--ink)}
   <path id=w_tc class=wire d="M178,200 L192,200"/>
   <path id=w_cp class=wire d="M416,168 L432,168"/>
   <path id=w_ph class=wire d="M486,168 L498,168"/>
-  <path id=w_hpc_r class=wire d="M352,66 L352,36 L525,36 L525,140"/>
-  <path id=w_hpc_w class=wire d="M178,176 L184,176 L184,46 L322,46 L322,66"/>
+  <path id=w_hpc_r class=wire d="M416,100 L424,100 L424,36 L525,36 L525,140"/>
+  <path id=w_hpc_w class=wire d="M312,110 L322,110"/>
   <path id=w_goal class=wire d="M486,244 L525,244 L525,196"/>
   <path id=w_plan class=wire d="M262,356 L262,376"/>
   <path id=w_bg class=wire d="M330,356 L330,376"/>
   <path id=w_da class=wire d="M432,396 L412,396"/>
-  <text class=tiny x=200 y=43>surprise-gated write</text>
-  <text class=tiny x=390 y=33>decode-free read → logits</text>
+  <text class=tiny x=280 y=105>write</text>
+  <text class=tiny x=430 y=33>decode-free read → logits</text>
   <text class=tiny x=492 y=236>goal bias</text>
   <rect class=blk x=8 y=180 width=44 height=40 rx=3 />
   <text class=lbl x=13 y=194>YOU</text><text class=val x=13 y=208 id=v_in>—</text>
@@ -1463,13 +1468,16 @@ button.quiet:hover{opacity:1;border-color:var(--mut);color:var(--ink)}
   <text class=lbl x=76 y=163>TRUNK · 13 layers</text>
   <g id=trunk></g>
   <text class=val x=76 y=243 id=v_trunk>—</text>
-  <rect class=blk x=188 y=58 width=228 height=298 rx=3 />
+  <rect class=blk x=188 y=58 width=124 height=298 rx=3 />
   <text class=lbl x=194 y=71>COUNCIL · six clocks</text>
   <text class=tiny x=228 y=86>acc</text><text class=tiny x=262 y=86>cortex</text>
-  <text class=tiny x=300 y=86>EPISODIC STORE M</text>
   <g id=bands></g>
-  <text class=val x=194 y=350 id=v_hpc>store quiet</text>
-  <text class=val x=290 y=350 id=v_hpc2 style="fill:#15803d"></text>
+  <rect class=blk x=322 y=58 width=94 height=298 rx=3 />
+  <text class=lbl x=328 y=71>HIPPOCAMPUS</text>
+  <text class=tiny x=328 y=81>episodic store · per-band lanes</text>
+  <g id=lanes></g>
+  <text class=val x=328 y=336 id=v_hpc>store quiet</text>
+  <text class=val x=328 y=348 id=v_hpc2 style="fill:#1f7a46"></text>
   <rect class=blk x=432 y=140 width=54 height=56 rx=3 />
   <text class=lbl x=438 y=154>PFC</text>
   <text class=tiny x=438 y=164>route·ponder</text>
@@ -1492,6 +1500,7 @@ button.quiet:hover{opacity:1;border-color:var(--mut);color:var(--ink)}
   <text class=lbl x=438 y=389>PRESS</text>
   <text class=val x=438 y=406 id=v_press>—</text>
  </svg>
+ <div id=stream></div>
  <div id=frameinfo>live</div>
  <input id=tslider type=range min=0 max=0 value=0 oninput="scrub(parseInt(this.value))">
  <div style="display:flex;gap:8px;align-items:center">
@@ -1555,9 +1564,13 @@ BANDS.forEach((b,i)=>{const y=94+i*40;
   '<text class=tiny x=194 y='+(y+24)+'>clk '+CLKL[b]+'</text>'+
   '<rect id=bnd'+b+' class=cell x=224 y='+y+' width=30 height=22 rx=2 />'+
   '<rect id=bndc'+b+' class=cell x=258 y='+y+' width=30 height=22 rx=2 />'+
-  '<rect id=mc'+b+' class=cell x=294 y='+y+' width='+(14+Math.round(KD[b]/128))+' height=22 rx=2 />'+
-  '<text class=tiny x='+(298+Math.round(KD[b]/128)+14)+' y='+(y+14)+'>'+KD[b]+'</text>'+
   '<text class=val id=bndv'+b+' x=224 y='+(y+32)+' style="font-size:6.5px"></text>';});
+const laneG=document.getElementById('lanes');
+BANDS.forEach((b,i)=>{const y=94+i*40;
+ laneG.innerHTML+=
+  '<text class=tiny x=328 y='+(y+9)+'>B'+b+'</text>'+
+  '<rect id=mc'+b+' class=cell x=328 y='+(y+12)+' width='+(30+Math.round(KD[b]/80))+' height=14 rx=2 />'+
+  '<text class=tiny x='+(332+30+Math.round(KD[b]/80))+' y='+(y+22)+'>'+KD[b]+'</text>';});
 const goalG=document.getElementById('goals');
 for(let i=0;i<4;i++){goalG.innerHTML+='<rect id=gs'+i+' class=cell x='+(438+(i%2)*22)+' y='+(238+Math.floor(i/2)*13)+' width=18 height=10 rx=2 />';}
 const planG=document.getElementById('plan');
@@ -1586,6 +1599,10 @@ function flow(wireId,n,color){const svg=document.getElementById('chip');const w=
   m.setAttribute('path',w.getAttribute('d'));m.setAttribute('fill','freeze');
   c.appendChild(m);svg.appendChild(c);setTimeout(()=>c.remove(),3000+i*110)}}
 function fmtD(d){return d>=1000?Math.round(d/1000)+'k':d>=100?Math.round(d):d>=1?d.toFixed(1):d.toFixed(2)}
+function stream(line){const s=document.getElementById('stream');
+ const d=document.createElement('div');d.textContent=line;
+ s.insertBefore(d,s.firstChild);
+ while(s.children.length>5)s.removeChild(s.lastChild)}
 function valueBars(val){if(!val)return;
  Object.entries(val).forEach(([u,v])=>{const e=document.getElementById('vb'+u);if(!e)return;
   const h=Math.min(16,Math.abs(v)*4);e.setAttribute('height',h);
@@ -1686,6 +1703,9 @@ async function doPress(m){
  const r=await fetch('/press',{method:'POST',body:JSON.stringify({mag:m})}).then(r=>r.json());
  document.getElementById('v_press').textContent=(m>0?'+':'')+m;
  flow('w_da',Math.min(12,2+Math.abs(m)*2),m>0?'#15803d':'#c2410c');
+ stream('P ▸ '+(m>0?'+':'')+m+' felt'+r.felt+
+  (r.absorbed_steps?' absorb×'+r.absorbed_steps:'')+
+  (r.corrected_steps?' unlearn×'+r.corrected_steps:'')+' mood'+r.mood);
  evt((m>0?'+':'')+m+' pressed · felt as '+r.felt+
   (r.absorbed_steps?(' · absorbed x'+r.absorbed_steps):'')+
   (r.corrected_steps?(' · corrective unlearning x'+r.corrected_steps):''),
@@ -1724,6 +1744,14 @@ async function send(){
    noticed:!!r.noticed,value:r.value};
   const f0=frames.length;
   addFrames(turnFrames(turnN,t,snap));
+  const mvs=(r.moved||[]).map(x=>x.part.replace('acc_c/','c')
+   .replace('acc/','a').replace('h/','h')+':'+fmtD(x.delta)).join(' ');
+  stream('T'+turnN+' ▸ in'+snap.qlen+' surp'+r.surprise+
+   (r.surprise_peak!=null?' pk'+r.surprise_peak:'')+
+   ' │ '+mvs+
+   (snap.vote>0.05?' │ hpc'+snap.vote+' «'+((snap.suggests||[])[0]||'')+'»':' │ hpc–')+
+   (r.value?(' │ val'+(Object.values(r.value).reduce((a,c)=>a+c,0)/6).toFixed(2)):'')+
+   ' │ mood'+r.mood);
   evt('turn '+turnN+' · «'+t.slice(0,30)+'» → '+words+' words · surp '+r.surprise+
    (snap.vote>0.05?' · store voted '+snap.vote:''),'#2563eb',f0);
   if(liveMode){turnBase(snap);
@@ -1751,6 +1779,8 @@ async function sleepy(){
   addFrames(nightFrames({nrem:r.nrem,rem:r.rem,woke:r.woke_thinking,
    story:(r.night_story||[]).map(x=>({q:x.q,pre:x.pre,post:x.post,verdict:x.verdict})),
    pairs:r.rem_pairs||[]}));
+  (r.night_story||[]).forEach(x=>stream('N ▸ '+(x.verdict||'')+' «'+
+   (x.q||'').slice(0,22)+'»'+(x.post!=null?' '+x.pre+'→'+x.post:'')));
   (r.night_story||[]).forEach((x,i)=>evt('night · '+x.verdict+': «'+x.q.slice(0,26)+'»'+
    (x.post!=null?(' '+x.pre+' → '+x.post):''),'#8b5cf6',nf0+i));
   (r.rem_pairs||[]).forEach((p,i)=>evt('dream · «'+p.a.slice(0,18)+'» × «'+p.b.slice(0,18)+'» charge '+p.charge,
