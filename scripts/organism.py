@@ -75,7 +75,10 @@ class Organism:
         self.pursuit = life.get("pursuit")
         self.pursuit_installment = bool(life.get("pursuit_installment"))
         self.press_log = list(life.get("press_log", []))
-        self.n_human_presses = int(life.get("n_human_presses", 0))
+        self.n_human_presses = max(
+            int(life.get("n_human_presses", 0)),
+            len([e for e in self.press_log
+                 if "mag" in e and not e.get("self")]))
         self.pride_today = 0
         self.mood = 0.0          # decaying tally of reward-channel events
         # THE OPEN DOOR: it may press its own button — gated by its
