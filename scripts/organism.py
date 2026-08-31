@@ -1356,42 +1356,63 @@ class Organism:
 PAGE = """<!doctype html><meta charset=utf-8>
 <title>the organism</title>
 <style>
-body{font:15px -apple-system,sans-serif;margin:0;display:flex;flex-direction:column;height:100vh;background:#f6f7f9;color:#1c2733}
-#top{display:flex;align-items:center;gap:14px;padding:10px 18px;background:#ffffff;border-bottom:1px solid #e3e8ee}
-.tgl{margin-left:auto}
-.tglbtn{background:#eef2f6;color:#51677e;border:1px solid #d5dde5;border-radius:999px;padding:6px 14px;cursor:pointer;font-size:12.5px}
-.tglbtn.on{background:#2563eb;color:#fff;border-color:#2563eb}
+:root{--paper:#faf9f6;--panel:#ffffff;--ink:#20242b;--mut:#8b94a0;--line:#e7e4dd;
+ --acc:#2f7d5c;--good:#1f7a46;--warn:#bd4a24;--dream:#7a5cc4;--blue:#3565b0}
+*{box-sizing:border-box}
+body{font:15px/1.5 -apple-system,'Segoe UI',sans-serif;margin:0;display:flex;flex-direction:column;height:100vh;background:var(--paper);color:var(--ink)}
+#top{display:flex;align-items:center;gap:14px;padding:12px 22px;background:var(--paper);border-bottom:1px solid var(--line)}
+#status{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--mut);letter-spacing:.3px}
+#alivedot{width:9px;height:9px;border-radius:50%;background:var(--acc);animation:breathe 3.2s ease-in-out infinite}
+@keyframes breathe{0%,100%{opacity:.45;transform:scale(.85)}50%{opacity:1;transform:scale(1.1)}}
+.tgl{margin-left:auto;display:flex;gap:8px}
+.tglbtn{background:transparent;color:var(--mut);border:1px solid var(--line);border-radius:999px;padding:6px 14px;cursor:pointer;font-size:12px;letter-spacing:.2px;transition:all .15s}
+.tglbtn:hover{border-color:var(--mut)}
+.tglbtn.on{background:var(--ink);color:var(--paper);border-color:var(--ink)}
 #main{display:flex;flex:1;min-height:0}
 #chat{flex:1;min-width:0;display:flex;flex-direction:column}
-#log{flex:1;overflow-y:auto;padding:20px 26px}
-.you{color:#2563eb;margin:10px 0 3px;font-weight:500}
-.bot{color:#1c2733;margin:0 0 8px;white-space:pre-wrap}
-.sys{color:#7d92a8;font-size:12px;margin:4px 0}
-#bar{display:flex;gap:8px;padding:12px 18px;border-top:1px solid #e3e8ee;background:#ffffff}
-#msg{flex:1;background:#f2f5f8;border:1px solid #d5dde5;color:#1c2733;padding:11px 13px;border-radius:9px;font-size:15px}
-button{background:#2563eb;color:#fff;border:0;border-radius:9px;padding:11px 18px;cursor:pointer;font-size:14px}
-button:hover{background:#1d4fd7}
-button.quiet{background:#eef2f6;color:#51677e;border:1px solid #d5dde5;padding:6px 12px;font-size:12px}
-#rewardrow{display:flex;align-items:center;gap:12px;padding:10px 18px 6px;background:#ffffff}
-#rw{flex:1;accent-color:#2563eb}
-#rwval{min-width:44px;text-align:center;font-weight:600;font-size:15px;color:#7d92a8}
-#brain{width:48%;min-width:380px;max-width:700px;padding:14px;overflow-y:auto;background:#f6f7f9;border-left:1px solid #e3e8ee;display:none}
-.panel{background:#ffffff;border:1px solid #e3e8ee;border-radius:10px;padding:12px}
-.panel h3{margin:0 0 8px;font-size:11px;letter-spacing:1.5px;color:#7d92a8}
-.blk{fill:#ffffff;stroke:#b9c6d4;stroke-width:1.1}
-.cell{fill:#eef3f8;stroke:#b9c6d4;stroke-width:0.8}
-.lbl{fill:#51677e;font-size:8.5px;font-family:-apple-system,sans-serif;letter-spacing:.4px}
-.tiny{fill:#8aa0b5;font-size:6.5px;font-family:-apple-system,sans-serif}
-.val{fill:#b45309;font-size:7.5px;font-family:menlo,monospace}
-.wire{stroke:#ccd7e1;stroke-width:1.3;fill:none}
-.dot{fill:#2563eb}
-#events{max-height:96px;overflow-y:auto;font-size:11px;color:#51677e;margin-bottom:6px}
-#night{max-height:96px;overflow-y:auto;font-size:11px;color:#51677e;margin-top:6px}
-#tslider{width:100%;accent-color:#2563eb}
-#frameinfo{font-size:11px;color:#2563eb;min-height:15px;font-weight:500}
-#footer{display:flex;gap:12px;align-items:center;font-size:11px;color:#51677e;margin-top:4px;flex-wrap:wrap}
+#log{flex:1;overflow-y:auto;padding:28px 0}
+#log>div{max-width:680px;margin-left:auto;margin-right:auto;padding:0 28px;animation:rise .18s ease-out}
+@keyframes rise{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+.you{color:var(--acc);margin:18px auto 4px;font-size:13.5px;font-weight:600;letter-spacing:.2px}
+.bot{font-family:Georgia,'Times New Roman',serif;font-size:17px;line-height:1.55;color:var(--ink);margin:0 auto 6px;white-space:pre-wrap}
+.sys{color:#b3aca0;font-size:11.5px;margin:6px auto;font-style:italic}
+.think{color:var(--mut);font-size:20px;letter-spacing:4px;animation:thinkp 1.2s ease-in-out infinite}
+@keyframes thinkp{0%,100%{opacity:.25}50%{opacity:.9}}
+#bar{display:flex;gap:10px;padding:14px 28px 8px;background:var(--paper);max-width:736px;margin:0 auto;width:100%}
+#msg{flex:1;background:var(--panel);border:1px solid var(--line);color:var(--ink);padding:13px 16px;border-radius:14px;font-size:15px;outline:none;transition:border .15s,box-shadow .15s}
+#msg:focus{border-color:var(--acc);box-shadow:0 0 0 3px rgba(47,125,92,.10)}
+button{background:var(--ink);color:var(--paper);border:0;border-radius:12px;padding:11px 18px;cursor:pointer;font-size:14px;transition:opacity .15s}
+button:hover{opacity:.85}
+#sendbtn{width:46px;height:46px;border-radius:50%;display:flex;align-items:center;justify-content:center;padding:0;font-size:18px}
+button.quiet{background:transparent;color:var(--mut);border:1px solid var(--line);padding:6px 13px;font-size:12px;border-radius:999px}
+button.quiet:hover{opacity:1;border-color:var(--mut);color:var(--ink)}
+#rewardrow{display:flex;align-items:center;gap:12px;padding:6px 28px;background:var(--paper);max-width:736px;margin:0 auto;width:100%}
+#rw{flex:1;-webkit-appearance:none;appearance:none;height:6px;border-radius:3px;outline:none;
+ background:linear-gradient(to right,#c96a45 0%,#e8e5de 46%,#e8e5de 54%,#3f8f63 100%)}
+#rw::-webkit-slider-thumb{-webkit-appearance:none;width:20px;height:20px;border-radius:50%;background:#fff;border:1.5px solid #c8c2b6;box-shadow:0 1px 3px rgba(0,0,0,.15);cursor:grab}
+#rwval{min-width:44px;text-align:center;font-weight:700;font-size:15px;color:var(--mut);font-variant-numeric:tabular-nums}
+#carerow{display:flex;gap:8px;padding:4px 28px 8px;max-width:736px;margin:0 auto;width:100%}
+#hint{padding:0 28px 12px;font-size:11px;color:#b3aca0;max-width:736px;margin:0 auto;width:100%}
+#brain{width:48%;min-width:380px;max-width:700px;padding:14px;overflow-y:auto;background:var(--paper);border-left:1px solid var(--line);display:none}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px}
+.panel h3{margin:0 0 8px;font-size:10.5px;letter-spacing:2px;color:var(--mut)}
+.blk{fill:#ffffff;stroke:#c8ceD8;stroke-width:1.1}
+.cell{fill:#f0f2ef;stroke:#c8ced8;stroke-width:0.8}
+.lbl{fill:#5a6672;font-size:8.5px;font-family:-apple-system,sans-serif;letter-spacing:.4px}
+.tiny{fill:#98a2ac;font-size:6.5px;font-family:-apple-system,sans-serif}
+.val{fill:#a06018;font-size:7.5px;font-family:menlo,monospace}
+.wire{stroke:#d5d9d2;stroke-width:1.3;fill:none}
+.dot{fill:var(--blue)}
+#events{max-height:96px;overflow-y:auto;font-size:11px;color:#5a6672;margin-bottom:6px}
+#events>div{padding:1px 0;border-radius:4px}
+#events>div:hover{background:#f4f2ec}
+#night{max-height:96px;overflow-y:auto;font-size:11px;color:#5a6672;margin-top:6px}
+#tslider{width:100%;accent-color:var(--acc)}
+#frameinfo{font-size:11px;color:var(--acc);min-height:15px;font-weight:600}
+#footer{display:flex;gap:12px;align-items:center;font-size:11px;color:#5a6672;margin-top:4px;flex-wrap:wrap}
 </style>
 <div id=top>
+ <div id=status><span id=alivedot></span><span id=alivetxt>awake</span></div>
  <span class=tgl>
   <button id=contTgl class=tglbtn onclick=toggleCont()>continuous time: off</button>
   <button id=intTgl class=tglbtn onclick=toggleInt()>internals: off</button>
@@ -1402,7 +1423,7 @@ button.quiet{background:#eef2f6;color:#51677e;border:1px solid #d5dde5;padding:6
  <div id=log></div>
  <div id=bar>
   <input id=msg placeholder="talk to it..." onkeydown="if(event.key==='Enter')send()">
-  <button id=sendbtn onclick=send()>send</button>
+  <button id=sendbtn onclick=send() title="send">↑</button>
  </div>
  <div id=rewardrow>
   <span style="font-size:12px;color:#c2410c">−6</span>
@@ -1411,12 +1432,12 @@ button.quiet{background:#eef2f6;color:#51677e;border:1px solid #d5dde5;padding:6
   <span id=rwval>0</span>
   <button onclick=pressSlider()>press</button>
  </div>
- <div style="display:flex;gap:8px;padding:0 18px 6px;background:#ffffff">
+ <div id=carerow>
   <button class=quiet onclick=sleepy()>sleep</button>
   <button class=quiet onclick=saveLife()>save</button>
   <button class=quiet onclick="fetch('/reset',{method:'POST'}).then(()=>add('sys','~ fresh wake ~'))">reset</button>
  </div>
- <div style="padding:0 18px 10px;font-size:11px;color:#8aa0b5">set the slider before sending — the press applies to its previous answer, then your message goes</div>
+ <div id=hint>set the slider before sending — the press applies to its previous answer, then your message goes</div>
 </div>
 <div id=brain>
  <div class=panel>
@@ -1503,7 +1524,7 @@ function toggleInt(){intOn=!intOn;const b=document.getElementById('intTgl');
  document.getElementById('brain').style.display=intOn?'block':'none'}
 function rwShow(){const v=parseFloat(document.getElementById('rw').value);
  const e=document.getElementById('rwval');e.textContent=(v>0?'+':'')+v;
- e.style.color=v>0?'#15803d':(v<0?'#c2410c':'#7d92a8')}
+ e.style.color=v>0?'var(--good)':(v<0?'var(--warn)':'var(--mut)')}
 let evN=0;
 function evt(txt,color,fi){const e=document.getElementById('events');
  if(evN===0)e.innerHTML='';evN++;
@@ -1639,7 +1660,11 @@ function goLive(){liveMode=true;if(playing){clearInterval(playing);playing=null;
  if(frames.length)renderFrame(frames.length-1)}
 
 function rewardPanel(mood,val){
- if(mood!=null){const m=Math.max(-8,Math.min(8,mood));
+ if(mood!=null){
+  const ad=document.getElementById('alivedot'),at=document.getElementById('alivetxt');
+  if(ad){ad.style.background=mood>1.5?'var(--acc)':(mood<-1?'var(--warn)':'#a8b0a6');
+   at.textContent='awake · mood '+mood.toFixed(1)}
+  const m=Math.max(-8,Math.min(8,mood));
   document.getElementById('moodnum').textContent=mood.toFixed(1);
   const b=document.getElementById('moodbar');
   b.style.background=m>=0?'#15803d':'#c2410c';
@@ -1680,7 +1705,7 @@ async function send(){
  try{
   const mv=parseFloat(document.getElementById('rw').value)||0;
   if(mv!==0)await doPress(mv);
-  mEl.value='';add('you','you: '+t);add('sys','…thinking');
+  mEl.value='';add('you','you: '+t);add('sys think','· · ·');
   const r=await fetch('/chat',{method:'POST',body:JSON.stringify({text:t})}).then(r=>r.json());
   log.lastChild.remove();if(r.reply)add('bot',r.reply);else add('sys','~ it said nothing ~');
   if(r.pride)evt('conscience approved ('+r.pride+')','#15803d');
