@@ -907,6 +907,11 @@ class Organism:
                 pair_ = next(((qq, aa) for qq, aa in self.facts
                               if qq == q_), None)
                 led_ = self.progress.get(q_)
+                if pair_ and led_ and led_.get("done") \
+                        and self.fact_ce(pair_[0], pair_[1]) \
+                        > self.pursuit["target"]:
+                    led_["done"] = False   # diploma below the goal's bar
+                    led_["stuck"] = 0
                 if pair_ and led_ and not led_.get("done")                         and ("qa", pair_[0], pair_[1]) not in cands:
                     cands.insert(0, ("qa", pair_[0], pair_[1]))
         # THE RETENTION CURVE (49zz): graduation starts a clock, not an
@@ -960,6 +965,13 @@ class Organism:
                 continue
             row = {"q": key[:60], "pre": round(ce, 2)}
             grad_bar = 0.6 if kind == "qa" else 2.0
+            if self.pursuit and key in self.pursuit["items"]:
+                # a pursuit item answers to its own goal's standard:
+                # graduating at the house bar (0.6) while the goal's
+                # target is stricter froze the item out of the replay
+                # above target — the goal starved on its own item's
+                # diploma (measured: the squirrel stall, shift 13)
+                grad_bar = min(grad_bar, self.pursuit["target"])
             # SETTLE LAW (49y, re-learned 49xx): a fact taught TODAY
             # never graduates on its first night — teach-to-criterion
             # holds the surface, only a slept-on night holds the week.
