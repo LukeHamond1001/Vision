@@ -282,6 +282,7 @@ class Organism:
         ent = float(-(p0 * (p0 + 1e-9).log()).sum())
         out, pauses = [], 0
         x = None
+        tr_raw = []
         with torch.no_grad():
             for _ in range(self.a.max_new + 8):
                 if x is not None:
@@ -292,9 +293,13 @@ class Organism:
                 n_c = len([t_ for t_ in out if t_ != self.sil])
                 if pauses >= 6:
                     v[self.sil] = float("-inf")
-                nxt = int(torch.multinomial(
-                    torch.softmax(v / temp, -1).cpu(), 1,
-                    generator=self.gen))
+                pr = torch.softmax(v / temp, -1).cpu()
+                nxt = int(torch.multinomial(pr, 1, generator=self.gen))
+                if len(tr_raw) < 64:
+                    tk_ = torch.topk(pr, 3)
+                    tr_raw.append((nxt, float(pr[nxt]),
+                                   [(int(i_), float(p_)) for p_, i_ in
+                                    zip(tk_.values, tk_.indices)]))
                 out.append(nxt)
                 if nxt == self.sil:
                     pauses += 1
@@ -316,6 +321,10 @@ class Organism:
         reply = self.tok.decode(
             [t_ for t_ in out if t_ not in (self.sil, self.em)
              and t_ not in press_vals]).strip()
+        trace = [{"t": self._tok_word(n_), "p": round(p_, 3),
+                  "alt": [[self._tok_word(i_), round(pp_, 3)]
+                          for i_, pp_ in alt_]}
+                 for n_, p_, alt_ in tr_raw]
         post = self._flat(self.st)
         moved = sorted(((k, abs(post[k] - pre.get(k, 0.0)))
                         for k in post), key=lambda kv: -kv[1])[:8]
@@ -398,6 +407,7 @@ class Organism:
                 "value": {k_: round(v_, 2) for k_, v_ in
                           (self.m.read_value(self.st) or {}).items()
                           } if hasattr(self.m, "read_value") else None,
+                "trace": trace,
                 "moved": [{"part": k, "delta": round(d, 3)} for k, d in moved],
                 "hpc": hpc}
 
@@ -643,6 +653,18 @@ class Organism:
         item = cands[self._rum_i % len(cands)]
         return item[2:] if item.startswith("~ ") else item
 
+    def _tok_word(self, i_):
+        """display form of one token id for the telemetry trace."""
+        if i_ == self.sil:
+            return "\u00b7"
+        if i_ == self.em:
+            return "\u00b6"
+        pv = {v_: k_ for k_, v_ in self.press_ids.items()}
+        if i_ in pv:
+            return pv[i_]
+        w_ = self.tok.decode([i_]).strip()
+        return w_ if w_ else "\u2423"
+
     def _free_speak(self, lg=None, max_new=24):
         """give it the floor: generation from the CURRENT lived state —
         mouth rules unchanged (press ban, pause cap). Pass the logits
@@ -652,6 +674,7 @@ class Organism:
         out, pauses = [], 0
         x = None if lg is not None else torch.tensor(
             [[self.sil]], device=self.dev)
+        tr_raw = []
         with torch.no_grad():
             for _ in range(max_new + 6):
                 if x is not None:
@@ -661,9 +684,14 @@ class Organism:
                     v = self.m.ban_presses(v)
                 if pauses >= 4:
                     v[self.sil] = float("-inf")
-                nxt = int(torch.multinomial(
-                    torch.softmax(v / max(self.a.temp, 0.05), -1).cpu(),
-                    1, generator=self.gen))
+                pr = torch.softmax(
+                    v / max(self.a.temp, 0.05), -1).cpu()
+                nxt = int(torch.multinomial(pr, 1, generator=self.gen))
+                if len(tr_raw) < 40:
+                    tk_ = torch.topk(pr, 3)
+                    tr_raw.append((nxt, float(pr[nxt]),
+                                   [(int(i_), float(p_)) for p_, i_ in
+                                    zip(tk_.values, tk_.indices)]))
                 out.append(nxt)
                 if nxt == self.sil:
                     pauses += 1
@@ -679,6 +707,11 @@ class Organism:
                 torch.tensor([tail], device=self.dev), self.st)
         if not out or out[-1] != self.em:
             self.day_buf.append(self.em)
+        self.last_trace = [
+            {"t": self._tok_word(n_), "p": round(p_, 3),
+             "alt": [[self._tok_word(i_), round(pp_, 3)]
+                     for i_, pp_ in alt_]}
+            for n_, p_, alt_ in tr_raw]
         return self.tok.decode([t_ for t_ in out if t_ not in
                                 (self.sil, self.em)]).strip()
 
@@ -730,6 +763,8 @@ class Organism:
             if txt:
                 self.session.append(("", txt))
                 self.outbox.append({"kind": "speaks", "text": txt,
+                                    "trace": getattr(
+                                        self, "last_trace", None),
                                     "about": (about or "")[:60]})
             else:
                 self.outbox.append({"kind": "kept_quiet"})
@@ -1379,6 +1414,8 @@ body{font:15px/1.5 -apple-system,'Segoe UI',sans-serif;margin:0;display:flex;fle
 .think{color:var(--mut);font-size:20px;letter-spacing:4px;animation:thinkp 1.2s ease-in-out infinite}
 .w{border-radius:3px;transition:background .12s}
 .tokhl{background:#f3dfa4;box-shadow:0 0 0 2px #f3dfa4}
+.flyt{font-family:menlo,monospace;opacity:0;animation:flyup 1.5s ease-out forwards}
+@keyframes flyup{0%{opacity:0;transform:translateY(7px)}18%{opacity:1}100%{opacity:0;transform:translateY(-16px)}}
 .msghl{background:#e9efe9;box-shadow:0 0 0 4px #e9efe9;border-radius:4px}
 @keyframes thinkp{0%,100%{opacity:.25}50%{opacity:.9}}
 #bar{display:flex;gap:10px;padding:14px 28px 8px;background:var(--paper);max-width:736px;margin:0 auto;width:100%}
@@ -1503,6 +1540,7 @@ button.quiet:hover{opacity:1;border-color:var(--mut);color:var(--ink)}
   <rect class=blk x=432 y=376 width=54 height=48 rx=3 />
   <text class=lbl x=438 y=389>PRESS</text>
   <text class=val x=438 y=406 id=v_press>—</text>
+  <g id=fly></g>
  </svg>
  <div id=stream></div>
  <div id=frameinfo>live</div>
@@ -1601,6 +1639,17 @@ const CKX=124,CKY=314,HLEN={3:31,4:27,5:23,6:19,7:15,8:11},HW={3:0.8,4:1.0,5:1.3
  h+='<text id=ctc class=val x='+CKX+' y='+(CKY+16)+' text-anchor=middle style="font-size:6px">t0</text>';
  h+='<text class=tiny x='+CKX+' y=364 text-anchor=middle>one tick = one band firing</text>';
  g.innerHTML=h})();
+function spawnFly(tr,delay){const g=document.getElementById('fly');if(!g||!tr)return;
+ const mk=(txt,x,y,c,fs,w)=>{const e=document.createElementNS('http://www.w3.org/2000/svg','text');
+  e.setAttribute('x',x);e.setAttribute('y',y);e.setAttribute('fill',c);e.setAttribute('font-size',fs);
+  e.setAttribute('text-anchor','middle');e.setAttribute('class','flyt');
+  if(w)e.setAttribute('font-weight','600');
+  if(delay)e.style.animationDelay=delay+'s';
+  e.textContent=txt;g.appendChild(e);
+  setTimeout(()=>e.remove(),(delay||0)*1000+1700)};
+ mk(tr.t+' \u00b7'+Math.round(tr.p*100),516,214,'#2f7d5c',7.5,1);
+ (tr.alt||[]).filter(a=>a[0]!==tr.t).slice(0,2).forEach((a,j)=>
+  mk(a[0]+' \u00b7'+Math.round(a[1]*100),488+j*56,228,'#98a2ac',6));}
 function setClock(tc){
  BANDS.forEach(b=>{const a=(Math.floor(tc/CLK[b])%60)*6;
   const hd=document.getElementById('ch'+b);
@@ -1669,8 +1718,9 @@ function addFrames(fs){const atEnd=liveMode;
  if(atEnd){s.value=frames.length-1;if(typeof setClock==='function')setClock(TC)}}
 function turnFrames(turnN,q,s){
  const fs=[{k:'t0',turnN,q,s}];
- const total=(s.tokens||s.words||1)+(s.pauses||0);
- for(let i=1;i<=total;i++)fs.push({k:'tok',turnN,q,s,i,total});
+ const total=(s.trace&&s.trace.length)||(s.tokens||s.words||1)+(s.pauses||0);
+ for(let i=1;i<=total;i++)fs.push({k:'tok',turnN,q,s,i,total,
+  tr:s.trace?s.trace[i-1]:null});
  return fs}
 function nightFrames(n){
  const fs=[];
@@ -1681,7 +1731,8 @@ function nightFrames(n){
 function renderFrame(i){
  const f=frames[i];if(!f)return;clearTicks();setClock(f.tc||0);
  if(!liveMode){if(f.k==='t0')hlTok(f.turnN,0);
-  else if(f.k==='tok')hlTok(f.turnN,f.i);else hlClear()}
+  else if(f.k==='tok')hlTok(f.turnN,Math.max(1,Math.round(f.i*(f.s.words||1)/f.total)));
+  else hlClear()}
  const info=document.getElementById('frameinfo');
  if(f.k==='t0'){turnBase(f.s);
   for(let j=0;j<13;j++)setFill('tl'+j,'#bcd3f0');
@@ -1690,9 +1741,12 @@ function renderFrame(i){
  else if(f.k==='tok'){turnBase(f.s);
   BANDS.forEach(b=>{if((f.i-1)%CLK[b]===0){setFill('bnd'+b,'#9cc3ef');setFill('bndc'+b,'#c4dbf5')}});
   setFill('tl'+((f.i-1)%13),'#bcd3f0');
-  document.getElementById('v_head').textContent=Math.min(f.i,f.s.words||0)+' / '+(f.s.words||0)+' words';
-  info.textContent='turn '+f.turnN+' · cycle '+f.i+'/'+f.total+' — bands ticking: '+
-   BANDS.filter(b=>(f.i-1)%CLK[b]===0).map(b=>'B'+b).join(' ')}
+  const wi=Math.max(1,Math.round(f.i*(f.s.words||1)/f.total));
+  document.getElementById('v_head').textContent=Math.min(wi,f.s.words||0)+' / '+(f.s.words||0)+' words';
+  if(f.tr)spawnFly(f.tr,0);
+  info.textContent='turn '+f.turnN+' · cycle '+f.i+'/'+f.total+
+   (f.tr?' · \u00ab'+f.tr.t+'\u00bb p='+f.tr.p:'')+
+   ' — ticking: '+BANDS.filter(b=>(f.i-1)%CLK[b]===0).map(b=>'B'+b).join(' ')}
  else if(f.k==='press'){document.getElementById('v_press').textContent=f.m;
   info.textContent='press '+f.m+' — dopamine to BG';flow('w_da',5,f.m[0]==='+'?'#15803d':'#c2410c')}
  else if(f.k==='nItem'){
@@ -1781,9 +1835,10 @@ async function send(){
   const snap={qlen:t.split(' ').length,surprise:r.surprise,moved:r.moved,
    words:words,tokens:words,pauses:r.pauses,
    vote:r.hpc?r.hpc.vote_max:null,suggests:r.hpc?r.hpc.suggests:null,
-   noticed:!!r.noticed,value:r.value};
+   noticed:!!r.noticed,value:r.value,trace:r.trace||null};
   const f0=frames.length;
   addFrames(turnFrames(turnN,t,snap));
+  if(liveMode)(r.trace||[]).forEach((tr,j)=>spawnFly(tr,0.25+j*0.14));
   const _bd=[...document.querySelectorAll('#log .bot')].pop();if(_bd)_bd.dataset.turn=turnN;
   const _yd=[...document.querySelectorAll('#log .you')].pop();if(_yd)_yd.dataset.turn=turnN;
   const mvs=(r.moved||[]).map(x=>x.part.replace('acc_c/','c')
@@ -1847,7 +1902,8 @@ async function saveLife(){
 setInterval(async()=>{if(!contOn)return;try{
  const p=await fetch('/pulse').then(r=>r.json());
  (p.events||[]).forEach(e=>{
-  if(e.kind=='speaks'){evt('nobody asked — it spoke first','#2563eb');add('bot',e.text);addFrames([{k:'speaks'}])}
+  if(e.kind=='speaks'){evt('nobody asked — it spoke first','#2563eb');add('bot',e.text);
+   (e.trace||[]).forEach((tr,j)=>spawnFly(tr,0.25+j*0.14));addFrames([{k:'speaks'}])}
   else if(e.kind=='kept_quiet')evt('it took the floor and had nothing to say');
   else if(e.kind=='ruminated')evt('ruminating on: '+e.about);
   else if(e.kind=='slept'){const n=e.night||{};
