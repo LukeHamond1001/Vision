@@ -1377,6 +1377,9 @@ body{font:15px/1.5 -apple-system,'Segoe UI',sans-serif;margin:0;display:flex;fle
 .bot{font-family:Georgia,'Times New Roman',serif;font-size:17px;line-height:1.55;color:var(--ink);margin:0 auto 6px;white-space:pre-wrap}
 .sys{color:#b3aca0;font-size:11.5px;margin:6px auto;font-style:italic}
 .think{color:var(--mut);font-size:20px;letter-spacing:4px;animation:thinkp 1.2s ease-in-out infinite}
+.w{border-radius:3px;transition:background .12s}
+.tokhl{background:#f3dfa4;box-shadow:0 0 0 2px #f3dfa4}
+.msghl{background:#e9efe9;box-shadow:0 0 0 4px #e9efe9;border-radius:4px}
 @keyframes thinkp{0%,100%{opacity:.25}50%{opacity:.9}}
 #bar{display:flex;gap:10px;padding:14px 28px 8px;background:var(--paper);max-width:736px;margin:0 auto;width:100%}
 #msg{flex:1;background:var(--panel);border:1px solid var(--line);color:var(--ink);padding:13px 16px;border-radius:14px;font-size:15px;outline:none;transition:border .15s,box-shadow .15s}
@@ -1488,6 +1491,7 @@ button.quiet:hover{opacity:1;border-color:var(--mut);color:var(--ink)}
   <rect class=blk x=432 y=220 width=54 height=48 rx=3 />
   <text class=lbl x=438 y=233>GOAL</text>
   <g id=goals></g>
+  <g id=clockw></g>
   <rect class=blk x=70 y=376 width=150 height=48 rx=3 />
   <text class=lbl x=76 y=389>PLAN / DREAMER · 8 steps</text>
   <g id=plan></g>
@@ -1523,7 +1527,19 @@ button.quiet:hover{opacity:1;border-color:var(--mut);color:var(--ink)}
 </div>
 <script>
 const log=document.getElementById('log');
-function add(cls,txt){const d=document.createElement('div');d.className=cls;d.textContent=txt;log.appendChild(d);log.scrollTop=1e9}
+function add(cls,txt){const d=document.createElement('div');d.className=cls;d.textContent=txt;log.appendChild(d);log.scrollTop=1e9;return d}
+function hlClear(){document.querySelectorAll('.tokhl,.msghl').forEach(e=>e.classList.remove('tokhl','msghl'))}
+function hlTok(turn,i){hlClear();
+ const bd=document.querySelector('#log .bot[data-turn="'+turn+'"]');
+ const yd=document.querySelector('#log .you[data-turn="'+turn+'"]');
+ if(i===0){if(yd){yd.classList.add('msghl');yd.scrollIntoView({block:'nearest'})}return}
+ if(!bd)return;
+ if(!bd.dataset.tok){const ws=bd.textContent.split(' ');bd.textContent='';
+  ws.forEach((w,j)=>{const s=document.createElement('span');s.className='w';s.textContent=w;
+   bd.appendChild(s);if(j<ws.length-1)bd.appendChild(document.createTextNode(' '))});
+  bd.dataset.tok='1'}
+ const sp=bd.querySelectorAll('.w'),k=Math.min(i,sp.length)-1;
+ if(k>=0&&sp[k]){sp[k].classList.add('tokhl');sp[k].scrollIntoView({block:'nearest'})}}
 let contOn=false,intOn=false,selfPressesToday=0,busy=false;
 function toggleCont(){contOn=!contOn;const b=document.getElementById('contTgl');
  b.textContent='continuous time: '+(contOn?'on':'off');b.classList.toggle('on',contOn);
@@ -1571,6 +1587,25 @@ BANDS.forEach((b,i)=>{const y=94+i*40;
   '<text class=tiny x=328 y='+(y+9)+'>B'+b+'</text>'+
   '<rect id=mc'+b+' class=cell x=328 y='+(y+12)+' width='+(30+Math.round(KD[b]/80))+' height=14 rx=2 />'+
   '<text class=tiny x='+(332+30+Math.round(KD[b]/80))+' y='+(y+22)+'>'+KD[b]+'</text>';});
+const CKX=124,CKY=314,HLEN={3:31,4:27,5:23,6:19,7:15,8:11},HW={3:0.8,4:1.0,5:1.3,6:1.6,7:2.0,8:2.4};
+(function(){const g=document.getElementById('clockw');let h='';
+ h+='<text class=lbl x='+CKX+' y=272 text-anchor=middle style="font-size:8px">CLOCKWORK</text>';
+ h+='<circle cx='+CKX+' cy='+CKY+' r=37 fill=#ffffff stroke=#c8ced8 stroke-width=1.1 />';
+ for(let m=0;m<60;m++){const a=m*6*Math.PI/180,maj=m%5===0,r0=maj?32:34;
+  h+='<line x1='+(CKX+Math.sin(a)*r0).toFixed(1)+' y1='+(CKY-Math.cos(a)*r0).toFixed(1)+
+   ' x2='+(CKX+Math.sin(a)*36).toFixed(1)+' y2='+(CKY-Math.cos(a)*36).toFixed(1)+
+   ' stroke='+(maj?'#98a2ac':'#dde2e8')+' stroke-width='+(maj?'0.9':'0.5')+' />'}
+ BANDS.forEach(b=>{h+='<line id=ch'+b+' x1='+CKX+' y1='+CKY+' x2='+CKX+' y2='+(CKY-HLEN[b])+
+  ' stroke='+(b===3?'#2f7d5c':'#2a323c')+' stroke-width='+HW[b]+' stroke-linecap=round />'});
+ h+='<circle cx='+CKX+' cy='+CKY+' r=2.2 fill=#2a323c />';
+ h+='<text id=ctc class=val x='+CKX+' y='+(CKY+16)+' text-anchor=middle style="font-size:6px">t0</text>';
+ h+='<text class=tiny x='+CKX+' y=364 text-anchor=middle>one tick = one band firing</text>';
+ g.innerHTML=h})();
+function setClock(tc){
+ BANDS.forEach(b=>{const a=(Math.floor(tc/CLK[b])%60)*6;
+  const hd=document.getElementById('ch'+b);
+  if(hd)hd.setAttribute('transform','rotate('+a+' '+CKX+' '+CKY+')')});
+ const e=document.getElementById('ctc');if(e)e.textContent='t'+tc}
 const goalG=document.getElementById('goals');
 for(let i=0;i<4;i++){goalG.innerHTML+='<rect id=gs'+i+' class=cell x='+(438+(i%2)*22)+' y='+(238+Math.floor(i/2)*13)+' width=18 height=10 rx=2 />';}
 const planG=document.getElementById('plan');
@@ -1626,9 +1661,12 @@ function turnBase(s){
 // ---- the film: every token a frame ----
 let frames=[],playing=null,liveMode=true;
 function slider(){return document.getElementById('tslider')}
-function addFrames(fs){const atEnd=liveMode;frames.push(...fs);
+let TC=0;
+function addFrames(fs){const atEnd=liveMode;
+ fs.forEach(f=>{if(f.k==='tok')TC++;if(f.k==='nWake')TC=0;f.tc=TC});
+ frames.push(...fs);
  const s=slider();s.max=frames.length-1;
- if(atEnd){s.value=frames.length-1}}
+ if(atEnd){s.value=frames.length-1;if(typeof setClock==='function')setClock(TC)}}
 function turnFrames(turnN,q,s){
  const fs=[{k:'t0',turnN,q,s}];
  const total=(s.tokens||s.words||1)+(s.pauses||0);
@@ -1641,7 +1679,9 @@ function nightFrames(n){
  fs.push({k:'nWake',n});
  return fs}
 function renderFrame(i){
- const f=frames[i];if(!f)return;clearTicks();
+ const f=frames[i];if(!f)return;clearTicks();setClock(f.tc||0);
+ if(!liveMode){if(f.k==='t0')hlTok(f.turnN,0);
+  else if(f.k==='tok')hlTok(f.turnN,f.i);else hlClear()}
  const info=document.getElementById('frameinfo');
  if(f.k==='t0'){turnBase(f.s);
   for(let j=0;j<13;j++)setFill('tl'+j,'#bcd3f0');
@@ -1673,7 +1713,7 @@ function playPause(){if(playing){clearInterval(playing);playing=null;document.ge
   s.value=v+1;renderFrame(v+1)},260)}
 function goLive(){liveMode=true;if(playing){clearInterval(playing);playing=null;document.getElementById('playic').textContent='▶'}
  const s=slider();s.value=frames.length-1;clearTicks();
- document.getElementById('frameinfo').textContent='live';
+ document.getElementById('frameinfo').textContent='live';hlClear();
  if(frames.length)renderFrame(frames.length-1)}
 
 function rewardPanel(mood,val){
@@ -1744,6 +1784,8 @@ async function send(){
    noticed:!!r.noticed,value:r.value};
   const f0=frames.length;
   addFrames(turnFrames(turnN,t,snap));
+  const _bd=[...document.querySelectorAll('#log .bot')].pop();if(_bd)_bd.dataset.turn=turnN;
+  const _yd=[...document.querySelectorAll('#log .you')].pop();if(_yd)_yd.dataset.turn=turnN;
   const mvs=(r.moved||[]).map(x=>x.part.replace('acc_c/','c')
    .replace('acc/','a').replace('h/','h')+':'+fmtD(x.delta)).join(' ');
   stream('T'+turnN+' ▸ in'+snap.qlen+' surp'+r.surprise+
