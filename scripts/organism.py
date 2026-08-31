@@ -933,10 +933,16 @@ class Organism:
         nrem_cap = 3 if excited else 2
         nrem = 0
         stream = []
-        for kind, q, a, _ in replay:
+        for kind, q, a, row_ in replay:
             if kind == "qa":
                 stream.extend(self.exch(q, a))
-                stream.extend(self.exch(q, a))
+                # replay dose scales inversely with strength (the
+                # flattening antidote as physiology): a fact already
+                # near the band gets ONE pass, not two — the night
+                # teacher measured sleep consolidating fresh in-band
+                # facts to ce 0.01 overnight, minting new predators
+                if row_.get("pre", 9.9) > 0.45:
+                    stream.extend(self.exch(q, a))
             else:
                 stream.extend(self.tok.encode(q).ids + [self.eh])
         if stream:
