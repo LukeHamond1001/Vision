@@ -1491,15 +1491,6 @@ async function sleepy(){
 async function saveLife(){
  const r=await fetch('/save',{method:'POST'}).then(r=>r.json());
  add('sys','~ saved \u2192 '+r.saved+' ~')}
-setInterval(async()=>{if(busy)return;try{
- const p=await fetch('/pulse').then(r=>r.json());
- (p.events||[]).forEach(e=>{
-  if(e.kind=='speaks'){add('sys','~ nobody asked \u2014 it spoke first ~');add('bot',e.text)}
-  else if(e.kind=='slept'){const n=e.night||{};
-   add('sys','~ it fell asleep on its own \u2014 NREM '+n.nrem+' + REM '+n.rem+' ~');
-   if(n.woke_feeling)add('selfp good','model: '+n.woke_feeling+' reward')}});
- if(p.drives)mood(p.drives.mood);
-}catch(e){}},4000);
 rwShow();
 </script>
 """
@@ -1607,16 +1598,11 @@ def main():
     print(f"[organism] organism awake on http://localhost:{a.port} "
           f"({a.ckpt} on {ORG.dev})", file=sys.stderr)
 
-    def _clock():
-        # the autonomous clock: time passes without being spoken to
-        while True:
-            time.sleep(a.tick)
-            with LOCK:
-                try:
-                    ORG.tick()
-                except Exception as e_:
-                    print("[tick]", e_, file=sys.stderr)
-    threading.Thread(target=_clock, daemon=True).start()
+    # the autonomous clock (tick(): self-sleep, rumination,
+    # speaking first) is retired from the serve: a timer can be
+    # bolted onto any model, so it dilutes rather than shows the
+    # architecture. The machinery stays in the body; nights come
+    # from the caretaker.
     ThreadingHTTPServer(("127.0.0.1", a.port), H).serve_forever()
 
 

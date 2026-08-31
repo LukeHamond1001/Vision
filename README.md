@@ -40,11 +40,10 @@ picks the replay (mastery graduates, stuck fades, fresh always
 settles, nothing drills more than two nights running); dreams pair
 the most emotionally charged memories; the conscience retrains on
 the human's real presses; mastered facts enter an expanding
-retention schedule (1/3/7/14/30 nights). **Always** — fatigue,
-boredom, and loneliness accumulate on their own clock: it falls
-asleep when tired, chews on its homework when bored, and may speak
-first when it has been alone too long. Mood feeds back into how it
-thinks. The life autosaves every night and survives process death.
+retention schedule (1/3/7/14/30 nights). **Always** — mood, built
+from felt presses and its own measured surprise, feeds back into
+how it thinks. The life autosaves every night and survives process
+death.
 
 Every threshold, budget, schedule, and reflex is a plain number in
 the code (the disclosed genome), shown on screen as it acts. The
@@ -62,8 +61,7 @@ pip install -e .          # torch, tokenizers, numpy
 python3 scripts/organism.py data/organism_life.pt data/ship_tok.json \
     --dev mps --temp 0.05 --save data/organism_life.pt
 # open http://localhost:8016 — talk to it, teach it, press the
-# slider, and leave it running a while: it sleeps, dreams, and may
-# speak to you first, all on its own clock
+# slider, and put it to sleep at night
 ```
 
 First reply after launch takes a few minutes (the model compiles);
