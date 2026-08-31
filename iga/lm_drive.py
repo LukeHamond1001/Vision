@@ -1,0 +1,393 @@
+"""v5.0 drive layer on the endless dialogue — full architecture, no scenes.
+
+Laws, unchanged in substance (card A6):
+  labels select, the world pays — a human "thanks" (the earned event)
+    MINTS the channel it followed; pay comes only from measured
+    readings graded against text the model cannot edit.
+  no hold outlives its referent — every hold carries a horizon set by
+    its band's clock; at the horizon it settles on the readings that
+    arrived, or expires at exactly zero. No brackets needed.
+  telescoping — pay = w*(phi_open - phi_settle), float64 bookkeeping,
+    exact by construction; a hold that ends where it opened pays zero.
+  imagination ranks and vetoes, never pays — a frontier target whose
+    carrying band cannot currently predict its own next window is
+    vetoed as unreachable; low fast-band fidelity vetoes on health.
+
+Channels:
+  recall:b<bin> — p(answer token) at annotated probes, binned by gap.
+  fid:<k>       — band-k next-window cosine fidelity at ticks.
+
+The scheduler: bin_weights() biases the weaver toward gap bins showing
+learning progress — the drive layer choosing what rides the belt.
+"""
+
+import random
+import torch
+from collections import deque
+
+from .lm_bands import N_BANDS, CLOCKS
+
+GAP_BINS = [(0, 256), (256, 2048), (2048, 16384), (16384, 10 ** 9)]
+BIN_BAND = {0: 2, 1: 3, 2: 4, 3: 5}
+FID_FLOOR = 0.05
+FID_HEALTHY = (0.15, 0.60)
+FRONTIER_DELTA = 0.05
+EMA = 0.02
+MAX_HOLDS_PER_LANE = 4
+
+
+def gap_bin(gap):
+    for i, (lo, hi) in enumerate(GAP_BINS):
+        if lo <= gap < hi:
+            return i
+    return len(GAP_BINS) - 1
+
+
+def horizon(band):
+    # A70: bands beyond the original six extrapolate the x8 ladder
+    # (band 6 -> 4 * 262144 ~ 1M tokens); 0..5 unchanged, exact.
+    if band < len(CLOCKS):
+        return max(4 * CLOCKS[band], 512)
+    return max(4 * CLOCKS[-1] * 8 ** (band - len(CLOCKS) + 1), 512)
+
+
+class Drive:
+    def __init__(self, n_lanes, lam=0.25, seed=0, constants=None,
+                 imagination_absent=False, absent_bands=(),
+                 hold_cap=None, ledger_cap=None):
+        """constants: dict (or path to results/lm_constants.json) from
+        iga.lm_calibrate — horizons and fid floors become data-set;
+        absent, the scaffold defaults apply (debug only).
+        imagination_absent (v5.2): the substrate carries no band
+        predictors, so the imagination gate has no instrument — and an
+        instrument that is absent holds no authority (F2). Fid-maintain
+        proposals and fid-floor vetoes are skipped, ledgered.
+        absent_bands (v5.4): bands the substrate does not implement
+        (hybrid: 1, 2) — no organ, no maintain register; run 4 held
+        perpetual zero-pay fid:1/2 maintains on organs that never
+        existed. lam: 0.1 -> 0.25 (A24 L3) — run 4's in-window margin
+        decayed all run while CE improved; pay pressure was losing."""
+        self.imagination_absent = imagination_absent
+        self.absent_bands = set(absent_bands)
+        self.bin_band = dict(BIN_BAND)
+        if isinstance(constants, str):
+            import json as _json
+            with open(constants) as f:
+                constants = _json.load(f)
+        c = constants or {}
+        self._horizons = {int(k): int(v)
+                          for k, v in c.get("horizons", {}).items()}
+        self._fid_floors = {int(k): float(v)
+                            for k, v in c.get("fid_floor", {}).items()}
+        self.n_lanes = n_lanes
+        self.lam = lam
+        # A60 (v9.3): global cap on NEW holds per sweep. The A59b
+        # onset-invariance analysis convicted event DENSITY: v-shards
+        # mint ~13 holds/step vs r-shards' ~0.85, and every settled
+        # hold's pay term injects retained-logp gradient into the
+        # trunk (line ~190). The cap throttles the mint->settle->
+        # re-propose loop to the measured-safe r-scale rate without
+        # amputating any drive function. None = uncapped (parity).
+        self.hold_cap = hold_cap
+        self.rng = random.Random(seed)
+        self.ema = {}
+        self.records = {}
+        self.levels_paid = set()
+        self.minted = set()            # channel keys ratified by "thanks"
+        # A64: the graded-press primary. Presses ledger, per-channel
+        # consecutive-negative counts, veto marks. Live-only state
+        # (rebuilds like holds; not checkpointed).
+        self.presses = []
+        self.neg_count = {}
+        self.veto_until = {}
+        self.press_vetoes = 0   # A64-R3: attribution — disapproval
+                                # vetoes counted apart from the
+                                # imagination gate's (R2 conflated them)
+        self.holds = [[] for _ in range(n_lanes)]
+        self.readings = {}             # (lane, key) -> [(t, tensor)]
+        self._fresh = set()            # keys appended to since the last detach
+        self._prune_n = 0
+        self.last_key = [None] * n_lanes
+        # the settled-hold ledger: a deque when capped — the list form's
+        # `del ledger[:drop]` per settle shifted 200k entries hundreds of
+        # times per step once the cap was reached (the scan organism's
+        # 2.7k -> 1.5k tok/s decay, 2026-08-22); entries, order and
+        # ledger_base are identical
+        self.ledger = deque(maxlen=ledger_cap) if ledger_cap else []
+        # A54e F6 (v10): the append-only ledger costs 2-4GB host RAM
+        # by 488k steps; an ~800k-step flash must prune. ledger_base
+        # counts dropped rows so sleep's absolute indices stay valid.
+        # None = certified unbounded behavior exactly. SIZING RULE:
+        # the cap must comfortably exceed settles-per-harvest-
+        # interval (~13/step x sleep every -> hundreds; 500M plan:
+        # 200_000 ~ 50MB) or rows die unharvested — the sleeper
+        # counts that as pruned_unharvested and the heartbeat
+        # watches it. The sleep window itself is recency-capped far
+        # below any sane cap (MAX_SPANS), so pruning old rows
+        # changes no replay.
+        self.ledger_cap = ledger_cap
+        self.ledger_base = 0
+        self.progress = {}             # key -> |d ema| EMA
+        self.vetoes = 0
+        self.proposed = 0
+        self.step_t = 0
+
+    # ---------- measurements ----------
+    def probe(self, lane, prob_tensor, gap):
+        key = f"recall:b{gap_bin(gap)}"
+        self.readings.setdefault((lane, key), []).append(
+            (self.step_t, prob_tensor))
+        self._fresh.add((lane, key))
+        self.last_key[lane] = key
+        v = float(prob_tensor.detach())
+        old = self.ema.get(key, v)
+        self.ema[key] = (1 - EMA) * old + EMA * v
+        self.progress[key] = 0.9 * self.progress.get(key, 0.0) \
+            + 0.1 * abs(self.ema[key] - old)
+
+    def earned(self, lane, ok):
+        # labels select: "thanks" mints the channel it followed; it
+        # never pays, and "not right" mints nothing
+        if ok and self.last_key[lane] is not None:
+            self.minted.add(self.last_key[lane])
+
+    def tick_fid(self, k, fid_tensor):
+        v = float(fid_tensor.detach().mean())
+        key = f"fid:{k}"
+        old = self.ema.get(key, v)
+        self.ema[key] = (1 - EMA) * old + EMA * v
+
+    def button(self, lane, v, at=None, attribute=True):
+        """A64: the graded-press primary reinforcer. labels select,
+        the world pays — a press NEVER pays or injects gradient.
+        +v mints the channel it followed and sets w=v on the holds
+        then open on that lane+channel (magnitude -> hold weight;
+        temporally local, so item-level selection rides pay-weighted
+        replay, not a persistent channel bias). -v withholds: those
+        holds void to w=0 (settle at exactly zero) and two
+        consecutive negatives veto the channel for one band-horizon;
+        a positive press resets the count. A press with no preceding
+        probe on the lane is an economic no-op, ledgered.
+        at (A69): exact token position for the press RECORD only —
+        the trainer dispatches events before advancing step_t, so
+        chunk-relative presses would all stamp the chunk start and
+        break arm C's turn-scoped pair targets. Every economic
+        effect (mint/void/veto) still runs on step_t; at=None is
+        bit-exact prior behavior.
+        attribute (v10 builder): False records the press (sleep
+        press-pay, arm C pairs, and the prophet all read
+        drive.presses) but SKIPS mint/void/veto — a judge press on
+        an ordinary corpus exchange must not credit or veto the
+        stale last recall channel it happens to follow. Default
+        True is the certified parenting economy bit-exactly."""
+        key = self.last_key[lane]
+        self.presses.append({"lane": lane, "v": int(v),
+                             "t": self.step_t if at is None else int(at),
+                             "key": key})
+        if key is None or not attribute:
+            return
+        if v > 0:
+            self.minted.add(key)
+            self.neg_count[key] = 0
+            for h in self.holds[lane]:
+                if h["key"] == key:
+                    h["w"] = max(h["w"], float(v))
+        else:
+            for h in self.holds[lane]:
+                if h["key"] == key:
+                    h["w"] = 0.0
+            self.neg_count[key] = self.neg_count.get(key, 0) + 1
+            # A64-R2 (B3'): threshold 3 and reset-on-fire — at 2 with
+            # a compounding count, interleaved items' negatives read
+            # as repeated channel disapproval and the round-1 run
+            # spent most of its life vetoed (31.8k skips)
+            if self.neg_count[key] >= 3:
+                self.neg_count[key] = 0
+                if key.startswith("recall:b"):
+                    band = self.bin_band[int(key[-1])]
+                else:
+                    band = int(key.split(":")[1])
+                # A64-R3 (B3''): cooldown CAPPED — a fire pauses the
+                # channel, never amputates the faculty (b1's full
+                # horizon = 16k tokens of silence per fire; R3's
+                # split counter convicted the uncapped form with
+                # 89.7k skips at debug press density)
+                self.veto_until[key] = self.step_t + \
+                    min(self.horizon_for(band), 2048)
+
+    # ---------- proposer + imagination ----------
+    def _propose(self, lane):
+        open_keys = {h["key"] for h in self.holds[lane]}
+        cands = []
+        if not self.imagination_absent:
+            for k in range(1, N_BANDS):
+                if k in self.absent_bands:
+                    continue          # no organ, no maintain register
+                key = f"fid:{k}"
+                if self.ema.get(key, 0.0) < FID_HEALTHY[0]:
+                    cands.append(("maintain", key, k, FID_HEALTHY[0] + 0.05))
+        for b in range(len(GAP_BINS)):
+            key = f"recall:b{b}"
+            if self.veto_until.get(key, 0) > self.step_t:
+                self.vetoes += 1   # A64 B3: disapproval veto, ledgered
+                self.press_vetoes += 1
+                continue
+            if key not in self.minted:
+                continue
+            rec = self.records.get(key, self.ema.get(key, 0.0))
+            level = int(rec / FRONTIER_DELTA)
+            if (key, level) in self.levels_paid:
+                continue
+            cands.append(("frontier", key, self.bin_band[b],
+                          rec + FRONTIER_DELTA))
+        scored = []
+        for kind, key, band, target in cands:
+            if key in open_keys:      # one register per channel per lane
+                continue
+            self.proposed += 1
+            carry = self.ema.get(f"fid:{band}", 0.0)
+            if not self.imagination_absent:
+                fast = min((self.ema.get(f"fid:{k}", 1.0) for k in (1, 2)
+                            if k not in self.absent_bands), default=1.0)
+                floor = self._fid_floors.get(band, FID_FLOOR)
+                fast_floor = max((self._fid_floors.get(k, FID_FLOOR)
+                                  for k in (1, 2)
+                                  if k not in self.absent_bands),
+                                 default=0.0)
+                if kind == "frontier" and (carry < floor
+                                           or fast < fast_floor):
+                    self.vetoes += 1
+                    continue
+            scored.append((carry, kind, key, band, target))
+        scored.sort(reverse=True)
+        out = []
+        room = MAX_HOLDS_PER_LANE - len(self.holds[lane])
+        for carry, kind, key, band, target in scored[:max(room, 0)]:
+            phi0 = max(0.0, target - self.ema.get(key, 0.0)) / max(target, 1e-6)
+            out.append({"lane": lane, "band": band, "key": key,
+                        "target": target, "phi0": phi0, "w": 1.0,
+                        "t0": self.step_t,
+                        "due": self.step_t + self.horizon_for(band),
+                        "kind": kind})
+        return out
+
+    def horizon_for(self, band):
+        return self._horizons.get(band, horizon(band))
+
+    # ---------- the sweep: settle due holds, then propose ----------
+    def sweep(self, losses):
+        self._minted_this_sweep = 0
+        for lane in range(self.n_lanes):
+            keep = []
+            for h in self.holds[lane]:
+                if self.step_t < h["due"]:
+                    keep.append(h)
+                    continue
+                # only progress made DURING the hold: the list is in time
+                # order, so walk back from the tail (O(readings since t0),
+                # not O(all readings on the key) — exact, 2026-08-22)
+                lst = self.readings.get((lane, h["key"]), [])
+                i = len(lst)
+                while i > 0 and lst[i - 1][0] > h["t0"]:
+                    i -= 1
+                rs = [r for (_, r) in lst[i:]]
+                if h["key"].startswith("fid:"):
+                    phi1 = max(0.0, h["target"] - self.ema.get(h["key"], 0.0)) \
+                        / max(h["target"], 1e-6)
+                    self._settle(h, phi1, h["w"] * (h["phi0"] - phi1))
+                elif rs:
+                    mean_r = torch.stack(rs).mean()
+                    phi1_t = torch.clamp(h["target"] - mean_r, min=0.0) \
+                        / max(h["target"], 1e-6)
+                    # A64 B1: a voided hold (w=0, negative press) adds
+                    # NO loss term — withheld means no gradient at all
+                    if phi1_t.requires_grad and h["w"] != 0:
+                        losses.append(-self.lam * h["w"] * (h["phi0"] - phi1_t))
+                    phi1 = float(phi1_t.detach())
+                    pay = h["w"] * (h["phi0"] - phi1)
+                    self._settle(h, phi1, pay)
+                    if h["kind"] == "frontier" and phi1 == 0.0:
+                        self.levels_paid.add(
+                            (h["key"], int(h["target"] / FRONTIER_DELTA)))
+                else:
+                    self._settle(h, h["phi0"], 0.0)   # expiry: exactly zero
+            self.holds[lane] = keep
+            new = self._propose(lane)
+            if self.hold_cap is not None:
+                take = max(0, self.hold_cap - self._minted_this_sweep)
+                new = new[:take]
+                self._minted_this_sweep += len(new)
+            self.holds[lane] += new
+        for key, val in self.ema.items():
+            if val > self.records.get(key, 0.0):
+                self.records[key] = val
+        # the cutoff prune, amortised (2026-08-22): entries arrive in time
+        # order, so dropping the expired head every 64 sweeps gives the
+        # same lists as the per-sweep rebuild (a hold's t0 is never older
+        # than the cutoff: horizons < 8 x max clock), at 1/64 the cost —
+        # on the pod the per-sweep rebuild was ~25 ms/step and growing
+        self._prune_n += 1
+        if self._prune_n % 64 == 0:
+            cutoff = self.step_t - 8 * max(CLOCKS)
+            for k, v in self.readings.items():
+                i = 0
+                while i < len(v) and v[i][0] <= cutoff:
+                    i += 1
+                if i:
+                    del v[:i]
+
+    def _settle(self, h, phi1, pay):
+        if self.ledger_cap and len(self.ledger) >= self.ledger_cap:
+            self.ledger_base += 1                     # the deque evicts the oldest
+        self.ledger.append({**{k: h[k] for k in
+                               ("lane", "band", "key", "phi0", "w", "t0")},
+                            "phi1": phi1, "pay": pay, "t1": self.step_t})
+
+    def detach_readings(self):
+        # only this step's readings carry a graph (everything older was
+        # detached by an earlier call): walk each touched key from its
+        # tail while entries still require grad. Same result as
+        # rebuilding every list, O(new) instead of O(all) — on the pod
+        # the rebuild was 110-130 ms/step and growing (2026-08-22)
+        for k in self._fresh:
+            v = self.readings.get(k)
+            if not v:
+                continue
+            i = len(v) - 1
+            while i >= 0 and v[i][1].requires_grad:
+                v[i] = (v[i][0], v[i][1].detach())
+                i -= 1
+        self._fresh.clear()
+
+    # ---------- scheduler ----------
+    def bin_weights(self):
+        w = [self.progress.get(f"recall:b{b}", 0.0) + 1e-4 for b in range(4)]
+        s = sum(w)
+        return [x / s for x in w]
+
+    # ---------- audit ----------
+    def audit(self):
+        exact = all(abs(e["pay"] - e["w"] * (e["phi0"] - e["phi1"])) < 1e-9
+                    for e in self.ledger)
+        scoped = all(e["t1"] >= e["t0"] for e in self.ledger)
+        # A64 B2: voided holds settle at exactly zero pay
+        voided_zero = all(e["pay"] == 0.0
+                          for e in self.ledger if e["w"] == 0.0)
+        return {"holds": len(self.ledger), "telescoping_exact": exact,
+                "scoped": scoped, "vetoes": self.vetoes,
+                "proposed": self.proposed, "presses": len(self.presses),
+                "press_vetoes": self.press_vetoes,
+                "voided_zero": voided_zero}
+
+    # ---------- the readable agenda ----------
+    def panel(self):
+        lines = []
+        for lane in range(self.n_lanes):
+            for h in self.holds[lane]:
+                lines.append(f"lane{lane} {h['kind']:8s} {h['key']:14s} "
+                             f"target {h['target']:.2f} phi0 {h['phi0']:.2f} "
+                             f"band {h['band']} due {h['due']}")
+        for key in sorted(self.records):
+            lines.append(f"record   {key:14s} {self.records[key]:.3f} "
+                         f"(ema {self.ema.get(key, 0):.3f})")
+        return "\n".join(lines) if lines else "(no open holds yet)"

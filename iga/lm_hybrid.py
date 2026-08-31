@@ -1,0 +1,968 @@
+"""v5.4 — the complete architecture as an LLM (A19 + A24).
+
+Attention is the hands, the bands are the memory, imagination is the
+lookahead, the ledger is the law.
+
+Substrate: a standard decoder-only transformer over each 512-token
+window (language, in-window lookup). Riding above it: slow band
+latents at clocks 512 / 4096 / 32768 — persistent across the whole
+run, injected back as MEMORY TOKENS the transformer attends over.
+
+v5.4 (A24, from the run-4 autopsy): the v5.3 bands were written with
+the MEAN of all window hiddens each tick — an unforecastable soup;
+fid:4/5 sat below floor all run, the gate vetoed every cross-window
+frontier, and the real carry transient died unpaid. Now:
+  selective read — each band attention-pools the window with its own
+    learned query (it chooses what to look at, not everything);
+  closed-by-default write — an exposed-gate slow cell, update gate
+    biased shut at init, so the state drifts slowly and the band's
+    forward model has something learnable to predict;
+  write cost — a small penalty on open gates keeps writes sparse.
+
+Same forward API: (tokens, st, _) -> (logits, st, ticks). Lesion
+zeroes the memory tokens. The trainer reads model.pop_write_cost().
+"""
+
+import torch
+import torch.nn as nn
+
+from .lm_bands import N_BANDS
+from .lm_transformer import Block
+
+HYBRID_CLOCKS = {3: 1, 4: 8, 5: 64}   # band idx -> tick every N chunks
+# A70 (v10): the ladder is band-count-parametric. Band 6 keeps the
+# x8 rule (512 chunks ~ 1M tokens at T=2048) — the "who I am across
+# everything" slot; ~6k ticks across a 6B-token flash.
+BAND6_CLOCKS = {3: 1, 4: 8, 5: 64, 6: 512}
+                                       # (chunks of 512 -> 512/4k/32k)
+
+
+class BandMatrix(nn.Module):
+    """A28: fast-weights associative store per slow band. The math
+    that chose it: a squashing recurrent vector holds ~1-2 facts
+    (every write decays all content by (1-z) through tanh) while the
+    spans hold 5-15; a delta-rule matrix holds ~d/(2 ln d) pairs with
+    crosstalk ~sqrt(n/d), degrading gracefully, and its capacity
+    grows with d^2 at scale. Writes are additive (no erasure); the
+    timescale ladder becomes per-band DECAY (half-life = the band's
+    clock). Write head is dedicated (separate from the read query).
+    Cross-chunk detachment breaks write-path gradient, so writes
+    learn from an in-chunk write-fidelity loss (read back the just-
+    written pair); the read path learns from LM + pay downstream."""
+
+    def __init__(self, d, decay):
+        super().__init__()
+        self.wk = nn.Linear(d, d, bias=False)
+        self.wv = nn.Linear(d, d, bias=False)
+        self.wq = nn.Linear(d, d, bias=False)
+        self.out = nn.Linear(d, d, bias=False)
+        self.decay = decay
+        self.beta = nn.Parameter(torch.tensor(0.0))  # sigmoid -> 0.5
+
+    def write(self, M, x, stale_ok=False):
+        """x: [B, d] this chunk's write selection. Delta rule:
+        M <- (1-decay) M + beta (v - M k) k^T. Returns (M', recon).
+        stale_ok (A38): the store pass's backward runs from the NEXT
+        chunk, after opt.step() has bumped parameter versions in
+        place — apply CLONED weights so the saved tensors stay valid.
+        Gradient still reaches the parameter leaves through the
+        clone; values are one step stale (standard TBPTT)."""
+        Wk = self.wk.weight.clone() if stale_ok else self.wk.weight
+        Wv = self.wv.weight.clone() if stale_ok else self.wv.weight
+        k = nn.functional.normalize(
+            nn.functional.linear(x, Wk), dim=-1)
+        v = nn.functional.linear(x, Wv)
+        pred = torch.einsum("bij,bj->bi", M, k)
+        M = (1 - self.decay) * M + torch.sigmoid(self.beta) * \
+            torch.einsum("bi,bj->bij", v - pred, k)
+        back = torch.einsum("bij,bj->bi", M, k)
+        recon = (1 - nn.functional.cosine_similarity(
+            back, v, dim=-1)).mean()
+        return M, recon
+
+    def read(self, M, h):
+        """h: [B, T, d] -> per-position associative read [B, T, d]."""
+        q = nn.functional.normalize(self.wq(h), dim=-1)
+        r = torch.einsum("bij,btj->bti", M, q)
+        return self.out(r)
+
+    def write_keyed(self, M, K, V, s, stale_ok=False):
+        """A52 (R4): token-keyed batch write. K [B, T, d] unit keys =
+        DETACHED token embeddings (the address is the token's
+        identity, not a learned projection); V [B, T, d] content
+        (wv applied here); s [B, T] per-pair write strength. One
+        (k, v) pair PER POSITION — replaces the one-gist-per-chunk
+        softmax selection that made item retrieval impossible.
+        Chunkwise-parallel delta rule: predictions against the
+        chunk-initial M (same-chunk same-token writes blend). The
+        update is the strength-NORMALIZED convex mix of single-pair
+        delta steps — a plain sum diverged in minutes (a token with
+        n same-chunk occurrences got its correction n times over;
+        n*beta*s > 2 overshoots and oscillates; whitespace has
+        n in the hundreds -> NaN by step ~1.5k, first r4 pod). The
+        normalization also makes tok_u truly price storage: as glue
+        strengths fall, each surviving write gets a larger share.
+        Returns (M', recon) like write()."""
+        Wv = self.wv.weight.clone() if stale_ok else self.wv.weight
+        v = nn.functional.linear(V, Wv)
+        pred = torch.einsum("bij,btj->bti", M, K)
+        upd = torch.einsum(
+            "bti,btj->bij", s.unsqueeze(-1) * (v - pred), K)
+        denom = s.sum(dim=1).clamp(min=1e-3)
+        M = (1 - self.decay) * M + torch.sigmoid(self.beta) * \
+            upd / denom.unsqueeze(-1).unsqueeze(-1)
+        back = torch.einsum("bij,btj->bti", M, K)
+        # A52b: recon weights DETACHED from the strength path. R4
+        # proved tok_u games an s-weighted fidelity loss: pushing
+        # strength onto frequent easy keys ('the', '=', newlines)
+        # minimizes weighted recon while making the store a glue
+        # echo. Detached, recon still measures fidelity where mass
+        # actually sits, but tok_u learns ONLY from read-usefulness
+        # (read-mix logits every position + A38 next-chunk credit).
+        w = (s / (s.sum(dim=1, keepdim=True) + 1e-6)).detach()
+        recon = ((1 - nn.functional.cosine_similarity(back, v, dim=-1))
+                 * w).sum(dim=1).mean()
+        return M, recon
+
+    def read_keyed(self, M, q):
+        """q [B, T, d] unit queries built from use-site token
+        embeddings. No wq: write-key space and read-query space are
+        the SAME space by construction — a use of token t addresses
+        exactly the slot written at t."""
+        r = torch.einsum("bij,btj->bti", M, q)
+        return self.out(r)
+
+
+class LogitStore(nn.Module):
+    """A53 (R5): decode-free item store, capacity-sized. The A52b
+    bench proved the learned value/decode path (wv in, out out) is
+    dead — far-read credit is too sparse/noisy to shape it. Here
+    NOTHING between store and prediction is learned but one scalar:
+    values are token IDENTITIES (unit embedding rows), and the read
+    result is matched straight against the vocabulary and added to
+    the LOGITS. Keys are context mixes lifted into a D-dim space by
+    a FROZEN random projection (JL: inner products preserved) — D is
+    decoupled from model width and sized per band to the measured
+    write load (the A52b capacity arithmetic: a delta-rule matrix
+    holds ~D pairs against dot-product readout; band 5's ~92-chunk
+    pair lifetime needs thousands, and d=256 drowned it)."""
+
+    def __init__(self, d, D, decay, seed):
+        super().__init__()
+        self.D = D
+        self.decay = decay
+        self.beta = nn.Parameter(torch.tensor(0.0))
+        # exact=True (2026-08-22, the one-token organism's hippocampus):
+        # the chunk's pairs are written by the TRUE sequential delta rule
+        # in chunkwise-exact form (Yang et al. 2024's WY representation —
+        # a T x T triangular solve), each pair at its own full strength.
+        # The certified default averages the chunk's corrections (the
+        # A52 NaN law's convex mix): one fact is written at 1/T strength,
+        # which is why the store accumulated frequent pairs and never
+        # held a one-shot item (scan3: store off = +0.003 nats).
+        self.exact = False
+        g = torch.Generator().manual_seed(seed)
+        # NONLINEAR lift (random Fourier features). A linear
+        # projection of d-dim keys spans a d-dim subspace of R^D —
+        # rank, not ambient dimension, sets capacity, so a linear
+        # lift buys NOTHING (caught by the capacity law test: 64
+        # keys in an effective 32-dim space erased each other).
+        # cos(Px+b) images span D dims; gamma sets the kernel
+        # bandwidth so orthogonal unit tokens decorrelate to ~0.15
+        # while nearby context mixes stay matched.
+        self.register_buffer(
+            "proj", 1.4 * torch.randn(D, d, generator=g))
+        self.register_buffer(
+            "phase", 2 * 3.141592653589793
+            * torch.rand(D, generator=g))
+
+    def lift(self, x):
+        """[.., d] context mix -> unit RFF key in R^D."""
+        return nn.functional.normalize(
+            torch.cos(nn.functional.linear(x, self.proj)
+                      + self.phase), dim=-1)
+
+    def write(self, M, K, V, s, stale_ok=False):
+        """M [B, d, D], K [B, T, D] unit lifted keys, V [B, T, d]
+        unit identity values (detached), s [B, T] write strength.
+        Convex strength-normalized delta rule (A52 NaN law); recon
+        weights detached (A52b anti-gaming law)."""
+        beta = self.beta.clone() if stale_ok else self.beta
+        if self.exact:
+            return self.write_exact(M, K, V, s, beta)
+        pred = torch.einsum("bij,btj->bti", M, K)
+        upd = torch.einsum("bti,btj->bij",
+                           s.unsqueeze(-1) * (V - pred), K)
+        denom = s.sum(dim=1).clamp(min=1e-3)
+        M = (1 - self.decay) * M + torch.sigmoid(beta) * \
+            upd / denom.unsqueeze(-1).unsqueeze(-1)
+        back = torch.einsum("bij,btj->bti", M, K)
+        sa = s.abs()                                             # un-writes (s < 0, v13) weigh by magnitude
+        w = (sa / (sa.sum(dim=1, keepdim=True) + 1e-6)).detach()
+        recon = ((1 - nn.functional.cosine_similarity(back, V,
+                                                      dim=-1))
+                 * w).sum(dim=1).mean()
+        return M, recon
+
+    def write_exact(self, M, K, V, s, beta):
+        """The sequential delta rule M_t = M_{t-1} + b_t (v_t - M_{t-1} k_t)
+        k_t^T for t = 1..T, b_t = sigmoid(beta) s_t, computed exactly for
+        the whole chunk: with u_t the rank-1 increment at t,
+            (I + L) U = b * (V - K M0^T),  L_ts = b_t k_t.k_s (s < t),
+            M_T = M0 + U^T K
+        (decay applied once per write, before the chunk, as the
+        certified rule does). A repeated key inside the chunk is handled
+        exactly — no overshoot, no averaging."""
+        B, T, _ = K.shape
+        b = torch.sigmoid(beta) * s                              # [B, T]
+        M0 = (1 - self.decay) * M
+        pred = torch.einsum("bij,btj->bti", M0, K)               # M0 k_t
+        R = b.unsqueeze(-1) * (V - pred)                         # [B, T, d]
+        G = torch.einsum("bti,bsi->bts", K, K)                   # k_t . k_s
+        L = torch.tril(b.unsqueeze(-1) * G, diagonal=-1)
+        A = torch.eye(T, device=K.device, dtype=K.dtype).unsqueeze(0) + L
+        U = torch.linalg.solve_triangular(A, R, upper=False)     # [B, T, d]
+        M = M0 + torch.einsum("bti,btj->bij", U, K)
+        back = torch.einsum("bij,btj->bti", M, K)
+        sa = s.abs()                                             # un-writes (s < 0, v13) weigh by magnitude
+        w = (sa / (sa.sum(dim=1, keepdim=True) + 1e-6)).detach()
+        recon = ((1 - nn.functional.cosine_similarity(back, V,
+                                                      dim=-1))
+                 * w).sum(dim=1).mean()
+        return M, recon
+
+    def read(self, M, q):
+        """q [B, T, D] lifted queries -> retrieved identity vectors
+        [B, T, d], ready for the vocabulary match."""
+        return torch.einsum("bij,btj->bti", M, q)
+
+
+class SlowCell(nn.Module):
+    """Gated delta-write with the update gate biased closed at init:
+    h' = (1-z)*h + z*cand. At init z ~ sigmoid(gate_bias) so the
+    state barely moves until training earns the right to write.
+    A71: d_h widens the band's STATE independently of the input
+    width (slow bands earn capacity); d_h=None = the certified
+    square cell with identical param names, shapes, and RNG draws."""
+
+    def __init__(self, d, gate_bias=-2.0, d_h=None):
+        super().__init__()
+        d_h = d if d_h is None else int(d_h)
+        self.z = nn.Linear(d_h + d, d_h)
+        self.cand = nn.Linear(d_h + d, d_h)
+        nn.init.constant_(self.z.bias, gate_bias)
+
+    def forward(self, x, h):
+        hx = torch.cat([h, x], dim=-1)
+        z = torch.sigmoid(self.z(hx))
+        c = torch.tanh(self.cand(hx))
+        return (1 - z) * h + z * c, z.mean()
+
+    def forward_cloned(self, x, h):
+        """The same map through CLONED parameters (A38 pattern): the
+        graph it returns survives the optimizer's in-place updates, so
+        a later chunk's backward can credit this write (band_credit)."""
+        hx = torch.cat([h, x], dim=-1)
+        z = torch.sigmoid(nn.functional.linear(
+            hx, self.z.weight.clone(), self.z.bias.clone()))
+        c = torch.tanh(nn.functional.linear(
+            hx, self.cand.weight.clone(), self.cand.bias.clone()))
+        return (1 - z) * h + z * c
+
+
+class HybridLM(nn.Module):
+    def __init__(self, vocab_size, d=128, n_layers=6, n_heads=8,
+                 max_T=512, talk=None, widths=None, store="vector",
+                 use_xl=True, gate_init=-4.0, read_drop=0.5,
+                 gate_mode="scalar", keyed=None, norm_mix=False,
+                 aux_trunk=0.0, clocks=None, band_widths=None,
+                 tie_embed=False, attn="abs", qk_norm=False, mlp="gelu",
+                 band_credit=False, band_center=False, tail_tokens=0):
+        super().__init__()
+        # BAND REPAIR (2026-08-21, docs/MEMORY_MATH.md 5; measured: the
+        # SlowCell candidate and the predictor never received gradient
+        # — pend was detached before the fidelity that used it, and
+        # nothing downstream of a band write lived past the chunk).
+        #   band_credit: fidelity trains cell + predictor through a
+        #     cloned-parameter one-tick graph, and the NEXT chunk's CE
+        #     credits the write through a one-chunk graph (the A38
+        #     pattern); values bit-identical, gradients routed.
+        #   band_center: fidelity on reads centred by a running mean,
+        #     so the shared hidden direction (cos ~.97 between any two
+        #     chunk means) cannot satisfy it.
+        #   tail_tokens: one extra memory token = the mean of the last
+        #     TAIL_W hiddens of the previous chunk — the boundary organ.
+        # All False/0 = the certified forward bit-exactly.
+        self.band_credit = bool(band_credit)
+        self.band_center = bool(band_center)
+        self.tail_tokens = int(tail_tokens)
+        # v10.1 gated candidates (2026-08-21): attn="rope" = decoupled
+        # rotary (text rows rotate by position, memory tokens stay
+        # position-free, no text position table); qk_norm = per-head
+        # RMS-normalized q/k. Defaults reproduce the certified model
+        # bit-exactly (same modules, names, RNG draw order).
+        self.attn_kind = attn
+        self.qk_norm = bool(qk_norm)
+        self.mlp_kind = mlp          # "gelu" certified | "swiglu" gated
+        # bf16 MIXED PRECISION (v10.1, certified separately): when set by
+        # the trainer, ONLY the trunk blocks (attention + MLP matmuls)
+        # run under bf16 autocast. The residual stream, embeddings, band
+        # reads/ticks/cells, store reads/writes, head and losses stay
+        # fp32 — the band-state swamping law at 1M-token horizons. Not a
+        # parameter: checkpoints are precision-agnostic.
+        self.autocast_bf16 = False
+        self.d = d
+        self.vocab_size = vocab_size
+        self.max_T = max_T
+        self.store = store
+        # A55 (R6 candidate): unit-normalize the read/write key mix
+        # before the RFF lift. Default OFF — R5/v9 parity exact; no
+        # parameters added, so checkpoints load across both settings.
+        self.norm_mix = bool(norm_mix)
+        # A58 (R8) -> A58b (R8b): pay-the-trunk auxiliary loss.
+        # When >0 and the logit bonus fires on a training chunk,
+        # forward keeps the final hidden so the trainer can add
+        # aux_trunk * CE(aux_head(hidden)) — the trunk BLOCKS earn
+        # gradient no matter how much the store covers (A57c: the
+        # bleed is gradient starvation). R8b: the aux reads its own
+        # SEPARATE head — R8 proved the shared head compromises
+        # between logits-good-alone and logits-good-with-bonus,
+        # taxing full CE 9%; the production head never sees the
+        # aux gradient and never touches aux_head at inference.
+        self.aux_trunk = float(aux_trunk)
+        self._aux_hidden = None
+        if self.aux_trunk > 0:
+            self.aux_head = nn.Linear(d, vocab_size)
+        self.use_xl = use_xl   # A36: benched in v6.0 — real one-boundary
+                               # reach (A33) but unresolved held-out cost
+                               # and large run-variance; revisit at scale
+        self.mid = n_layers // 2                    # read injection depth
+        # A70: clocks=None reproduces the certified 3-band ladder
+        # bit-exactly (param names, shapes, RNG draw order, forward).
+        self.clocks = dict(HYBRID_CLOCKS if clocks is None else clocks)
+        self.bands = sorted(self.clocks)            # default [3, 4, 5]
+        # A71 (gated): per-band STATE widths — slow bands earn
+        # capacity (cell state, its pred and mem projections widen;
+        # the window read stays d). None = every band at d with the
+        # certified param names/shapes/RNG draw order bit-exactly.
+        self.band_w = {k: d for k in self.bands}
+        if band_widths:
+            self.band_w.update({int(k): int(v)
+                                for k, v in band_widths.items()})
+        self.embed = nn.Embedding(vocab_size, d)
+        if attn == "rope":
+            from .lm_transformer import RotaryBlock
+            # memory slots keep a learned tag; text carries no table
+            self.pos = nn.Embedding(len(self.bands) + self.tail_tokens, d)
+            self.blocks = nn.ModuleList(
+                [RotaryBlock(d, n_heads,
+                             n_mem=len(self.bands) + self.tail_tokens,
+                             qk_norm=self.qk_norm, mlp=mlp)
+                 for _ in range(n_layers)])
+        else:
+            assert not self.qk_norm, "qk_norm requires attn='rope'"
+            self.pos = nn.Embedding(
+                max_T + len(self.bands) + self.tail_tokens, d)
+            self.blocks = nn.ModuleList(
+                [Block(d, n_heads, mlp=mlp) for _ in range(n_layers)])
+        self.lnf = nn.LayerNorm(d)
+        self.head = nn.Linear(d, vocab_size)
+        # A75 (gated): weight tying — head shares the embedding
+        # matrix (standard sub-1B practice; the logit store's value
+        # space lg_E is ALREADY the embedding, so tying unifies the
+        # store, head, and input geometry). False = certified
+        # untied model bit-exactly.
+        if tie_embed:
+            self.head.weight = self.embed.weight
+        self.cells = nn.ModuleDict(
+            {str(k): SlowCell(d, d_h=(None if self.band_w[k] == d
+                                      else self.band_w[k]))
+             for k in self.bands})
+        self.read_q = nn.ParameterDict(
+            {str(k): nn.Parameter(torch.randn(d) / d ** 0.5)
+             for k in self.bands})
+        self.pred = nn.ModuleDict(
+            {str(k): nn.Linear(self.band_w[k], d) if
+             self.band_w[k] != d else nn.Linear(d, d)
+             for k in self.bands})
+        self.mem_proj = nn.ModuleDict(
+            {str(k): nn.Linear(self.band_w[k], d, bias=False)
+             for k in self.bands})
+        if self.tail_tokens:
+            self.tail_proj = nn.Linear(d, d, bias=False)
+        # running mean of the final hidden (no grad): the centre for
+        # band_center's fidelity target
+        self.register_buffer("band_mu", torch.zeros(d))
+        self.TAIL_W = 64
+        if store == "matrix":
+            # half-life = the band's clock, in chunks
+            self.mats = nn.ModuleDict(
+                {str(k): BandMatrix(d, 1 - 0.5 ** (1 / self.clocks[k]))
+                 for k in self.bands})
+            self.write_q = nn.ParameterDict(
+                {str(k): nn.Parameter(torch.randn(d) / d ** 0.5)
+                 for k in self.bands})
+            # A52 (R4): token-keyed storage. Three consecutive runs
+            # (v8.0, R1, R2) put true-memory retrieval at chance,
+            # lesion-invariant, while R2 proved the DEMAND signal
+            # works. Diagnosis: addressing — learned-soup keys over
+            # one softmax gist per chunk cannot fetch one identifier
+            # among thousands. keyed="token" writes one pair per
+            # POSITION with key = the token's own (detached, unit)
+            # embedding, and reads with a query mixed from the last
+            # QR tokens' embeddings: tok_u learns which token TYPES
+            # are worth storing/asking about (identifiers vs glue),
+            # qmix a recency prior. Same space on both sides — a
+            # shared rare token bridges use site to definition site
+            # with no learned alignment needed.
+            self.keyed = keyed
+            if keyed == "token":
+                self.QR = 8
+                self.tok_u = nn.Parameter(torch.zeros(vocab_size))
+                self.qmix = nn.Parameter(torch.zeros(self.QR))
+            if keyed in ("logit", "hidden"):
+                # A53 (R5): decode-free capacity-sized stores.
+                # QR=64: bridge ceiling 30.2% (A52b curve). KD per
+                # band from load = writes/chunk x pair lifetime
+                # (band 3 ~2 chunks, band 4 ~12, band 5 ~92).
+                # alpha init 0: the bonus is opt-in like the gates;
+                # gradient flows at 0. The mid-layer residual read
+                # (the dead decode route) is OFF in this mode.
+                self.QR = 64
+                # A54 (v9): capacity tracks chunk length — write load
+                # per band = T x selectivity x pair lifetime, so KD
+                # scales with max_T (T=1024 reproduces R5 exactly;
+                # T=2048 doubles every band's store).
+                kd_base = max(1, max_T // 1024)
+                # doubling per rung (load = writes x pair lifetime);
+                # default bands [3,4,5] -> {512,1024,2048}*kd_base
+                # exactly as before; band 6 gets 4096*kd_base
+                self.KD = {k: 512 * (2 ** i) * kd_base
+                           for i, k in enumerate(self.bands)}
+                self.tok_u = nn.Parameter(torch.zeros(vocab_size))
+                if keyed == "logit":
+                    self.qmix = nn.Parameter(torch.zeros(self.QR))
+                else:
+                    # CONTENT KEYS (2026-08-21, docs/MEMORY_MATH.md 4):
+                    # the positional token mix collapsed into a bigram
+                    # cache (qmix softmax .9992 on the previous token;
+                    # one global mix cannot be an entity at a plant and
+                    # a bigram elsewhere). Here the write key at t is
+                    # the trunk's own hidden at t-1 (context strictly
+                    # before t) and the read query is the hidden at t,
+                    # each through a projection (identity at init), unit-
+                    # normalized for the RFF lift. Values, lift, delta
+                    # rule, alpha and the A38 two-pass credit unchanged;
+                    # tok_u keeps only its write-strength role.
+                    self.key_proj = nn.Linear(d, d, bias=False)
+                    self.query_proj = nn.Linear(d, d, bias=False)
+                    nn.init.eye_(self.key_proj.weight)
+                    nn.init.eye_(self.query_proj.weight)
+                self.stores = nn.ModuleDict(
+                    {str(k): LogitStore(
+                        d, self.KD[k],
+                        1 - 0.5 ** (1 / self.clocks[k]),
+                        seed=1000 + k)
+                     for k in self.bands})
+                self.alpha = nn.ParameterDict(
+                    {str(k): nn.Parameter(torch.tensor(0.0))
+                     for k in self.bands})
+            # A30: reads gated shut at init (sigmoid(-4) ~ 0.018) —
+            # v5.6 proved ungated per-position reads crowd out
+            # induction formation; the model must opt in. gate_init
+            # and read_drop are v6.2 bootstrap knobs (A39): defaults
+            # reproduce v6.0/v6.1 exactly.
+            self.read_gate = nn.ParameterDict(
+                {str(k): nn.Parameter(torch.tensor(float(gate_init)))
+                 for k in self.bands})
+            # A41 candidate — per-position read gates: the v6.1 82k
+            # snapshot showed the DILUTION stall (betas 0.94/0.99 =
+            # write path engaged; scalar gates pinned = one knob
+            # cannot price reads that help at ask-positions and cost
+            # noise at the other 511). gate_mode="position" gives
+            # each position its own learned gate (d->1, bias at
+            # gate_init): asks can open the vault while chatter
+            # keeps it shut. Same protection at init.
+            self.gate_mode = gate_mode
+            if gate_mode == "entropy":
+                # A51 (R2): metamemory — reads flow only where the
+                # BLIND path is uncertain. The trainer runs a blind
+                # pass (reads off, throwaway state), computes
+                # per-position entropy H, and sets entropy_gate =
+                # sigmoid(ent_a*(H - ent_tau)) before the real pass.
+                # The crutch loop is broken twice: blind CE trains
+                # the base every chunk, and confident positions get
+                # no read at all.
+                self.ent_a = nn.Parameter(torch.tensor(1.0))
+                self.ent_tau = nn.Parameter(torch.tensor(2.0))
+                self.entropy_gate = None
+            if gate_mode == "position":
+                self.read_gate_pos = nn.ModuleDict()
+                for k in self.bands:
+                    lin = nn.Linear(d, 1)
+                    nn.init.zeros_(lin.weight)
+                    nn.init.constant_(lin.bias, float(gate_init))
+                    self.read_gate_pos[str(k)] = lin
+        self.read_drop = read_drop
+        # A30: Transformer-XL chunk carry — the previous chunk's
+        # hiddens as attendable keys. v5.6's autopsy: chunks were
+        # processed independently, so ANY boundary-straddling gap
+        # (even 48 tokens) was invisible to attention and fell to
+        # the store. Attention now owns everything within one chunk
+        # of lookback; the store owes only true long range.
+        self.xl_tag = nn.Parameter(torch.zeros(d))
+        self.lesioned = set()
+        # A62: store reads only — bands/mem-tokens stay live (unlike
+        # lesioned, which amputates both). Sleep's trunk-alone student
+        # pass and ARM A replay run with this on; False = bit-exact
+        # certified forward (L2).
+        self.store_read_off = False
+        # CENTERPIECE (2026-08-21): the slow THREAD alone — every
+        # band's memory token zeroed while the stores stay readable.
+        # `lesioned` removes a band's token AND its store; this switch
+        # separates the two organs for the demos. False = bit-exact.
+        self.mem_off = False
+        self._write_cost = None
+        self._recon = None
+
+    def init_state(self, B, device):
+        st = {"h": {k: torch.zeros(B, self.band_w[k], device=device)
+                    for k in self.bands},
+              "acc": {k: torch.zeros(B, self.d, device=device)
+                      for k in self.bands},
+              "cnt": {k: 0 for k in self.bands},
+              "pend": {k: None for k in self.bands},
+              "fresh": {k: False for k in self.bands},
+              "tail": torch.zeros(B, self.d, device=device),
+              "chunk": 0}
+        if self.store == "matrix":
+            if getattr(self, "keyed", None) in ("logit", "hidden"):
+                st["M"] = {k: torch.zeros(B, self.d, self.KD[k],
+                                          device=device)
+                           for k in self.bands}
+            else:
+                st["M"] = {k: torch.zeros(B, self.d, self.d,
+                                          device=device)
+                           for k in self.bands}
+        st["xl"] = None            # per-layer cached hiddens (A30)
+        return st
+
+    def detach_state(self, st):
+        if self.band_credit:
+            # a band that ticked in this chunk keeps its one-op write
+            # graph for exactly the next chunk (the memory token's
+            # hindsight credit); pend keeps its one-tick graph until
+            # the fidelity that consumes it
+            st["h"] = {k: (v if st["fresh"].get(k) else v.detach())
+                       for k, v in st["h"].items()}
+            st["fresh"] = {k: False for k in st["h"]}
+        else:
+            st["h"] = {k: v.detach() for k, v in st["h"].items()}
+            st["pend"] = {k: (p.detach() if p is not None else None)
+                          for k, p in st["pend"].items()}
+        st["acc"] = {k: v.detach() for k, v in st["acc"].items()}
+        if "tail" in st:
+            st["tail"] = st["tail"].detach()
+        # A38: M is deliberately NOT detached here — it carries one
+        # write-op of graph across the boundary (inputs were detached
+        # at the write site), so the next chunk's read backward can
+        # credit the write head. Depth cannot grow: each write starts
+        # from M.detach().
+        if st.get("xl") is not None:
+            st["xl"] = [h.detach() for h in st["xl"]]
+        return st
+
+    def _mem_tokens(self, st, B):
+        toks = []
+        for k in self.bands:
+            h = st["h"][k]
+            if k in self.lesioned or getattr(self, "mem_off", False):
+                h = torch.zeros_like(h)
+            toks.append(self.mem_proj[str(k)](h))
+        if self.tail_tokens:
+            # the previous chunk's tail; part of the THREAD (off under
+            # mem_off) and of the full amputation (every band lesioned)
+            t = st["tail"]
+            if getattr(self, "mem_off", False) or \
+                    len(self.lesioned) >= len(self.bands):
+                t = torch.zeros_like(t)
+            toks.append(self.tail_proj(t))
+        return torch.stack(toks, dim=1)          # [B, M, d]
+
+    def forward(self, tokens, st, scene_starts=None):
+        B, T = tokens.shape
+        dev = tokens.device
+        M = len(self.bands) + self.tail_tokens
+        # states from older checkpoints predate these keys
+        if "fresh" not in st:
+            st["fresh"] = {k: False for k in self.bands}
+        if "tail" not in st:
+            st["tail"] = torch.zeros(B, self.d, device=dev)
+        mem = self._mem_tokens(st, B)
+        if self.attn_kind == "rope":
+            x = self.embed(tokens)            # position lives in rotary
+        else:
+            x = self.embed(tokens) + self.pos(
+                torch.arange(M, M + T, device=dev))[None]
+        mem = mem + self.pos(torch.arange(M, device=dev))[None]
+        x = torch.cat([mem, x], dim=1)           # [B, M+T, d]
+        # causal over text; every text position may attend all memory;
+        # memory rows attend only themselves
+        sq = torch.triu(torch.ones(M + T, M + T, device=dev,
+                                   dtype=torch.bool), diagonal=1)
+        sq[:M, :] = True
+        sq[torch.arange(M + T), torch.arange(M + T)] = False
+        xl = st.get("xl") if self.use_xl else None
+        if self.training and xl is not None and \
+                float(torch.rand(())) < 0.5:
+            # A34: XL-dropout — v5.8 proved the carry crowds out
+            # induction (same-chunk 0.68 -> 0.31 while straddle
+            # tripled); half the chunks train blind so the robust
+            # circuit must form, the other half keep the reach
+            xl = None
+        self._xl_used = xl is not None
+        if xl is not None:
+            # XL carry (A30): previous chunk's per-layer text hiddens
+            # as extra keys — text rows attend all of them (they are
+            # wholly past); mem-token rows still attend only self
+            xT = xl[0].shape[1]
+            left = torch.ones(M + T, xT, device=dev, dtype=torch.bool)
+            left[M:, :] = False
+            mask = torch.cat([left, sq], dim=1)
+        else:
+            mask = sq
+        new_xl = []
+        read_ok = (not self.training) or \
+            float(torch.rand(())) >= self.read_drop
+        self._reads_used = read_ok and self.store == "matrix"
+        for i, b in enumerate(self.blocks):
+            if self.use_xl:
+                new_xl.append(x[:, M:].detach())
+            kv = (xl[i] + self.xl_tag) if xl is not None else None
+            with torch.autocast(device_type=dev.type, dtype=torch.bfloat16,
+                                enabled=self.autocast_bf16):
+                x = b(x, mask if xl is not None else sq, kv=kv)
+            if self.autocast_bf16:
+                x = x.float()            # residual stream stays fp32
+            if self.store == "matrix" and i == self.mid - 1 \
+                    and read_ok \
+                    and not getattr(self, "store_read_off", False) \
+                    and getattr(self, "keyed", None) not in ("logit",
+                                                             "hidden"):
+                # per-position associative reads from LAST chunks'
+                # matrices, gated shut at init (A30) + read-dropout
+                # (A36: the crowding-out law — half the chunks train
+                # storeless so induction must form)
+                text = x[:, M:]
+                r = torch.zeros_like(text)
+                q_tok = None
+                if getattr(self, "keyed", None) == "token":
+                    # A52: query = unit mix of the last QR tokens'
+                    # embeddings — the same space the write keys
+                    # live in, so no learned alignment is needed
+                    E = nn.functional.normalize(
+                        self.embed.weight, dim=-1).detach()
+                    Tt = tokens.shape[1]
+                    idx = torch.arange(Tt, device=tokens.device)
+                    offs = torch.arange(self.QR, device=tokens.device)
+                    rel = idx.unsqueeze(1) - offs.unsqueeze(0)
+                    wtok = tokens[:, rel.clamp(min=0)]   # [B, T, QR]
+                    lgt = self.qmix + self.tok_u[wtok]
+                    lgt = lgt.masked_fill(
+                        (rel < 0).unsqueeze(0), float("-inf"))
+                    mixw = torch.softmax(lgt, dim=-1)
+                    q_tok = nn.functional.normalize(torch.einsum(
+                        "btr,btrd->btd", mixw, E[wtok]), dim=-1)
+                for k in self.bands:
+                    if k in self.lesioned:
+                        continue
+                    gm = getattr(self, "gate_mode", "scalar")
+                    if gm == "position":
+                        # [B, T, 1] — each position prices its own read
+                        g = torch.sigmoid(self.read_gate_pos[str(k)](text))
+                    elif gm == "entropy":
+                        eg = getattr(self, "entropy_gate", None)
+                        if eg is None:
+                            g = 0.0          # no uncertainty signal: blind
+                        else:
+                            g = eg.unsqueeze(-1)     # [B, T, 1]
+                    else:
+                        g = torch.sigmoid(self.read_gate[str(k)])
+                    if q_tok is not None:
+                        r = r + g * self.mats[str(k)].read_keyed(
+                            st["M"][k], q_tok)
+                    else:
+                        r = r + g * self.mats[str(k)].read(
+                            st["M"][k], text)
+                x = torch.cat([x[:, :M], text + r], dim=1)
+        st["xl"] = new_xl if self.use_xl else None
+        hidden = x[:, M:]                        # text positions
+        logits = self.head(self.lnf(hidden))
+        lg_E = lg_qd = lg_smask = None
+        if self.store == "matrix" and \
+                getattr(self, "keyed", None) == "hidden":
+            # content-keyed read: the query is the trunk's hidden at t
+            # (attached — the trunk learns to ASK in the key space),
+            # matched against the vocabulary exactly as in logit mode
+            lg_E = nn.functional.normalize(
+                self.embed.weight, dim=-1).detach()
+            lg_qd = nn.functional.normalize(self.query_proj(hidden),
+                                            dim=-1)
+            lg_smask = torch.ones(1, tokens.shape[1], device=dev,
+                                  dtype=lg_qd.dtype)
+            lg_smask[:, 0] = 0.0          # position 0: no context before
+            self._aux_hidden = None
+            if read_ok and not getattr(self, "store_read_off", False):
+                rsum = None
+                for k in self.bands:
+                    if k in self.lesioned:
+                        continue
+                    stn = self.stores[str(k)]
+                    r = self.alpha[str(k)] * stn.read(
+                        st["M"][k], stn.lift(lg_qd))
+                    rsum = r if rsum is None else rsum + r
+                if rsum is not None:
+                    if self.aux_trunk > 0 and self.training:
+                        self._aux_hidden = hidden
+                    logits = logits + rsum @ lg_E.t()
+        elif self.store == "matrix" and \
+                getattr(self, "keyed", None) == "logit":
+            # A53 read: query = mix of the last QR tokens' embeddings
+            # (window includes the current token); the retrieved
+            # identity vectors are matched against the vocabulary and
+            # added DIRECTLY to the logits — no learned decode. Reads
+            # see the PREVIOUS chunks' M (writes happen below).
+            lg_E = nn.functional.normalize(
+                self.embed.weight, dim=-1).detach()
+            Tt = tokens.shape[1]
+            idx = torch.arange(Tt, device=tokens.device)
+            offs = torch.arange(self.QR, device=tokens.device)
+            rel = idx.unsqueeze(1) - offs.unsqueeze(0)
+            wtok = tokens[:, rel.clamp(min=0)]
+
+            # memory: the [B,T,QR,d] embedding gathers (4.3GB each
+            # at 16 lanes, three sites) OOM'd the first r5 pod at
+            # backward. Checkpoint the whole mix construction —
+            # exact same fp32 math, gathers recomputed in backward
+            # instead of retained; only [B,T,QR] windows persist.
+            def _mixq(qm, tu, wt, msk, zero_all):
+                lg = qm + tu[wt]
+                lg = lg.masked_fill(msk.unsqueeze(0), float("-inf"))
+                if zero_all is not None:
+                    lg = lg.masked_fill(zero_all.view(1, -1, 1), 0.0)
+                mw = torch.softmax(lg, dim=-1)
+                mix = torch.einsum("btr,btrd->btd", mw, lg_E[wt])
+                if self.norm_mix:
+                    # A55 (R6 candidate, from A54e F2): the raw mix
+                    # is a softmax MEAN of unit rows — norm
+                    # ~1/sqrt(support), deep in the RFF kernel's
+                    # flat region, so distinct contexts collide
+                    # (cos 0.97 measured at v9 shapes). The lift's
+                    # gamma was calibrated for UNIT inputs; unit-
+                    # normalizing the mix restores that design point
+                    # and makes broad-context keys addressable.
+                    mix = nn.functional.normalize(mix, dim=-1)
+                return mix
+
+            from torch.utils.checkpoint import checkpoint as _ckpt
+            lg_qd = _ckpt(_mixq, self.qmix, self.tok_u, wtok,
+                          rel < 0, None, use_reentrant=False)
+            # write-side index tensors (context STRICTLY before each
+            # position — the induction shape; position 0 has none:
+            # masked to uniform, write strength zeroed below). The
+            # write MIXES are built in the write block, twice, for
+            # the A38 two-pass credit (uncloned/cloned params).
+            relw = idx.unsqueeze(1) - (offs + 1).unsqueeze(0)
+            wtokw = tokens[:, relw.clamp(min=0)]
+            allw = (relw < 0).all(dim=-1)
+            lg_smask = (~allw).view(1, -1).to(lg_qd.dtype)
+            self._aux_hidden = None
+            if read_ok and not getattr(self, "store_read_off", False):
+                rsum = None
+                for k in self.bands:
+                    if k in self.lesioned:
+                        continue
+                    stn = self.stores[str(k)]
+                    r = self.alpha[str(k)] * stn.read(
+                        st["M"][k], stn.lift(lg_qd))
+                    rsum = r if rsum is None else rsum + r
+                if rsum is not None:
+                    if self.aux_trunk > 0 and self.training:
+                        self._aux_hidden = hidden
+                    logits = logits + rsum @ lg_E.t()
+        if self.tail_tokens:
+            # the boundary organ's content: the last TAIL_W hiddens'
+            # mean (detached — the projection learns at read time)
+            st["tail"] = hidden[:, -min(self.TAIL_W, T):].mean(1).detach()
+        if self.band_center and self.training:
+            with torch.no_grad():
+                self.band_mu.mul_(0.99).add_(
+                    0.01 * hidden.detach().mean(dim=(0, 1)))
+        # band updates: each band SELECTS from the window with its own
+        # query (A24) instead of receiving the window mean
+        ticks = [[] for _ in range(max(N_BANDS, max(self.bands) + 1))]
+        st["chunk"] += 1
+        wcost = []
+        for k in self.bands:
+            w = torch.softmax(
+                hidden @ self.read_q[str(k)] / self.d ** 0.5, dim=1)
+            read = torch.einsum("bt,btd->bd", w, hidden)
+            st["acc"][k] = st["acc"][k] + read
+            st["cnt"][k] += 1
+            if st["chunk"] % self.clocks[k] == 0:
+                pooled = st["acc"][k] / max(st["cnt"][k], 1)
+                target = pooled
+                if self.band_center:
+                    target = pooled - self.band_mu
+                if st["pend"][k] is not None:
+                    fid = nn.functional.cosine_similarity(
+                        st["pend"][k], target, dim=-1)
+                    ticks[k].append((T - 1, fid))
+                if self.band_credit:
+                    # values identical to the live cell; gradient is
+                    # routed: this chunk's loss sees z (write cost),
+                    # the next chunk's CE sees the write through the
+                    # memory token, the next tick's fidelity sees the
+                    # predictor AND the cell — each through its own
+                    # cloned-parameter graph on detached inputs
+                    h_old = st["h"][k].detach()
+                    p_d = pooled.detach()
+                    _, z = self.cells[str(k)](pooled, h_old)
+                    cell = self.cells[str(k)]
+                    st["h"][k] = cell.forward_cloned(p_d, h_old)
+                    st["fresh"][k] = True
+                    pr = self.pred[str(k)]
+                    st["pend"][k] = nn.functional.linear(
+                        cell.forward_cloned(p_d, h_old),
+                        pr.weight.clone(), pr.bias.clone())
+                else:
+                    st["h"][k], z = self.cells[str(k)](pooled, st["h"][k])
+                    st["pend"][k] = self.pred[str(k)](st["h"][k])
+                wcost.append(z)
+                st["acc"][k] = torch.zeros_like(st["acc"][k])
+                st["cnt"][k] = 0
+        if wcost:
+            self._write_cost = torch.stack(wcost).mean()
+        if self.store == "matrix":
+            # dedicated write selection + additive write, EVERY chunk
+            # (storage is non-destructive; decay is the timescale).
+            # A38: the write path learns from NEXT-chunk reads. The
+            # stored M keeps exactly one write-op of graph across the
+            # boundary (its M input detached, window hiddens detached),
+            # so read-success backward at chunk t+1 reaches write_q/
+            # wk/wv/beta — the severed credit that left the selector
+            # blind (v5.6-v6.0: gist equilibrium, cross bins dead).
+            # Two passes over identical math: the recon pass is
+            # traversed by THIS chunk's backward, the store pass by
+            # the NEXT chunk's — shared nodes would be freed twice.
+            recon = []
+            h_wr = hidden.detach()
+            if getattr(self, "keyed", None) == "logit":
+                # A53 writes: value = the token's own IDENTITY under
+                # its preceding-context key. Two passes (A38): recon
+                # pass with live params feeds THIS chunk's backward;
+                # store pass with cloned params feeds the NEXT
+                # chunk's read-success backward, version-safe.
+                V_id = lg_E[tokens]
+                from torch.utils.checkpoint import \
+                    checkpoint as _ckpt
+                for pass2 in (False, True):
+                    tu = self.tok_u.clone() if pass2 else self.tok_u
+                    qm = self.qmix.clone() if pass2 else self.qmix
+                    # cloned params ride as checkpoint INPUTS —
+                    # saved copies, so the backward recompute is
+                    # version-frozen exact (A38 safety preserved)
+                    k_d = _ckpt(_mixq, qm, tu, wtokw, relw < 0,
+                                allw, use_reentrant=False)
+                    sv = torch.sigmoid(tu[tokens]) * lg_smask
+                    for k in self.bands:
+                        stn = self.stores[str(k)]
+                        M_in = st["M"][k].detach()
+                        if not pass2:
+                            _, rc = stn.write(M_in, stn.lift(k_d),
+                                              V_id, sv)
+                            recon.append(rc)
+                        else:
+                            st["M"][k], _ = stn.write(
+                                M_in, stn.lift(k_d), V_id, sv,
+                                stale_ok=True)
+            elif getattr(self, "keyed", None) == "hidden":
+                # content-keyed writes: key_t = proj(hidden_{t-1}) — the
+                # context strictly before t (the induction shape kept);
+                # value = the token's identity. Recon pass with LIVE
+                # params and the LIVE hidden: this chunk's backward
+                # teaches the trunk to write retrievable keys. Store
+                # pass with cloned params and the detached hidden: one
+                # write-op of graph rides into the next chunk (A38).
+                V_id = lg_E[tokens]
+                h_prev_live = torch.cat(
+                    [torch.zeros_like(hidden[:, :1]), hidden[:, :-1]],
+                    dim=1)
+                h_prev_det = h_prev_live.detach()
+                for pass2 in (False, True):
+                    tu = self.tok_u.clone() if pass2 else self.tok_u
+                    Wk = (self.key_proj.weight.clone() if pass2
+                          else self.key_proj.weight)
+                    hp = h_prev_det if pass2 else h_prev_live
+                    k_d = nn.functional.normalize(hp @ Wk.t(), dim=-1)
+                    sv = torch.sigmoid(tu[tokens]) * lg_smask
+                    for k in self.bands:
+                        stn = self.stores[str(k)]
+                        M_in = st["M"][k].detach()
+                        if not pass2:
+                            _, rc = stn.write(M_in, stn.lift(k_d),
+                                              V_id, sv)
+                            recon.append(rc)
+                        else:
+                            st["M"][k], _ = stn.write(
+                                M_in, stn.lift(k_d), V_id, sv,
+                                stale_ok=True)
+            elif getattr(self, "keyed", None) == "token":
+                # A52: one pair per POSITION, key = the token's own
+                # unit embedding, write strength from tok_u. The A38
+                # two-pass credit structure is preserved: the recon
+                # pass feeds THIS chunk's backward (tok_u learns
+                # write-fidelity), the stale_ok pass with cloned
+                # tok_u feeds the NEXT chunk's read-success backward.
+                E = nn.functional.normalize(
+                    self.embed.weight, dim=-1).detach()
+                Kt = E[tokens]
+                s = torch.sigmoid(self.tok_u[tokens])
+                s2 = torch.sigmoid(self.tok_u.clone()[tokens])
+                for k in self.bands:
+                    M_in = st["M"][k].detach()
+                    _, rc = self.mats[str(k)].write_keyed(
+                        M_in, Kt, h_wr, s)
+                    recon.append(rc)
+                    st["M"][k], _ = self.mats[str(k)].write_keyed(
+                        M_in, Kt, h_wr, s2, stale_ok=True)
+            else:
+                for k in self.bands:
+                    M_in = st["M"][k].detach()
+                    w = torch.softmax(
+                        h_wr @ self.write_q[str(k)] / self.d ** 0.5,
+                        dim=1)
+                    sel = torch.einsum("bt,btd->bd", w, h_wr)
+                    _, rc = self.mats[str(k)].write(M_in, sel)
+                    recon.append(rc)
+                    w2 = torch.softmax(
+                        h_wr @ self.write_q[str(k)].clone()
+                        / self.d ** 0.5, dim=1)
+                    sel2 = torch.einsum("bt,btd->bd", w2, h_wr)
+                    st["M"][k], _ = self.mats[str(k)].write(
+                        M_in, sel2, stale_ok=True)
+            self._recon = torch.stack(recon).mean()
+        return logits, st, ticks
+
+    def pop_write_cost(self):
+        c = self._write_cost
+        self._write_cost = None
+        return c
+
+    def pop_recon(self):
+        c = self._recon
+        self._recon = None
+        return c
+
+    def n_params(self):
+        return sum(p.numel() for p in self.parameters())

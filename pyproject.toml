@@ -1,0 +1,19 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "iga"
+version = "1.0.0"
+description = "Vision — a language being flashed with a lifetime: timescale bands, contextual memory stores, a press economy and sleep (iga/lm_*); plus the original drive-layer program (docs/drive-layer)."
+requires-python = ">=3.11"
+license = "Apache-2.0"
+license-files = ["LICENSE", "NOTICE"]
+dependencies = ["torch>=2.0", "numpy>=1.24"]
+
+[project.optional-dependencies]
+crafter = ["crafter"]
+render = ["pillow", "matplotlib"]
+
+[tool.setuptools]
+packages = ["iga", "iga.envs"]
