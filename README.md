@@ -57,7 +57,7 @@ meaning.
 git clone https://github.com/LukeHamond1001/Vision.git && cd Vision
 pip install -e .          # torch, tokenizers, numpy
 # weights (the living body + tokenizer, ~1.2G):
-#   https://huggingface.co/LukeHamond1001/one-token-organism
+#   https://huggingface.co/Luke1001/one-token-organism
 # put organism_life.pt and ship_tok.json in data/, then:
 python3 scripts/organism.py data/organism_life.pt data/ship_tok.json \
     --dev mps --temp 0.05 --save data/organism_life.pt
