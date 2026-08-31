@@ -62,7 +62,8 @@ pip install -e .          # torch, tokenizers, numpy
 python3 scripts/organism.py data/organism_life.pt data/ship_tok.json \
     --dev mps --temp 0.05 --save data/organism_life.pt
 # open http://localhost:8016 — talk to it, teach it, press the
-# slider, flip on internals, and leave continuous time on a while
+# slider, and leave it running a while: it sleeps, dreams, and may
+# speak to you first, all on its own clock
 ```
 
 First reply after launch takes a few minutes (the model compiles);

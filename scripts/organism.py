@@ -1392,35 +1392,24 @@ PAGE = """<!doctype html><meta charset=utf-8>
 <title>the organism</title>
 <style>
 :root{--paper:#faf9f6;--panel:#ffffff;--ink:#20242b;--mut:#8b94a0;--line:#e7e4dd;
- --acc:#2f7d5c;--good:#1f7a46;--warn:#bd4a24;--dream:#7a5cc4;--blue:#3565b0}
+ --acc:#2f7d5c;--good:#1f7a46;--warn:#bd4a24}
 *{box-sizing:border-box}
 body{font:15px/1.5 -apple-system,'Segoe UI',sans-serif;margin:0;display:flex;flex-direction:column;height:100vh;background:var(--paper);color:var(--ink)}
 #top{display:flex;align-items:center;gap:14px;padding:12px 22px;background:var(--paper);border-bottom:1px solid var(--line)}
 #status{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--mut);letter-spacing:.3px}
 #alivedot{width:9px;height:9px;border-radius:50%;background:var(--acc);animation:breathe 3.2s ease-in-out infinite}
 @keyframes breathe{0%,100%{opacity:.45;transform:scale(.85)}50%{opacity:1;transform:scale(1.1)}}
-.tgl{margin-left:auto;display:flex;gap:8px}
-.tglbtn{background:transparent;color:var(--mut);border:1px solid var(--line);border-radius:999px;padding:6px 14px;cursor:pointer;font-size:12px;letter-spacing:.2px;transition:all .15s}
-.tglbtn:hover{border-color:var(--mut)}
-.tglbtn.on{background:var(--ink);color:var(--paper);border-color:var(--ink)}
-#main{display:flex;flex:1;min-height:0}
-#chat{flex:1;min-width:0;display:flex;flex-direction:column}
 #log{flex:1;overflow-y:auto;padding:28px 0}
 #log>div{max-width:680px;margin-left:auto;margin-right:auto;padding:0 28px;animation:rise .18s ease-out}
 @keyframes rise{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
 .you{color:var(--acc);margin:18px auto 4px;font-size:13.5px;font-weight:600;letter-spacing:.2px}
 .bot{font-family:Georgia,'Times New Roman',serif;font-size:17px;line-height:1.55;color:var(--ink);margin:0 auto 6px;white-space:pre-wrap}
 .sys{color:#b3aca0;font-size:11.5px;margin:6px auto;font-style:italic}
-.selfp{font-size:12px;margin:2px auto 10px;display:table;padding:4px 12px;border-radius:999px}
+.think{color:var(--mut);font-size:20px;letter-spacing:4px;animation:thinkp 1.2s ease-in-out infinite}
+@keyframes thinkp{0%,100%{opacity:.25}50%{opacity:.9}}
+.selfp{font-size:12px;margin:2px auto 10px;display:table;padding:4px 12px;border-radius:999px;font-family:menlo,monospace}
 .selfp.good{color:var(--good);background:rgba(31,122,70,.07)}
 .selfp.bad{color:var(--warn);background:rgba(189,74,36,.07)}
-.think{color:var(--mut);font-size:20px;letter-spacing:4px;animation:thinkp 1.2s ease-in-out infinite}
-.w{border-radius:3px;transition:background .12s}
-.tokhl{background:#f3dfa4;box-shadow:0 0 0 2px #f3dfa4}
-.flyt{font-family:menlo,monospace;opacity:0;animation:flyup 1.5s ease-out forwards}
-@keyframes flyup{0%{opacity:0;transform:translateY(7px)}18%{opacity:1}100%{opacity:0;transform:translateY(-16px)}}
-.msghl{background:#e9efe9;box-shadow:0 0 0 4px #e9efe9;border-radius:4px}
-@keyframes thinkp{0%,100%{opacity:.25}50%{opacity:.9}}
 #bar{display:flex;gap:10px;padding:14px 28px 8px;background:var(--paper);max-width:736px;margin:0 auto;width:100%}
 #msg{flex:1;background:var(--panel);border:1px solid var(--line);color:var(--ink);padding:13px 16px;border-radius:14px;font-size:15px;outline:none;transition:border .15s,box-shadow .15s}
 #msg:focus{border-color:var(--acc);box-shadow:0 0 0 3px rgba(47,125,92,.10)}
@@ -1436,491 +1425,84 @@ button.quiet:hover{opacity:1;border-color:var(--mut);color:var(--ink)}
 #rwval{min-width:44px;text-align:center;font-weight:700;font-size:15px;color:var(--mut);font-variant-numeric:tabular-nums}
 #carerow{display:flex;gap:8px;padding:4px 28px 8px;max-width:736px;margin:0 auto;width:100%}
 #hint{padding:0 28px 12px;font-size:11px;color:#b3aca0;max-width:736px;margin:0 auto;width:100%}
-#brain{width:48%;min-width:380px;max-width:700px;padding:14px;overflow-y:auto;background:var(--paper);border-left:1px solid var(--line);display:none}
-.panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px}
-.panel h3{margin:0 0 8px;font-size:10.5px;letter-spacing:2px;color:var(--mut)}
-.blk{fill:#ffffff;stroke:#c8ceD8;stroke-width:1.1}
-.cell{fill:#f0f2ef;stroke:#c8ced8;stroke-width:0.8}
-.lbl{fill:#5a6672;font-size:8.5px;font-family:-apple-system,sans-serif;letter-spacing:.4px}
-.tiny{fill:#98a2ac;font-size:6.5px;font-family:-apple-system,sans-serif}
-.val{fill:#a06018;font-size:7.5px;font-family:menlo,monospace}
-.wire{stroke:#d5d9d2;stroke-width:1.3;fill:none}
-.dot{fill:var(--blue)}
-#events{max-height:96px;overflow-y:auto;font-size:11px;color:#5a6672;margin-bottom:6px}
-#events>div{padding:1px 0;border-radius:4px}
-#events>div:hover{background:#f4f2ec}
-#night{max-height:96px;overflow-y:auto;font-size:11px;color:#5a6672;margin-top:6px}
-#tslider{width:100%;accent-color:var(--acc)}
-#frameinfo{font-size:11px;color:var(--acc);min-height:15px;font-weight:600}
-#stream{font-family:menlo,monospace;font-size:9.5px;line-height:1.5;color:#48525c;
- max-height:78px;overflow:hidden;margin:6px 0 2px;font-variant-numeric:tabular-nums}
-#stream>div{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-#stream>div:nth-child(1){color:#20242b}
-#stream>div:nth-child(3){opacity:.75}#stream>div:nth-child(4){opacity:.5}#stream>div:nth-child(5){opacity:.3}
-#footer{display:flex;gap:12px;align-items:center;font-size:11px;color:#5a6672;margin-top:4px;flex-wrap:wrap}
 </style>
 <div id=top>
  <div id=status><span id=alivedot></span><span id=alivetxt>awake</span></div>
- <span class=tgl>
-  <button id=contTgl class=tglbtn onclick=toggleCont()>continuous time: off</button>
-  <button id=intTgl class=tglbtn onclick=toggleInt()>internals: off</button>
- </span>
 </div>
-<div id=main>
-<div id=chat>
- <div id=log></div>
- <div id=bar>
-  <input id=msg placeholder="talk to it..." onkeydown="if(event.key==='Enter')send()">
-  <button id=sendbtn onclick=send() title="send">↑</button>
- </div>
- <div id=rewardrow>
-  <span style="font-size:12px;color:#c2410c">−6</span>
-  <input id=rw type=range min=-6 max=6 step=0.5 value=0 oninput=rwShow()>
-  <span style="font-size:12px;color:#15803d">+6</span>
-  <span id=rwval>0</span>
-  <button onclick=pressSlider()>press</button>
- </div>
- <div id=carerow>
-  <button class=quiet onclick=sleepy()>sleep</button>
-  <button class=quiet onclick=saveLife()>save</button>
-  <button class=quiet onclick="fetch('/reset',{method:'POST'}).then(()=>add('sys','~ fresh wake ~'))">reset</button>
- </div>
- <div id=hint>set the slider before sending — the press applies to its previous answer, then your message goes</div>
+<div id=log></div>
+<div id=bar>
+ <input id=msg placeholder="talk to it..." onkeydown="if(event.key==='Enter')send()">
+ <button id=sendbtn onclick=send() title="send">&#8593;</button>
 </div>
-<div id=brain>
- <div class=panel>
- <h3>INSIDE — live</h3>
- <div id=events>—</div>
- <svg id=chip viewBox="0 0 560 436" width="100%">
-  <path id=w_in class=wire d="M52,200 L70,200"/>
-  <path id=w_tc class=wire d="M178,200 L192,200"/>
-  <path id=w_cp class=wire d="M416,168 L432,168"/>
-  <path id=w_ph class=wire d="M486,168 L498,168"/>
-  <path id=w_hpc_r class=wire d="M416,100 L424,100 L424,36 L525,36 L525,140"/>
-  <path id=w_hpc_w class=wire d="M312,110 L322,110"/>
-  <path id=w_goal class=wire d="M486,244 L525,244 L525,196"/>
-  <path id=w_plan class=wire d="M262,356 L262,376"/>
-  <path id=w_bg class=wire d="M330,356 L330,376"/>
-  <path id=w_da class=wire d="M432,396 L412,396"/>
-  <text class=tiny x=280 y=105>write</text>
-  <text class=tiny x=430 y=33>decode-free read → logits</text>
-  <text class=tiny x=492 y=236>goal bias</text>
-  <rect class=blk x=8 y=180 width=44 height=40 rx=3 />
-  <text class=lbl x=13 y=194>YOU</text><text class=val x=13 y=208 id=v_in>—</text>
-  <rect class=blk x=70 y=150 width=108 height=100 rx=3 />
-  <text class=lbl x=76 y=163>TRUNK · 13 layers</text>
-  <g id=trunk></g>
-  <text class=val x=76 y=243 id=v_trunk>—</text>
-  <rect class=blk x=188 y=58 width=124 height=298 rx=3 />
-  <text class=lbl x=194 y=71>COUNCIL · six clocks</text>
-  <text class=tiny x=228 y=86>acc</text><text class=tiny x=262 y=86>cortex</text>
-  <g id=bands></g>
-  <rect class=blk x=322 y=58 width=94 height=298 rx=3 />
-  <text class=lbl x=328 y=71>HIPPOCAMPUS</text>
-  <text class=tiny x=328 y=81>episodic store · per-band lanes</text>
-  <g id=lanes></g>
-  <text class=val x=328 y=336 id=v_hpc>store quiet</text>
-  <text class=val x=328 y=348 id=v_hpc2 style="fill:#1f7a46"></text>
-  <rect class=blk x=432 y=140 width=54 height=56 rx=3 />
-  <text class=lbl x=438 y=154>PFC</text>
-  <text class=tiny x=438 y=164>route·ponder</text>
-  <text class=val x=438 y=186 id=v_pfc>—</text>
-  <rect class=blk x=498 y=140 width=54 height=56 rx=3 />
-  <text class=lbl x=504 y=154>LEXICON</text>
-  <text class=val x=504 y=172 id=v_head>—</text>
-  <rect class=blk x=432 y=220 width=54 height=48 rx=3 />
-  <text class=lbl x=438 y=233>GOAL</text>
-  <g id=goals></g>
-  <g id=clockw></g>
-  <rect class=blk x=70 y=376 width=150 height=48 rx=3 />
-  <text class=lbl x=76 y=389>PLAN / DREAMER · 8 steps</text>
-  <g id=plan></g>
-  <text class=val x=180 y=417 id=v_plan>—</text>
-  <rect class=blk x=240 y=376 width=172 height=48 rx=3 />
-  <text class=lbl x=246 y=389>BG · DA — value per band</text>
-  <g id=vbars></g>
-  <text class=val x=370 y=417 id=v_bg>—</text>
-  <rect class=blk x=432 y=376 width=54 height=48 rx=3 />
-  <text class=lbl x=438 y=389>PRESS</text>
-  <text class=val x=438 y=406 id=v_press>—</text>
-  <g id=fly></g>
- </svg>
- <div id=stream></div>
- <div id=frameinfo>live</div>
- <input id=tslider type=range min=0 max=0 value=0 oninput="scrub(parseInt(this.value))">
- <div style="display:flex;gap:8px;align-items:center">
-  <button class=quiet onclick=playPause()><span id=playic>▶</span></button>
-  <button class=quiet onclick=goLive()>LIVE</button>
-  <span style="font-size:10.5px;color:#8aa0b5">every token is a frame — bands tick on their real clocks; nights play replay-by-replay</span>
- </div>
- <div id=footer>
-  <span>mood <b id=moodnum>0</b></span>
-  <div style="background:#eef2f6;border-radius:4px;height:8px;position:relative;width:90px">
-   <div id=moodbar style="position:absolute;top:0;height:8px;border-radius:4px;background:#15803d;left:50%;width:0"></div>
-  </div>
-  <span id=selfpresses style="color:#b45309"></span>
-  <span id=drives>—</span>
-  <span id=moodfx style="color:#7d92a8"></span>
- </div>
- <div id=night>no night yet this session</div>
- </div>
+<div id=rewardrow>
+ <span style="font-size:12px;color:var(--warn)">&minus;6</span>
+ <input type=range id=rw min=-6 max=6 step=1 value=0 oninput=rwShow()>
+ <span style="font-size:12px;color:var(--good)">+6</span>
+ <span id=rwval>0</span>
+ <button onclick=pressSlider()>press</button>
 </div>
+<div id=carerow>
+ <button class=quiet onclick=sleepy()>sleep</button>
+ <button class=quiet onclick=saveLife()>save</button>
+ <button class=quiet onclick="fetch('/reset',{method:'POST'}).then(()=>add('sys','~ fresh wake ~'))">reset</button>
 </div>
+<div id=hint>set the slider before sending — the press applies to its previous answer, then your message goes</div>
 <script>
 const log=document.getElementById('log');
+let busy=false;
 function add(cls,txt){const d=document.createElement('div');d.className=cls;d.textContent=txt;log.appendChild(d);log.scrollTop=1e9;return d}
-function hlClear(){document.querySelectorAll('.tokhl,.msghl').forEach(e=>e.classList.remove('tokhl','msghl'))}
-function hlTok(turn,i){hlClear();
- const bd=document.querySelector('#log .bot[data-turn="'+turn+'"]');
- const yd=document.querySelector('#log .you[data-turn="'+turn+'"]');
- if(i===0){if(yd){yd.classList.add('msghl');yd.scrollIntoView({block:'nearest'})}return}
- if(!bd)return;
- if(!bd.dataset.tok){const ws=bd.textContent.split(' ');bd.textContent='';
-  ws.forEach((w,j)=>{const s=document.createElement('span');s.className='w';s.textContent=w;
-   bd.appendChild(s);if(j<ws.length-1)bd.appendChild(document.createTextNode(' '))});
-  bd.dataset.tok='1'}
- const sp=bd.querySelectorAll('.w'),k=Math.min(i,sp.length)-1;
- if(k>=0&&sp[k]){sp[k].classList.add('tokhl');sp[k].scrollIntoView({block:'nearest'})}}
-let contOn=false,intOn=false,selfPressesToday=0,busy=false;
-function toggleCont(){contOn=!contOn;const b=document.getElementById('contTgl');
- b.textContent='continuous time: '+(contOn?'on':'off');b.classList.toggle('on',contOn);
- add('sys',contOn?'~ continuous time on — it may speak first when it has been alone ~':'~ continuous time off ~')}
-function toggleInt(){intOn=!intOn;const b=document.getElementById('intTgl');
- b.textContent='internals: '+(intOn?'on':'off');b.classList.toggle('on',intOn);
- document.getElementById('brain').style.display=intOn?'block':'none'}
+function mood(m){if(m==null)return;
+ const ad=document.getElementById('alivedot'),at=document.getElementById('alivetxt');
+ ad.style.background=m>1.5?'var(--acc)':(m<-1?'var(--warn)':'#a8b0a6');
+ at.textContent='awake \u00b7 mood '+m.toFixed(1)}
 function rwShow(){const v=parseFloat(document.getElementById('rw').value);
  const e=document.getElementById('rwval');e.textContent=(v>0?'+':'')+v;
  e.style.color=v>0?'var(--good)':(v<0?'var(--warn)':'var(--mut)')}
-let evN=0;
-function evt(txt,color,fi){const e=document.getElementById('events');
- if(evN===0)e.innerHTML='';evN++;
- const d=document.createElement('div');
- const now=new Date();
- const hh=('0'+now.getHours()).slice(-2)+':'+('0'+now.getMinutes()).slice(-2)+':'+('0'+now.getSeconds()).slice(-2);
- d.innerHTML='<span style="color:#b5c2ce;font-family:menlo,monospace;font-size:9.5px">'+hh+
-  '</span> <span style="color:'+(color||'#9db0c2')+'">●</span> ';
- const t=document.createElement('span');t.textContent=txt;
- if(color)t.style.color=color;d.appendChild(t);
- if(fi!=null){d.style.cursor='pointer';d.title='click to replay this moment';
-  d.onclick=()=>{document.getElementById('tslider').value=fi;scrub(fi)}}
- e.appendChild(d);
- while(e.children.length>100)e.removeChild(e.firstChild);
- e.scrollTop=1e9}
-
-// ---- the anatomy ----
-const BANDS=[3,4,5,6,7,8];
-const CLK={3:1,4:8,5:64,6:512,7:4096,8:32768};
-const CLKL={3:'1',4:'8',5:'64',6:'512',7:'4k',8:'32k'};
-const KD={3:512,4:1024,5:2048,6:4096,7:4096,8:4096};
-const trunkG=document.getElementById('trunk');
-for(let i=0;i<13;i++){trunkG.innerHTML+='<rect id=tl'+i+' class=cell x='+(76+i*7.6)+' y=170 width=6 height=56 rx=1 />';}
-const bandG=document.getElementById('bands');
-BANDS.forEach((b,i)=>{const y=94+i*40;
- bandG.innerHTML+=
-  '<text class=lbl x=194 y='+(y+15)+' style="font-size:8px">B'+b+'</text>'+
-  '<text class=tiny x=194 y='+(y+24)+'>clk '+CLKL[b]+'</text>'+
-  '<rect id=bnd'+b+' class=cell x=224 y='+y+' width=30 height=22 rx=2 />'+
-  '<rect id=bndc'+b+' class=cell x=258 y='+y+' width=30 height=22 rx=2 />'+
-  '<text class=val id=bndv'+b+' x=224 y='+(y+32)+' style="font-size:6.5px"></text>';});
-const laneG=document.getElementById('lanes');
-BANDS.forEach((b,i)=>{const y=94+i*40;
- laneG.innerHTML+=
-  '<text class=tiny x=328 y='+(y+9)+'>B'+b+'</text>'+
-  '<rect id=mc'+b+' class=cell x=328 y='+(y+12)+' width='+(30+Math.round(KD[b]/80))+' height=14 rx=2 />'+
-  '<text class=tiny x='+(332+30+Math.round(KD[b]/80))+' y='+(y+22)+'>'+KD[b]+'</text>';});
-const CKX=124,CKY=314,HLEN={3:31,4:27,5:23,6:19,7:15,8:11},HW={3:0.8,4:1.0,5:1.3,6:1.6,7:2.0,8:2.4};
-(function(){const g=document.getElementById('clockw');let h='';
- h+='<text class=lbl x='+CKX+' y=272 text-anchor=middle style="font-size:8px">CLOCKWORK</text>';
- h+='<circle cx='+CKX+' cy='+CKY+' r=37 fill=#ffffff stroke=#c8ced8 stroke-width=1.1 />';
- for(let m=0;m<60;m++){const a=m*6*Math.PI/180,maj=m%5===0,r0=maj?32:34;
-  h+='<line x1='+(CKX+Math.sin(a)*r0).toFixed(1)+' y1='+(CKY-Math.cos(a)*r0).toFixed(1)+
-   ' x2='+(CKX+Math.sin(a)*36).toFixed(1)+' y2='+(CKY-Math.cos(a)*36).toFixed(1)+
-   ' stroke='+(maj?'#98a2ac':'#dde2e8')+' stroke-width='+(maj?'0.9':'0.5')+' />'}
- BANDS.forEach(b=>{h+='<line id=ch'+b+' x1='+CKX+' y1='+CKY+' x2='+CKX+' y2='+(CKY-HLEN[b])+
-  ' stroke='+(b===3?'#2f7d5c':'#2a323c')+' stroke-width='+HW[b]+' stroke-linecap=round />'});
- h+='<circle cx='+CKX+' cy='+CKY+' r=2.2 fill=#2a323c />';
- h+='<text id=ctc class=val x='+CKX+' y='+(CKY+16)+' text-anchor=middle style="font-size:6px">t0</text>';
- h+='<text class=tiny x='+CKX+' y=364 text-anchor=middle>one tick = one band firing</text>';
- g.innerHTML=h})();
-function spawnFly(tr,delay){const g=document.getElementById('fly');if(!g||!tr)return;
- const mk=(txt,x,y,c,fs,w)=>{const e=document.createElementNS('http://www.w3.org/2000/svg','text');
-  e.setAttribute('x',x);e.setAttribute('y',y);e.setAttribute('fill',c);e.setAttribute('font-size',fs);
-  e.setAttribute('text-anchor','middle');e.setAttribute('class','flyt');
-  if(w)e.setAttribute('font-weight','600');
-  if(delay)e.style.animationDelay=delay+'s';
-  e.textContent=txt;g.appendChild(e);
-  setTimeout(()=>e.remove(),(delay||0)*1000+1700)};
- mk(tr.t+' \u00b7'+Math.round(tr.p*100),516,214,'#2f7d5c',7.5,1);
- (tr.alt||[]).filter(a=>a[0]!==tr.t).slice(0,2).forEach((a,j)=>
-  mk(a[0]+' \u00b7'+Math.round(a[1]*100),488+j*56,228,'#98a2ac',6));}
-function setClock(tc){
- BANDS.forEach(b=>{const a=(Math.floor(tc/CLK[b])%60)*6;
-  const hd=document.getElementById('ch'+b);
-  if(hd)hd.setAttribute('transform','rotate('+a+' '+CKX+' '+CKY+')')});
- const e=document.getElementById('ctc');if(e)e.textContent='t'+tc}
-const goalG=document.getElementById('goals');
-for(let i=0;i<4;i++){goalG.innerHTML+='<rect id=gs'+i+' class=cell x='+(438+(i%2)*22)+' y='+(238+Math.floor(i/2)*13)+' width=18 height=10 rx=2 />';}
-const planG=document.getElementById('plan');
-let pl='';for(let i=0;i<8;i++){
- if(i>0)pl+='<line x1='+(84+(i-1)*17+4)+' y1=402 x2='+(84+i*17-4)+' y2=402 stroke="#ccd7e1" stroke-width="1"/>';
- pl+='<circle id=pn'+i+' cx='+(84+i*17)+' cy=402 r=4 fill="#eef3f8" stroke="#b9c6d4"/>';}
-planG.innerHTML=pl;
-const vbG=document.getElementById('vbars');
-BANDS.forEach((b,i)=>{vbG.innerHTML+='<line x1='+(252+i*26)+' y1=406 x2='+(252+i*26+18)+' y2=406 stroke="#d5dde5"/>'+
- '<rect id=vb'+b+' x='+(252+i*26)+' y=406 width=18 height=0 fill="#15803d"/>'+
- '<text class=tiny x='+(254+i*26)+' y=420>B'+b+'</text>';});
-
-function setFill(id,c){const e=document.getElementById(id);if(e)e.style.fill=c}
-function clearTicks(){BANDS.forEach(b=>{setFill('bnd'+b,'#eef3f8');setFill('bndc'+b,'#eef3f8');setFill('mc'+b,'#eef3f8')});
- for(let i=0;i<13;i++)setFill('tl'+i,'#eef3f8');
- for(let i=0;i<8;i++)setFill('pn'+i,'#eef3f8')}
-function glow(id,mag){const e=document.getElementById(id);if(!e)return;
- const g=Math.min(1,mag);e.style.fill='rgb('+(238-100*g)+','+(243-45*g)+','+(248-12*g)+')';
- setTimeout(()=>{e.style.fill='#eef3f8'},2600)}
-function flow(wireId,n,color){const svg=document.getElementById('chip');const w=document.getElementById(wireId);if(!w)return;
- for(let i=0;i<Math.min(n,14);i++){
-  const c=document.createElementNS('http://www.w3.org/2000/svg','circle');
-  c.setAttribute('r',2.2);c.setAttribute('class','dot');if(color)c.setAttribute('fill',color);
-  const m=document.createElementNS('http://www.w3.org/2000/svg','animateMotion');
-  m.setAttribute('dur',(1.0+Math.random()*0.8)+'s');m.setAttribute('begin',(i*0.11)+'s');
-  m.setAttribute('path',w.getAttribute('d'));m.setAttribute('fill','freeze');
-  c.appendChild(m);svg.appendChild(c);setTimeout(()=>c.remove(),3000+i*110)}}
-function fmtD(d){return d>=1000?Math.round(d/1000)+'k':d>=100?Math.round(d):d>=1?d.toFixed(1):d.toFixed(2)}
-function stream(line){const s=document.getElementById('stream');
- const d=document.createElement('div');d.textContent=line;d.title=line;
- s.insertBefore(d,s.firstChild);
- while(s.children.length>5)s.removeChild(s.lastChild)}
-function valueBars(val){if(!val)return;
- Object.entries(val).forEach(([u,v])=>{const e=document.getElementById('vb'+u);if(!e)return;
-  const h=Math.min(16,Math.abs(v)*4);e.setAttribute('height',h);
-  e.setAttribute('y',v>=0?406-h:406);e.setAttribute('fill',v>=0?'#15803d':'#c2410c')});}
-function turnBase(s){
- document.getElementById('v_in').textContent=s.qlen+' tok';
- document.getElementById('v_trunk').textContent='surp '+(s.surprise!=null?s.surprise:'—');
- BANDS.forEach(b=>{const e=document.getElementById('bndv'+b);if(e)e.textContent=''});
- let mx=1;(s.moved||[]).forEach(x=>{mx=Math.max(mx,x.delta)});
- (s.moved||[]).forEach(x=>{const m=x.part.match(/(acc(?:_c)?)\\/(\\d)/);
-  if(m){const e=document.getElementById('bndv'+m[2]);if(e)e.textContent='Δ'+fmtD(x.delta)}});
- document.getElementById('v_pfc').textContent='pauses '+s.pauses;
- if(s.vote!=null&&s.vote>0.05){
-  document.getElementById('v_hpc').textContent='store vote '+s.vote;
-  document.getElementById('v_hpc2').textContent=(s.suggests||[]).slice(0,2).join(' ')}
- else{document.getElementById('v_hpc').textContent='store quiet';document.getElementById('v_hpc2').textContent=''}
- valueBars(s.value);
- if(s.value){const vs=Object.values(s.value);
-  document.getElementById('v_bg').textContent='val '+(vs.reduce((a,c)=>a+c,0)/vs.length).toFixed(2)}}
-
-// ---- the film: every token a frame ----
-let frames=[],playing=null,liveMode=true;
-function slider(){return document.getElementById('tslider')}
-let TC=0;
-function addFrames(fs){const atEnd=liveMode;
- fs.forEach(f=>{if(f.k==='tok')TC++;if(f.k==='nWake')TC=0;f.tc=TC});
- frames.push(...fs);
- const s=slider();s.max=frames.length-1;
- if(atEnd){s.value=frames.length-1;if(typeof setClock==='function')setClock(TC)}}
-function turnFrames(turnN,q,s){
- const fs=[{k:'t0',turnN,q,s}];
- const total=(s.trace&&s.trace.length)||(s.tokens||s.words||1)+(s.pauses||0);
- for(let i=1;i<=total;i++)fs.push({k:'tok',turnN,q,s,i,total,
-  tr:s.trace?s.trace[i-1]:null});
- return fs}
-function nightFrames(n){
- const fs=[];
- (n.story||[]).forEach(it=>fs.push({k:'nItem',n,it}));
- (n.pairs||[]).forEach(p=>fs.push({k:'nRem',n,p}));
- fs.push({k:'nWake',n});
- return fs}
-function renderFrame(i){
- const f=frames[i];if(!f)return;clearTicks();setClock(f.tc||0);
- if(!liveMode){if(f.k==='t0')hlTok(f.turnN,0);
-  else if(f.k==='tok')hlTok(f.turnN,Math.max(1,Math.round(f.i*(f.s.words||1)/f.total)));
-  else hlClear()}
- const info=document.getElementById('frameinfo');
- if(f.k==='t0'){turnBase(f.s);
-  for(let j=0;j<13;j++)setFill('tl'+j,'#bcd3f0');
-  if(f.s.vote>0.05)BANDS.forEach(b=>setFill('mc'+b,'#f4e4c8'));
-  info.textContent='turn '+f.turnN+' · «'+f.q.slice(0,38)+'» · trunk pass, store '+(f.s.vote>0.05?'votes '+f.s.vote:'quiet')}
- else if(f.k==='tok'){turnBase(f.s);
-  BANDS.forEach(b=>{if((f.i-1)%CLK[b]===0){setFill('bnd'+b,'#9cc3ef');setFill('bndc'+b,'#c4dbf5')}});
-  setFill('tl'+((f.i-1)%13),'#bcd3f0');
-  const wi=Math.max(1,Math.round(f.i*(f.s.words||1)/f.total));
-  document.getElementById('v_head').textContent=Math.min(wi,f.s.words||0)+' / '+(f.s.words||0)+' words';
-  if(f.tr)spawnFly(f.tr,0);
-  info.textContent='turn '+f.turnN+' · cycle '+f.i+'/'+f.total+
-   (f.tr?' · \u00ab'+f.tr.t+'\u00bb p='+f.tr.p:'')+
-   ' — ticking: '+BANDS.filter(b=>(f.i-1)%CLK[b]===0).map(b=>'B'+b).join(' ')}
- else if(f.k==='press'){document.getElementById('v_press').textContent=f.m;
-  info.textContent='press '+f.m+' — dopamine to BG';flow('w_da',5,f.m[0]==='+'?'#15803d':'#c2410c')}
- else if(f.k==='nItem'){
-  BANDS.forEach(b=>setFill('mc'+b,'#d9c8f2'));
-  flow('w_hpc_w',6,'#8b5cf6');
-  info.textContent='night · replaying: «'+(f.it.q||'').slice(0,34)+'» '+(f.it.pre!=null?f.it.pre+' → '+(f.it.post!=null?f.it.post:'…'):'')+' ('+(f.it.verdict||'')+')'}
- else if(f.k==='nRem'){
-  setFill('mc'+(3+(Math.abs(f.p.a.length)%6)),'#d9c8f2');setFill('mc'+(3+(Math.abs(f.p.b.length)%6)),'#d9c8f2');
-  for(let j=0;j<8;j++)setFill('pn'+j,'#c9b8f5');
-  info.textContent='night · dream: «'+f.p.a.slice(0,20)+'» × «'+f.p.b.slice(0,20)+'» charge '+f.p.charge}
- else if(f.k==='nWake'){info.textContent='morning — NREM '+f.n.nrem+' + REM '+f.n.rem+(f.n.woke?' · woke thinking: '+f.n.woke:'')}
- else if(f.k==='speaks'){info.textContent='it spoke first — nobody asked'}}
-function scrub(i){liveMode=false;renderFrame(i)}
-function playPause(){if(playing){clearInterval(playing);playing=null;document.getElementById('playic').textContent='▶';return}
- liveMode=false;document.getElementById('playic').textContent='⏸';
- playing=setInterval(()=>{const s=slider();let v=parseInt(s.value);
-  if(v>=frames.length-1){clearInterval(playing);playing=null;document.getElementById('playic').textContent='▶';return}
-  s.value=v+1;renderFrame(v+1)},260)}
-function goLive(){liveMode=true;if(playing){clearInterval(playing);playing=null;document.getElementById('playic').textContent='▶'}
- const s=slider();s.value=frames.length-1;clearTicks();
- document.getElementById('frameinfo').textContent='live';hlClear();
- if(frames.length)renderFrame(frames.length-1)}
-
-function rewardPanel(mood,val){
- if(mood!=null){
-  const ad=document.getElementById('alivedot'),at=document.getElementById('alivetxt');
-  if(ad){ad.style.background=mood>1.5?'var(--acc)':(mood<-1?'var(--warn)':'#a8b0a6');
-   at.textContent='awake · mood '+mood.toFixed(1)}
-  const m=Math.max(-8,Math.min(8,mood));
-  document.getElementById('moodnum').textContent=mood.toFixed(1);
-  const b=document.getElementById('moodbar');
-  b.style.background=m>=0?'#15803d':'#c2410c';
-  if(m>=0){b.style.left='50%';b.style.width=(m/8*50)+'%'}
-  else{b.style.left=(50+m/8*50)+'%';b.style.width=(-m/8*50)+'%'}}
- if(val)valueBars(val);
- document.getElementById('selfpresses').textContent=
-  selfPressesToday?('self-pressed x'+selfPressesToday+' today'):''}
-let lastDr={f:0,l:0,b:0};
-function drivesPanel(d){const el=document.getElementById('drives');if(!el||!d)return;
- el.innerHTML='fatigue <b>'+d.fatigue+'</b> · novelty '+d.bored_s+'s · alone '+d.lonely_s+'s'+
- (d.may_speak!=null?(' · may speak ×'+d.may_speak):'');
- if(d.fatigue>=10&&lastDr.f<10)evt('it is getting sleepy (fatigue '+d.fatigue+')','#8b5cf6');
- if(d.lonely_s>=400&&lastDr.l<400)evt('it has been alone a while — it may speak first soon','#2563eb');
- if(d.bored_s>=200&&lastDr.b<200)evt('nothing new for a while — it may start ruminating');
- lastDr={f:d.fatigue,l:d.lonely_s,b:d.bored_s}}
-
 async function doPress(m){
  const r=await fetch('/press',{method:'POST',body:JSON.stringify({mag:m})}).then(r=>r.json());
- document.getElementById('v_press').textContent=(m>0?'+':'')+m;
- flow('w_da',Math.min(12,2+Math.abs(m)*2),m>0?'#15803d':'#c2410c');
- stream('P ▸ '+(m>0?'+':'')+m+' felt'+r.felt+
-  (r.absorbed_steps?' absorb×'+r.absorbed_steps:'')+
-  (r.corrected_steps?' unlearn×'+r.corrected_steps:'')+' mood'+r.mood);
- evt((m>0?'+':'')+m+' pressed · felt as '+r.felt+
-  (r.absorbed_steps?(' · absorbed x'+r.absorbed_steps):'')+
-  (r.corrected_steps?(' · corrective unlearning x'+r.corrected_steps):''),
-  m>0?'#15803d':'#c2410c',frames.length);
- addFrames([{k:'press',m:(m>0?'+':'')+m}]);
- rewardPanel(r.mood,null);
- document.getElementById('rw').value=0;rwShow();return r}
+ mood(r.mood);document.getElementById('rw').value=0;rwShow();return r}
 async function pressSlider(){
  const m=parseFloat(document.getElementById('rw').value)||0;
- if(m===0){add('sys','~ move the slider first — zero is not a judgment ~');return}
+ if(m===0){add('sys','~ move the slider first \u2014 zero is not a judgment ~');return}
  await doPress(m)}
-let turnN=0;
 async function send(){
+ const inp=document.getElementById('msg');const t=inp.value.trim();if(!t)return;
  if(busy)return;
- const mEl=document.getElementById('msg');const t=mEl.value.trim();if(!t)return;
  busy=true;document.getElementById('sendbtn').disabled=true;
  try{
   const mv=parseFloat(document.getElementById('rw').value)||0;
   if(mv!==0)await doPress(mv);
-  mEl.value='';add('you','you: '+t);add('sys think','· · ·');
+  inp.value='';
+  add('you','you: '+t);add('sys think','\u00b7 \u00b7 \u00b7');
   const r=await fetch('/chat',{method:'POST',body:JSON.stringify({text:t})}).then(r=>r.json());
   log.lastChild.remove();if(r.reply)add('bot',r.reply);else add('sys','~ it said nothing ~');
-  if(r.pride)evt('conscience approved ('+r.pride+')','#15803d');
-  if(r.self_press){if(r.self_press.mag>0){selfPressesToday++;
-    document.getElementById('v_press').textContent='self +1';
-    add('selfp good','it pressed its own button +1 — its conscience liked that ('+r.self_press.conscience+')');
-    evt('IT PRESSED ITS OWN BUTTON +1 — conscience '+r.self_press.conscience+' · '+r.self_press.left_today+' left today','#15803d');
-    flow('w_da',8,'#15803d')}
-   else{document.getElementById('v_press').textContent='self −1';
-    add('selfp bad','it pressed its own button −1 — it did not like its own answer');
-    evt('it felt its own miss (self −1, feeling only)','#c2410c');flow('w_da',5,'#c2410c')}}
-  if(r.noticed)evt('kept that (surprise '+r.noticed.surprise+' nats, dose x'+r.noticed.dose+') — it will dream it tonight','#15803d');
-  turnN++;
-  const words=(r.reply||'').split(' ').filter(Boolean).length;
-  const snap={qlen:t.split(' ').length,surprise:r.surprise,moved:r.moved,
-   words:words,tokens:words,pauses:r.pauses,
-   vote:r.hpc?r.hpc.vote_max:null,suggests:r.hpc?r.hpc.suggests:null,
-   noticed:!!r.noticed,value:r.value,trace:r.trace||null};
-  const f0=frames.length;
-  addFrames(turnFrames(turnN,t,snap));
-  if(liveMode)(r.trace||[]).forEach((tr,j)=>spawnFly(tr,0.25+j*0.14));
-  const _bd=[...document.querySelectorAll('#log .bot')].pop();if(_bd)_bd.dataset.turn=turnN;
-  const _yd=[...document.querySelectorAll('#log .you')].pop();if(_yd)_yd.dataset.turn=turnN;
-  const mvs=(r.moved||[]).map(x=>x.part.replace('acc_c/','c')
-   .replace('acc/','a').replace('h/','h')+':'+fmtD(x.delta)).join(' ');
-  stream('T'+turnN+' ▸ in'+snap.qlen+' surp'+r.surprise+
-   (r.surprise_peak!=null?' pk'+r.surprise_peak:'')+
-   ' │ '+mvs+
-   (snap.vote>0.05?' │ hpc'+snap.vote+
-    (((snap.suggests||[])[0])?' «'+snap.suggests[0]+'»':''):' │ hpc–')+
-   (r.value?(' │ val'+(Object.values(r.value).reduce((a,c)=>a+c,0)/6).toFixed(2)):'')+
-   ' │ mood'+r.mood);
-  evt('turn '+turnN+' · «'+t.slice(0,30)+'» → '+words+' words · surp '+r.surprise+
-   (snap.vote>0.05?' · store voted '+snap.vote:''),'#2563eb',f0);
-  if(liveMode){turnBase(snap);
-   for(let j=0;j<13;j++)setTimeout(()=>{setFill('tl'+j,'#bcd3f0');setTimeout(()=>setFill('tl'+j,'#eef3f8'),300)},j*40);
-   flow('w_in',Math.min(12,2+Math.ceil(snap.qlen/3)));
-   flow('w_tc',6);flow('w_cp',6);flow('w_ph',Math.min(12,1+Math.ceil(words/3)));
-   document.getElementById('v_head').textContent=words+' words';
-   let mx=1;(r.moved||[]).forEach(x=>{mx=Math.max(mx,x.delta)});
-   (r.moved||[]).forEach(x=>{const m2=x.part.match(/(acc(?:_c)?)\\/(\\d)/);
-    if(m2)glow((m2[1]==='acc_c'?'bndc':'bnd')+m2[2],x.delta/mx)});
-   if(snap.vote>0.05)flow('w_hpc_r',Math.min(10,1+Math.round(snap.vote*3)),'#b45309');
-   if(snap.noticed)flow('w_hpc_w',8,'#15803d');
-   document.getElementById('frameinfo').textContent='live · turn '+turnN}
-  rewardPanel(r.mood,r.value);
-  if(r.drives)drivesPanel(r.drives);
-  document.getElementById('moodfx').textContent=r.mood_fx?
-   ('temp '+r.mood_fx.temp+' · bar '+(r.mood_fx.bar_shift>0?'+':'')+r.mood_fx.bar_shift):'';
+  if(r.self_press){
+   if(r.self_press.mag>0)add('selfp good','model: +1 reward');
+   else add('selfp bad','model: \u22121 reward')}
+  mood(r.mood);
  }finally{busy=false;document.getElementById('sendbtn').disabled=false}}
 async function sleepy(){
- evt('falling asleep…','#8b5cf6');
- flow('w_hpc_w',10,'#8b5cf6');flow('w_plan',10,'#8b5cf6');
+ add('sys','~ falling asleep\u2026 ~');
  const r=await fetch('/sleep',{method:'POST'}).then(r=>r.json());
- document.getElementById('v_plan').textContent=r.rem!=null?('REM x'+r.rem):'—';
- if(!r.error){const nf0=frames.length;
-  addFrames(nightFrames({nrem:r.nrem,rem:r.rem,woke:r.woke_thinking,
-   story:(r.night_story||[]).map(x=>({q:x.q,pre:x.pre,post:x.post,verdict:x.verdict})),
-   pairs:r.rem_pairs||[]}));
-  (r.night_story||[]).forEach(x=>stream('N ▸ '+(x.verdict||'')+' «'+
-   (x.q||'').slice(0,22)+'»'+(x.post!=null?' '+x.pre+'→'+x.post:'')));
-  (r.night_story||[]).forEach((x,i)=>evt('night · '+x.verdict+': «'+x.q.slice(0,26)+'»'+
-   (x.post!=null?(' '+x.pre+' → '+x.post):''),'#8b5cf6',nf0+i));
-  (r.rem_pairs||[]).forEach((p,i)=>evt('dream · «'+p.a.slice(0,18)+'» × «'+p.b.slice(0,18)+'» charge '+p.charge,
-   '#8b5cf6',nf0+(r.night_story||[]).length+i));
-  if(r.conscience)evt(r.conscience,'#b45309');
-  if(r.pursuit)evt('pursuit: '+r.pursuit.state+(r.pursuit.items?(' — '+r.pursuit.items.join(' · ').slice(0,40)):''),'#b45309');
-  if(r.genome)evt('genome: '+r.genome,'#b45309')}
- document.getElementById('night').innerHTML=r.error?r.error:
-  'last night: NREM '+r.nrem+' + REM '+r.rem+(r.excited_night?' · <b>earned a longer night</b>':'')+' · '+r.lived_tokens+' lived tokens'+
-  (r.conscience?('<br>'+r.conscience):'')+
-  (r.genome?('<br>genome: '+r.genome):'')+
-  (r.pursuit?('<br><b>pursuit '+r.pursuit.state+'</b>'+(r.pursuit.items?(': '+r.pursuit.items.join(' · ')):'')):'')+
-  (r.woke_thinking?('<br>woke thinking about: '+r.woke_thinking):'')+
-  (r.woke_feeling?('<br><b>woke and pressed its own button '+r.woke_feeling+'</b>'):'')+
-  (r.tail_dropped?('<br>'+r.tail_dropped+' degenerate turn(s) kept out of the dreams'):'');
- evt(r.error||('woke: NREM '+r.nrem+' + REM '+r.rem),'#8b5cf6');
- if(!r.error){selfPressesToday=0;rewardPanel(r.woke_feeling?2:0,null)}}
+ if(r.error){add('sys','~ '+r.error+' ~');return}
+ add('sys','~ it slept \u2014 NREM '+r.nrem+' + REM '+r.rem+' \u00b7 '+r.lived_tokens+' lived tokens ~');
+ if(r.woke_feeling)add('selfp good','model: '+r.woke_feeling+' reward');
+ if(r.woke_thinking)add('bot',r.woke_thinking)}
 async function saveLife(){
  const r=await fetch('/save',{method:'POST'}).then(r=>r.json());
- add('sys','saved -> '+r.saved+' ('+r.live_steps+' live steps)')}
-setInterval(async()=>{if(!contOn)return;try{
+ add('sys','~ saved \u2192 '+r.saved+' ~')}
+setInterval(async()=>{if(busy)return;try{
  const p=await fetch('/pulse').then(r=>r.json());
  (p.events||[]).forEach(e=>{
-  if(e.kind=='speaks'){evt('nobody asked — it spoke first','#2563eb');add('bot',e.text);
-   (e.trace||[]).forEach((tr,j)=>spawnFly(tr,0.25+j*0.14));addFrames([{k:'speaks'}])}
-  else if(e.kind=='kept_quiet')evt('it took the floor and had nothing to say');
-  else if(e.kind=='ruminated')evt('ruminating on: '+e.about);
+  if(e.kind=='speaks'){add('sys','~ nobody asked \u2014 it spoke first ~');add('bot',e.text)}
   else if(e.kind=='slept'){const n=e.night||{};
-   evt('fell asleep on its own — NREM '+n.nrem+' over '+n.lived_tokens+' lived tokens','#8b5cf6');
-   addFrames(nightFrames({nrem:n.nrem,rem:n.rem,woke:n.woke_thinking,story:[],pairs:[]}));
-   if(n.woke_feeling)evt('it woke and pressed its own button '+n.woke_feeling,'#15803d');
-   if(n.conscience)evt(n.conscience);
-   selfPressesToday=0;rewardPanel(0,null)}});
- if(p.drives){drivesPanel(p.drives);rewardPanel(p.drives.mood,null)}
-}catch(e){}},5000);
+   add('sys','~ it fell asleep on its own \u2014 NREM '+n.nrem+' + REM '+n.rem+' ~');
+   if(n.woke_feeling)add('selfp good','model: '+n.woke_feeling+' reward')}});
+ if(p.drives)mood(p.drives.mood);
+}catch(e){}},4000);
 rwShow();
-</script>"""
+</script>
+"""
 
 ORG = None
 
