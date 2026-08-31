@@ -1340,48 +1340,61 @@ class Organism:
 PAGE = """<!doctype html><meta charset=utf-8>
 <title>the organism</title>
 <style>
-body{font:14px -apple-system,sans-serif;margin:0;display:flex;height:100vh;background:#0b0f13;color:#dde}
-#chat{flex:1;min-width:0;display:flex;flex-direction:column;border-right:1px solid #223}
-#log{flex:1;overflow-y:auto;padding:16px}
-.you{color:#8ecbff;margin:8px 0 2px}.bot{color:#eee;margin:0 0 6px;white-space:pre-wrap}
-.sys{color:#7a8;font-size:12px;margin:4px 0}
-#bar{display:flex;flex-wrap:wrap;padding:8px;gap:5px;border-top:1px solid #223}
-#msg,#tq,#ta{flex:1;min-width:70px;background:#141a21;border:1px solid #2a3644;color:#eee;padding:8px;border-radius:6px}
-button{background:#1d2c3d;color:#cde;border:1px solid #35506b;border-radius:6px;padding:8px 10px;cursor:pointer}
-button:hover{background:#2c405a}
-#brain{width:46%;min-width:330px;max-width:600px;padding:12px;overflow-y:auto;background:#0b0f13}
-.panel{background:#11161c;border:1px solid #223;border-radius:8px;padding:10px;margin-bottom:10px}
-.panel h3{margin:0 0 6px;font-size:11px;letter-spacing:1.5px;color:#89a}
-.rowb{display:flex;justify-content:space-between;font-size:12px;margin:2px 0}
-.suggest{color:#ffd479}
-.blk{fill:#141c25;stroke:#33475c;stroke-width:1.2;rx:6}
-.blk-label{fill:#9db8d0;font-size:9px;font-family:-apple-system,sans-serif;letter-spacing:.5px}
-.blk-val{fill:#ffd479;font-size:8.5px;font-family:menlo,monospace}
-.wire{stroke:#2a3b4d;stroke-width:1.4;fill:none}
-.dot{fill:#6fd3ff}
+body{font:15px -apple-system,sans-serif;margin:0;display:flex;flex-direction:column;height:100vh;background:#f6f7f9;color:#1c2733}
+#top{display:flex;align-items:center;gap:14px;padding:10px 18px;background:#ffffff;border-bottom:1px solid #e3e8ee}
+#top h1{font-size:15px;margin:0;letter-spacing:1px;color:#33455c;font-weight:600}
+.tgl{margin-left:auto}
+.tglbtn{background:#eef2f6;color:#51677e;border:1px solid #d5dde5;border-radius:999px;padding:6px 14px;cursor:pointer;font-size:12.5px}
+.tglbtn.on{background:#2563eb;color:#fff;border-color:#2563eb}
+#main{display:flex;flex:1;min-height:0}
+#chat{flex:1;min-width:0;display:flex;flex-direction:column}
+#log{flex:1;overflow-y:auto;padding:20px 26px}
+.you{color:#2563eb;margin:10px 0 3px;font-weight:500}
+.bot{color:#1c2733;margin:0 0 8px;white-space:pre-wrap}
+.sys{color:#7d92a8;font-size:12px;margin:4px 0}
+#bar{display:flex;gap:8px;padding:12px 18px;border-top:1px solid #e3e8ee;background:#ffffff}
+#msg{flex:1;background:#f2f5f8;border:1px solid #d5dde5;color:#1c2733;padding:11px 13px;border-radius:9px;font-size:15px}
+button{background:#2563eb;color:#fff;border:0;border-radius:9px;padding:11px 18px;cursor:pointer;font-size:14px}
+button:hover{background:#1d4fd7}
+button.quiet{background:#eef2f6;color:#51677e;border:1px solid #d5dde5}
+#rewardrow{display:flex;align-items:center;gap:12px;padding:10px 18px 14px;background:#ffffff}
+#rw{flex:1;accent-color:#2563eb}
+#rwval{min-width:44px;text-align:center;font-weight:600;font-size:15px;color:#7d92a8}
+#brain{width:46%;min-width:340px;max-width:640px;padding:14px;overflow-y:auto;background:#f6f7f9;border-left:1px solid #e3e8ee;display:none}
+.panel{background:#ffffff;border:1px solid #e3e8ee;border-radius:10px;padding:12px;margin-bottom:12px}
+.panel h3{margin:0 0 8px;font-size:11px;letter-spacing:1.5px;color:#7d92a8}
+.rowb{display:flex;justify-content:space-between;font-size:12.5px;margin:2px 0}
+.suggest{color:#b45309}
+.blk{fill:#ffffff;stroke:#b9c6d4;stroke-width:1.2;rx:6}
+.blk-label{fill:#51677e;font-size:9px;font-family:-apple-system,sans-serif;letter-spacing:.5px}
+.blk-val{fill:#b45309;font-size:8.5px;font-family:menlo,monospace}
+.wire{stroke:#ccd7e1;stroke-width:1.4;fill:none}
+.dot{fill:#2563eb}
 </style>
+<div id=top><h1>THE ORGANISM</h1>
+ <span class=tgl>
+  <button id=contTgl class=tglbtn onclick=toggleCont()>continuous time: off</button>
+  <button id=intTgl class=tglbtn onclick=toggleInt()>internals: off</button>
+ </span>
+</div>
+<div id=main>
 <div id=chat>
  <div id=log></div>
  <div id=bar>
   <input id=msg placeholder="talk to it..." onkeydown="if(event.key==='Enter')send()">
   <button onclick=send()>send</button>
-  <button onclick=press(1)>+1</button><button onclick=press(2)>+2</button>
-  <button onclick=press(-1)>-1</button><button onclick=press(-2)>-2</button>
-  <input id=mag type=number min=-6 max=6 step=0.5 value=3 style="flex:0 0 52px;min-width:52px">
-  <button onclick="press(parseFloat(document.getElementById('mag').value)||0)">press</button>
-  <button onclick=sleepy()>sleep</button><button onclick=save()>save</button>
-  <button onclick="fetch('/reset',{method:'POST'}).then(()=>add('sys','~ fresh wake ~'))">reset</button>
  </div>
- <div id=bar style="border-top:none">
-  <input id=tq placeholder="teach: question...">
-  <input id=ta placeholder="teach: the answer...">
-  <button onclick=teach()>teach</button>
+ <div id=rewardrow>
+  <span style="font-size:12px;color:#c2410c">−6</span>
+  <input id=rw type=range min=-6 max=6 step=0.5 value=0 oninput=rwShow()>
+  <span style="font-size:12px;color:#15803d">+6</span>
+  <span id=rwval>0</span>
+  <button onclick=pressSlider()>press</button>
  </div>
 </div>
 <div id=brain>
  <div class=panel><h3>THE CHIP — live dataflow</h3>
  <svg id=chip viewBox="0 0 540 330" width="100%">
-  <!-- wires -->
   <path id=w_in class=wire d="M60,165 L108,165"/>
   <path id=w_tc class=wire d="M186,165 L222,165"/>
   <path id=w_cp class=wire d="M330,165 L364,165"/>
@@ -1391,7 +1404,6 @@ button:hover{background:#2c405a}
   <path id=w_plan class=wire d="M276,214 L276,244"/>
   <path id=w_bg class=wire d="M330,262 L376,262"/>
   <path id=w_da class=wire d="M160,262 L222,240"/>
-  <!-- blocks -->
   <rect class=blk x=14 y=147 width=46 height=36 rx="6"/>
   <text class=blk-label x=20 y=162>YOU</text><text class=blk-val x=20 y=176 id=v_in>—</text>
   <rect class=blk x=108 y=132 width=78 height=66 rx="6"/>
@@ -1411,7 +1423,7 @@ button:hover{background:#2c405a}
   <rect class=blk x=210 y=52 width=120 height=48 rx="6" id="hpc_blk"/>
   <text class=blk-label x=218 y=68>HIPPOCAMPUS</text>
   <text class=blk-val x=218 y=82 id=v_hpc>—</text>
-  <text class=blk-val x=218 y=93 id=v_hpc2 style="fill:#8fd">—</text>
+  <text class=blk-val x=218 y=93 id=v_hpc2 style="fill:#15803d">—</text>
   <rect class=blk x=222 y=244 width=108 height=40 rx="6" id="plan_blk"/>
   <text class=blk-label x=230 y=260>PLAN / DREAMER</text>
   <text class=blk-val x=230 y=274 id=v_plan>—</text>
@@ -1424,51 +1436,70 @@ button:hover{background:#2c405a}
  </svg></div>
  <div class=panel><h3>REWARD — what it feels right now</h3>
   <div class=rowb><span>mood</span><span id=moodnum>0</span></div>
-  <div style="background:#182430;border-radius:4px;height:10px;position:relative;margin:3px 0 8px">
-   <div id=moodbar style="position:absolute;top:0;height:10px;border-radius:4px;background:#7fd77f;left:50%;width:0"></div>
-   <div style="position:absolute;left:50%;top:-2px;width:1px;height:14px;background:#35506b"></div>
+  <div style="background:#eef2f6;border-radius:4px;height:10px;position:relative;margin:3px 0 8px">
+   <div id=moodbar style="position:absolute;top:0;height:10px;border-radius:4px;background:#15803d;left:50%;width:0"></div>
+   <div style="position:absolute;left:50%;top:-2px;width:1px;height:14px;background:#b9c6d4"></div>
   </div>
-  <div class=rowb><span>its own reward forecast (value heads)</span><span id=selfpresses style="color:#ffd479"></span></div>
+  <div class=rowb><span>its own reward forecast (value heads)</span><span id=selfpresses style="color:#b45309"></span></div>
   <div id=valheads style="display:flex;gap:4px;margin-top:4px">—</div>
-  <div class=rowb style="margin-top:8px"><span>drives</span><span id=moodfx style="color:#89a"></span></div>
-  <div id=drives style="font-size:11px;color:#9ab">—</div>
+  <div class=rowb style="margin-top:8px"><span>drives</span><span id=moodfx style="color:#7d92a8"></span></div>
+  <div id=drives style="font-size:11.5px;color:#51677e">—</div>
  </div>
  <div class=panel><h3>HIPPOCAMPUS</h3><div id=hpc>—</div></div>
  <div class=panel><h3>PFC</h3><div id=pfc>—</div></div>
  <div class=panel><h3>NIGHT</h3><div id=night>—</div></div>
  <div class=panel><h3>REPORT CARD</h3><div id=card>—</div></div>
+ <div class=panel><h3>CARETAKER</h3>
+  <button class=quiet onclick=sleepy()>sleep</button>
+  <button class=quiet onclick=saveLife()>save</button>
+  <button class=quiet onclick="fetch('/reset',{method:'POST'}).then(()=>add('sys','~ fresh wake ~'))">reset</button>
+ </div>
+</div>
 </div>
 <script>
 const log=document.getElementById('log');
 function add(cls,txt){const d=document.createElement('div');d.className=cls;d.textContent=txt;log.appendChild(d);log.scrollTop=1e9}
-// build band cells inside COUNCIL
+let contOn=false, intOn=false, selfPressesToday=0;
+function toggleCont(){contOn=!contOn;const b=document.getElementById('contTgl');
+ b.textContent='continuous time: '+(contOn?'on':'off');b.classList.toggle('on',contOn);
+ add('sys',contOn?'~ continuous time on — it may speak first when it has been alone ~'
+  :'~ continuous time off — you will not see its unprompted life ~')}
+function toggleInt(){intOn=!intOn;const b=document.getElementById('intTgl');
+ b.textContent='internals: '+(intOn?'on':'off');b.classList.toggle('on',intOn);
+ document.getElementById('brain').style.display=intOn?'block':'none'}
+function rwShow(){const v=parseFloat(document.getElementById('rw').value);
+ const e=document.getElementById('rwval');e.textContent=(v>0?'+':'')+v;
+ e.style.color=v>0?'#15803d':(v<0?'#c2410c':'#7d92a8')}
 const bandG=document.getElementById('bands');
 const BANDS=[3,4,5,6,7,8];const CLK={3:'1',4:'8',5:'64',6:'512',7:'4k',8:'32k'};
 BANDS.forEach((b,i)=>{
  const x=230+(i%3)*33, y=142+Math.floor(i/3)*34;
- bandG.innerHTML+='<rect id=bnd'+b+' x='+x+' y='+y+' width=28 height=26 rx=4 fill="#182430" stroke="#2c455c"/>'+
+ bandG.innerHTML+='<rect id=bnd'+b+' x='+x+' y='+y+' width=28 height=26 rx=4 fill="#eef3f8" stroke="#b9c6d4"/>'+
  '<text class=blk-label x='+(x+3)+' y='+(y+11)+' style="font-size:8px">B'+b+'</text>'+
  '<text class=blk-val x='+(x+3)+' y='+(y+22)+' style="font-size:7px">'+CLK[b]+'</text>';
 });
-let selfPressesToday=0;
 function rewardPanel(mood,val){
  if(mood!=null){const m=Math.max(-8,Math.min(8,mood));
   document.getElementById('moodnum').textContent=mood.toFixed(1);
   const b=document.getElementById('moodbar');
-  b.style.background=m>=0?'#7fd77f':'#ff8a7a';
+  b.style.background=m>=0?'#15803d':'#c2410c';
   if(m>=0){b.style.left='50%';b.style.width=(m/8*50)+'%'}
   else{b.style.left=(50+m/8*50)+'%';b.style.width=(-m/8*50)+'%'}}
  if(val){const vh=document.getElementById('valheads');
   vh.innerHTML=Object.entries(val).map(([u,v])=>{
-   const c=v>0.5?'#7fd77f':v<-0.5?'#ff8a7a':'#89a';
+   const c=v>0.5?'#15803d':v<-0.5?'#c2410c':'#7d92a8';
    return '<div style="flex:1;text-align:center;font-size:10px;color:'+c+
     '">B'+u+'<br><b>'+v.toFixed(1)+'</b></div>'}).join('')}
  document.getElementById('selfpresses').textContent=
   selfPressesToday?('self-pressed x'+selfPressesToday+' today'):'';
 }
+function drivesPanel(d){const el=document.getElementById('drives');if(!el||!d)return;
+ el.innerHTML='fatigue <b>'+d.fatigue+'</b> · without novelty <b>'+d.bored_s+
+ 's</b> · alone <b>'+d.lonely_s+'s</b>'+
+ (d.may_speak!=null?(' · may speak first ×'+d.may_speak):'')}
 function glow(id,mag){const e=document.getElementById(id);if(!e)return;
- const g=Math.min(1,mag);e.style.fill='rgb('+(24+120*g)+','+(36+80*g)+','+(48+20*g)+')';
- setTimeout(()=>{e.style.fill='#182430'},2600)}
+ const g=Math.min(1,mag);e.style.fill='rgb('+(238-90*g)+','+(243-40*g)+','+(248-10*g)+')';
+ setTimeout(()=>{e.style.fill='#eef3f8'},2600)}
 function flow(wireId,n,color){const svg=document.getElementById('chip');const w=document.getElementById(wireId);if(!w)return;
  for(let i=0;i<Math.min(n,14);i++){
   const c=document.createElementNS('http://www.w3.org/2000/svg','circle');
@@ -1487,12 +1518,13 @@ function chip(r,qlen){
  if(r.hpc&&r.hpc.vote_max!=null){
   document.getElementById('v_hpc').textContent='vote '+r.hpc.vote_max;
   document.getElementById('v_hpc2').textContent=(r.hpc.suggests||[]).slice(0,2).join(' ');
-  flow('w_hpc_r',Math.round(r.hpc.vote_max*3),'#ffd479');flow('w_hpc_w',3,'#7fd77f')}
+  flow('w_hpc_r',Math.round(r.hpc.vote_max*3),'#b45309');flow('w_hpc_w',3,'#15803d')}
  document.getElementById('v_head').textContent=(r.reply||'').split(' ').length+' words';
+ document.getElementById('v_pfc').textContent='pauses '+r.pauses;
 }
 function card(rc){document.getElementById('card').innerHTML=(rc||[]).map(f=>
  '<div class=rowb><span>'+f.q.slice(0,30)+'</span><span style="color:'+
- (f.ce<1?'#7fd77f':f.ce<2?'#ffd479':'#ff8a7a')+'">'+f.ce+'</span></div>').join('')||'—'}
+ (f.ce<1?'#15803d':f.ce<2?'#b45309':'#c2410c')+'">'+f.ce+'</span></div>').join('')||'—'}
 async function send(){
  const m=document.getElementById('msg');const t=m.value.trim();if(!t)return;m.value='';
  add('you','you: '+t);add('sys','…thinking');
@@ -1502,16 +1534,16 @@ async function send(){
  if(r.self_press){if(r.self_press.mag>0){selfPressesToday++;
    add('sys','~ IT PRESSED ITS OWN BUTTON +1 — conscience '+
     r.self_press.conscience+' · '+r.self_press.left_today+' left today ~');
-   flow('w_da',8,'#7fd77f')}
+   flow('w_da',8,'#15803d')}
   else{add('sys','~ it felt its own miss (self −1, feeling only — no unlearning) ~');
-   flow('w_da',5,'#ff8a7a')}}
- rewardPanel(r.mood,r.value);
- if(r.drives)drivesPanel(r.drives,null);
- document.getElementById('moodfx').textContent=r.mood_fx?
-  ('mood retunes: temp '+r.mood_fx.temp+' · bar '+(r.mood_fx.bar_shift>0?'+':'')+r.mood_fx.bar_shift):'';
+   flow('w_da',5,'#c2410c')}}
  if(r.noticed){add('sys','~ it chose to keep that (surprise '+r.noticed.surprise+
   ' nats, dose x'+r.noticed.dose+') — it will dream it tonight ~');
-  flow('w_hpc_w',8,'#7fd77f')}
+  flow('w_hpc_w',8,'#15803d')}
+ rewardPanel(r.mood,r.value);
+ if(r.drives)drivesPanel(r.drives);
+ document.getElementById('moodfx').textContent=r.mood_fx?
+  ('mood retunes: temp '+r.mood_fx.temp+' · bar '+(r.mood_fx.bar_shift>0?'+':'')+r.mood_fx.bar_shift):'';
  chip(r,t.split(' ').length);
  document.getElementById('hpc').innerHTML=r.hpc&&r.hpc.suggests?
   'vote <b>'+r.hpc.vote_max+'</b> logits · suggests: <span class=suggest>'+
@@ -1519,29 +1551,22 @@ async function send(){
  document.getElementById('pfc').innerHTML='pauses '+r.pauses+
   (r.surprise!=null?(' · surprise '+r.surprise):'');
 }
-async function press(m){
+async function pressSlider(){
+ const m=parseFloat(document.getElementById('rw').value)||0;
+ if(m===0){add('sys','~ move the slider first — zero is not a judgment ~');return}
  const r=await fetch('/press',{method:'POST',body:JSON.stringify({mag:m})}).then(r=>r.json());
  document.getElementById('v_press').textContent=(m>0?'+':'')+m;
- flow('w_da',Math.min(12,2+Math.abs(m)*2),m>0?'#7fd77f':'#ff8a7a');
+ flow('w_da',Math.min(12,2+Math.abs(m)*2),m>0?'#15803d':'#c2410c');
  add('sys',(m>0?'+':'')+m+' pressed · felt as '+r.felt+
   (r.absorbed_steps?(' · absorbed x'+r.absorbed_steps+' (loss '+r.loss+')'):'')+
   (r.corrected_steps?(' · corrective unlearning x'+r.corrected_steps):''));
  rewardPanel(r.mood,null);
-}
-async function teach(){
- const q=document.getElementById('tq').value.trim(),a=document.getElementById('ta').value.trim();
- if(!q||!a)return;add('sys','teaching: '+q+' -> '+a);
- const r=await fetch('/teach',{method:'POST',body:JSON.stringify({q:q,a:a})}).then(r=>r.json());
- add('sys','absorbed (loss '+r.absorb_loss+')');card(r.report_card);
- flow('w_da',8,'#7fd77f');
- document.getElementById('tq').value='';document.getElementById('ta').value='';
+ document.getElementById('rw').value=0;rwShow();
 }
 async function sleepy(){
- add('sys','~~~ sleeping (NREM -> splice REM) ~~~');
- document.getElementById('chip').style.opacity=0.45;
- flow('w_hpc_w',10,'#b48ff5');flow('w_plan',10,'#b48ff5');
+ add('sys','~ falling asleep… ~');
+ flow('w_hpc_w',10,'#8b5cf6');flow('w_plan',10,'#8b5cf6');
  const r=await fetch('/sleep',{method:'POST'}).then(r=>r.json());
- document.getElementById('chip').style.opacity=1;
  document.getElementById('v_plan').textContent=r.rem!=null?('REM x'+r.rem):'—';
  document.getElementById('night').innerHTML=r.error?r.error:
   'NREM '+r.nrem+' + REM '+r.rem+(r.excited_night?' · <b>earned a longer night</b>':'')+' over '+r.lived_tokens+' lived tokens'+
@@ -1555,7 +1580,8 @@ async function sleepy(){
    r.rem_pairs.map(p=>p.a+' × '+p.b+' ('+p.charge+')').join(' · ')+' ~'):'')+
   (r.maintenance&&r.maintenance.length?('<br>~ retention: '+
    r.maintenance.map(m=>m.q.slice(0,18)+' — '+m.verdict).join(' · ')+' ~'):'')+
-  (r.store_carried?('<br>~ episodes from yesterday carried in its store (faded) ~'):'')+
+  (r.tail_dropped?('<br>~ '+r.tail_dropped+' degenerate turn(s) kept out of the dreams ~'):'')+
+  (r.store_carried?('<br>~ episodes from the day carried in its store (faded) ~'):'')+
   (r.woke_thinking?('<br>~ it woke thinking about: '+r.woke_thinking+' ~'):'')+
   (r.woke_feeling?('<br>~ <b>it woke and pressed its own button '+r.woke_feeling+'</b> ~'):'')+
   (r.woke_hungry?'<br>~ learning felt good — it woke hungrier ~':'')+
@@ -1564,24 +1590,18 @@ async function sleepy(){
    (r.progress.faded.length?' · let go: '+r.progress.faded.join(', '):'')):'')+
   '<br><br><b>its own study plan tonight:</b>'+
   (r.night_story||[]).map(x=>'<div class=rowb><span>'+
-   (x.verdict=='mastered'?'🎓 ':x.verdict=='stuck'?'💤 ':'📖 ')+x.q.slice(0,24)+'</span><span>'+
+   (x.verdict=='mastered'?'🎓 ':x.verdict=='stuck'?'💤 ':x.verdict=='rest'?'😴 ':'📖 ')+x.q.slice(0,24)+'</span><span>'+
    (x.post!=null?(x.pre+' → '+x.post+' ('+(x.delta<=0?'▼ ':'▲ ')+Math.abs(x.delta)+')'):(x.pre+' · '+x.verdict))+
    '</span></div>').join('');
  add('sys',r.error||('woke: NREM '+r.nrem+' + REM '+r.rem));
  if(!r.error){selfPressesToday=0;rewardPanel(r.woke_feeling?2:0,null)}
  if(r.report_card)card(r.report_card);
 }
-async function save(){
+async function saveLife(){
  const r=await fetch('/save',{method:'POST'}).then(r=>r.json());
  add('sys','saved -> '+r.saved+' ('+r.live_steps+' live steps)');
 }
-function drivesPanel(d){const el=document.getElementById('drives');if(!el||!d)return;
- el.innerHTML='fatigue <b>'+d.fatigue+'</b> · without novelty <b>'+d.bored_s+
- 's</b> · alone <b>'+d.lonely_s+'s</b>'+
- (d.may_speak!=null?(' · may speak first ×'+d.may_speak):'')}
-// THE PULSE: its autonomous life reaches the page even when you are
-// silent — it can ruminate, speak first, or fall asleep on its own.
-setInterval(async()=>{try{
+setInterval(async()=>{if(!contOn)return;try{
  const p=await fetch('/pulse').then(r=>r.json());
  (p.events||[]).forEach(e=>{
   if(e.kind=='speaks'){add('sys','~ nobody asked — it spoke first ~');add('bot',e.text)}
@@ -1596,8 +1616,8 @@ setInterval(async()=>{try{
    selfPressesToday=0;rewardPanel(0,null)}});
  if(p.drives){drivesPanel(p.drives);rewardPanel(p.drives.mood,null)}
 }catch(e){}},5000);
+rwShow();
 </script>"""
-
 
 ORG = None
 
