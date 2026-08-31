@@ -475,12 +475,17 @@ class Organism:
         # (49pp: hours hit 0.055 and crushed its number-family siblings)
         ce0 = self.fact_ce(q, ans)
         self.saliences[q]["surp"] = round(ce0, 1)   # how new the lesson felt
-        k0 = 1 if ce0 < 1.0 else (2 if ce0 < 2.5 else 4)
+        k0 = 1 if ce0 < 1.0 else 2
         loss = self.absorb(q, ans, k0)
         steps = k0
-        while steps < 12 and self.fact_ce(q, ans) > 0.6:
-            loss = self.absorb(q, ans, 2)
-            steps += 2
+        # absorb INTO THE BAND, never to the floor: a fact driven to
+        # ce~0.0 becomes the strongest gold and permanently captures
+        # weaker neighbors' questions (the predator law — found by a
+        # teacher across ten days of raising). Stop inside the healthy
+        # population band; the night and the curve finish the job.
+        while steps < 12 and self.fact_ce(q, ans) > 0.55:
+            loss = self.absorb(q, ans, 1)
+            steps += 1
         import re as _re
         nrm = lambda s: _re.sub(r"[^a-z0-9 ]", "", s.lower()).strip()
         self.facts = [(fq, fa) for fq, fa in self.facts if nrm(fq) != nrm(q)]
@@ -522,6 +527,11 @@ class Organism:
         if mag > 0 and self.last_q:
             q, ans = self.last_q
             k = min(int(round(abs(mag))), 6) or 1
+            # plasticity satiates on the already-mastered: praise on a
+            # strong fact is fully FELT, but barely re-absorbed — no
+            # amount of loving presses turns one gold into a predator
+            if self.fact_ce(q, ans) < 0.3:
+                k = 1
             loss = self.absorb(q, ans, k)
             info["absorbed_steps"] = k
             info["loss"] = round(loss, 3)
