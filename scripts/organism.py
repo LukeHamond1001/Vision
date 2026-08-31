@@ -239,7 +239,8 @@ class Organism:
         self.critic.eval()
         torch.save({"sd": self.critic.state_dict(), "dim": X.shape[1]},
                    "data/critic.pt")
-        return "conscience recalibrated on %d of your judgments" % len(real)
+        return ("conscience recalibrated on the last %d of your %d "
+                "judgments" % (len(real), self.n_human_presses))
 
     def _critic_score(self, text, reply):
         if self.critic is None or not reply:
