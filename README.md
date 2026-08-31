@@ -54,11 +54,21 @@ meaning.
 ## Run it
 
 ```bash
+git clone https://github.com/LukeHamond1001/Vision.git && cd Vision
+pip install -e .          # torch, tokenizers, numpy
+# weights (the living body + tokenizer, ~1.2G):
+#   https://huggingface.co/LukeHamond1001/one-token-organism
+# put organism_life.pt and ship_tok.json in data/, then:
 python3 scripts/organism.py data/organism_life.pt data/ship_tok.json \
     --dev mps --temp 0.05 --save data/organism_life.pt
-# open http://localhost:8016 — chat, teach, press, and watch the
-# live die-view, reward gauges, and drives
+# open http://localhost:8016 — talk to it, teach it, press the
+# slider, flip on internals, and leave continuous time on a while
 ```
+
+First reply after launch takes a few minutes (the model compiles);
+after that it answers in seconds. Works on Apple Silicon (`--dev
+mps`), CUDA (`--dev cuda`), or CPU (slow). What has been measured
+about it: [RESULTS.md](RESULTS.md).
 
 ## Tools
 
