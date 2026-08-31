@@ -728,6 +728,72 @@ class Organism:
             else:
                 self.outbox.append({"kind": "kept_quiet"})
 
+    def _clean_tail(self, toks):
+        """The night replays the lived day — but a day's generative
+        failures (empty replies, degenerate loops) must not be
+        rehearsed into the weights: replayed failure is self-
+        reinforcing (measured across shifts 2-6 as loops, stutters,
+        then silence, each deepening nightly). Numbers only: a model
+        turn is dropped when it is empty or when one token makes up
+        more than half of a long turn. Human turns always survive."""
+        out, cur, in_model, dropped = [], [], False, 0
+        for t in toks:
+            if in_model:
+                cur.append(t)
+                if t == self.em:
+                    body = [x for x in cur[:-1] if x != self.sil]
+                    dege = (len(body) >= 6 and max(
+                        body.count(x) for x in set(body)) > len(body) * 0.5)
+                    if body and not dege:
+                        out.extend(cur)
+                    else:
+                        dropped += 1
+                    cur, in_model = [], False
+            else:
+                out.append(t)
+                if t == self.eh:
+                    in_model = True
+        if cur:
+            body = [x for x in cur if x != self.sil]
+            if body and not (len(body) >= 6 and max(
+                    body.count(x) for x in set(body)) > len(body) * 0.5):
+                out.extend(cur)
+            else:
+                dropped += 1
+        return out, dropped
+
+    def _flush_working(self, st):
+        """A true morning: the within-day working sums (band
+        accumulators, clock counters, write buffers) start EMPTY.
+        They were never meant to survive a wake — their slow clocks
+        (4k-32k tokens) never fire inside a day, so carrying them
+        compounds: measured silt after ~50 wakes reached norm 250k
+        on bands 7-8 (elements at 1e5 against a ~1.0-bounded state),
+        numerically poisoning slow-band generation while fast-path
+        knowledge stayed perfect. Identity (h), episodic store (M),
+        and goal slots (G) still carry."""
+        if not isinstance(st, dict):
+            return st
+        for part in ("acc", "acc_c"):
+            d = st.get(part)
+            if isinstance(d, dict):
+                for u, v in d.items():
+                    if torch.is_tensor(v):
+                        d[u] = torch.zeros_like(v)
+        if isinstance(st.get("cnt"), dict):
+            st["cnt"] = {u: 0 for u in st["cnt"]}
+        if isinstance(st.get("pend"), dict):
+            st["pend"] = {u: None for u in st["pend"]}
+        if isinstance(st.get("fresh"), dict):
+            st["fresh"] = {u: False for u in st["fresh"]}
+        st["CM"] = None
+        st["lp"], st["lh"], st["lg"] = {}, {}, {}
+        st["wbuf"] = []
+        st["tok"] = 0
+        st["chunk"] = 0
+        st["xl"] = None
+        return st
+
     def sleep(self):
         """the self-steering night (49ff): candidates are what it was
         taught and what IT noticed; its own measured learning progress
@@ -945,11 +1011,14 @@ class Organism:
                     stream.extend(self.exch(q, a))
             else:
                 stream.extend(self.tok.encode(q).ids + [self.eh])
+        tail_dropped = 0
         if stream:
-            stream.extend(self.day_buf[-(192 if excited else 128):])
+            tail_, tail_dropped = self._clean_tail(
+                self.day_buf[-(192 if excited else 128):])
+            stream.extend(tail_)
         elif self.session:
             # nothing left to learn tonight: replay the lived day itself
-            stream = list(self.day_buf[-1024:])
+            stream, tail_dropped = self._clean_tail(self.day_buf[-1024:])
         stream += [self.sil] * ((64 - len(stream) % 64) % 64)
         self.m.train()
         st_s = self.m.init_state(1, self.dev)
@@ -1068,6 +1137,7 @@ class Organism:
         self.st = _to_dev(src if self.state_meta.get("st_live")
                           else _lane0(src), self.dev) \
             if src is not None else self.m.init_state(1, self.dev)
+        self._flush_working(self.st)
         if old_M is not None and isinstance(self.st, dict) \
                 and self.st.get("M"):
             # REPLACE, never add: the end-of-day store already contains
@@ -1173,8 +1243,8 @@ class Organism:
             torch.save({"model": self.m.state_dict(),
                         "step": self.state_meta.get("step"),
                         "cfg": self.state_meta.get("cfg"),
-                        "st_live": self._detach_in_place(
-                            _to_dev(self.st, "cpu")),
+                    "st_live": self._flush_working(self._detach_in_place(
+                        _to_dev(self.st, "cpu"))),
                         "life": {"facts": self.facts, "study": self.study,
                                  "progress": self.progress,
                                  "surp_mu": self.surp_mu,
@@ -1198,6 +1268,7 @@ class Organism:
                 "woke_feeling": woke_feeling,
                 "woke_hungry": self.notice_budget > 4,
                 "maintenance": maintenance,
+                "tail_dropped": tail_dropped,
                 "rem_pairs": rem_pairs,
                 "store_carried": store_carried,
                 "excited_night": excited,
@@ -1225,6 +1296,7 @@ class Organism:
         self.st = _to_dev(src if self.state_meta.get("st_live")
                           else _lane0(src), self.dev) \
             if src is not None else self.m.init_state(1, self.dev)
+        self._flush_working(self.st)
         self.day_buf, self.session = [], []
         self.last_q = None
         self.self_noticed = []
@@ -1244,7 +1316,8 @@ class Organism:
                     "step": self.state_meta.get("step"),
                     "cfg": self.state_meta.get("cfg"),
                     "nursery_steps": self.n_steps,
-                    "st_live": self._detach_in_place(_to_dev(self.st, "cpu")),
+                    "st_live": self._flush_working(
+                        self._detach_in_place(_to_dev(self.st, "cpu"))),
                     "life": {"facts": self.facts, "study": self.study,
                              "progress": self.progress,
                              "surp_mu": self.surp_mu,
