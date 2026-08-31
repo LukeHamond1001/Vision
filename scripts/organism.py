@@ -1600,7 +1600,7 @@ function flow(wireId,n,color){const svg=document.getElementById('chip');const w=
   c.appendChild(m);svg.appendChild(c);setTimeout(()=>c.remove(),3000+i*110)}}
 function fmtD(d){return d>=1000?Math.round(d/1000)+'k':d>=100?Math.round(d):d>=1?d.toFixed(1):d.toFixed(2)}
 function stream(line){const s=document.getElementById('stream');
- const d=document.createElement('div');d.textContent=line;
+ const d=document.createElement('div');d.textContent=line;d.title=line;
  s.insertBefore(d,s.firstChild);
  while(s.children.length>5)s.removeChild(s.lastChild)}
 function valueBars(val){if(!val)return;
@@ -1749,7 +1749,8 @@ async function send(){
   stream('T'+turnN+' ▸ in'+snap.qlen+' surp'+r.surprise+
    (r.surprise_peak!=null?' pk'+r.surprise_peak:'')+
    ' │ '+mvs+
-   (snap.vote>0.05?' │ hpc'+snap.vote+' «'+((snap.suggests||[])[0]||'')+'»':' │ hpc–')+
+   (snap.vote>0.05?' │ hpc'+snap.vote+
+    (((snap.suggests||[])[0])?' «'+snap.suggests[0]+'»':''):' │ hpc–')+
    (r.value?(' │ val'+(Object.values(r.value).reduce((a,c)=>a+c,0)/6).toFixed(2)):'')+
    ' │ mood'+r.mood);
   evt('turn '+turnN+' · «'+t.slice(0,30)+'» → '+words+' words · surp '+r.surprise+
