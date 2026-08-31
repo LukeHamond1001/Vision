@@ -5,7 +5,9 @@
 set -euo pipefail
 REPO=${1:-one-token-organism}
 WHO=$(hf auth whoami 2>/dev/null | head -1) || {
-  echo "not logged in — run: hf auth login"; exit 1; }
+  echo "not logged in — run: hf auth login   (or prefix this script"
+  echo "with HF_TOKEN=hf_...  — paste is invisible at the login"
+  echo "prompt: Cmd+V then Enter still works)"; exit 1; }
 echo "logged in as $WHO — creating $REPO and uploading (~1.2G)"
 hf repo create "$REPO" --type model -y 2>/dev/null || true
 hf upload "$REPO" data/organism_life.pt organism_life.pt
