@@ -1387,7 +1387,7 @@ button.quiet{background:#eef2f6;color:#51677e;border:1px solid #d5dde5}
 .wire{stroke:#ccd7e1;stroke-width:1.4;fill:none}
 .dot{fill:#2563eb}
 </style>
-<div id=top><h1>THE ORGANISM</h1>
+<div id=top>
  <span class=tgl>
   <button id=contTgl class=tglbtn onclick=toggleCont()>continuous time: off</button>
   <button id=intTgl class=tglbtn onclick=toggleInt()>internals: off</button>
@@ -1467,7 +1467,6 @@ button.quiet{background:#eef2f6;color:#51677e;border:1px solid #d5dde5}
  <div class=panel><h3>HIPPOCAMPUS</h3><div id=hpc>—</div></div>
  <div class=panel><h3>PFC</h3><div id=pfc>—</div></div>
  <div class=panel><h3>NIGHT</h3><div id=night>—</div></div>
- <div class=panel><h3>REPORT CARD</h3><div id=card>—</div></div>
  <div class=panel><h3>CARETAKER</h3>
   <button class=quiet onclick=sleepy()>sleep</button>
   <button class=quiet onclick=saveLife()>save</button>
@@ -1502,7 +1501,7 @@ BANDS.forEach((b,i)=>{
  const x=230+(i%3)*33, y=142+Math.floor(i/3)*34;
  bandG.innerHTML+='<rect id=bnd'+b+' x='+x+' y='+y+' width=28 height=26 rx=4 fill="#eef3f8" stroke="#b9c6d4"/>'+
  '<text class=blk-label x='+(x+3)+' y='+(y+11)+' style="font-size:8px">B'+b+'</text>'+
- '<text class=blk-val x='+(x+3)+' y='+(y+22)+' style="font-size:7px">'+CLK[b]+'</text>';
+ '<text class=blk-val id=bndv'+b+' x='+(x+3)+' y='+(y+22)+' style="font-size:7px">'+CLK[b]+'</text>';
 });
 function rewardPanel(mood,val){
  if(mood!=null){const m=Math.max(-8,Math.min(8,mood));
@@ -1534,23 +1533,30 @@ function flow(wireId,n,color){const svg=document.getElementById('chip');const w=
   m.setAttribute('dur',(1.1+Math.random()*0.9)+'s');m.setAttribute('begin',(i*0.12)+'s');
   m.setAttribute('path',w.getAttribute('d'));m.setAttribute('fill','freeze');
   c.appendChild(m);svg.appendChild(c);setTimeout(()=>c.remove(),3200+i*120)}}
+function fmtD(d){return d>=1000?Math.round(d/1000)+'k':d>=100?Math.round(d):d>=1?d.toFixed(1):d.toFixed(2)}
 function chip(r,qlen){
  document.getElementById('v_in').textContent=qlen+' tok';
- document.getElementById('v_trunk').textContent='streaming';
- flow('w_in',6);flow('w_tc',8);flow('w_cp',8);flow('w_ph',8);
- let mx=1;(r.moved||[]).forEach(x=>{mx=Math.max(mx,x.delta)});
+ document.getElementById('v_trunk').textContent='surp '+(r.surprise!=null?r.surprise:'—');
+ flow('w_in',Math.min(12,2+Math.ceil(qlen/3)));
+ let mx=1,tot=0;(r.moved||[]).forEach(x=>{mx=Math.max(mx,x.delta);tot+=x.delta});
+ BANDS.forEach(b=>{const e=document.getElementById('bndv'+b);if(e)e.textContent=CLK[b]});
  (r.moved||[]).forEach(x=>{const m=x.part.match(/acc(?:_c)?\\/(\\d)/);
-  if(m)glow('bnd'+m[1],x.delta/mx)});
+  if(m){glow('bnd'+m[1],x.delta/mx);
+   const e=document.getElementById('bndv'+m[1]);
+   if(e)e.textContent='Δ'+fmtD(x.delta)}});
+ const cf=Math.min(12,2+Math.round(Math.log10(1+tot)*3));
+ flow('w_tc',cf);flow('w_cp',cf);
+ const words=(r.reply||'').split(' ').filter(Boolean).length;
+ flow('w_ph',Math.min(12,1+Math.ceil(words/3)));
+ document.getElementById('v_head').textContent=words+' words';
+ document.getElementById('v_pfc').textContent='pauses '+r.pauses;
  if(r.hpc&&r.hpc.vote_max!=null){
   document.getElementById('v_hpc').textContent='vote '+r.hpc.vote_max;
   document.getElementById('v_hpc2').textContent=(r.hpc.suggests||[]).slice(0,2).join(' ');
-  flow('w_hpc_r',Math.round(r.hpc.vote_max*3),'#b45309');flow('w_hpc_w',3,'#15803d')}
- document.getElementById('v_head').textContent=(r.reply||'').split(' ').length+' words';
- document.getElementById('v_pfc').textContent='pauses '+r.pauses;
+  if(r.hpc.vote_max>0.1)flow('w_hpc_r',Math.min(10,1+Math.round(r.hpc.vote_max*3)),'#b45309')}
+ if(r.value){const vs=Object.values(r.value);
+  document.getElementById('v_bg').textContent='val '+(vs.reduce((a,c)=>a+c,0)/vs.length).toFixed(2)}
 }
-function card(rc){document.getElementById('card').innerHTML=(rc||[]).map(f=>
- '<div class=rowb><span>'+f.q.slice(0,30)+'</span><span style="color:'+
- (f.ce<1?'#15803d':f.ce<2?'#b45309':'#c2410c')+'">'+f.ce+'</span></div>').join('')||'—'}
 async function send(){
  const m=document.getElementById('msg');const t=m.value.trim();if(!t)return;m.value='';
  add('you','you: '+t);add('sys','…thinking');
@@ -1558,10 +1564,12 @@ async function send(){
  log.lastChild.remove();if(r.reply)add('bot',r.reply);else add('sys','~ it said nothing ~');
  if(r.pride)evt('conscience approved ('+r.pride+')','#15803d');
  if(r.self_press){if(r.self_press.mag>0){selfPressesToday++;
+   document.getElementById('v_press').textContent='self +1';
    evt('IT PRESSED ITS OWN BUTTON +1 — conscience '+
     r.self_press.conscience+' · '+r.self_press.left_today+' left today','#15803d');
    flow('w_da',8,'#15803d')}
-  else{evt('it felt its own miss (self −1, feeling only)','#c2410c');
+  else{document.getElementById('v_press').textContent='self −1';
+   evt('it felt its own miss (self −1, feeling only)','#c2410c');
    flow('w_da',5,'#c2410c')}}
  if(r.noticed){evt('kept that (surprise '+r.noticed.surprise+
   ' nats, dose x'+r.noticed.dose+') — it will dream it tonight','#15803d');
@@ -1622,7 +1630,6 @@ async function sleepy(){
    '</span></div>').join('');
  evt(r.error||('woke: NREM '+r.nrem+' + REM '+r.rem),'#8b5cf6');
  if(!r.error){selfPressesToday=0;rewardPanel(r.woke_feeling?2:0,null)}
- if(r.report_card)card(r.report_card);
 }
 async function saveLife(){
  const r=await fetch('/save',{method:'POST'}).then(r=>r.json());
