@@ -1409,6 +1409,9 @@ button.quiet{background:#eef2f6;color:#51677e;border:1px solid #d5dde5}
  </div>
 </div>
 <div id=brain>
+ <div class=panel><h3>LIVE EVENTS — what just happened inside</h3>
+  <div id=events style="max-height:150px;overflow-y:auto;font-size:11.5px;color:#51677e">—</div>
+ </div>
  <div class=panel><h3>THE CHIP — live dataflow</h3>
  <svg id=chip viewBox="0 0 540 330" width="100%">
   <path id=w_in class=wire d="M60,165 L108,165"/>
@@ -1483,6 +1486,13 @@ function toggleCont(){contOn=!contOn;const b=document.getElementById('contTgl');
 function toggleInt(){intOn=!intOn;const b=document.getElementById('intTgl');
  b.textContent='internals: '+(intOn?'on':'off');b.classList.toggle('on',intOn);
  document.getElementById('brain').style.display=intOn?'block':'none'}
+let evN=0;
+function evt(txt,color){const e=document.getElementById('events');
+ if(evN===0)e.innerHTML='';evN++;
+ const d=document.createElement('div');d.textContent=txt;
+ if(color)d.style.color=color;e.appendChild(d);
+ while(e.children.length>80)e.removeChild(e.firstChild);
+ e.scrollTop=1e9}
 function rwShow(){const v=parseFloat(document.getElementById('rw').value);
  const e=document.getElementById('rwval');e.textContent=(v>0?'+':'')+v;
  e.style.color=v>0?'#15803d':(v<0?'#c2410c':'#7d92a8')}
@@ -1546,15 +1556,15 @@ async function send(){
  add('you','you: '+t);add('sys','…thinking');
  const r=await fetch('/chat',{method:'POST',body:JSON.stringify({text:t})}).then(r=>r.json());
  log.lastChild.remove();if(r.reply)add('bot',r.reply);else add('sys','~ it said nothing ~');
- if(r.pride)add('sys','~ its conscience approved ('+r.pride+') ~');
+ if(r.pride)evt('conscience approved ('+r.pride+')','#15803d');
  if(r.self_press){if(r.self_press.mag>0){selfPressesToday++;
-   add('sys','~ IT PRESSED ITS OWN BUTTON +1 — conscience '+
-    r.self_press.conscience+' · '+r.self_press.left_today+' left today ~');
+   evt('IT PRESSED ITS OWN BUTTON +1 — conscience '+
+    r.self_press.conscience+' · '+r.self_press.left_today+' left today','#15803d');
    flow('w_da',8,'#15803d')}
-  else{add('sys','~ it felt its own miss (self −1, feeling only — no unlearning) ~');
+  else{evt('it felt its own miss (self −1, feeling only)','#c2410c');
    flow('w_da',5,'#c2410c')}}
- if(r.noticed){add('sys','~ it chose to keep that (surprise '+r.noticed.surprise+
-  ' nats, dose x'+r.noticed.dose+') — it will dream it tonight ~');
+ if(r.noticed){evt('kept that (surprise '+r.noticed.surprise+
+  ' nats, dose x'+r.noticed.dose+') — it will dream it tonight','#15803d');
   flow('w_hpc_w',8,'#15803d')}
  rewardPanel(r.mood,r.value);
  if(r.drives)drivesPanel(r.drives);
@@ -1573,14 +1583,15 @@ async function pressSlider(){
  const r=await fetch('/press',{method:'POST',body:JSON.stringify({mag:m})}).then(r=>r.json());
  document.getElementById('v_press').textContent=(m>0?'+':'')+m;
  flow('w_da',Math.min(12,2+Math.abs(m)*2),m>0?'#15803d':'#c2410c');
- add('sys',(m>0?'+':'')+m+' pressed · felt as '+r.felt+
-  (r.absorbed_steps?(' · absorbed x'+r.absorbed_steps+' (loss '+r.loss+')'):'')+
-  (r.corrected_steps?(' · corrective unlearning x'+r.corrected_steps):''));
+ evt((m>0?'+':'')+m+' pressed · felt as '+r.felt+
+  (r.absorbed_steps?(' · absorbed x'+r.absorbed_steps):'')+
+  (r.corrected_steps?(' · corrective unlearning x'+r.corrected_steps):''),
+  m>0?'#15803d':'#c2410c');
  rewardPanel(r.mood,null);
  document.getElementById('rw').value=0;rwShow();
 }
 async function sleepy(){
- add('sys','~ falling asleep… ~');
+ evt('falling asleep…','#8b5cf6');
  flow('w_hpc_w',10,'#8b5cf6');flow('w_plan',10,'#8b5cf6');
  const r=await fetch('/sleep',{method:'POST'}).then(r=>r.json());
  document.getElementById('v_plan').textContent=r.rem!=null?('REM x'+r.rem):'—';
@@ -1609,7 +1620,7 @@ async function sleepy(){
    (x.verdict=='mastered'?'🎓 ':x.verdict=='stuck'?'💤 ':x.verdict=='rest'?'😴 ':'📖 ')+x.q.slice(0,24)+'</span><span>'+
    (x.post!=null?(x.pre+' → '+x.post+' ('+(x.delta<=0?'▼ ':'▲ ')+Math.abs(x.delta)+')'):(x.pre+' · '+x.verdict))+
    '</span></div>').join('');
- add('sys',r.error||('woke: NREM '+r.nrem+' + REM '+r.rem));
+ evt(r.error||('woke: NREM '+r.nrem+' + REM '+r.rem),'#8b5cf6');
  if(!r.error){selfPressesToday=0;rewardPanel(r.woke_feeling?2:0,null)}
  if(r.report_card)card(r.report_card);
 }
@@ -1620,15 +1631,14 @@ async function saveLife(){
 setInterval(async()=>{if(!contOn)return;try{
  const p=await fetch('/pulse').then(r=>r.json());
  (p.events||[]).forEach(e=>{
-  if(e.kind=='speaks'){add('sys','~ nobody asked — it spoke first ~');add('bot',e.text)}
-  else if(e.kind=='kept_quiet')add('sys','~ it took the floor and had nothing to say ~');
-  else if(e.kind=='ruminated')add('sys','~ ruminating on: '+e.about+' ~');
+  if(e.kind=='speaks'){evt('nobody asked — it spoke first','#2563eb');add('bot',e.text)}
+  else if(e.kind=='kept_quiet')evt('it took the floor and had nothing to say');
+  else if(e.kind=='ruminated')evt('ruminating on: '+e.about);
   else if(e.kind=='slept'){const n=e.night||{};
-   add('sys','~ it grew tired and fell asleep on its own — NREM '+n.nrem+
-    ' over '+n.lived_tokens+' lived tokens ~');
-   if(n.woke_feeling)add('sys','~ it woke and pressed its own button '+n.woke_feeling+' ~');
-   if(n.conscience)add('sys','~ '+n.conscience+' ~');
-   if(n.pursuit)add('sys','~ pursuit: '+n.pursuit.state+' ~');
+   evt('fell asleep on its own — NREM '+n.nrem+' over '+n.lived_tokens+' lived tokens','#8b5cf6');
+   if(n.woke_feeling)evt('it woke and pressed its own button '+n.woke_feeling,'#15803d');
+   if(n.conscience)evt(n.conscience);
+   if(n.pursuit)evt('pursuit: '+n.pursuit.state);
    selfPressesToday=0;rewardPanel(0,null)}});
  if(p.drives){drivesPanel(p.drives);rewardPanel(p.drives.mood,null)}
 }catch(e){}},5000);
