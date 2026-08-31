@@ -1411,6 +1411,9 @@ body{font:15px/1.5 -apple-system,'Segoe UI',sans-serif;margin:0;display:flex;fle
 .you{color:var(--acc);margin:18px auto 4px;font-size:13.5px;font-weight:600;letter-spacing:.2px}
 .bot{font-family:Georgia,'Times New Roman',serif;font-size:17px;line-height:1.55;color:var(--ink);margin:0 auto 6px;white-space:pre-wrap}
 .sys{color:#b3aca0;font-size:11.5px;margin:6px auto;font-style:italic}
+.selfp{font-size:12px;margin:2px auto 10px;display:table;padding:4px 12px;border-radius:999px}
+.selfp.good{color:var(--good);background:rgba(31,122,70,.07)}
+.selfp.bad{color:var(--warn);background:rgba(189,74,36,.07)}
 .think{color:var(--mut);font-size:20px;letter-spacing:4px;animation:thinkp 1.2s ease-in-out infinite}
 .w{border-radius:3px;transition:background .12s}
 .tokhl{background:#f3dfa4;box-shadow:0 0 0 2px #f3dfa4}
@@ -1825,9 +1828,11 @@ async function send(){
   if(r.pride)evt('conscience approved ('+r.pride+')','#15803d');
   if(r.self_press){if(r.self_press.mag>0){selfPressesToday++;
     document.getElementById('v_press').textContent='self +1';
+    add('selfp good','it pressed its own button +1 — its conscience liked that ('+r.self_press.conscience+')');
     evt('IT PRESSED ITS OWN BUTTON +1 — conscience '+r.self_press.conscience+' · '+r.self_press.left_today+' left today','#15803d');
     flow('w_da',8,'#15803d')}
    else{document.getElementById('v_press').textContent='self −1';
+    add('selfp bad','it pressed its own button −1 — it did not like its own answer');
     evt('it felt its own miss (self −1, feeling only)','#c2410c');flow('w_da',5,'#c2410c')}}
   if(r.noticed)evt('kept that (surprise '+r.noticed.surprise+' nats, dose x'+r.noticed.dose+') — it will dream it tonight','#15803d');
   turnN++;
