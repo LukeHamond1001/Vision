@@ -455,9 +455,9 @@ def train(d=64, lanes=4, T=256, steps=40, seed=0, device="cpu",
                   imagination_absent=(arch == "transformer"),
                   absent_bands={1, 2} if arch == "hybrid" else ())
     if data:  # prepared real-data shard (A8): UltraChat conveyor
-        from .lm_data_ultrachat import UltraConveyor, load_tokenizer
+        from .lm_diet import LaneConveyor, load_tokenizer
         import os
-        conveyor = UltraConveyor(data, n_lanes=lanes,
+        conveyor = LaneConveyor(data, n_lanes=lanes,
                                  offset_frac=offset_frac)
         tok = load_tokenizer(os.path.join(data, "tokenizer.json"))
         vocab, vocab_size = tok, tok.get_vocab_size()
@@ -668,7 +668,7 @@ def train(d=64, lanes=4, T=256, steps=40, seed=0, device="cpu",
             torch.cuda.empty_cache()
     peval = None
     if data and eval_data:
-        from .lm_data_ultrachat import UltraConveyor as _UC
+        from .lm_diet import LaneConveyor as _UC
         peval = {"conv": _UC(eval_data, n_lanes=2), "agg": {}}
         if resume:
             # A54e (F4): the banking baseline must survive resume —
@@ -904,7 +904,7 @@ def main():
                     else "cpu")
     ap.add_argument("--ckpt", default="lm_ladder.pt")
     ap.add_argument("--data", default=None,
-                    help="prepared shard dir (lm_data_ultrachat prepare)")
+                    help="prepared shard dir (lm_data_life prepare)")
     ap.add_argument("--talk", default="tick")
     ap.add_argument("--constants", default=None,
                     help="calibrated constants json (lm_calibrate)")

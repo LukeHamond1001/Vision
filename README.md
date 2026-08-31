@@ -74,6 +74,15 @@ seeding · `scripts/scan_chat.py` — terminal REPL · `pod_*.sh` /
 itself (day/night-structured lives with rewards in-stream, the diet
 the body was born on and the recipe the next body scales).
 
+## The next body
+
+[GESTATION.md](GESTATION.md) — the v17 pretraining method: the
+organism's food is lives, not documents. `scripts/author_lives.py`
+writes the childhoods (every rule measured on this organism by its
+teachers); `iga/lm_data_life` turns them into lane shards;
+`iga/lm_train` gestates 32+ childhoods at once through one body,
+against a matched transformer control on identical food.
+
 ## Honest limits
 
 At 297M, question→answer routing shares narrow capacity: heavy

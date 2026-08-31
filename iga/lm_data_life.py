@@ -29,9 +29,8 @@ import os
 import random
 from dataclasses import dataclass
 
-from .lm_data_ultrachat import (COLORS, NAMES, OBJECTS, ROOMS,
-                                TokenSink, iter_convos,
-                                load_tokenizer, train_tokenizer)
+from .lm_diet import (COLORS, NAMES, OBJECTS, ROOMS, TokenSink,
+                      load_tokenizer, train_tokenizer)
 from . import lm_judge as J
 
 SPECIALS_LIFE = ["<pad>", "<eot_human>", "<eot_model>",
@@ -101,51 +100,6 @@ def epochs(factory, n=1):
             for x in factory():
                 yield x
     return gen()
-
-
-def split_ultrachat(path, out_simple, out_rest, infancy_words,
-                    skip=0):
-    """ONE pass over the shared UltraChat file -> two disjoint
-    files: the SIMPLEST conversations (smallest per-conv max turn
-    length, by an adaptive threshold that just covers the infancy
-    word budget) and everything else. Fixes the flash-scale A12
-    violation where infancy and childhood re-read the same rows,
-    and replaces the fixed 80-word filter that passed only ~1% of
-    UltraChat (the 44M-budget collapse, 2026-08-20).
-
-    Two passes over the jsonl (cheap line streams): pass 1 builds a
-    histogram of per-conv max-turn-words vs words; pass 2 routes.
-    Returns {"threshold": T, "simple_words": w, "rest_words": w2,
-    "simple_convs": n, "rest_convs": n2}."""
-    hist = {}
-    for turns in ultrachat_source(path, skip):
-        mx = max(len(t.split()) for t in turns)
-        w = sum(len(t.split()) for t in turns)
-        b = min(mx // 20, 400)          # 20-word bins, cap 8k words
-        c, ww = hist.get(b, (0, 0))
-        hist[b] = (c + 1, ww + w)
-    acc = 0
-    thr_bin = max(hist)
-    for b in sorted(hist):
-        acc += hist[b][1]
-        if acc >= infancy_words:
-            thr_bin = b
-            break
-    T = (thr_bin + 1) * 20
-    res = {"threshold": T, "simple_words": 0, "rest_words": 0,
-           "simple_convs": 0, "rest_convs": 0}
-    with open(out_simple, "w") as fs, open(out_rest, "w") as fr:
-        for turns in ultrachat_source(path, skip):
-            mx = max(len(t.split()) for t in turns)
-            w = sum(len(t.split()) for t in turns)
-            simple = mx <= T and \
-                res["simple_words"] + w <= infancy_words * 1.05
-            f = fs if simple else fr
-            k = "simple" if simple else "rest"
-            f.write(json.dumps({"data": turns}) + "\n")
-            res[k + "_words"] += w
-            res[k + "_convs"] += 1
-    return res
 
 
 def feasible_budget(rep, stages, st2_epochs=1, magpie_epochs=1,
@@ -464,7 +418,7 @@ def prepare_life(out_dir, budget_tokens, n_lives, seed=0,
     os.makedirs(out_dir, exist_ok=True)
     rng = random.Random(seed)
     world_seed = seed if world_seed is None else world_seed
-    sources = sources or {"default": iter_convos(10 ** 9)}
+    assert sources, "prepare needs a source: authored lives (--lives-file)"
     life_budget = budget_tokens // n_lives
 
     tok_path = os.path.join(out_dir, "tokenizer.json")
@@ -1012,9 +966,9 @@ def simple_only(src, max_words=80):
     return gen()
 
 
-def ultrachat_source(path, skip=0):
-    """Conversations (lists of alternating turn strings, human
-    first) from a local UltraChat jsonl."""
+def lives_source(path, skip=0):
+    """Authored childhoods (GESTATION.md): lists of alternating turn
+    strings, caretaker first, from scripts/author_lives.py JSONL."""
     def gen():
         with open(path) as f:
             for i, line in enumerate(f):
@@ -1028,7 +982,6 @@ def ultrachat_source(path, skip=0):
                 if len(turns) >= 2:
                     yield turns[:len(turns) - len(turns) % 2]
     return gen()
-
 
 def _measure(src, stages, tok=None, sample_convs=400):
     """One-epoch yield per stage source (the A12 law's input): full
@@ -1101,7 +1054,7 @@ if __name__ == "__main__":
     import argparse
     ap = argparse.ArgumentParser()
     ap.add_argument("mode", choices=["prepare", "measure",
-                                     "freeze-judge", "split-uc"])
+                                     "freeze-judge"])
     ap.add_argument("--out", required=True)
     ap.add_argument("--budget", type=int, default=0)
     ap.add_argument("--stages", default="gate",
@@ -1110,18 +1063,13 @@ if __name__ == "__main__":
                          "supply-fitted 5.2B table")
     ap.add_argument("--st2-epochs", type=int, default=1)
     ap.add_argument("--magpie-epochs", type=int, default=1)
-    ap.add_argument("--ultrachat-simple", default=None,
-                    help="split-uc output: pre-filtered infancy file")
-    ap.add_argument("--ultrachat-rest", default=None,
-                    help="split-uc output: childhood file")
-    ap.add_argument("--infancy-tokens", type=int, default=0,
-                    help="split-uc: infancy token budget to cover")
     ap.add_argument("--lives", type=int, default=4)
     ap.add_argument("--seed", type=int, default=0)
     ap.add_argument("--world-seed", type=int, default=None)
     ap.add_argument("--vocab", type=int, default=16384)
     ap.add_argument("--tokenizer", default=None)
-    ap.add_argument("--ultrachat", default="data/ultrachat_raw.jsonl")
+    ap.add_argument("--lives-file", default="data/lives.jsonl",
+                    help="authored childhoods (scripts/author_lives.py)")
     ap.add_argument("--skip", type=int, default=0)
     ap.add_argument("--shuffle-sessions", action="store_true")
     ap.add_argument("--episodic", action="store_true",
@@ -1182,111 +1130,15 @@ if __name__ == "__main__":
     pq_ = None            # quality-press thresholds (set inside _src)
 
     def _src(ep=True):
-        global pq_          # module-level CLI block: global, not nonlocal
-        if a.ultrachat_simple and a.ultrachat_rest:
-            # split-uc products: disjoint files, one shared pass
-            # already done — no filter, no double consumption
-            s = {"default": ultrachat_source(a.ultrachat_rest),
-                 "tokenizer": ultrachat_source(a.ultrachat_rest),
-                 "infancy": ultrachat_source(a.ultrachat_simple),
-                 "childhood": ultrachat_source(a.ultrachat_rest)}
-        else:
-            s = {"default": ultrachat_source(a.ultrachat, a.skip),
-                 "tokenizer": ultrachat_source(a.ultrachat, a.skip),
-                 "infancy": simple_only(
-                     ultrachat_source(a.ultrachat, a.skip)),
-                 "childhood": ultrachat_source(a.ultrachat,
-                                               a.skip + 40)}
-        if a.flat_life and a.childhood_source != "magpie":
-            # 49g (the user): ULTRACHAT-ONLY flat world — one shared
-            # sequential stream (uc_rest when the split products
-            # exist, else the raw jsonl), every stage key -> the same
-            # iterator; no staged split, no simple gate, no presses.
-            uc_all = epochs(
-                lambda: ultrachat_source(
-                    a.ultrachat_rest or a.ultrachat, a.skip),
-                a.st2_epochs if ep else 1)
-            for k in ("default", "infancy", "childhood",
-                      "adolescence", "tail"):
-                s[k] = uc_all
-            return s
-        if a.childhood_source == "magpie":
-            # v15 scan15 (the user's rulings, in order): "use
-            # Smol-Magpie-Ultra for this round", then "no uc infancy —
-            # just start and keep on Smol-Magpie-Ultra". THE WHOLE LIFE
-            # IS MAGPIE-ULTRA: one shared sequential iterator feeds
-            # every stage (no repetition; stages keep their day/gap
-            # machinery, only the text source changes).
-            assert a.magpie_dir, "--childhood-source magpie needs --magpie-dir"
-            magc = sorted(
-                _glob.glob(f"{a.magpie_dir}/*magpie*.parquet"))
-            mag_all = epochs(
-                lambda: smoltalk2_source(magc, quality=a.press_quality),
-                a.magpie_epochs if ep else 1)
-            if a.press_quality:
-                qs = []
-                for item in smoltalk2_source(magc, quality=True):
-                    _, q0 = item
-                    if q0 is not None:
-                        qs.append(q0)
-                    if len(qs) >= 2000:
-                        break
-                if len(qs) >= 200:
-                    qs.sort()
-                    pq_ = (qs[len(qs) // 10], qs[len(qs) // 2],
-                           qs[(len(qs) * 9) // 10])
-                    print(f"press-quality thresholds {pq_} "
-                          f"(n={len(qs)})")
-                else:
-                    pq_ = None
-                    print("press-quality: NO quality column found in "
-                          f"the magpie parquets (n={len(qs)}) — "
-                          "presses disabled")
-            else:
-                pq_ = None
-            mix = float(a.flat_mix_everyday or 0.0)
-            if mix > 0 and a.st2_dir:
-                st2c = st2_ordered(
-                    f for f in _glob.glob(f"{a.st2_dir}/*.parquet")
-                    if "magpie" not in f and "everyday" in f) or \
-                    st2_ordered(
-                        f for f in _glob.glob(f"{a.st2_dir}/*.parquet")
-                        if "magpie" not in f)
-                def _mixed():
-                    # 49e: seeded interleave — everyday conversations
-                    # (no quality column -> no press) among the Magpie
-                    # stream at the given rate
-                    import random as _r
-                    rmix = _r.Random(a.seed * 77 + 5)
-                    g_m = smoltalk2_source(magc, quality=a.press_quality)
-                    g_e = smoltalk2_source(st2c)
-                    while True:
-                        src_ = g_e if rmix.random() < mix else g_m
-                        try:
-                            yield next(src_)
-                        except StopIteration:
-                            if src_ is g_m:
-                                return          # magpie exhausted: done
-                            g_e = smoltalk2_source(st2c)   # everyday recycles
-                mag_all = epochs(_mixed, a.magpie_epochs if ep else 1)
-            for k in ("default", "infancy", "childhood",
-                      "adolescence", "tail"):
-                s[k] = mag_all
-            return s
-        if a.st2_dir:
-            st2 = st2_ordered(f for f in
-                              _glob.glob(f"{a.st2_dir}/*.parquet")
-                              if "magpie" not in f)
-            s["adolescence"] = epochs(
-                lambda: smoltalk2_source(st2),
-                a.st2_epochs if ep else 1)
-        if a.magpie_dir:
-            mag = sorted(
-                _glob.glob(f"{a.magpie_dir}/*magpie*.parquet"))
-            s["tail"] = epochs(
-                lambda: smoltalk2_source(mag),
-                a.magpie_epochs if ep else 1)
-        return s
+        global pq_
+        pq_ = None
+        # v17: THE DIET IS LIVES (GESTATION.md). One authored source
+        # feeds every stage; staging is authored into the lives
+        # themselves. The document-diet branches are retired.
+        lv = epochs(lambda: lives_source(a.lives_file, a.skip),
+                    a.st2_epochs if ep else 1)
+        return {k: lv for k in ("default", "tokenizer", "infancy",
+                                "childhood", "adolescence", "tail")}
 
     stages_sel = STAGES_V10_FLASH if a.stages == "flash" \
         else STAGES_V10
@@ -1324,18 +1176,6 @@ if __name__ == "__main__":
         with open(a.out, "w") as f:
             json.dump(t, f, indent=1)
         print(json.dumps(t, indent=1))
-    elif a.mode == "split-uc":
-        assert a.infancy_tokens > 0, "split-uc needs --infancy-tokens"
-        assert a.ultrachat_simple and a.ultrachat_rest, \
-            "split-uc needs --ultrachat-simple/--ultrachat-rest"
-        # words needed ~ tokens / (tok/word of simple text, ~1.6)
-        res = split_ultrachat(a.ultrachat, a.ultrachat_simple,
-                              a.ultrachat_rest,
-                              int(a.infancy_tokens / 1.55),
-                              skip=a.skip)
-        with open(a.out, "w") as f:
-            json.dump(res, f, indent=1)
-        print(json.dumps(res, indent=1))
     else:
         assert a.budget > 0, "prepare needs --budget"
         if a.judge_thresholds:
