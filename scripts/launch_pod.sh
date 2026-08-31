@@ -13,13 +13,13 @@
 set -euo pipefail
 SCRIPT=${1:?pod script name, e.g. pod_scan.sh}
 ENVSTR=${2:-}
-SHA=${3:-$(git ls-remote -q https://github.com/LukeHamond1001/Vision.git refs/heads/main | cut -f1)}
+SHA=${3:-$(git ls-remote -q https://github.com/LukeHamond1001/one-token-organism.git refs/heads/main | cut -f1)}
 GPUS=${4:-"NVIDIA GeForce RTX 4090,NVIDIA RTX 2000 Ada Generation"}
 VOLUME=${VOLUME:-2o9gtwzkhd}
 DISK=${DISK:-40}
 NAME=${NAME:-iga-scan}
 [ -n "$SHA" ] || { echo "no SHA"; exit 1; }
-curl -sSf -o /dev/null "https://raw.githubusercontent.com/LukeHamond1001/Vision/$SHA/scripts/$SCRIPT" \
+curl -sSf -o /dev/null "https://raw.githubusercontent.com/LukeHamond1001/one-token-organism/$SHA/scripts/$SCRIPT" \
   || { echo "scripts/$SCRIPT not at $SHA on GitHub (push first)"; exit 1; }
 SCRIPT="$SCRIPT" ENVSTR="$ENVSTR" SHA="$SHA" GPUS="$GPUS" VOLUME="$VOLUME" DISK="$DISK" NAME="$NAME" \
 python3 - <<'PY'
@@ -32,7 +32,7 @@ env = {"GIT_TOKEN": tok, "PIN_SHA": sha}
 for kv in envstr.split():
     k, _, v = kv.partition("=")
     env[k] = v
-boot = f"curl -sSL https://raw.githubusercontent.com/LukeHamond1001/Vision/{sha}/scripts/{script} | bash"
+boot = f"curl -sSL https://raw.githubusercontent.com/LukeHamond1001/one-token-organism/{sha}/scripts/{script} | bash"
 def call(method, path, body=None):
     req = urllib.request.Request("https://rest.runpod.io/v1" + path,
         data=json.dumps(body).encode() if body is not None else None, method=method,

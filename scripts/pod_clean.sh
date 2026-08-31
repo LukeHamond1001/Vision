@@ -6,9 +6,9 @@ set -uo pipefail
 W=/root/w-aux
 mkdir -p "$W" && cd "$W"
 [ -d Vision ] || git clone -q --depth 1 --single-branch --branch main \
-  https://github.com/LukeHamond1001/Vision.git
+  https://github.com/LukeHamond1001/one-token-organism.git
 cd Vision
-PUSH="https://x-access-token:${GIT_TOKEN}@github.com/LukeHamond1001/Vision.git"
+PUSH="https://x-access-token:${GIT_TOKEN}@github.com/LukeHamond1001/one-token-organism.git"
 git config user.email "pod@Vision"; git config user.name "iga-pod"
 git checkout -q -B results-v10 || true
 git pull -q origin results-v10 || true

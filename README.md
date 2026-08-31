@@ -54,7 +54,7 @@ meaning.
 ## Run it
 
 ```bash
-git clone https://github.com/LukeHamond1001/Vision.git && cd Vision
+git clone https://github.com/LukeHamond1001/one-token-organism.git && cd Vision
 pip install -e .          # torch, tokenizers, numpy
 # weights (the living body + tokenizer, ~1.2G):
 #   https://huggingface.co/Luke1001/one-token-organism

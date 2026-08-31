@@ -9,9 +9,9 @@ mkdir -p "$W" && cd "$W"
 # SHALLOW single-branch clone: the full repo drags multi-GB data
 # branches — the 00:xx mules died silently inside that clone
 [ -d Vision ] || git clone -q --depth 1 --single-branch --branch main \
-  https://github.com/LukeHamond1001/Vision.git
+  https://github.com/LukeHamond1001/one-token-organism.git
 cd Vision
-PUSH="https://x-access-token:${GIT_TOKEN}@github.com/LukeHamond1001/Vision.git"
+PUSH="https://x-access-token:${GIT_TOKEN}@github.com/LukeHamond1001/one-token-organism.git"
 git config user.email "pod@Vision"; git config user.name "iga-pod"
 git checkout -q -B results-ship
 ITER=${ITER:-scan15}

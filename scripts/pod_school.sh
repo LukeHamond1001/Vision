@@ -30,9 +30,9 @@ W=/workspace/w-v10prep
 R=/root/w-school            # school's OWN repo — never git-fiddle the shared one
 mkdir -p "$R" "$DATA" "$OUT" && cd "$R"
 git clone -q --depth 1 --single-branch --branch main \
-  https://github.com/LukeHamond1001/Vision.git 2>/dev/null || true
+  https://github.com/LukeHamond1001/one-token-organism.git 2>/dev/null || true
 cd Vision || { echo "ABORT no clone"; sleep 300; exit 1; }
-PUSH="https://x-access-token:${GIT_TOKEN}@github.com/LukeHamond1001/Vision.git"
+PUSH="https://x-access-token:${GIT_TOKEN}@github.com/LukeHamond1001/one-token-organism.git"
 git config user.email "pod@Vision"; git config user.name "iga-pod"
 git fetch -q origin "+refs/heads/data-school:refs/remotes/origin/data-school" || echo "WARN data-school fetch failed"
 [ -n "${PIN_SHA:-}" ] && { git fetch -q origin "$PIN_SHA" 2>/dev/null; git reset --hard -q "$PIN_SHA" 2>/dev/null || true; }
@@ -67,7 +67,7 @@ else
   else
     hb "shard not in clone checkout; pulling pinned raw"
     curl -sfL --retry 6 --retry-delay 10 --retry-all-errors \
-      "https://raw.githubusercontent.com/LukeHamond1001/Vision/${PIN_SHA:-main}/data/school_pairs.jsonl" \
+      "https://raw.githubusercontent.com/LukeHamond1001/one-token-organism/${PIN_SHA:-main}/data/school_pairs.jsonl" \
       -o "$DATA/school_pairs.jsonl.tmp" || true
   fi
   LINES=$(wc -l < "$DATA/school_pairs.jsonl.tmp" 2>/dev/null || echo 0)
@@ -96,7 +96,7 @@ fi
 # skips cloning entirely
 for try in 1 2 3; do
   git clone -q --depth 1 --single-branch --branch main \
-    https://github.com/LukeHamond1001/Vision.git "$W/Vision" 2>/dev/null && break
+    https://github.com/LukeHamond1001/one-token-organism.git "$W/Vision" 2>/dev/null && break
   sleep 15
 done
 if [ -d "$W/Vision/.git" ]; then
