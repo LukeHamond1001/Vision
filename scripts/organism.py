@@ -614,6 +614,13 @@ class Organism:
             n_c = len([t_ for t_ in g["out"] if t_ != self.sil])
             if g["pauses"] >= 6:
                 v[self.sil] = float("-inf")
+            # THE BREATH (genome): past eou_start content tokens, the end
+            # of the utterance gains eou_k logits per further token — a
+            # short declarative register, and no reply runs on forever
+            eou_s = int(getattr(self.a, "eou_start", 12))
+            eou_k = float(getattr(self.a, "eou_k", 0.35))
+            if eou_k > 0 and n_c >= eou_s:
+                v[self.em] = v[self.em] + eou_k * (n_c - eou_s + 1)
             pr = torch.softmax(v / g["temp"], -1).cpu()
             nxt = int(torch.multinomial(pr, 1, generator=self.gen))
             if len(g["tr_raw"]) < 64:
@@ -2313,6 +2320,12 @@ def main():
     ap.add_argument("ckpt"); ap.add_argument("tok")
     ap.add_argument("--dev", default="mps")
     ap.add_argument("--port", type=int, default=8016)
+    ap.add_argument("--eou-start", type=int, default=12,
+                    help="the breath: after this many content tokens the end of "
+                         "the utterance starts gaining logits")
+    ap.add_argument("--eou-k", type=float, default=0.35,
+                    help="the breath: logits added to <eot_model> per token past "
+                         "--eou-start (0 = off)")
     ap.add_argument("--hear-mode", default="word", choices=["word", "turn"],
                     help="word: one forward per word as it is said (per-word "
                          "listening tones); turn: the words run through the body "
