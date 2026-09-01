@@ -323,9 +323,9 @@ class Organism:
     def _turn(self):
         t = getattr(self, "turn_ctx", None)
         if t is None:
-            t = {"text": "", "frags": [], "level": 0, "tot": 0.0, "n": 0,
-                 "mx": 0.0, "lg": None, "pre": self._flat(self.st),
-                 "felt_ev": []}
+            t = {"text": "", "frags": [], "ftone": [], "level": 0,
+                 "tot": 0.0, "n": 0, "mx": 0.0, "lg": None,
+                 "pre": self._flat(self.st), "felt_ev": []}
             self.turn_ctx = t
         return t
 
@@ -391,7 +391,16 @@ class Organism:
             s0 = len(t["text"])
             t["text"] += fragment
             t["frags"].append((s0, s0 + len(fragment), lvl))
-        return {"heard": len(fragment), "felt": felt,
+            # what it felt hearing these words: the value heads' own
+            # press expectation from the state after them
+            tv = None
+            if hasattr(self.m, "read_value"):
+                rv = self.m.read_value(self.st)
+                tv = round(sum(rv.values()) / max(len(rv), 1), 2) if rv else 0.0
+            t["ftone"].append(tv)
+            return {"heard": len(fragment), "felt": felt, "tone": tv,
+                    "mood": round(self.mood, 2), "level": t["level"]}
+        return {"heard": 0, "felt": felt,
                 "mood": round(self.mood, 2), "level": t["level"]}
 
     def chat_begin(self, text=None, temp=None, stress=None):
@@ -431,7 +440,8 @@ class Organism:
                         "surp_pk": t["mx"], "lg": lg, "out": [],
                         "pauses": 0, "x": None, "tr_raw": [],
                         "tone_raw": [], "rew": [], "level": t["level"],
-                        "frags": t["frags"], "you_felt": t["felt_ev"],
+                        "frags": t["frags"], "ftone": t["ftone"],
+                        "you_felt": t["felt_ev"],
                         "felt_ev": [], "done": False}
         self.turn_ctx = None
         return {"began": True, "level": t["level"],
@@ -479,10 +489,11 @@ class Organism:
             g["tone_raw"].append(tv if tv is not None else 0.0)
             if nxt == self.sil:
                 g["pauses"] += 1
-                ev.append({"pause": True})
+                ev.append({"pause": True, "v": round(g["tone_raw"][-1], 2),
+                           "you": lvl})
             elif nxt != self.em:
                 ev.append({"tok": self.tok.decode([nxt]),
-                           "v": round(g["tone_raw"][-1], 2)})
+                           "v": round(g["tone_raw"][-1], 2), "you": lvl})
             g["x"] = torch.tensor([[nxt]], device=self.dev)
             if nxt == self.em or n_c + 1 >= self.a.max_new \
                     or len(g["out"]) >= self.a.max_new + 8:
@@ -705,7 +716,9 @@ class Organism:
                 "felt_at": felt_at,
                 "expression": expression,
                 "you_text": text,
-                "you_marks": [{"s": s_, "e": e_, "r": r_} for s_, e_, r_ in frags],
+                "you_marks": [{"s": s_, "e": e_, "r": r_, "v": v_}
+                              for (s_, e_, r_), v_ in
+                              zip(frags, (g.get("ftone") or []) + [None] * len(frags))],
                 "you_felt": [{"s": s_, "mag": l_} for s_, l_ in (g.get("you_felt") or [])],
                 "ended_by": g.get("ended_by", "eou"),
                 "moved": [{"part": k, "delta": round(d, 3)} for k, d in moved],
@@ -1744,18 +1757,23 @@ PAGE = """<!doctype html><meta charset=utf-8>
  --acc:#2f7d5c;--good:#1f7a46;--warn:#bd4a24}
 *{box-sizing:border-box}
 body{font:15px/1.5 -apple-system,'Segoe UI',sans-serif;margin:0;display:flex;flex-direction:column;height:100vh;background:var(--paper);color:var(--ink)}
-#log{flex:1;overflow-y:auto;padding:28px 0}
-#log>div{max-width:680px;margin-left:auto;margin-right:auto;padding:0 28px;animation:rise .18s ease-out}
+#log{flex:1;overflow-y:auto;padding:24px 0}
+.turn{max-width:720px;margin:0 auto 10px;padding:0 28px;animation:rise .18s ease-out}
 @keyframes rise{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
-.you{color:var(--acc);margin:18px auto 4px;font-size:13.5px;font-weight:600;letter-spacing:.2px}
-.bot{font-family:Georgia,'Times New Roman',serif;font-size:17px;line-height:1.55;color:var(--ink);margin:0 auto 6px;white-space:pre-wrap}
-.sys{color:#b3aca0;font-size:11.5px;margin:6px auto;font-style:italic}
+.lbl{display:inline-block;vertical-align:top;font-family:menlo,monospace;font-size:10px;color:#b3aca0;width:26px;padding-top:4px}
+.tk{display:inline-flex;flex-direction:column;align-items:center;vertical-align:top;margin:0 2px 8px 0}
+.tk .w{white-space:pre;padding:0 1px;border-bottom:2px solid transparent;line-height:1.25}
+.turn.you .w{color:var(--acc);font-weight:600;font-size:13.5px}
+.turn.it .w{font-family:Georgia,'Times New Roman',serif;font-size:17px;color:var(--ink)}
+.tk .fi,.tk .fy{font-family:menlo,monospace;font-size:9.5px;line-height:1.25;min-height:12px;color:#d2ccc0}
+.tk .fy{font-weight:700}
+.fi.good,.fy.good{color:var(--good)}.fi.bad,.fy.bad{color:var(--warn)}
+.tk.pz .w{color:#c8c2b6}
+.tk.upg .w{border-bottom:3px double var(--good)}.tk.upb .w{border-bottom:3px double var(--warn)}
+.tk.lov .w{border-bottom:2px solid var(--good)}.tk.blm .w{border-bottom:2px solid var(--warn)}
+.sys{color:#b3aca0;font-size:11.5px;margin:6px auto;font-style:italic;max-width:720px;padding:0 28px}
 .think{color:var(--mut);font-size:20px;letter-spacing:4px;animation:thinkp 1.2s ease-in-out infinite}
 @keyframes thinkp{0%,100%{opacity:.25}50%{opacity:.9}}
-.lov{border-bottom:2px solid var(--good)}
-.blm{border-bottom:2px solid var(--warn)}
-.upg{border-bottom:3px double var(--good)}
-.upb{border-bottom:3px double var(--warn)}
 #bar{display:flex;gap:10px;align-items:center;padding:14px 28px 8px;background:var(--paper);max-width:736px;margin:0 auto;width:100%}
 #msg{flex:1;background:var(--panel);border:1px solid var(--line);color:var(--ink);padding:13px 16px;border-radius:14px;font-size:15px;outline:none;transition:border .15s,box-shadow .15s}
 #msg:focus{border-color:var(--acc);box-shadow:0 0 0 3px rgba(47,125,92,.10)}
@@ -1782,24 +1800,23 @@ button.quiet:hover{opacity:1;border-color:var(--mut);color:var(--ink)}
 <div id=log></div>
 <div id=bar>
  <span class=fl>you</span><input id=expr type=number min=-6 max=6 step=1 value=0 title="your expression, −6…6 — felt with what you say, and between its words">
- <input id=msg placeholder="talk to it... (↑ ↓ your face · Enter: send, then one word per Enter)" autofocus autocomplete=off>
+ <input id=msg placeholder="talk to it — ↑ ↓ your face · Enter sends, then one word per Enter" autofocus autocomplete=off>
  <button id=sendbtn title="send · next word">&#8593;</button>
 </div>
 <div id=carerow>
  <button class=quiet onclick=sleepy()>sleep</button>
  <button class=quiet onclick=saveLife()>save</button>
- <button class=quiet onclick="fetch('/reset',{method:'POST'}).then(()=>{log.innerHTML='';turnQd=null;turnText='';clientLevel=0;expr.value=0;faceColor();add('sys','~ fresh wake ~');pulseMood()})">reset</button>
+ <button class=quiet onclick="fetch('/reset',{method:'POST'}).then(()=>{log.innerHTML='';turnRow=null;turnCells=[];clientLevel=0;expr.value=0;faceColor();add('sys','~ fresh wake ~');pulseMood()})">reset</button>
  <div id=face><span class=fl>it feels</span><span id=mood>0.0</span></div>
 </div>
 <script>
 const log=document.getElementById('log'),msg=document.getElementById('msg'),
       expr=document.getElementById('expr'),moodEl=document.getElementById('mood');
-let busy=false,sleeping=false,turnQd=null,turnText='',clientLevel=0,q=Promise.resolve(),stepWait=null;
+let busy=false,sleeping=false,turnRow=null,turnCells=[],clientLevel=0,q=Promise.resolve(),stepWait=null;
 function stepNow(){if(busy&&stepWait){const w=stepWait;stepWait=null;w()}}
-function enqueue(fn){q=q.then(fn,fn);return q}
-function lockup(m){sleeping=m;document.getElementById('sendbtn').disabled=m;expr.disabled=m;msg.disabled=m}
+function lockup(m){sleeping=m;expr.disabled=m;msg.disabled=m}
 function add(cls,txt){const d=document.createElement('div');d.className=cls;d.textContent=txt;log.appendChild(d);log.scrollTop=1e9;return d}
-function toneBg(v){return (v>0?'rgba(31,122,70,':'rgba(189,74,36,')+Math.min(.28,Math.abs(v)*.14).toFixed(3)+')'}
+function post(path,body){return fetch(path,{method:'POST',body:JSON.stringify(body)}).then(r=>r.json())}
 function setMood(v){if(v==null)return;
  moodEl.textContent=(v>0.05?'+':v<-0.05?'−':'')+Math.abs(v).toFixed(1);
  moodEl.className=v>0.05?'good':v<-0.05?'bad':''}
@@ -1807,26 +1824,32 @@ async function pulseMood(){try{const p=await fetch('/pulse').then(r=>r.json());
  setMood(p.drives&&p.drives.mood!=null?p.drives.mood:p.mood)}catch(e){}}
 function exprVal(){let v=parseInt(expr.value,10);if(isNaN(v))v=0;return Math.max(-6,Math.min(6,v))}
 function faceColor(){const v=exprVal();expr.className=v>0?'good':v<0?'bad':''}
-function mark(div,lvl){const k=document.createElement('span');k.className='lpm '+(lvl>0?'good':'bad');
- k.textContent=(lvl>0?'+':'−')+Math.abs(lvl);div.appendChild(k);log.scrollTop=1e9}
-function post(path,body){return fetch(path,{method:'POST',body:JSON.stringify(body)}).then(r=>r.json())}
-// THE FACE IS ALWAYS OPEN: a change is felt the moment it happens —
-// between your own words while you speak (sent at once), or between
-// its words while it speaks (carried by the next step). A held face is
-// silence; relaxing toward neutral is not an event.
+// THE SCORE: every token of either speaker, with what it felt under it and your face under that
+function row(who){const r=document.createElement('div');r.className='turn '+who;
+ const l=document.createElement('span');l.className='lbl';l.textContent=who==='you'?'you':'it';r.appendChild(l);
+ log.appendChild(r);log.scrollTop=1e9;return r}
+function setF(el,v,dec){const base=el.className.split(' ')[0];
+ if(v==null){el.textContent='';el.className=base;return}
+ el.textContent=(v>0?'+':v<0?'−':'')+Math.abs(v).toFixed(dec);
+ el.className=base+(v>0.05?' good':v<-0.05?' bad':'')}
+function cell(r,word,fi,fy,cls){const c=document.createElement('span');c.className='tk'+(cls?' '+cls:'');
+ const w=document.createElement('span');w.className='w';w.textContent=word;
+ const a=document.createElement('span');a.className='fi';setF(a,fi,1);
+ const b=document.createElement('span');b.className='fy';setF(b,fy,0);
+ c.append(w,a,b);r.appendChild(c);log.scrollTop=1e9;return c}
+// YOUR FACE IS ALWAYS OPEN: a change is felt the moment it happens — between
+// your own words (sent at once) or between its (carried by the next word).
+// A held face is silence; relaxing toward neutral is not an event.
 function faceChange(){const lvl=exprVal();faceColor();const prev=clientLevel;clientLevel=lvl;
- if(sleeping||lvl===0||lvl===prev||!(Math.abs(lvl)>Math.abs(prev)||(lvl>0)!==(prev>0)))return;
- if(busy)return;
- if(!turnQd){turnQd=add('you','you: ');turnText=''}
- mark(turnQd,lvl);
+ if(sleeping||busy||lvl===0||lvl===prev||!(Math.abs(lvl)>Math.abs(prev)||(lvl>0)!==(prev>0)))return;
  enqueue(()=>post('/hear',{text:'',expr:lvl}).then(r=>setMood(r.mood)))}
+function enqueue(fn){q=q.then(fn,fn);return q}
 expr.oninput=faceChange;expr.onchange=()=>{expr.value=exprVal();faceChange()};
 function hearFrag(frag){
  if(!frag.trim()||sleeping)return;
- if(!turnQd){turnQd=add('you','you: ');turnText=''}
- turnQd.appendChild(document.createTextNode(frag));turnText+=frag;log.scrollTop=1e9;
- const lvl=exprVal();
- enqueue(()=>post('/hear',{text:frag,expr:lvl}).then(r=>setMood(r.mood)))}
+ if(!turnRow){turnRow=row('you');turnCells=[]}
+ const lvl=exprVal();const c=cell(turnRow,frag.trim(),null,lvl);turnCells.push(c);
+ enqueue(()=>post('/hear',{text:frag,expr:lvl}).then(r=>{setF(c.children[1],r.tone,1);setMood(r.mood)}))}
 // WHAT IS SAID IS SAID: each word leaves the box at the space after it
 msg.oninput=()=>{if(busy||sleeping)return;const v=msg.value;let idx=-1;
  for(let i=v.length-1;i>=0;i--){if(' .,!?;:'.includes(v[i])){idx=i;break}}
@@ -1837,58 +1860,31 @@ function keys(e){
   expr.value=Math.max(-6,Math.min(6,exprVal()+(e.key==='ArrowUp'?1:-1)));faceChange()}}
 msg.onkeydown=keys;expr.onkeydown=keys;
 document.getElementById('sendbtn').onclick=()=>{if(busy)stepNow();else send()};
-function seg(div,text,marks,prefix){
- div.textContent='';if(prefix)div.appendChild(document.createTextNode(prefix));
- const pts=marks.filter(m=>m.pt),rng=marks.filter(m=>!m.pt);
- const cl=v=>Math.max(0,Math.min(text.length,v));
- const bs=new Set([0,text.length]);
- rng.forEach(m=>{bs.add(cl(m.s));bs.add(cl(m.e))});pts.forEach(m=>bs.add(cl(m.s)));
- const bl=[...bs].sort((a,b)=>a-b);
- const dot=p=>pts.filter(m=>cl(m.s)===p).forEach(m=>{const k=document.createElement('span');
-  k.className=m.cls;k.textContent=m.txt;div.appendChild(k)});
- for(let i=0;i<bl.length-1;i++){const s=bl[i],e=bl[i+1];dot(s);if(e<=s)continue;
-  const cov=rng.filter(m=>m.s<e&&m.e>s);
-  if(!cov.length){div.appendChild(document.createTextNode(text.slice(s,e)));continue}
-  const sp=document.createElement('span');
-  sp.className=cov.map(m=>m.cls).filter(Boolean).join(' ');
-  cov.forEach(m=>{if(m.bg)sp.style.background=m.bg;if(m.v!=null)sp.title='felt '+m.v;if(m.title)sp.title=m.title});
-  sp.textContent=text.slice(s,e);div.appendChild(sp)}
- dot(text.length)}
-function pt(f){return {s:f.s,e:f.s,pt:true,cls:'lpm '+(f.mag>0?'good':'bad'),txt:(f.mag>0?'+':'−')+Math.abs(f.mag)}}
-function paintReply(div,r){
- const marks=[],ex=r.expression||{};
- (r.tones||[]).forEach(t=>{if(t.e<=t.s)return;
-  if(Math.abs(t.v)>=0.05)marks.push({s:t.s,e:t.e,bg:toneBg(t.v),v:t.v});
-  if(t.r>0)marks.push({s:t.s,e:t.e,cls:'upg',title:'you: +'+t.r+(ex.learned_steps?' · learned ×'+ex.learned_steps:'')});
-  else if(t.r<0)marks.push({s:t.s,e:t.e,cls:'upb',title:'you: −'+Math.abs(t.r)+(t.r<=-2&&ex.unlearned_steps?' · unlearned ×'+ex.unlearned_steps:'')})});
- if(r.self_press){const sp=r.self_press,tt='its conscience '+(sp.conviction>0?'+':'')+(sp.conviction!=null?sp.conviction.toFixed(1):'');
-  (sp.loved||[]).forEach(([s,e])=>marks.push({s:s,e:e,cls:'lov',title:tt}));
-  (sp.blamed||[]).forEach(([s,e])=>marks.push({s:s,e:e,cls:'blm',title:tt}))}
- (r.felt_at||[]).forEach(f=>marks.push(pt(f)));
- seg(div,r.reply,marks)}
-function paintYou(div,text,r){
- const marks=[],nz=r.noticed;
- (r.you_marks||[]).forEach(m=>{if(m.r>0)marks.push({s:m.s,e:m.e,cls:'upg',title:'said with +'+m.r+(nz&&nz.dose?' · kept ×'+nz.dose:'')});
-  else if(m.r<0)marks.push({s:m.s,e:m.e,cls:'upb',title:'said with −'+Math.abs(m.r)+' · not kept'})});
- (r.you_felt||[]).forEach(f=>marks.push(pt(f)));
- seg(div,text,marks,'you: ')}
+function credit(cells,tones,ex){   // the face each word was spoken into is its reward
+ tones.forEach((t,i)=>{const c=cells[i];if(!c)return;
+  if(t.r>0){c.classList.add('upg');c.title='you: +'+t.r+(ex.learned_steps?' · learned ×'+ex.learned_steps:'')}
+  else if(t.r<0){c.classList.add('upb');c.title='you: −'+Math.abs(t.r)+(t.r<=-2&&ex.unlearned_steps?' · unlearned ×'+ex.unlearned_steps:'')}})}
+function conscience(cells,tones,sp){
+ const tt='its conscience '+(sp.conviction>0?'+':'')+(sp.conviction!=null?sp.conviction.toFixed(1):'');
+ const mark=(spans,cls)=>(spans||[]).forEach(([s,e])=>tones.forEach((t,i)=>{if(t.s<e&&t.e>s&&cells[i]){cells[i].classList.add(cls);cells[i].title=tt}}));
+ mark(sp.loved,'lov');mark(sp.blamed,'blm')}
 async function send(){
  if(sleeping){add('sys','~ it’s sleeping — wait for morning ~');return}
  if(busy)return;
  const rest=msg.value;msg.value='';
  if(rest.trim())hearFrag(rest);
- if(!turnQd||!turnText.trim()){turnQd=null;turnText='';return}
+ if(!turnRow){return}
  busy=true;
- const qd=turnQd,qtext=turnText;turnQd=null;turnText='';
- let bd=null,th=null;
+ const myCells=turnCells;turnRow=null;turnCells=[];
+ let itRow=null,th=null;
  try{
   await q;
   let b;
   try{b=await post('/begin',{})}catch(e){add('sys','~ unreachable — is it awake yet? ~');return}
   if(b.error){add('sys','~ '+b.error+' ~');return}
   setMood(b.mood);
-  bd=add('bot','');th=add('sys think','· · ·');
-  let fin=null;
+  itRow=row('it');th=add('sys think','· · ·');
+  const itCells=[];let fin=null;
   while(!fin){
    await new Promise(res=>{stepWait=res});   // ONE WORD PER ENTER
    let r;
@@ -1896,15 +1892,20 @@ async function send(){
    if(r.error){add('sys','~ '+r.error+' ~');return}
    for(const ev of r.events){
     if(th){th.remove();th=null}
-    if(ev.tok!=null){const sp=document.createElement('span');sp.textContent=ev.tok;
-     if(ev.v!=null&&Math.abs(ev.v)>=0.05){sp.style.background=toneBg(ev.v);sp.title='felt '+ev.v}
-     bd.appendChild(sp);log.scrollTop=1e9}
-    else if(ev.pause){const sp=document.createElement('span');sp.className='pz';sp.textContent=' ·';bd.appendChild(sp)}
-    else if(ev.felt!=null){mark(bd,ev.felt);setMood(ev.mood)}
+    if(ev.tok!=null)itCells.push(cell(itRow,ev.tok.trim()||'␣',ev.v,ev.you));
+    else if(ev.pause)cell(itRow,'·',ev.v,ev.you,'pz');
+    else if(ev.felt!=null)setMood(ev.mood);
     else if(ev.done)fin=ev.done}}
   setMood(fin.mood);
-  paintYou(qd,fin.you_text!=null?fin.you_text:qtext,fin);
-  if(fin.reply)paintReply(bd,fin);else{bd.remove();bd=null;add('sys','~ it said nothing ~')}
+  const ex=fin.expression||{};
+  credit(itCells,fin.tones||[],ex);
+  if(fin.self_press)conscience(itCells,fin.tones||[],fin.self_press);
+  const nz=fin.noticed;
+  (fin.you_marks||[]).forEach((m,i)=>{const c=myCells[i];if(!c)return;
+   if(m.v!=null)setF(c.children[1],m.v,1);
+   if(m.r>0){c.classList.add('upg');c.title='said with +'+m.r+(nz&&nz.dose?' · kept ×'+nz.dose:'')}
+   else if(m.r<0){c.classList.add('upb');c.title='said with −'+Math.abs(m.r)+' · not kept'}});
+  if(!fin.reply&&!itCells.length){itRow.remove();add('sys','~ it said nothing ~')}
  }finally{if(th)th.remove();busy=false;stepWait=null;msg.focus()}}
 async function sleepy(){
  if(sleeping||busy)return;
@@ -1916,13 +1917,14 @@ async function sleepy(){
   const s=(n,w,p)=>n+' '+(n==1?w:(p||w+'s'));
   add('sys','~ morning — it replayed '+s(r.nrem,'memory','memories')+' and dreamt '+s(r.rem,'dream')+' ~');
   if(r.woke_feeling)add('sys','~ it woke feeling '+r.woke_feeling+' ~');
-  turnQd=null;turnText='';clientLevel=0;expr.value=0;faceColor();
+  turnRow=null;turnCells=[];clientLevel=0;expr.value=0;faceColor();
  }catch(e){add('sys','~ the night was interrupted — reload me ~')
  }finally{fl.classList.remove('think');lockup(false);pulseMood();msg.focus()}}
 async function saveLife(){
  const r=await fetch('/save',{method:'POST'}).then(r=>r.json());
  add('sys','~ saved → '+r.saved+' ~')}
 post('/turn',{drop:true}).catch(()=>{});pulseMood();
+add('sys','~ under each word: what it felt · your face ~');
 </script>
 """
 

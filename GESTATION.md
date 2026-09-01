@@ -83,7 +83,11 @@ are authored to obey them:
     says it). A held face is silence; relaxing is not an event. This
     is exactly how the serve feels the human's expression, so the
     body is raised on the distribution it will live in
-    (`author_lives.face`).
+    (`author_lives.face`). Open for the next body: the child's OWN
+    expression back, token by token, needs its own felt vocabulary —
+    the present tokenizer carries only the caretaker's four presses,
+    so today the child conveys its feeling through the value heads'
+    reading (measured, not chosen), shown under each word it says.
 
 ## Pipeline
 
