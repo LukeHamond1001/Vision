@@ -84,13 +84,14 @@ def main():
         if q is None:
             ids = tok.encode(ans).ids + [eh]
         else:
-            ids = tok.encode(q).ids + [eh] + tok.encode(ans).ids + [em]
+            # the serve's own format: the answer carries its leading space
+            ids = tok.encode(q).ids + [eh] + tok.encode(" " + ans).ids + [em]
         ids += [sil] * ((64 - len(ids) % 64) % 64)
         return ids
 
     def ce_of(q, ans):
         ids = tok.encode(q).ids + [eh]
-        ans_ids = tok.encode(ans).ids
+        ans_ids = tok.encode(" " + ans).ids + [em]   # scored as the serve scores
         x = torch.tensor([ids + ans_ids], device=a.dev)
         with torch.no_grad():
             st = m.init_state(1, a.dev)
