@@ -74,8 +74,12 @@ about it: [RESULTS.md](RESULTS.md).
 
 ## Tools
 
-`scripts/caretaker.py` — raises it through its face at the serve's own
-protocol: asks word by word, holds a face over every token of the reply
+`scripts/opus_caretaker.py` — Claude Opus raises it itself, from
+scratch: no gold list, no rule for the face; Opus decides what to teach,
+says it in the creature's register, holds a face over every word of the
+reply by its own judgment of meaning, answers back, sleeps it, checks
+the morning, keeps a diary (credentials from your environment) ·
+`scripts/caretaker.py` — the rule-based teacher at the same protocol: asks word by word, holds a face over every token of the reply
 against the gold (still while right, −2 at the first wrong word, praise
 once the answer lands), teaches back with a smile, sleeps it, checks the
 morning; `--opus` lets Claude Opus paraphrase the asks and judge
