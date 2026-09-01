@@ -392,7 +392,7 @@ class Organism:
                 self._self_pressed_qs.add(key_sp)
                 self.press_log.append({"q": text[:80], "a": reply[:80],
                                        "mag": -1.0, "self": True})
-                self_press = {"mag": -1,
+                self_press = {"mag": -1, "conscience": round(sc, 2),
                               "left_today": self.self_frown_budget}
         self.last_q = (text, reply)
         if reply:
@@ -1463,8 +1463,10 @@ async function send(){
   const r=await fetch('/chat',{method:'POST',body:JSON.stringify({text:t})}).then(r=>r.json());
   log.lastChild.remove();if(r.reply)add('bot',r.reply);else add('sys','~ it said nothing ~');
   if(r.self_press){
-   if(r.self_press.mag>0)felt('selfp good','model: +1 reward');
-   else felt('selfp bad','model: \u22121 reward')}
+   const c=r.self_press.conscience;
+   const why=(c==null?'':' \u00b7 conscience '+c.toFixed(2));
+   if(r.self_press.mag>0)felt('selfp good','model: +1 reward'+why);
+   else felt('selfp bad','model: \u22121 reward'+why)}
  }finally{busy=false;document.getElementById('sendbtn').disabled=false}}
 async function sleepy(){
  add('sys','~ falling asleep\u2026 ~');
