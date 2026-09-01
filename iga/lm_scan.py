@@ -58,6 +58,7 @@ lesioned / store_read_off / mem_off mean the same things. Clocks are
 in TOKENS (clock_unit = "token"); horizons = clock.
 """
 
+import math
 import torch
 import torch.nn as nn
 
@@ -1226,6 +1227,17 @@ class ScanLM(nn.Module):
             if self.aux_trunk > 0 and self.training:
                 self._aux_hidden = C
             rd_full = R @ lg_E.t()
+            # A READ THAT CAN STEER: when the trunk is unsure of the next
+            # word (high entropy), the hippocampus speaks louder —
+            # read_beta = 0 is exactly the trained body (the store's
+            # vote of ~2 logits lost to a confident trunk every time)
+            rb = float(getattr(self, "read_beta", 0.0) or 0.0)
+            if rb > 0.0:
+                with torch.no_grad():
+                    pz = torch.softmax(logits.float(), dim=-1)
+                    ent = -(pz * (pz + 1e-9).log()).sum(-1, keepdim=True)
+                    gain = 1.0 + rb * ent / math.log(max(2, logits.shape[-1]))
+                rd_full = rd_full * gain.to(rd_full.dtype)
             _sb = getattr(self, "store_boost", 1.0)
             if _sb != 1.0:
                 # 49q sparse boost: amplify only memory's top suggestions

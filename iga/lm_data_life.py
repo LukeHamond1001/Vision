@@ -25,6 +25,7 @@ stay separate concerns.
 """
 
 import json
+import re
 import os
 import random
 from dataclasses import dataclass
@@ -543,8 +544,11 @@ def prepare_life(out_dir, budget_tokens, n_lives, seed=0,
                         # presses are annotations, not judgments —
                         # they pass
                         continue
-                    events.append({"pos": t0, "kind": "button",
-                                   **meta})
+                    # law 14: a face that changed MID-utterance lands on
+                    # the token after the words it was felt on (prefix)
+                    pos_b = t0 + (len(enc(meta["prefix"])) if meta.get("prefix") else 0)
+                    events.append({"pos": pos_b, "kind": "button",
+                                   **{k_: v_ for k_, v_ in meta.items() if k_ != "prefix"}})
                     k = str(meta["v"])
                     stats["presses"][k] = \
                         stats["presses"].get(k, 0) + 1
@@ -752,8 +756,15 @@ def prepare_life(out_dir, budget_tokens, n_lives, seed=0,
                     # varied, external, judge-free
                     m_ev = ([("button", {"v": q_lv, "quality": True})]
                             if q_lv and pair_i == len(pairs) - 1 else [])
-                    turns = [(h_text, "human", []),
-                             (m_text, "model", m_ev)]
+                    # law 14 (the face is a sense): inline caretaker
+                    # faces <+1> <+2> <-1> <-2> authored mid-utterance
+                    # leave the text and become button events at the
+                    # word where the face changed. The child's own face
+                    # <me±> stays in the text — those are its words.
+                    h_text, h_ev = _faces_out(h_text, press_in_stream)
+                    m_text, m_ev2 = _faces_out(m_text, press_in_stream)
+                    turns = [(h_text, "human", h_ev),
+                             (m_text, "model", m_ev2 + m_ev)]
                     if press:
                         tokp = f"<+{press}>" if press_in_stream else None
                         turns.append((tokp, "human",
@@ -964,6 +975,29 @@ def simple_only(src, max_words=80):
             if all(len(t.split()) <= max_words for t in turns):
                 yield turns
     return gen()
+
+
+_FACE_RE = re.compile(r"\s*<([+-])([12])>\s*")
+
+
+def _faces_out(text, press_in_stream):
+    """strip inline caretaker faces from authored text; when the grade
+    is a sense (press_in_stream False) return them as button events
+    positioned by the text prefix they were felt on. When faces stay in
+    the stream, the text is returned untouched (they are tokens)."""
+    if press_in_stream or not text or "<" not in text:
+        return text, []
+    out, evs, pos = [], [], 0
+    for m in _FACE_RE.finditer(text):
+        out.append(text[pos:m.start()])
+        prefix = "".join(out).rstrip()
+        v = int(m.group(2)) * (1 if m.group(1) == "+" else -1)
+        evs.append(("button", {"v": v, "attr": False, "prefix": prefix}))
+        out.append(" ")
+        pos = m.end()
+    out.append(text[pos:])
+    clean = re.sub(r"\s+", " ", "".join(out)).strip()
+    return clean, evs
 
 
 def lives_source(path, skip=0):

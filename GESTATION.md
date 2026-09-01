@@ -89,6 +89,42 @@ are authored to obey them:
     so today the child conveys its feeling through the value heads'
     reading (measured, not chosen), shown under each word it says.
 
+14. **The face is a sense, not a word** — the caretaker's expression
+    reaches the body as a press LEVEL on the next token (`press_levels`,
+    the reward slot and the value heads), never as a token the language
+    model must speak around. Measured on the 297M body raised with
+    press tokens in the stream: a felt token mid-sentence derailed a
+    correct answer five times out of five, and "press → social reply"
+    pattern-matched into greetings. The v17 diet is built with
+    `--no-press-tokens` (events only); the serve delivers every face
+    change as an event (`--felt-as event`); the record of the day
+    still holds the press where it happened for the night's value
+    learning.
+
+15. **Its own face, by choice** — the next body's vocabulary carries
+    `<me+1> <me+2> <me-1> <me-2>` (`data/ship_tok_v17.json`), the
+    child's expression back: a rising `<me+1>` as it echoes a lesson it
+    is sure of, `<me+2>` when a hard recall lands, `<me-1>` when it
+    does not know. They are its words (in the stream, sampled like
+    words, never banned), not the caretaker's presses; the serve shows
+    them as its face and never prints them.
+
+16. **A read that can steer** — the hippocampus read is gated by the
+    trunk's own uncertainty: `logits += read · (1 + β · H(trunk))`
+    (`read_beta`; 0 is exactly the trained body). Measured on the 297M
+    body: the store votes ~2 logits and loses to a confident trunk
+    every time, so one-shot recall never happens the same day; the gate
+    lets it speak louder exactly when the trunk does not know.
+
+Live-body laws that arrived with them (in `scripts/organism.py`, all
+disclosed numbers): every wake dose rehearses one old memory beside
+the new one (no school pass needed to hold the router); the dose
+follows reward SURPRISE (the face minus what the value heads
+expected), not the raw face; mood halves in ten quiet minutes; the
+conscience recalibrates with mismatched question/answer negatives;
+a smile the lesson was said with is not the reply's reward; the night
+keeps and dreams what moved it most in its own currency.
+
 ## Pipeline
 
 ```

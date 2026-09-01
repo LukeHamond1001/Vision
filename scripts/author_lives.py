@@ -50,6 +50,7 @@ UNKNOWNS = [    # honest-ignorance probes, every question FORM (law 6)
     "which stone is the hardest", "what does a magnet pull",
 ]
 IDK = "I do not know that yet, but you could teach me."
+IDK_ME = "I do not know that yet, <me-1> but you could teach me."   # law 15: its own face
 GREET_H = ["hello little one.", "good morning.", "hi again.", "hello."]
 GREET_M = ["Hi! It is nice to talk with you.", "Good morning! I am awake and ready."]
 WARMTH = ["you learned that so well today.", "i am proud of how you listened.",
@@ -71,13 +72,21 @@ def face(text, rng, kind):
     (<+1> early, <+2> as it lands); 'wrong' — a frown falling as the
     error becomes audible (<-1> after the first words); 'lesson' — the
     caretaker's own stress, a <+1> held over the core of the lesson.
-    Rates leave many utterances under a still face."""
+    Rates leave many utterances under a still face.
+    kind 'me' (law 15): the CHILD's own face — its expression back,
+    by choice — tokens <me+1> <me+2> <me-1> <me-2> in its own turns:
+    a rising <me+1> as it echoes a lesson it is sure of, <me+2> when a
+    hard recall lands, <me-1> when it does not know."""
     w = text.split()
     if len(w) < 3:
         return text
-    p = {"right": 0.7, "wrong": 0.8, "lesson": 0.5}[kind]
+    p = {"right": 0.7, "wrong": 0.8, "lesson": 0.5, "me": 0.6}[kind]
     if rng.random() > p:
         return text
+    if kind == "me":
+        a = max(1, int(len(w) * 0.5))
+        w.insert(a, "<me+1>" if rng.random() < 0.7 else "<me+2>")
+        return " ".join(w)
     if kind == "right":
         a = max(1, int(len(w) * 0.35))
         b = max(a + 1, int(len(w) * 0.8))
@@ -100,10 +109,10 @@ def life(rng):
     t = []
     t += [rng.choice(GREET_H), rng.choice(GREET_M)]
     # honest ignorance BEFORE the lesson (law 6): asked, not known
-    t += ["tell me, " + f1[0] + "?", IDK]
+    t += ["tell me, " + f1[0] + "?", IDK_ME if rng.random() < 0.6 else IDK]
     # the lesson, its grammar (law 1); echo once, never drilled (law 2)
     t += [face(f1[1], rng, "lesson"),
-          face("I will remember. " + f1[1], rng, "right")]
+          face(face("I will remember. " + f1[1], rng, "right"), rng, "me")]
     # a press with a readable reason (law 8)
     t += ["that is exactly right. " + PRESS_GOOD, "Thank you!"]
     # asking earns the second lesson (law 7)
@@ -125,7 +134,7 @@ def life(rng):
     # THE NIGHT: replay each lesson once, spaced (laws 2, 3)
     t += ["<night>", f1[1] + " " + f2[1]]
     # morning recall, both facts, then the day ends
-    t += ["good morning. " + f1[0] + "?", face(f1[1], rng, "right")]
+    t += ["good morning. " + f1[0] + "?", face(face(f1[1], rng, "right"), rng, "me")]
     t += [f2[0] + "?", face(f2[1], rng, "right") + " " + PRESS_GOOD]
     return t
 

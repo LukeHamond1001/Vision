@@ -39,14 +39,23 @@ class Organism:
         self.dev = a.dev if (a.dev != "mps" or torch.backends.mps.is_available()) else "cpu"
         self.m, state = load_scan(a.ckpt, self.tok, self.dev)
         self.state_meta = state
+        self._grow_vocab(self.tok.get_vocab_size())
         t = self.tok.token_to_id
         self.eh, self.em, self.sil = t("<eot_human>"), t("<eot_model>"), t("<pad>")
         self.press_ids = {s: t(s) for s in ("<+1>", "<+2>", "<-1>", "<-2>")}
+        # ITS OWN FACE (law 15, a body raised with them): <me+1> <me+2>
+        # <me-1> <me-2> are its expression back, by choice — sampled
+        # like words, shown as its face, never printed as text
+        self.me_ids = {t(s): lv for s, lv in
+                       (("<me+1>", 1), ("<me+2>", 2), ("<me-1>", -1), ("<me-2>", -2))
+                       if t(s) is not None}
         if hasattr(self.m, "set_reward_tokens"):
             self.m.set_reward_tokens({self.press_ids[s]: l for s, l in
                                       (("<+1>", 1), ("<+2>", 2), ("<-1>", 3), ("<-2>", 4))})
         if hasattr(self.m, "set_eot_ids"):
             self.m.set_eot_ids(self.eh, self.em)
+        if hasattr(self.m, "read_beta"):
+            self.m.read_beta = float(getattr(a, "store_read_beta", 0.0) or 0.0)
         self.m = self.m.eval()
         src = state.get("st_live") or state.get("st")
         self.st = _to_dev(src if state.get("st_live") else _lane0(src), self.dev) \
@@ -159,7 +168,7 @@ class Organism:
                     torch.tensor([ids[i:i + 64]], device=self.dev), self.st)
         return lg
 
-    def feed_ce(self, ids, skip=None):
+    def feed_ce(self, ids, skip=None, ctx=None):
         """feed through the live state AND read the surprise: mean CE of
         ids[1:] under the stream — the serve-level NE signal (the same
         law the store's write_surprise gate uses, applied at serve).
@@ -167,11 +176,21 @@ class Organism:
         human placed inside their own utterance — stress, not words)."""
         self.day_buf.extend(ids)
         tot, n, mx, lg = 0.0, 0, 0.0, None
+        pl0 = None
+        if ctx is not None and ctx.get("pending_level"):
+            pl0 = ctx["pending_level"]
+            ctx["pending_level"] = 0
         with torch.no_grad():
             for i in range(0, len(ids), 64):
                 chunk = ids[i:i + 64]
+                pl = None
+                if i == 0 and pl0:
+                    pl = torch.zeros(1, len(chunk), dtype=torch.long,
+                                     device=self.dev)
+                    pl[0, 0] = pl0
                 lg, self.st, _ = self.m(
-                    torch.tensor([chunk], device=self.dev), self.st)
+                    torch.tensor([chunk], device=self.dev), self.st,
+                    press_levels=pl)
                 if len(chunk) > 1:
                     ce = F.cross_entropy(
                         lg[0, :-1].float(),
@@ -226,7 +245,9 @@ class Organism:
                 ce = F.cross_entropy(lg[0], y[0, i:i + 64], reduction="none")
                 p = (ce * w[0, i:i + 64]).sum()
                 tot = p if tot is None else tot + p
-            (tot / w.sum().clamp_min(1.0)).backward()
+            loss_s = tot / w.sum().clamp_min(1.0)
+            rl = self._rehearsal_loss()
+            (loss_s + rl if rl is not None else loss_s).backward()
             self.opt.step()
             self.n_steps += 1
         self.m.eval()
@@ -256,8 +277,20 @@ class Organism:
         def vec(t_):
             ids = content_ids(self.tok, t_) or self.tok.encode(t_).ids
             return _F.normalize(E[ids].mean(0), dim=-1)
-        X = torch.stack([vec(e["q"] + " " + e["a"]) for e in real])
-        Y = torch.tensor([1.0 if e["mag"] > 0 else 0.0 for e in real])
+        X = [vec(e["q"] + " " + e["a"]) for e in real]
+        Y = [1.0 if e["mag"] > 0 else 0.0 for e in real]
+        # mismatched pairs are wrong answers: a fluent answer to the
+        # WRONG question must not pass ("A zebra has stripes" scored
+        # +40 for a zephyr question). One derangement of the positives.
+        pos = [e for e in real if e["mag"] > 0]
+        if len(pos) >= 2:
+            for i_, e in enumerate(pos):
+                other = pos[(i_ + 1) % len(pos)]
+                if other["a"] != e["a"]:
+                    X.append(vec(e["q"] + " " + other["a"]))
+                    Y.append(0.0)
+        X = torch.stack(X)
+        Y = torch.tensor(Y)
         opt = torch.optim.Adam(self.critic.parameters(), lr=1e-3)
         self.critic.train()
         for _ in range(150):
@@ -334,6 +367,23 @@ class Organism:
             self.turn_ctx = t
         return t
 
+    def _felt_forward(self, ids, ctx=None):
+        """run tokens through the live state; if a face change is
+        pending (felt-as-event), it rides the first token as a press
+        level — the grade as a SENSE (the reward slot and the value
+        heads), never a word in the language stream."""
+        pl = None
+        if ctx is not None and ctx.get("pending_level"):
+            code = ctx["pending_level"]
+            pl = torch.zeros(1, len(ids), dtype=torch.long, device=self.dev)
+            pl[0, 0] = code
+            ctx["pending_level"] = 0
+        with torch.no_grad():
+            lg, self.st, _ = self.m(torch.tensor([ids], device=self.dev),
+                                    self.st, press_levels=pl)
+        self.day_buf.extend(ids)
+        return lg
+
     def _feel_change(self, ctx, lvl, where):
         """THE FACE IS ALWAYS OPEN. A change of the human's expression
         is felt as a token wherever it happens — between the human's
@@ -346,10 +396,21 @@ class Organism:
                 not (abs(lvl) > abs(prev) or (lvl > 0) != (prev > 0)):
             return None
         pid = self._press_tok(lvl)
-        with torch.no_grad():
-            lg, self.st, _ = self.m(torch.tensor([[pid]], device=self.dev),
-                                    self.st)
-        self.day_buf.append(pid)
+        if getattr(self.a, "felt_as", "event") == "event":
+            # FELT AS A SENSE: the change is delivered on the next token
+            # as a press level (the reward slot), not as a word the
+            # language model must speak around. The token is still
+            # written to the day's record so the night's value learning
+            # sees the press where it happened.
+            ctx["pending_level"] = {1: 1, 2: 2, -1: 3, -2: 4}[
+                max(-2, min(2, lvl))]
+            self.day_buf.append(pid)
+            lg = None
+        else:
+            with torch.no_grad():
+                lg, self.st, _ = self.m(
+                    torch.tensor([[pid]], device=self.dev), self.st)
+            self.day_buf.append(pid)
         self.mood = self.mood * 0.9 + lvl
         self.n_human_presses += 1
         self._today["presses"] += lvl
@@ -364,14 +425,17 @@ class Organism:
         said is said: there is no message, only the turn."""
         t = self._turn()
         self.last_user_t = time.time()
+        self._decay_mood()
         try:
             lvl = int(max(-6.0, min(6.0, float(expr or 0.0))))
         except Exception:
             lvl = 0
         felt = None
+        prev_lvl = t["level"]
         lg_f = self._feel_change(t, lvl, "(while you spoke)")
         if lg_f is not None:
             t["lg"] = lg_f
+        if t["level"] == lvl and lvl != prev_lvl and (lg_f is not None or t.get("pending_level")):
             t["felt_ev"].append((len(t["text"]), lvl))
             felt = lvl
         fragment = fragment or ""
@@ -400,7 +464,7 @@ class Organism:
                         t["tot"] += ce0
                         t["n"] += 1
                         t["mx"] = max(t["mx"], ce0)
-                lg, s_, mx_ = self.feed_ce(ids)
+                lg, s_, mx_ = self.feed_ce(ids, ctx=t)
                 t["tot"] += s_ * max(0, len(ids) - 1)
                 t["n"] += max(0, len(ids) - 1)
                 t["mx"] = max(t["mx"], mx_)
@@ -458,7 +522,7 @@ class Organism:
                     t["tot"] += ce0
                     t["n"] += 1
                     t["mx"] = max(t["mx"], ce0)
-            lg_t, s_, mx_ = self.feed_ce(tail_ids)
+            lg_t, s_, mx_ = self.feed_ce(tail_ids, ctx=t)
             t["tot"] += s_ * max(0, len(tail_ids) - 1)
             t["n"] += max(0, len(tail_ids) - 1)
             t["mx"] = max(t["mx"], mx_)
@@ -480,9 +544,7 @@ class Organism:
                 t["tot"] += ce_e
                 t["n"] += 1
                 t["mx"] = max(t["mx"], ce_e)
-            lg, self.st, _ = self.m(
-                torch.tensor([[self.eh]], device=self.dev), self.st)
-        self.day_buf.append(self.eh)
+        lg = self._felt_forward([self.eh], ctx=t)
         surp = t["tot"] / max(1, t["n"])
         v_prev = t["v_prev"]
         if hasattr(self.m, "read_value"):
@@ -519,11 +581,18 @@ class Organism:
         ev = []
         with torch.no_grad():
             if g["x"] is not None:
-                g["lg"], self.st, _ = self.m(g["x"], self.st)
+                pl = None
+                if g.get("pending_level"):
+                    pl = torch.zeros(1, 1, dtype=torch.long, device=self.dev)
+                    pl[0, 0] = g["pending_level"]
+                    g["pending_level"] = 0
+                g["lg"], self.st, _ = self.m(g["x"], self.st, press_levels=pl)
+            prev_lvl = g["level"]
             lg_f = self._feel_change(g, lvl, "(while it spoke)")
             r_felt = 0
             if lg_f is not None:
                 g["lg"] = lg_f
+            if g["level"] == lvl and lvl != prev_lvl and (lg_f is not None or g.get("pending_level")):
                 g["felt_ev"].append((len(g["out"]), lvl))
                 r_felt = lvl
                 ev.append({"felt": lvl, "mood": round(self.mood, 2)})
@@ -562,6 +631,10 @@ class Organism:
             if nxt == self.sil:
                 g["pauses"] += 1
                 ev.append(dict(base_ev, pause=True))
+            elif nxt in self.me_ids:
+                # its own face, conveyed back by choice
+                g.setdefault("me_face", []).append((len(g["out"]) - 1, self.me_ids[nxt]))
+                ev.append(dict(base_ev, me=self.me_ids[nxt]))
             elif nxt != self.em:
                 ev.append(dict(base_ev, tok=self.tok.decode([nxt])))
             g["x"] = torch.tensor([[nxt]], device=self.dev)
@@ -612,7 +685,8 @@ class Organism:
             self.day_buf.append(self.em)
         press_vals = {v_: k_ for k_, v_ in self.press_ids.items()}
         keep_i = [i_ for i_, t_ in enumerate(out)
-                  if t_ not in (self.sil, self.em) and t_ not in press_vals]
+                  if t_ not in (self.sil, self.em) and t_ not in press_vals
+                  and t_ not in self.me_ids]
         kid = [out[i_] for i_ in keep_i]
         reply = self.tok.decode(kid).strip()
         trace = [{"t": self._tok_word(n_), "p": round(p_, 3),
@@ -668,8 +742,10 @@ class Organism:
             # a surprise, it is kept (muted words never learn); said
             # entirely into a frown, it is let go
             if pos_f:
-                mp = sum(r_ for _, _, r_ in pos_f) / len(pos_f)
-                k_dose = min(int(round(mp)), 6) or 1
+                ft = g.get("ftone") or []
+                surp_f = [max(0.0, r_ - ((ft[i_] or 0.0) if i_ < len(ft) else 0.0))
+                          for i_, (_, _, r_) in enumerate(frags) if r_ > 0]
+                k_dose = min(int(round(sum(surp_f) / len(surp_f))), 6) or 1
             else:
                 k_dose = 2 if surp_pk > pk_thr + 0.5 else 1
             self.absorb_stmt(text, k=k_dose, spans=spans_f)
@@ -707,17 +783,29 @@ class Organism:
                       if t_["r"] > 0 and t_["e"] > t_["s"]]
             neg_sp = [(t_["s"], t_["e"]) for t_ in tones
                       if t_["r"] <= -2 and t_["e"] > t_["s"]]
+            # REWARD SURPRISE, NOT RAW REWARD: the dose follows the
+            # prediction error the value heads already compute — a smile
+            # it expected teaches little, a smile it did not teaches its
+            # full size; a frown where it expected praise cuts deeper.
+            # v is its expectation at that word, in press units.
+            pos_surp = [max(0.0, t_["r"] - (t_["v"] or 0.0))
+                        for t_ in tones if t_["r"] > 0 and t_["e"] > t_["s"]]
+            neg_surp = [max(0.0, -t_["r"] + max(0.0, t_["v"] or 0.0))
+                        for t_ in tones if t_["r"] <= -2 and t_["e"] > t_["s"]]
             k_pos = k_neg = 0
+            sp_mean = sn_mean = 0.0
             if pos_sp:
-                mp = sum(r_ for r_ in rews if r_ > 0) / len(pos_sp)
-                k_pos = min(int(round(mp)), 6) or 1
-                if self.fact_ce(text, reply) < 0.3:
+                sp_mean = sum(pos_surp) / len(pos_surp)
+                k_pos = min(int(round(sp_mean)), 6)
+                if k_pos and self.fact_ce(text, reply) < 0.3:
                     k_pos = 1          # satiation on the mastered
-                self.absorb(text, reply, k_pos, span=pos_sp)
+                if k_pos:
+                    self.absorb(text, reply, k_pos, span=pos_sp)
             if neg_sp:
-                mn = sum(-r_ for r_ in rews if r_ <= -2) / len(neg_sp)
-                k_neg = max(1, min(int(round(mn)) - 1, 3))
-                self._unlearn_reply(reply, k_neg, span=neg_sp)
+                sn_mean = sum(neg_surp) / len(neg_surp)
+                k_neg = max(0, min(int(round(sn_mean)) - 1, 3))
+                if k_neg:
+                    self._unlearn_reply(reply, k_neg, span=neg_sp)
             nz = [r_ for r_ in rews if r_ != 0]
             mean_r = sum(nz) / len(nz)
             self.press_log.append({"q": text[:80], "a": reply[:80],
@@ -726,6 +814,7 @@ class Organism:
             expression = {"learned_steps": k_pos,
                           "unlearned_steps": k_neg,
                           "mean": round(mean_r, 2),
+                          "surprise": round(sp_mean - sn_mean, 2),
                           "words_in": len(pos_sp),
                           "words_out": len(neg_sp)}
         # THE OPEN DOOR v2 (50c): no oracle, no matcher — its OWN
@@ -793,6 +882,7 @@ class Organism:
                 "trace": trace,
                 "tones": tones or None,
                 "felt_at": felt_at,
+                "its_face": [{"at": a_, "mag": m_} for a_, m_ in (g.get("me_face") or [])],
                 "expression": expression,
                 "you_text": text,
                 "you_marks": [{"s": s_, "e": e_, "r": r_, "v": v_}
@@ -921,6 +1011,7 @@ class Organism:
         if mag is None:
             mag = float(level.replace("+", ""))
         mag = max(-6.0, min(6.0, float(mag)))
+        self._decay_mood()
         tgt = self.last_q
         sp_rng = None
         if span and tgt and tgt[1]:
@@ -942,21 +1033,30 @@ class Organism:
             self.press_log = self.press_log[-500:]
         info = {"felt": tokname.strip("<>"), "mag": mag,
                 "mood": round(self.mood, 2)}
+        # the dose follows reward SURPRISE: what it expected (the value
+        # heads' reading, press units) is subtracted from the press
+        v_exp = 0.0
+        if hasattr(self.m, "read_value"):
+            rv = self.m.read_value(self.st)
+            v_exp = sum(rv.values()) / max(len(rv), 1) if rv else 0.0
+        info["expected"] = round(v_exp, 2)
         if tgt and mag > 0 and tgt[1]:
             q, ans = tgt
-            k = min(int(round(abs(mag))), 6) or 1
+            k = min(int(round(max(0.0, mag - v_exp))), 6)
             # plasticity satiates on the already-mastered: praise on a
             # strong fact is fully FELT, but barely re-absorbed — no
             # amount of loving presses turns one gold into a predator
-            if self.fact_ce(q, ans) < 0.3:
+            if k and self.fact_ce(q, ans) < 0.3:
                 k = 1
-            loss = self.absorb(q, ans, k, span=sp_rng)
-            info["absorbed_steps"] = k
-            info["loss"] = round(loss, 3)
+            if k:
+                loss = self.absorb(q, ans, k, span=sp_rng)
+                info["absorbed_steps"] = k
+                info["loss"] = round(loss, 3)
         elif tgt and mag <= -2 and tgt[1]:
-            k = min(int(round(abs(mag))) - 1, 3)
-            self._unlearn_reply(tgt[1], k, span=sp_rng)
-            info["corrected_steps"] = k
+            k = max(0, min(int(round(-mag + max(0.0, v_exp))) - 1, 3))
+            if k:
+                self._unlearn_reply(tgt[1], k, span=sp_rng)
+                info["corrected_steps"] = k
         if sp_rng:
             info["span"] = tgt[1][sp_rng[0]:sp_rng[1]].strip()[:60]
             info["span_at"] = [sp_rng[0], sp_rng[1]]
@@ -1008,10 +1108,42 @@ class Organism:
                     ul = -torch.log1p(-p_)
                     loss = ul if loss is None else loss + ul
             if loss is not None:
-                (0.3 * loss).backward()
+                # unlearning rehearses too: a frown on a wrong reply must
+                # not erode the shared words every fact is made of
+                rl = self._rehearsal_loss()
+                (0.3 * loss + (rl if rl is not None else 0.0)).backward()
                 self.opt.step()
             self.n_steps += 1
         self.m.eval()
+
+    REHEARSE_W = 0.5   # genome: the weight of the old memory rehearsed beside each wake dose
+
+    def _rehearsal_loss(self, avoid_q=None):
+        """one old memory replayed beside a wake dose — the quiet-wake
+        replay a brain does instead of needing a school pass. A random
+        known fact (never the one being dosed), in the serve's format,
+        from a fresh state. None when it knows nothing else yet."""
+        pool = [(q_, a_) for q_, a_ in self.facts if q_ != avoid_q]
+        if not pool:
+            return None
+        q_, a_ = pool[int(torch.randint(len(pool), (1,), generator=self.gen))]
+        tok = self.tok
+        ids = (tok.encode(q_).ids + [self.eh]
+               + tok.encode(" " + a_).ids + [self.em])
+        ids += [self.sil] * ((64 - len(ids) % 64) % 64)
+        x = torch.tensor([ids[:-1]], device=self.dev)
+        y = torch.tensor([ids[1:]], device=self.dev)
+        a0 = len(tok.encode(q_).ids) + 1
+        w = torch.zeros_like(y, dtype=torch.float)
+        w[0, a0 - 1:a0 - 1 + len(tok.encode(" " + a_).ids) + 1] = 1.0
+        st_r = self.m.init_state(1, self.dev)
+        tot = None
+        for i in range(0, x.shape[1], 64):
+            lg, st_r, _ = self.m(x[:, i:i + 64], st_r)
+            ce = F.cross_entropy(lg[0], y[0, i:i + 64], reduction="none")
+            pc = (ce * w[0, i:i + 64]).sum()
+            tot = pc if tot is None else tot + pc
+        return self.REHEARSE_W * tot / w.sum().clamp_min(1.0)
 
     def absorb(self, q, ans, k, span=None):
         tok = self.tok
@@ -1047,7 +1179,10 @@ class Organism:
                 pc = (ce * w[0, i:i + 64]).sum()
                 tot = pc if tot is None else tot + pc
             loss = tot / w.sum().clamp_min(1.0)
-            loss.backward()
+            # INTERLEAVED REPLAY: an old memory learns beside the new one,
+            # so a serial dose cannot overwrite the shared routing
+            rl = self._rehearsal_loss(avoid_q=q)
+            (loss + rl if rl is not None else loss).backward()
             self.opt.step()
             self.n_steps += 1
         self.m.eval()
@@ -1069,7 +1204,46 @@ class Organism:
         return float(F.cross_entropy(v[:L - 1].cpu(),
                                      torch.tensor(ids[1:L])))
 
+    MOOD_HALF_LIFE_S = 600.0   # genome: a feeling halves in ten quiet minutes
+
+    def _decay_mood(self):
+        """mood clears with time, not only with events: dopamine is
+        cleared in minutes. Called wherever mood is read or moved."""
+        now = time.time()
+        last = getattr(self, "_mood_t", None)
+        if last is not None and now > last:
+            self.mood *= 0.5 ** ((now - last) / self.MOOD_HALF_LIFE_S)
+        self._mood_t = now
+
+    def _grow_vocab(self, V_new):
+        """a tokenizer with more words than the body was born with (law
+        15: its own face tokens) — the tied embedding/head matrix and
+        the press LUT grow by the new rows, initialised small so the new
+        tokens are silent until the diet teaches them."""
+        E = self.m.embed.weight
+        V0, d = E.shape
+        if V_new <= V0:
+            return
+        import torch.nn as _nn
+        with torch.no_grad():
+            newE = torch.empty(V_new, d, device=E.device, dtype=E.dtype)
+            newE[:V0] = E
+            _nn.init.normal_(newE[V0:], std=float(E[:V0].std()) * 0.5)
+        emb = _nn.Embedding(V_new, d).to(E.device, E.dtype)
+        emb.weight = _nn.Parameter(newE)
+        self.m.embed = emb
+        if hasattr(self.m, "head"):
+            self.m.head.weight = self.m.embed.weight        # keep the tie
+        if hasattr(self.m, "reward_lut"):
+            lut = torch.zeros(V_new, dtype=self.m.reward_lut.dtype,
+                              device=self.m.reward_lut.device)
+            lut[:V0] = self.m.reward_lut
+            self.m.reward_lut = lut
+        print("[organism] vocabulary grew %d -> %d (its own face tokens)"
+              % (V0, V_new), file=sys.stderr)
+
     def _drives(self):
+        self._decay_mood()
         now = time.time()
         return {"fatigue": round(self.fatigue, 1),
                 "bored_s": int(now - self.last_novel_t),
@@ -2105,6 +2279,13 @@ def main():
     ap.add_argument("ckpt"); ap.add_argument("tok")
     ap.add_argument("--dev", default="mps")
     ap.add_argument("--port", type=int, default=8016)
+    ap.add_argument("--felt-as", default="event", choices=["event", "token"],
+                    help="how a face change reaches it: as a press LEVEL riding "
+                         "the next token (the grade as a sense) or as a press "
+                         "TOKEN in the language stream")
+    ap.add_argument("--store-read-beta", type=float, default=0.0,
+                    help="hippocampus read gain by the trunk's uncertainty: "
+                         "logits += read * (1 + beta * entropy); 0 = as trained")
     ap.add_argument("--temp", type=float, default=0.6)
     ap.add_argument("--max-new", type=int, default=80)
     ap.add_argument("--live-lr", type=float, default=1e-5)
