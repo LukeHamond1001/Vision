@@ -60,10 +60,10 @@ pip install -e .          # torch, tokenizers, numpy
 # put organism_life.pt and ship_tok.json in data/, then:
 python3 scripts/organism.py data/organism_life.pt data/ship_tok.json \
     --dev mps --temp 0.05 --save data/organism_life.pt
-# open http://localhost:8016 — talk to it; the number bottom-right is
-# your expression (−6…6): it is felt when it changes while it speaks,
-# and the face each word was spoken into is that word's reward;
-# sleep it at night
+# open http://localhost:8016 — talk to it. The number beside the text
+# box is your expression (−6…6), felt with what you say. Its reply
+# comes one token per Enter under your current number; the face each
+# word was spoken into is that word's reward. Sleep it at night.
 ```
 
 First reply after launch takes a few minutes (the model compiles);

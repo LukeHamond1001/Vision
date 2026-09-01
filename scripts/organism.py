@@ -434,6 +434,13 @@ class Organism:
             if nxt == self.em or n_c + 1 >= self.a.max_new \
                     or len(g["out"]) >= self.a.max_new + 8:
                 g["done"] = True
+            # the stutter reflex (a disclosed genome number, like the
+            # six-silence rule): a word said four times in a row ends
+            # the turn. A degenerate loop is not an utterance.
+            if len(g["out"]) >= 4 and nxt != self.sil \
+                    and len(set(g["out"][-4:])) == 1:
+                g["done"] = True
+                g["ended_by"] = "stutter"
         if g["done"]:
             ev.append({"done": self._chat_finish()})
         return {"events": ev}
@@ -626,6 +633,7 @@ class Organism:
                 "tones": tones or None,
                 "felt_at": felt_at,
                 "expression": expression,
+                "ended_by": g.get("ended_by", "eou"),
                 "moved": [{"part": k, "delta": round(d, 3)} for k, d in moved],
                 "hpc": hpc}
 
@@ -1107,6 +1115,7 @@ class Organism:
         pairs, then a fresh wake."""
         if len(self.day_buf) < 65:
             return {"error": "not enough lived tokens to dream yet"}
+        self.gen_ctx = None          # an open turn is abandoned
         # THE PURSUIT (49uu): a self-adopted multi-night goal with
         # self-earned installments — its card picks the goal, its
         # measured progress pays the installments, completion earns a
@@ -1611,6 +1620,7 @@ class Organism:
     def reset(self):
         """a fresh wake: the day's working state clears, the life
         (facts, study, ledger) stays."""
+        self.gen_ctx = None          # an open turn is abandoned
         src = self.state_meta.get("st_live") or self.state_meta.get("st")
         self.st = _to_dev(src if self.state_meta.get("st_live")
                           else _lane0(src), self.dev) \
@@ -1671,7 +1681,7 @@ body{font:15px/1.5 -apple-system,'Segoe UI',sans-serif;margin:0;display:flex;fle
 .blm{border-bottom:2px solid var(--warn)}
 .upg{border-bottom:3px double var(--good)}
 .upb{border-bottom:3px double var(--warn)}
-#bar{display:flex;gap:10px;padding:14px 28px 8px;background:var(--paper);max-width:736px;margin:0 auto;width:100%}
+#bar{display:flex;gap:10px;align-items:center;padding:14px 28px 8px;background:var(--paper);max-width:736px;margin:0 auto;width:100%}
 #msg{flex:1;background:var(--panel);border:1px solid var(--line);color:var(--ink);padding:13px 16px;border-radius:14px;font-size:15px;outline:none;transition:border .15s,box-shadow .15s}
 #msg:focus{border-color:var(--acc);box-shadow:0 0 0 3px rgba(47,125,92,.10)}
 button{background:var(--ink);color:var(--paper);border:0;border-radius:12px;padding:11px 18px;cursor:pointer;font-size:14px;transition:opacity .15s}
@@ -1682,7 +1692,8 @@ button.quiet{background:transparent;color:var(--mut);border:1px solid var(--line
 button.quiet:hover{opacity:1;border-color:var(--mut);color:var(--ink)}
 #face{margin-left:auto;display:flex;align-items:center;gap:8px}
 .fl{font-size:11px;color:#b3aca0}
-#expr{width:56px;font-family:menlo,monospace;font-size:13px;font-weight:600;text-align:center;border:1px solid var(--line);border-radius:8px;padding:4px 2px;background:var(--panel);color:var(--ink);outline:none}
+#expr{width:60px;height:46px;font-family:menlo,monospace;font-size:15px;font-weight:600;text-align:center;border:1px solid var(--line);border-radius:14px;padding:4px 2px;background:var(--panel);color:var(--ink);outline:none}
+#msg:disabled{opacity:.45}
 #expr:focus{border-color:var(--acc)}
 #expr.good{color:var(--good)}#expr.bad{color:var(--warn)}
 #expr:disabled{opacity:.35}
@@ -1695,6 +1706,7 @@ button.quiet:hover{opacity:1;border-color:var(--mut);color:var(--ink)}
 </style>
 <div id=log></div>
 <div id=bar>
+ <span class=fl>you</span><input id=expr type=number min=-6 max=6 step=1 value=0 title="your expression, −6…6 — felt with what you say, and between its words">
  <input id=msg placeholder="talk to it..." autofocus onkeydown="if(event.key==='Enter')send()">
  <button id=sendbtn onclick=send() title="send">&#8593;</button>
 </div>
@@ -1702,13 +1714,13 @@ button.quiet:hover{opacity:1;border-color:var(--mut);color:var(--ink)}
  <button class=quiet onclick=sleepy()>sleep</button>
  <button class=quiet onclick=saveLife()>save</button>
  <button class=quiet onclick="fetch('/reset',{method:'POST'}).then(()=>{log.innerHTML='';add('sys','~ fresh wake ~');pulseMood()})">reset</button>
- <div id=face><span class=fl>you</span><input id=expr type=number min=-6 max=6 step=1 value=0 title="your expression, −6…6 — it feels the changes"><span class=fl>it</span><span id=mood>0.0</span></div>
+ <div id=face><span class=fl>it</span><span id=mood>0.0</span></div>
 </div>
 <script>
 const log=document.getElementById('log'),msg=document.getElementById('msg'),
       expr=document.getElementById('expr'),moodEl=document.getElementById('mood');
 let busy=false,sleeping=false;
-function lockup(m){sleeping=m;document.getElementById('sendbtn').disabled=m;expr.disabled=m}
+function lockup(m){sleeping=m;document.getElementById('sendbtn').disabled=m;expr.disabled=m;msg.disabled=m}
 function add(cls,txt){const d=document.createElement('div');d.className=cls;d.textContent=txt;log.appendChild(d);log.scrollTop=1e9;return d}
 function toneBg(v){return (v>0?'rgba(31,122,70,':'rgba(189,74,36,')+Math.min(.28,Math.abs(v)*.14).toFixed(3)+')'}
 function setMood(v){if(v==null)return;
@@ -1747,43 +1759,58 @@ function paintReply(div,r){
   (sp.blamed||[]).forEach(([s,e])=>marks.push({s:s,e:e,cls:'blm',title:tt}))}
  (r.felt_at||[]).forEach(f=>marks.push({s:f.s,e:f.s,pt:true,cls:'lpm '+(f.mag>0?'good':'bad'),txt:(f.mag>0?'+':'−')+Math.abs(f.mag)}));
  seg(div,r.reply,marks)}
+// TURNS. Yours: type, Enter. Its: the first token comes at once; then
+// every Enter feeds exactly one more token under your current number,
+// until its end-of-utterance — then nothing else comes. While it is
+// its turn the text box and the care buttons are locked.
+let turn={bd:null,th:null,stepping:false};
+function itsTurn(on){busy=on;msg.disabled=on;document.getElementById('sendbtn').disabled=on;
+ document.querySelectorAll('button.quiet').forEach(b=>b.disabled=on);
+ if(on)expr.focus();else msg.focus()}
 async function send(){
  const t=msg.value.trim();if(!t)return;
  if(sleeping){add('sys','~ it’s sleeping — wait for morning ~');return}
  if(busy)return;
- busy=true;document.getElementById('sendbtn').disabled=true;
- let bd=null,th=null;
- try{
-  msg.value='';
-  const st=exprVal();
-  const qd=add('you','you: '+t);
-  if(st!==0){const k=document.createElement('span');k.className='lpm '+(st>0?'good':'bad');
-   k.textContent=(st>0?'+':'−')+Math.abs(st);k.title='said with your expression';qd.appendChild(k)}
-  let b;
-  try{b=await fetch('/begin',{method:'POST',body:JSON.stringify({text:t,stress:st})}).then(r=>r.json())}
-  catch(e){add('sys','~ unreachable — is it awake yet? ~');return}
-  if(b.error){add('sys','~ '+b.error+' ~');return}
-  setMood(b.mood);
-  bd=add('bot','');th=add('sys think','· · ·');
-  expr.focus();
-  let fin=null;
-  while(!fin){
-   let r;
-   try{r=await fetch('/step',{method:'POST',body:JSON.stringify({expr:exprVal()})}).then(r=>r.json())}
-   catch(e){add('sys','~ the reply was cut off ~');return}
-   if(r.error){add('sys','~ '+r.error+' ~');return}
-   for(const ev of r.events){
-    if(th){th.remove();th=null}
-    if(ev.tok!=null){const sp=document.createElement('span');sp.textContent=ev.tok;
-     if(ev.v!=null&&Math.abs(ev.v)>=0.05){sp.style.background=toneBg(ev.v);sp.title='felt '+ev.v}
-     bd.appendChild(sp);log.scrollTop=1e9}
-    else if(ev.pause){const sp=document.createElement('span');sp.className='pz';sp.textContent=' ·';bd.appendChild(sp)}
-    else if(ev.felt!=null){const mk=document.createElement('span');mk.className='lpm '+(ev.felt>0?'good':'bad');
-     mk.textContent=(ev.felt>0?'+':'−')+Math.abs(ev.felt);bd.appendChild(mk);setMood(ev.mood)}
-    else if(ev.done)fin=ev.done}}
-  setMood(fin.mood);
-  if(fin.reply)paintReply(bd,fin);else{bd.remove();bd=null;add('sys','~ it said nothing ~')}
- }finally{if(th)th.remove();busy=false;document.getElementById('sendbtn').disabled=false;msg.focus()}}
+ msg.value='';
+ const st=exprVal();
+ const qd=add('you','you: '+t);
+ if(st!==0){const k=document.createElement('span');k.className='lpm '+(st>0?'good':'bad');
+  k.textContent=(st>0?'+':'−')+Math.abs(st);k.title='said with your expression';qd.appendChild(k)}
+ itsTurn(true);
+ let b;
+ try{b=await fetch('/begin',{method:'POST',body:JSON.stringify({text:t,stress:st})}).then(r=>r.json())}
+ catch(e){add('sys','~ unreachable — is it awake yet? ~');itsTurn(false);return}
+ if(b.error){add('sys','~ '+b.error+' ~');itsTurn(false);return}
+ setMood(b.mood);
+ turn.bd=add('bot','');turn.th=add('sys think','· · ·');turn.stepping=false;
+ await step()}
+async function step(){
+ if(!busy||turn.stepping||!turn.bd)return;
+ turn.stepping=true;
+ let r;
+ try{r=await fetch('/step',{method:'POST',body:JSON.stringify({expr:exprVal()})}).then(r=>r.json())}
+ catch(e){add('sys','~ the reply was cut off ~');endTurn(null);return}
+ if(r.error){add('sys','~ '+r.error+' ~');endTurn(null);return}
+ const bd=turn.bd;let fin=null;
+ for(const ev of r.events){
+  if(turn.th){turn.th.remove();turn.th=null}
+  if(ev.tok!=null){const sp=document.createElement('span');sp.textContent=ev.tok;
+   if(ev.v!=null&&Math.abs(ev.v)>=0.05){sp.style.background=toneBg(ev.v);sp.title='felt '+ev.v}
+   bd.appendChild(sp);log.scrollTop=1e9}
+  else if(ev.pause){const sp=document.createElement('span');sp.className='pz';sp.textContent=' ·';bd.appendChild(sp)}
+  else if(ev.felt!=null){const mk=document.createElement('span');mk.className='lpm '+(ev.felt>0?'good':'bad');
+   mk.textContent=(ev.felt>0?'+':'−')+Math.abs(ev.felt);bd.appendChild(mk);setMood(ev.mood)}
+  else if(ev.done)fin=ev.done}
+ turn.stepping=false;
+ if(fin){if(fin.ended_by==='stutter')add('sys','~ it stuttered — its turn ended ~');endTurn(fin)}}
+function endTurn(fin){
+ const bd=turn.bd;
+ if(turn.th){turn.th.remove();turn.th=null}
+ if(fin){setMood(fin.mood);
+  if(fin.reply)paintReply(bd,fin);else{bd.remove();add('sys','~ it said nothing ~')}}
+ turn.bd=null;turn.stepping=false;itsTurn(false)}
+document.addEventListener('keydown',e=>{
+ if(e.key==='Enter'&&busy&&!sleeping){e.preventDefault();step()}});
 async function sleepy(){
  if(sleeping||busy)return;
  lockup(true);
