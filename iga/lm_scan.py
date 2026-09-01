@@ -381,6 +381,21 @@ class ScanLM(nn.Module):
         self.n_fixed = 2 + int(bool(reward_slot))   # token, [reward,] hippocampus
         self.slot = nn.Embedding(self.n_fixed + len(self.units), d)
         self.reward_emb = nn.Embedding(5, d)
+        # LIVE_BODY §1 — the caretaker's face as a CONTINUOUS sense: its
+        # level (tonic) and its change (phasic) enter the trunk input as a
+        # zero-init modulation, never as a word. Zero at birth: exact.
+        self.affect_in = nn.Sequential(nn.Linear(2, max(8, d // 4)), nn.GELU(),
+                                       nn.Linear(max(8, d // 4), d))
+        nn.init.zeros_(self.affect_in[2].weight); nn.init.zeros_(self.affect_in[2].bias)
+        # LIVE_BODY §1 — ITS FACE: a forecast of the caretaker's face for
+        # the word about to be said; its expression, its model of you,
+        # and over a finished sentence its conscience. Zero at birth.
+        self.face_head = nn.Linear(d, 1)
+        nn.init.zeros_(self.face_head.weight); nn.init.zeros_(self.face_head.bias)
+        self._face = None
+        self._face_feat = None
+        self._face_loss = None
+        self.store_slot_gain = 1.0
         nn.init.zeros_(self.reward_emb.weight)            # silent at init
         self.register_buffer("reward_lut", torch.zeros(vocab_size, dtype=torch.long))
         self.register_buffer("reward_val", torch.tensor([0.0, 1.0, 2.0, -1.0, -2.0]))
@@ -863,7 +878,8 @@ class ScanLM(nn.Module):
         return w
 
     # ---------------- forward ----------------
-    def forward(self, tokens, st, scene_starts=None, press_levels=None, day_lanes=None):
+    def forward(self, tokens, st, scene_starts=None, press_levels=None, day_lanes=None,
+                affect=None, face_target=None):
         """press_levels [B, T] long (optional): the press level at each
         position from the stream's button EVENTS (1..4 = +1 +2 -1 -2) —
         the grade as a sense. Combined by max with the token LUT, so a
@@ -879,6 +895,14 @@ class ScanLM(nn.Module):
         ticks = [[] for _ in range(max(N_BANDS, max(self.bands) + 1))]
         wcost = []
         emb = self.embed(tokens) * self.emb_scale        # [B, T, d] (tied: sqrt(d) read)
+        if affect is not None and hasattr(self, "affect_in"):
+            a_ = affect.to(emb.device, emb.dtype).clamp(-6.0, 6.0) / 6.0     # [B, T]
+            prev = st.get("affect_prev")
+            if prev is None or prev.shape[0] != B:
+                prev = a_[:, :1]
+            a_prev = torch.cat([prev.to(a_.dtype), a_[:, :-1]], dim=1)
+            emb = emb + self.affect_in(torch.stack([a_, a_ - a_prev], dim=-1))
+            st["affect_prev"] = a_[:, -1:].detach()
         lev = self.reward_lut[tokens]                    # [B, T] press level per token
         if press_levels is not None:
             lev = torch.maximum(lev, press_levels.to(lev.device, lev.dtype))
@@ -910,7 +934,7 @@ class ScanLM(nn.Module):
         acc_all = torch.stack([st["acc"][u] for u in self.ukeys], dim=1)  # [B, U, d]
         m = self._slots_from(h_all, W_mem)
         rd0 = self._read(st, st["prev_c"], read_ok) if st["chunk"] > 0 else None
-        r_slot = self.store_in(rd0) if rd0 is not None \
+        r_slot = self.store_in(rd0 * getattr(self, "store_slot_gain", 1.0)) if rd0 is not None \
             else torch.zeros(B, self.d, device=dev)
         c_slot = None
         cs, s0s, bundles, tick_log = [], [], [], []
@@ -934,7 +958,7 @@ class ScanLM(nn.Module):
             if (t + 1) % self.slot_every == 0 and t + 1 < T:
                 # the hippocampus, queried by what the council concluded
                 rd = self._read(st, s0, read_ok)
-                r_slot = self.store_in(rd) if rd is not None \
+                r_slot = self.store_in(rd * getattr(self, "store_slot_gain", 1.0)) if rd is not None \
                     else torch.zeros_like(s0)
             # the bands LISTEN through their council slots every token and
             # must PREDICT the cortex stream (the fidelity target = the
@@ -1075,7 +1099,7 @@ class ScanLM(nn.Module):
                         if rslots is not None else None)
                 for _cyc in range(self.ponder - 1):
                     rdb = self._read_flat(st, s_r, lane_idx, read_ok)
-                    r_b = self.store_in(rdb) if rdb is not None else torch.zeros_like(s_r)
+                    r_b = self.store_in(rdb * getattr(self, "store_slot_gain", 1.0)) if rdb is not None else torch.zeros_like(s_r)
                     c_b = None
                     im_b = None
                     if self.plan_cand > 0 and self.imag_k > 0:
@@ -1205,6 +1229,14 @@ class ScanLM(nn.Module):
                     C = C + self.imag_gate * imag
         logits = self.head(self.lnf(C))
         logits_own = logits                               # the cortex's belief before memory
+        if hasattr(self, "face_head"):
+            feat_f = self.lnf(C)
+            face = self.face_head(feat_f).squeeze(-1) * 6.0            # [B, T], face units
+            self._face = face.detach()
+            self._face_feat = feat_f.detach()
+            if face_target is not None:
+                self._face_loss = nn.functional.mse_loss(
+                    face, face_target.to(face.device, face.dtype).clamp(-6.0, 6.0))
         G = st.get("G")
         if G is not None and G.abs().sum() > 0:
             # THE GOAL ORGAN speaks in identity space, like the store:
@@ -1458,6 +1490,17 @@ class ScanLM(nn.Module):
     def pop_value_loss(self):
         c = self._value_loss
         self._value_loss = None
+        return c
+
+    def pop_face(self):
+        """its face per token of the last forward (a forecast of the
+        caretaker's face, face units) and the detached features it was
+        read from — for the serve's online lesson at every token."""
+        return self._face, self._face_feat
+
+    def pop_face_loss(self):
+        c = self._face_loss
+        self._face_loss = None
         return c
 
     def pop_bg_loss(self):

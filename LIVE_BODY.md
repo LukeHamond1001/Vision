@@ -74,8 +74,14 @@ the mismatch teaches the forecast, the words, and the value heads at once.
 ## 4. Speech and body
 
 The breath (●): past twelve words the end of the utterance gains logits. The
-stutter reflex (●). Its register is whatever you raise; the breath keeps it
-short. Its own face rides beside every word (§1), never inside the sentence.
+stutter reflex (●). **Speaking costs (●):** past sixteen content tokens (a
+sentence longer than any school answer) each further token adds cortisol
+(0.15); cortisol pushes the utterance to end
+(0.5 logits per unit), weighs on mood, and dampens what a stressed reply
+can teach (dose ÷ (1 + cortisol)); it clears with a two-minute half-life
+and sleep takes 70% of what is left. Its register is whatever you raise; the
+breath and the cost keep it short. Its own face rides beside every word
+(§1), never inside the sentence.
 
 ## 5. The protocol (every token, both directions)
 
@@ -111,13 +117,13 @@ states hold structure that generalizes is the open experiment. The plan makes
 the body *whole* — every organ a live learner needs, trained by a signal that
 arrives on every token, both ways — not omniscient.
 
-## 8. Build order (live-only, no gestation)
+## 8. Build order (live-only, no gestation) — status 2026-09-01 night
 
-1. **Scalar face + tonic/phasic split** in the serve and the reward slot (○).
-2. **Expression head** (its face = forecast of yours), trained at every token; its own-face tokens retire (○).
-3. **Dose by forecast surprise**, with **eligibility traces** (○).
-4. **Online TD** for the value heads (○).
-5. **Steering read** — zero-init gated slot from the store into the council (○); success = same-day recall.
-6. **Uncertainty-gated ignorance** (○).
-7. The score shows its face beside each word (○).
+1. **Scalar face + tonic/phasic split** — built (●): `affect_in`, zero-init, on the trunk input; the day's faces are recorded and replayed at night.
+2. **Expression head** (its face = forecast of yours) — built (●): `face_head`, taught head-only at every token it speaks and every word it hears (Adam, lr 2e-5: a newborn organ that drifts, never lurches), and again in the night's replay; shown as the first row under every word. Its own-face tokens remain in the vocabulary, unused.
+3. **Eligibility traces** — built (●): λ 0.7, six words back. **Dose by surprise** uses the value heads' expectation (●); the forecast head becomes the baseline once its error is small (a switch, not yet flipped).
+4. **Online TD** — built (●): the value heads step at every felt change, γ 0.9.
+5. **Steering read** — knobs only (◐): read gain by uncertainty (β), slot gain; the zero-init gated slot is still to build; same-day recall still fails.
+6. **Uncertainty** — measured per token and shown (●); gating the IDK route would have the serve author words, so ignorance stays a lesson the caretaker gives.
+7. The score shows its face beside each word (●), and stress when speaking costs (●).
 8. Measure daily: morning recall, same-day recall, face-forecast correlation (how well it knows you), derailment rate, register drift.

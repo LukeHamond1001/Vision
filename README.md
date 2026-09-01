@@ -102,6 +102,14 @@ seeding · `scripts/scan_chat.py` — terminal REPL · `pod_*.sh` /
 itself (day/night-structured lives with rewards in-stream, the diet
 the body was born on and the recipe the next body scales).
 
+## The live body
+
+[LIVE_BODY.md](LIVE_BODY.md) — the 0.5B organism that learns only from
+faces: your face as a continuous sense on every token, its face as a
+forecast of yours taught at every token, dose by surprise with
+eligibility traces, online value learning, the cost of speaking
+(cortisol), and the build status of each organ.
+
 ## The next body
 
 [GESTATION.md](GESTATION.md) — the v17 pretraining method: the

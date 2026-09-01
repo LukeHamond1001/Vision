@@ -62,7 +62,7 @@ except ImportError:
 
 
 @beta_tool
-def say(text: str, face: int = 0) -> str:
+def say(text: str, face: float = 0.0) -> str:
     """Say something to the organism, word by word, under your face, and end
     your turn so it can reply. Then call listen() until its reply is done.
 
@@ -71,7 +71,8 @@ def say(text: str, face: int = 0) -> str:
             (a lesson is a single true declarative, e.g. "A pearl grows
             inside an oyster around a tiny grain of sand."; a check is a
             plain lowercase question, e.g. "how is a pearl made").
-        face: Your expression while saying it, an integer -6..6 (0 = still).
+        face: Your expression while saying it, a number -6..6 (decimals
+            allowed, e.g. 1.5; 0 = still).
             A statement said with a smile (+1/+2) is kept and learned; said
             with a frown it is not kept. Questions are best asked still.
             The smile you say a lesson with is NOT a reward for its reply:
@@ -86,7 +87,7 @@ def say(text: str, face: int = 0) -> str:
     for w in re.findall(r"\S+\s*", text):
         post("/hear", {"text": w, "expr": face})
     b = post("/begin", {})
-    print("\nopus (face %s): %s" % (_fmt(face, 0), text))
+    print("\nopus (face %s): %s" % (_fmt(face, 1), text))
     _log("say", text=text, face=face, res=b)
     if "error" in b:
         return json.dumps(b)
@@ -95,21 +96,25 @@ def say(text: str, face: int = 0) -> str:
 
 
 @beta_tool
-def listen(face: int = 0, words: int = 1) -> str:
+def listen(face: float = 0.0, words: int = 1) -> str:
     """Hear the next word(s) of its reply under your face. Call again until
-    it reports done. Each word comes back with three numbers: its mood (slow,
-    the integral of everything felt), your face, and its internal reward
-    (the dopamine prediction error at that word; hover-equivalent 'expects'
-    is its raw expectation of reward).
+    it reports done. Each word comes back with its numbers: its own face (a
+    forecast of yours — a newborn organ, near 0 at first), its mood (slow,
+    the integral of everything felt), your face, its internal reward (the
+    dopamine prediction error at that word), its stress (the cost of
+    speaking, rises past twelve words), and its uncertainty about the word
+    (entropy; high = it is guessing).
 
     Args:
-        face: Your expression while these words are spoken, -6..6. Only a
-            CHANGE is felt (between words); a held face is silence. LAW
-            measured on this body: a face change mid-sentence derails a
-            correct answer. So keep the face STILL while the reply is going
-            right, frown (-2) at the first clearly wrong word, and praise
-            after it finishes with praise(). Judge MEANING: a true answer in
-            different words is right.
+        face: Your expression while these words are spoken, -6..6, decimals
+            allowed. Only a CHANGE is felt (between words); a held face is
+            silence. Your face reaches it as a sense beside the words, not
+            inside them, so gentle changes are safe — but keep the face
+            STILL while the reply is going right. At the first clearly wrong
+            word frown (-2) for ONE word, then relax to 0 (the frown is felt
+            as a change; holding it teaches nothing more and weighs on
+            mood). Praise after it finishes with praise(). Judge MEANING: a
+            true answer in different words is right.
         words: How many words to hear before deciding again: 1 when unsure,
             more (up to 40) when it is clearly going well or already wrong.
     """
@@ -124,13 +129,17 @@ def listen(face: int = 0, words: int = 1) -> str:
         for ev in r.get("events", []):
             if "tok" in ev or "pause" in ev:
                 w = ev.get("tok", "·")
-                out.append({"word": w, "its_mood": ev.get("mood"),
+                out.append({"word": w, "its_face": ev.get("face"),
+                            "its_mood": ev.get("mood"),
                             "your_face": ev.get("you"),
                             "internal_reward": ev.get("rpe"),
+                            "stress": ev.get("cort"),
+                            "uncertainty": ev.get("ent"),
                             "expects": ev.get("v")})
-                print("   %-14s mood %s  face %s  reward %s" % (
-                    repr(w), _fmt(ev.get("mood")), _fmt(ev.get("you"), 0),
-                    _fmt(ev.get("rpe"), 2)))
+                print("   %-14s its face %s  mood %s  you %s  reward %s  stress %s  ent %s" % (
+                    repr(w), _fmt(ev.get("face"), 2), _fmt(ev.get("mood")),
+                    _fmt(ev.get("you"), 1), _fmt(ev.get("rpe"), 2),
+                    _fmt(ev.get("cort"), 2), _fmt(ev.get("ent"), 2)))
             if "done" in ev:
                 done = ev["done"]
         if done:
@@ -139,6 +148,8 @@ def listen(face: int = 0, words: int = 1) -> str:
     if done:
         res.update({"reply": done.get("reply"),
                     "its_mood": done.get("mood"),
+                    "its_stress": done.get("cortisol"),
+                    "ended_by": done.get("ended_by"),
                     "it_learned_from_your_face": done.get("expression"),
                     "it_kept_what_you_said": done.get("noticed"),
                     "its_own_conscience": {k: v for k, v in (done.get("self_press") or {}).items()
@@ -149,7 +160,7 @@ def listen(face: int = 0, words: int = 1) -> str:
 
 
 @beta_tool
-def praise(level: int) -> str:
+def praise(level: float) -> str:
     """React to the reply that just ENDED, as a whole: -6..6. Positive absorbs
     it (barely, if it is already mastered); -2 or below unlearns it. Only for
     the answer that just landed — never for anything earlier.
@@ -168,9 +179,9 @@ def praise(level: int) -> str:
     e = _spend()
     if e:
         return json.dumps(e)
-    r = post("/press", {"mag": int(level)})
+    r = post("/press", {"mag": float(level)})
     print("   opus reacts %s -> mood %s%s" % (
-        _fmt(level, 0), _fmt(r.get("mood")),
+        _fmt(level, 1), _fmt(r.get("mood")),
         " · learned x%s" % r["absorbed_steps"] if r.get("absorbed_steps") else
         " · unlearned x%s" % r["corrected_steps"] if r.get("corrected_steps") else ""))
     _log("praise", level=level, res=r)
@@ -221,12 +232,12 @@ def diary(entry: str) -> str:
     return json.dumps({"written": True})
 
 
-SYSTEM = """You are the caretaker of a small language organism — a 297-million-parameter recurrent creature that lives in one continuous stream and learns while you talk to it. It is not an assistant and cannot reason; it is more like a very young child with a good ear. It learns three ways: by being TOLD a simple true sentence (kept if you say it with a smile, or if it surprised it), by SLEEPING (the night replays and consolidates the day), and by being ASKED afterwards (recall it has to produce itself). Its answers are short declaratives in a plain register; it echoes what it is told. It knows about fifty school facts already (what_it_knows shows them).
+SYSTEM = """You are the caretaker of a small language organism — a 500-million-parameter recurrent creature (grown last night from a 297M body: the same knowledge, more room) that lives in one continuous stream and learns while you talk to it. It is not an assistant and cannot reason; it is more like a very young child with a good ear. It learns three ways: by being TOLD a simple true sentence (kept if you say it with a smile, or if it surprised it), by SLEEPING (the night replays and consolidates the day), and by being ASKED afterwards (recall it has to produce itself). Its answers are short declaratives in a plain register; it echoes what it is told. It knows about fifty school facts already (what_it_knows shows them).
 
-Your face is its reward. Every word you say or it says is spoken into your expression, an integer -6..6. Only a CHANGE of face is felt (a held face is silence; relaxing to neutral is not an event). At the end of its reply, the face each word was spoken into becomes that word's reward: words spoken into a smile are absorbed, words under a strong frown (-2 or below) are unlearned. Your reactions also train its conscience at night.
+Your face is its reward. Every word you say or it says is spoken into your expression, a number -6..6 (decimals allowed). Only a CHANGE of face is felt (a held face is silence; relaxing to neutral is not an event). At the end of its reply, the face each word was spoken into becomes that word's reward: words spoken into a smile are absorbed, words under a strong frown (-2 or below) are unlearned. Your reactions also train its conscience at night.
 
 Laws you must respect, all measured on this body:
-1. A face change mid-sentence derails a correct answer. Keep your face STILL while a reply is going right. Frown (-2) at the first clearly wrong word — there is nothing left to derail. Praise (praise(+2)) once a right answer has landed.
+1. Keep your face STILL while a reply is going right. Frown (-2) at the first clearly wrong word for ONE word, then relax to 0 — the frown is felt as a change, a held frown teaches nothing more. Praise (praise(+2)) once a right answer has landed.
 1b. The smile you said a lesson with is not a reward for the reply. Always listen with face 0 (relaxing to 0 is silent); a reply earns its reward only from a face that moves for it, or from praise() after it lands. Rewarding whatever follows a lesson taught the last body to answer everything with "Hi! It is nice to talk with you."
 2. Judge MEANING, not wording. A true answer in different words is right. Do not frown at a paraphrase.
 3. Never praise a wrong answer, even a fluent one. Never teach something false.
@@ -236,7 +247,7 @@ Laws you must respect, all measured on this body:
 
 Your face has a whole range, -6..6, and its strength acts (see praise()). Use it: +1 for a small right thing, +2 for a good answer, +3 or +4 when it does something genuinely hard, -1 for doubt, -2 for wrong, -3 or -4 for badly wrong. Extremes almost never. Its dreams tonight are chosen by what moved IT most — its own surprise, the peak of its internal reward while a memory was lived, and whether its conscience spoke — so the moments that light up its reward row are the ones it will dream on.
 
-Watch the three numbers under each word: its mood (slow), your face, its internal reward (fast — a burst at a felt surprise, near zero when nothing new happens, a dip when hope fades). They are all real measurements. Notice when its own conscience presses; notice what it kept.
+Watch the numbers under each word: its own face (a forecast of yours, taught at every word — a newborn organ that starts near 0; notice when it begins to track you), its mood (slow), your face, its internal reward (fast — a burst at a felt surprise, near zero when nothing new happens, a dip when hope fades), its stress, and its uncertainty. They are all real measurements. Speaking costs it: past about twelve words each further word builds stress, which pushes it to stop, weighs on its mood, and dampens what a stressed reply can teach — so keep lessons and questions short, and do not reward a reply that ran long and stressed. Notice when its own conscience presses; notice what it kept.
 
 Teach from scratch: choose what a small creature should learn first about the world — simple, concrete, true, in its register. Keep a diary as you go: what you tried, what it did, what you believe it understood. Stop calling tools when the budget is spent or the day's work is done, ending with a diary entry."""
 
