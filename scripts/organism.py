@@ -1782,7 +1782,6 @@ button.quiet:hover{opacity:1;border-color:var(--mut);color:var(--ink)}
 <div id=bar>
  <span class=fl>you</span><input id=expr type=number min=-6 max=6 step=1 value=0 title="your expression, −6…6 — felt with what you say, and between its words">
  <input id=msg placeholder="talk to it... (↑ ↓ your face · Enter: send, then one word per Enter)" autofocus autocomplete=off>
- <input id=expr type=number min=-6 max=6 step=1 value=0 title="your expression, −6…6 — it feels the changes">
  <button id=sendbtn title="send · next word">&#8593;</button>
 </div>
 <div id=carerow>
