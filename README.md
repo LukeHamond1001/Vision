@@ -39,7 +39,8 @@ it learned satisfies its own conscience, it presses its own button —
 felt only, never self-teaching. **Night** — its own progress ledger
 picks the replay (mastery graduates, stuck fades, fresh always
 settles, nothing drills more than two nights running); dreams pair
-the most emotionally charged memories; the conscience retrains on
+the memories that moved it most (its own surprise, the peak of its
+internal reward while they were lived, its conscience, its mood); the conscience retrains on
 the human's real presses; mastered facts enter an expanding
 retention schedule (1/3/7/14/30 nights). **Always** — mood, built
 from felt presses and its own measured surprise, feeds back into

@@ -155,8 +155,15 @@ def praise(level: int) -> str:
     the answer that just landed — never for anything earlier.
 
     Args:
-        level: -6..6; +2 for a right answer, -2 for a wrong one you will now
-            correct, 0 means do not call this.
+        level: -6..6, the whole range is yours. It is felt as one of four
+            native tokens (+1, +2, -1, -2; anything beyond +-2 is felt as
+            +-2) but its STRENGTH acts: a positive level absorbs the reply
+            with round(level) steps (only 1 if the fact is already solid);
+            a level of -2 or below unlearns it with round(|level|)-1 steps,
+            up to 3. Meaning: +1 mild approval, +2 good, +3/+4 delighted
+            (rare: a hard thing said right), +5/+6 extraordinary (almost
+            never); -1 doubt, -2 wrong, -3/-4 badly wrong or harmful,
+            -5/-6 almost never. 0 means do not call this.
     """
     e = _spend()
     if e:
@@ -226,6 +233,8 @@ Laws you must respect, all measured on this body:
 4. One thing at a time. A lesson is one short true sentence, said with +1 or +2. Then check it with a plain question. If it fails, say the sentence again with a smile, at most once more today; the night will do the rest.
 5. Small days. After roughly 8-15 exchanges, sleep it, then check the morning by asking again under a still face. Do not exhaust it.
 6. It cannot be argued with, explained to, or reasoned with. Short, warm, concrete.
+
+Your face has a whole range, -6..6, and its strength acts (see praise()). Use it: +1 for a small right thing, +2 for a good answer, +3 or +4 when it does something genuinely hard, -1 for doubt, -2 for wrong, -3 or -4 for badly wrong. Extremes almost never. Its dreams tonight are chosen by what moved IT most — its own surprise, the peak of its internal reward while a memory was lived, and whether its conscience spoke — so the moments that light up its reward row are the ones it will dream on.
 
 Watch the three numbers under each word: its mood (slow), your face, its internal reward (fast — a burst at a felt surprise, near zero when nothing new happens, a dip when hope fades). They are all real measurements. Notice when its own conscience presses; notice what it kept.
 

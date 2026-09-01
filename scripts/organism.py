@@ -329,7 +329,8 @@ class Organism:
                 v0 = sum(rv.values()) / max(len(rv), 1) if rv else 0.0
             t = {"text": "", "frags": [], "ftone": [], "level": 0,
                  "tot": 0.0, "n": 0, "mx": 0.0, "lg": None,
-                 "pre": self._flat(self.st), "felt_ev": [], "v_prev": v0}
+                 "pre": self._flat(self.st), "felt_ev": [], "v_prev": v0,
+                 "rpe_peak": 0.0}
             self.turn_ctx = t
         return t
 
@@ -408,6 +409,7 @@ class Organism:
             if tv is not None and t["v_prev"] is not None:
                 rpe = round((felt or 0) + tv - t["v_prev"], 2)
                 t["v_prev"] = tv
+                t["rpe_peak"] = max(t["rpe_peak"], abs(rpe))
             return {"heard": len(fragment), "felt": felt, "tone": tv,
                     "rpe": rpe, "mood": round(self.mood, 2),
                     "level": t["level"]}
@@ -450,7 +452,7 @@ class Organism:
         if hasattr(self.m, "read_value"):
             rv = self.m.read_value(self.st)
             v_prev = sum(rv.values()) / max(len(rv), 1) if rv else v_prev
-        self.gen_ctx = {"v_prev": v_prev,
+        self.gen_ctx = {"v_prev": v_prev, "rpe_peak": t.get("rpe_peak", 0.0),
                         # THE LESSON'S SMILE IS NOT THE REPLY'S REWARD: the
                         # face carried over from the human's own words does
                         # not credit the reply until the human moves it
@@ -517,6 +519,7 @@ class Organism:
             rpe = None
             if g.get("v_prev") is not None:
                 rpe = round(r_felt + v_t - g["v_prev"], 2)
+                g["rpe_peak"] = max(g.get("rpe_peak", 0.0), abs(rpe))
             g["v_prev"] = v_t
             base_ev = {"v": round(v_t, 2), "you": lvl, "rpe": rpe,
                        "mood": round(self.mood, 2)}
@@ -644,7 +647,8 @@ class Organism:
             self.last_novel_t = time.time()
             self._today["noticed"].append(text[:80])
             self.saliences["~ " + text] = {
-                "surp": round(surp_pk, 1), "mood": round(self.mood, 1)}
+                "surp": round(surp_pk, 1), "mood": round(self.mood, 1),
+                "felt": round(g.get("rpe_peak", 0.0), 2)}
             noticed = {"surprise": round(surp, 2),
                        "peak": round(surp_pk, 1),
                        "over_mean": round(surp - mu, 2),
@@ -728,6 +732,14 @@ class Organism:
                               "conviction": round(conv, 1),
                               "blamed": blm,
                               "left_today": self.self_frown_budget}
+        # what it found important, in its own currency: the peak of its
+        # internal reward over the exchange, and whether its conscience
+        # spoke — the amygdala's vote for tonight's dream
+        key_s = "~ " + text
+        if key_s in self.saliences:
+            self.saliences[key_s]["felt"] = round(g.get("rpe_peak", 0.0), 2)
+            if self_press:
+                self.saliences[key_s]["pride"] = self_press["mag"]
         self.last_q = (text, reply)
         if reply:
             self.session.append((text, reply))
@@ -1492,10 +1504,15 @@ class Organism:
         # charged memories dream together (amygdala's vote, not PFC's:
         # the executive is asleep).
         def _charge(item):
+            # surprise (its own), mood (mostly your face), and — its own
+            # currency — the peak of its internal reward while it lived
+            # the memory, plus its conscience having spoken about it
             k_, q_, _a = item
             key_ = q_ if k_ == "qa" else "~ " + q_
             s_ = self.saliences.get(key_, {})
-            return (s_.get("surp") or 5.0) + abs(s_.get("mood") or 0.0)
+            return ((s_.get("surp") or 5.0) + abs(s_.get("mood") or 0.0)
+                    + 3.0 * (s_.get("felt") or 0.0)
+                    + (2.0 if s_.get("pride") else 0.0))
         segs_src = sorted(((k, q, a) for k, q, a, _ in replay),
                           key=_charge, reverse=True)
         pairs = []
