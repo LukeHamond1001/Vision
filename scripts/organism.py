@@ -320,17 +320,92 @@ class Organism:
         sg = "+" if mag >= 0 else "-"
         return self.press_ids[f"<{sg}{2 if abs(mag) >= 2 else 1}>"]
 
-    def chat_begin(self, text, temp=None, stress=0.0):
-        """REWARD IS A FACE. The reply is produced one token at a time
-        by chat_step(); every step reads the human's CURRENT expression
-        (an integer −6..6). Your expression while you speak is felt
-        right after your words; while it speaks, a change of your
-        expression is felt between its words; at the end, the
-        expression each word was spoken into is that word's reward.
-        Nothing is ever applied to the past. The serve reads a number
-        and matches nothing in the text."""
-        temp = temp or self.a.temp
+    def _turn(self):
+        t = getattr(self, "turn_ctx", None)
+        if t is None:
+            t = {"text": "", "frags": [], "level": 0, "tot": 0.0, "n": 0,
+                 "mx": 0.0, "lg": None, "pre": self._flat(self.st),
+                 "felt_ev": []}
+            self.turn_ctx = t
+        return t
+
+    def _feel_change(self, ctx, lvl, where):
+        """THE FACE IS ALWAYS OPEN. A change of the human's expression
+        is felt as a token wherever it happens — between the human's
+        own words or between the reply's. A held face is silence; only
+        the change is information (dopamine encodes the change, not
+        the level); relaxing toward neutral is not an event."""
+        prev = ctx["level"]
+        ctx["level"] = lvl
+        if lvl == 0 or lvl == prev or \
+                not (abs(lvl) > abs(prev) or (lvl > 0) != (prev > 0)):
+            return None
+        pid = self._press_tok(lvl)
+        with torch.no_grad():
+            lg, self.st, _ = self.m(torch.tensor([[pid]], device=self.dev),
+                                    self.st)
+        self.day_buf.append(pid)
+        self.mood = self.mood * 0.9 + lvl
+        self.n_human_presses += 1
+        self._today["presses"] += lvl
+        self.press_log.append({"q": (ctx.get("text") or "")[:80],
+                               "a": where, "mag": float(lvl), "live": True})
+        self.press_log = self.press_log[-500:]
+        return lg
+
+    def hear(self, fragment="", expr=0.0):
+        """the human's words enter the stream AS THEY ARE SAID — a
+        fragment at a time — under the face of that moment. What is
+        said is said: there is no message, only the turn."""
+        t = self._turn()
         self.last_user_t = time.time()
+        try:
+            lvl = int(max(-6.0, min(6.0, float(expr or 0.0))))
+        except Exception:
+            lvl = 0
+        felt = None
+        lg_f = self._feel_change(t, lvl, "(while you spoke)")
+        if lg_f is not None:
+            t["lg"] = lg_f
+            t["felt_ev"].append((len(t["text"]), lvl))
+            felt = lvl
+        fragment = fragment or ""
+        if fragment:
+            ids = self.tok.encode(fragment).ids
+            if ids:
+                # surprise accumulates across fragments: a fragment's
+                # first token is scored under the previous logits
+                with torch.no_grad():
+                    if t["lg"] is not None:
+                        ce0 = float(F.cross_entropy(
+                            t["lg"][0, -1:].float(),
+                            torch.tensor([ids[0]], device=self.dev)))
+                        t["tot"] += ce0
+                        t["n"] += 1
+                        t["mx"] = max(t["mx"], ce0)
+                lg, s_, mx_ = self.feed_ce(ids)
+                t["tot"] += s_ * max(0, len(ids) - 1)
+                t["n"] += max(0, len(ids) - 1)
+                t["mx"] = max(t["mx"], mx_)
+                t["lg"] = lg
+            s0 = len(t["text"])
+            t["text"] += fragment
+            t["frags"].append((s0, s0 + len(fragment), lvl))
+        return {"heard": len(fragment), "felt": felt,
+                "mood": round(self.mood, 2), "level": t["level"]}
+
+    def chat_begin(self, text=None, temp=None, stress=None):
+        """the human's turn ends: what is still unsaid is heard, the
+        end-of-turn token is felt, and the reply begins — one token per
+        chat_step(), each under the human's current expression."""
+        t = self._turn()
+        if text:
+            self.hear(text, stress if stress is not None else t["level"])
+        elif stress is not None:
+            self.hear("", stress)
+        if not t["text"].strip():
+            return {"error": "nothing was said"}
+        temp = temp or self.a.temp
         # MOOD FEEDBACK (49xx): the felt tally retunes the machinery —
         # a good stretch broadens (warmer sampling, lower curiosity
         # bar), a bad stretch conserves. Bounded, disclosed.
@@ -339,33 +414,27 @@ class Organism:
         mood_fx = {"temp": round(temp, 3),
                    "bar_shift": round(-0.6 * mood_n, 2)} \
             if abs(mood_n) > 0.05 else None
-        pre = self._flat(self.st)
-        try:
-            lvl0 = int(max(-6.0, min(6.0, float(stress or 0.0))))
-        except Exception:
-            lvl0 = 0
-        ids = self.tok.encode(text).ids
-        skip = set()
-        if lvl0 != 0:
-            # said with an expression: the tone of voice, heard right
-            # after the words, not counted as surprise
-            skip.add(len(ids))
-            ids = ids + [self._press_tok(lvl0)]
-        lg, surp, surp_pk = self.feed_ce(ids + [self.eh], skip=skip)
-        if lvl0 != 0:
-            self.mood = self.mood * 0.9 + lvl0
-            self.n_human_presses += 1
-            self._today["presses"] += lvl0
-            self.press_log.append({"q": text[:80], "a": "(said with it)",
-                                   "mag": float(lvl0), "stmt": True})
-            self.press_log = self.press_log[-500:]
-        self.gen_ctx = {"text": text, "temp": temp, "mood_fx": mood_fx,
-                        "mood_n": mood_n, "pre": pre, "surp": surp,
-                        "surp_pk": surp_pk, "lg": lg, "out": [],
+        with torch.no_grad():
+            if t["lg"] is not None:
+                ce_e = float(F.cross_entropy(
+                    t["lg"][0, -1:].float(),
+                    torch.tensor([self.eh], device=self.dev)))
+                t["tot"] += ce_e
+                t["n"] += 1
+                t["mx"] = max(t["mx"], ce_e)
+            lg, self.st, _ = self.m(
+                torch.tensor([[self.eh]], device=self.dev), self.st)
+        self.day_buf.append(self.eh)
+        surp = t["tot"] / max(1, t["n"])
+        self.gen_ctx = {"text": t["text"], "temp": temp, "mood_fx": mood_fx,
+                        "mood_n": mood_n, "pre": t["pre"], "surp": surp,
+                        "surp_pk": t["mx"], "lg": lg, "out": [],
                         "pauses": 0, "x": None, "tr_raw": [],
-                        "tone_raw": [], "rew": [], "level": lvl0,
-                        "stress": lvl0, "felt_ev": [], "done": False}
-        return {"began": True, "stress": lvl0,
+                        "tone_raw": [], "rew": [], "level": t["level"],
+                        "frags": t["frags"], "you_felt": t["felt_ev"],
+                        "felt_ev": [], "done": False}
+        self.turn_ctx = None
+        return {"began": True, "level": t["level"],
                 "mood": round(self.mood, 2)}
 
     def chat_step(self, expr=0.0):
@@ -381,27 +450,11 @@ class Organism:
         with torch.no_grad():
             if g["x"] is not None:
                 g["lg"], self.st, _ = self.m(g["x"], self.st)
-            # the face changed: a felt token between words. A held
-            # expression is silence — only the change is information
-            # (dopamine encodes the change, not the level). Relaxing
-            # toward neutral is not an event.
-            if lvl != 0 and lvl != g["level"] and \
-                    (abs(lvl) > abs(g["level"]) or
-                     (lvl > 0) != (g["level"] > 0)):
-                pid = self._press_tok(lvl)
-                g["lg"], self.st, _ = self.m(
-                    torch.tensor([[pid]], device=self.dev), self.st)
-                self.day_buf.append(pid)
-                self.mood = self.mood * 0.9 + lvl
-                self.n_human_presses += 1
-                self._today["presses"] += lvl
-                self.press_log.append({"q": g["text"][:80],
-                                       "a": "(mid-reply)",
-                                       "mag": float(lvl), "live": True})
-                self.press_log = self.press_log[-500:]
+            lg_f = self._feel_change(g, lvl, "(while it spoke)")
+            if lg_f is not None:
+                g["lg"] = lg_f
                 g["felt_ev"].append((len(g["out"]), lvl))
                 ev.append({"felt": lvl, "mood": round(self.mood, 2)})
-            g["level"] = lvl
             v = g["lg"][0, -1].float()
             if hasattr(self.m, "ban_presses"):
                 v = self.m.ban_presses(v)
@@ -446,9 +499,13 @@ class Organism:
         return {"events": ev}
 
     def chat(self, text, temp=None, stress=0.0):
-        """the whole reply at once (API form): begin, then step with a
-        neutral face until done."""
-        self.chat_begin(text, temp, stress)
+        """the whole reply at once (API form): the text is heard as one
+        fragment under one face, then stepped with a neutral face."""
+        self.turn_ctx = None
+        self.hear(text, stress)
+        b = self.chat_begin(None, temp, None)
+        if "error" in b:
+            return b
         while True:
             r = self.chat_step(0.0)
             if "error" in r:
@@ -518,17 +575,28 @@ class Organism:
         pk_thr = (self.notice_peak_dyn or self.a.notice_peak) \
             - 0.6 * mood_n
         peak = surp_pk > pk_thr
-        st_lvl = g["stress"]
-        if st_lvl > 0 or ((spike or peak) and self.notice_budget > 0
-                          and st_lvl >= 0):
-            k_dose = min(st_lvl, 6) if st_lvl > 0 else \
-                (2 if surp_pk > pk_thr + 0.5 else 1)
-            self.absorb_stmt(text, k=k_dose)
+        frags = g.get("frags") or []
+        pos_f = [(s_, e_, r_) for s_, e_, r_ in frags if r_ > 0]
+        all_frowned = bool(frags) and all(r_ < 0 for _, _, r_ in frags)
+        spans_f = [(s_, e_, r_) for s_, e_, r_ in frags if r_ != 0] or None
+        said_with = round(sum(r_ for _, _, r_ in frags) / len(frags), 2) \
+            if frags else 0
+        if pos_f or ((spike or peak) and self.notice_budget > 0
+                     and not all_frowned):
+            # said with a smile, the words under it learn; said into
+            # a surprise, it is kept (muted words never learn); said
+            # entirely into a frown, it is let go
+            if pos_f:
+                mp = sum(r_ for _, _, r_ in pos_f) / len(pos_f)
+                k_dose = min(int(round(mp)), 6) or 1
+            else:
+                k_dose = 2 if surp_pk > pk_thr + 0.5 else 1
+            self.absorb_stmt(text, k=k_dose, spans=spans_f)
             self.self_noticed.append(text)
             if text not in self.study:
                 self.study.append(text)
             self.study = self.study[-8:]
-            if st_lvl <= 0:
+            if not pos_f:
                 self.notice_budget -= 1
             self.mood = self.mood * 0.95 + 0.3
             self.last_novel_t = time.time()
@@ -538,7 +606,7 @@ class Organism:
             noticed = {"surprise": round(surp, 2),
                        "peak": round(surp_pk, 1),
                        "over_mean": round(surp - mu, 2),
-                       "dose": k_dose, "said_with": st_lvl,
+                       "dose": k_dose, "said_with": said_with,
                        "budget": self.notice_budget}
         self.surp_mu = surp if self.surp_mu is None \
             else 0.9 * self.surp_mu + 0.1 * surp
@@ -636,6 +704,8 @@ class Organism:
                 "tones": tones or None,
                 "felt_at": felt_at,
                 "expression": expression,
+                "you_marks": [{"s": s_, "e": e_, "r": r_} for s_, e_, r_ in frags],
+                "you_felt": [{"s": s_, "mag": l_} for s_, l_ in (g.get("you_felt") or [])],
                 "ended_by": g.get("ended_by", "eou"),
                 "moved": [{"part": k, "delta": round(d, 3)} for k, d in moved],
                 "hpc": hpc}
@@ -1630,6 +1700,7 @@ class Organism:
             if src is not None else self.m.init_state(1, self.dev)
         self._flush_working(self.st)
         self.day_buf, self.session = [], []
+        self.turn_ctx, self.gen_ctx = None, None
         self.last_q = None
         self.self_noticed = []
         self.notice_budget = 4
@@ -1710,19 +1781,22 @@ button.quiet:hover{opacity:1;border-color:var(--mut);color:var(--ink)}
 <div id=log></div>
 <div id=bar>
  <span class=fl>you</span><input id=expr type=number min=-6 max=6 step=1 value=0 title="your expression, −6…6 — felt with what you say, and between its words">
- <input id=msg placeholder="talk to it..." autofocus onkeydown="if(event.key==='Enter')send()">
- <button id=sendbtn onclick=send() title="send">&#8593;</button>
+ <input id=msg placeholder="talk to it... (↑ ↓ your face · Enter: send, then one word per Enter)" autofocus autocomplete=off>
+ <input id=expr type=number min=-6 max=6 step=1 value=0 title="your expression, −6…6 — it feels the changes">
+ <button id=sendbtn title="send · next word">&#8593;</button>
 </div>
 <div id=carerow>
  <button class=quiet onclick=sleepy()>sleep</button>
  <button class=quiet onclick=saveLife()>save</button>
- <button class=quiet onclick="fetch('/reset',{method:'POST'}).then(()=>{log.innerHTML='';add('sys','~ fresh wake ~');pulseMood()})">reset</button>
- <div id=face><span class=fl>it</span><span id=mood>0.0</span></div>
+ <button class=quiet onclick="fetch('/reset',{method:'POST'}).then(()=>{log.innerHTML='';turnQd=null;turnText='';clientLevel=0;expr.value=0;faceColor();add('sys','~ fresh wake ~');pulseMood()})">reset</button>
+ <div id=face><span class=fl>it feels</span><span id=mood>0.0</span></div>
 </div>
 <script>
 const log=document.getElementById('log'),msg=document.getElementById('msg'),
       expr=document.getElementById('expr'),moodEl=document.getElementById('mood');
-let busy=false,sleeping=false;
+let busy=false,sleeping=false,turnQd=null,turnText='',clientLevel=0,q=Promise.resolve(),stepWait=null;
+function stepNow(){if(busy&&stepWait){const w=stepWait;stepWait=null;w()}}
+function enqueue(fn){q=q.then(fn,fn);return q}
 function lockup(m){sleeping=m;document.getElementById('sendbtn').disabled=m;expr.disabled=m;msg.disabled=m}
 function add(cls,txt){const d=document.createElement('div');d.className=cls;d.textContent=txt;log.appendChild(d);log.scrollTop=1e9;return d}
 function toneBg(v){return (v>0?'rgba(31,122,70,':'rgba(189,74,36,')+Math.min(.28,Math.abs(v)*.14).toFixed(3)+')'}
@@ -1733,9 +1807,38 @@ async function pulseMood(){try{const p=await fetch('/pulse').then(r=>r.json());
  setMood(p.drives&&p.drives.mood!=null?p.drives.mood:p.mood)}catch(e){}}
 function exprVal(){let v=parseInt(expr.value,10);if(isNaN(v))v=0;return Math.max(-6,Math.min(6,v))}
 function faceColor(){const v=exprVal();expr.className=v>0?'good':v<0?'bad':''}
-expr.oninput=faceColor;expr.onchange=()=>{expr.value=exprVal();faceColor()};
-function seg(div,text,marks){
- div.textContent='';
+function mark(div,lvl){const k=document.createElement('span');k.className='lpm '+(lvl>0?'good':'bad');
+ k.textContent=(lvl>0?'+':'−')+Math.abs(lvl);div.appendChild(k);log.scrollTop=1e9}
+function post(path,body){return fetch(path,{method:'POST',body:JSON.stringify(body)}).then(r=>r.json())}
+// THE FACE IS ALWAYS OPEN: a change is felt the moment it happens —
+// between your own words while you speak (sent at once), or between
+// its words while it speaks (carried by the next step). A held face is
+// silence; relaxing toward neutral is not an event.
+function faceChange(){const lvl=exprVal();faceColor();const prev=clientLevel;clientLevel=lvl;
+ if(sleeping||lvl===0||lvl===prev||!(Math.abs(lvl)>Math.abs(prev)||(lvl>0)!==(prev>0)))return;
+ if(busy)return;
+ if(!turnQd){turnQd=add('you','you: ');turnText=''}
+ mark(turnQd,lvl);
+ enqueue(()=>post('/hear',{text:'',expr:lvl}).then(r=>setMood(r.mood)))}
+expr.oninput=faceChange;expr.onchange=()=>{expr.value=exprVal();faceChange()};
+function hearFrag(frag){
+ if(!frag.trim()||sleeping)return;
+ if(!turnQd){turnQd=add('you','you: ');turnText=''}
+ turnQd.appendChild(document.createTextNode(frag));turnText+=frag;log.scrollTop=1e9;
+ const lvl=exprVal();
+ enqueue(()=>post('/hear',{text:frag,expr:lvl}).then(r=>setMood(r.mood)))}
+// WHAT IS SAID IS SAID: each word leaves the box at the space after it
+msg.oninput=()=>{if(busy||sleeping)return;const v=msg.value;let idx=-1;
+ for(let i=v.length-1;i>=0;i--){if(' .,!?;:'.includes(v[i])){idx=i;break}}
+ if(idx<0)return;const frag=v.slice(0,idx+1),rest=v.slice(idx+1);msg.value=rest;hearFrag(frag)};
+function keys(e){
+ if(e.key==='Enter'){e.preventDefault();if(busy)stepNow();else send();return}
+ if(e.key==='ArrowUp'||e.key==='ArrowDown'){e.preventDefault();
+  expr.value=Math.max(-6,Math.min(6,exprVal()+(e.key==='ArrowUp'?1:-1)));faceChange()}}
+msg.onkeydown=keys;expr.onkeydown=keys;
+document.getElementById('sendbtn').onclick=()=>{if(busy)stepNow();else send()};
+function seg(div,text,marks,prefix){
+ div.textContent='';if(prefix)div.appendChild(document.createTextNode(prefix));
  const pts=marks.filter(m=>m.pt),rng=marks.filter(m=>!m.pt);
  const cl=v=>Math.max(0,Math.min(text.length,v));
  const bs=new Set([0,text.length]);
@@ -1751,6 +1854,7 @@ function seg(div,text,marks){
   cov.forEach(m=>{if(m.bg)sp.style.background=m.bg;if(m.v!=null)sp.title='felt '+m.v;if(m.title)sp.title=m.title});
   sp.textContent=text.slice(s,e);div.appendChild(sp)}
  dot(text.length)}
+function pt(f){return {s:f.s,e:f.s,pt:true,cls:'lpm '+(f.mag>0?'good':'bad'),txt:(f.mag>0?'+':'−')+Math.abs(f.mag)}}
 function paintReply(div,r){
  const marks=[],ex=r.expression||{};
  (r.tones||[]).forEach(t=>{if(t.e<=t.s)return;
@@ -1760,60 +1864,48 @@ function paintReply(div,r){
  if(r.self_press){const sp=r.self_press,tt='its conscience '+(sp.conviction>0?'+':'')+(sp.conviction!=null?sp.conviction.toFixed(1):'');
   (sp.loved||[]).forEach(([s,e])=>marks.push({s:s,e:e,cls:'lov',title:tt}));
   (sp.blamed||[]).forEach(([s,e])=>marks.push({s:s,e:e,cls:'blm',title:tt}))}
- (r.felt_at||[]).forEach(f=>marks.push({s:f.s,e:f.s,pt:true,cls:'lpm '+(f.mag>0?'good':'bad'),txt:(f.mag>0?'+':'−')+Math.abs(f.mag)}));
+ (r.felt_at||[]).forEach(f=>marks.push(pt(f)));
  seg(div,r.reply,marks)}
-// TURNS. Yours: type, Enter. Its: the first token comes at once; then
-// every Enter feeds exactly one more token under your current number,
-// until its end-of-utterance — then nothing else comes. While it is
-// its turn the text box and the care buttons are locked.
-let turn={bd:null,th:null,stepping:false};
-function itsTurn(on){busy=on;msg.disabled=on;document.getElementById('sendbtn').disabled=on;
- document.querySelectorAll('button.quiet').forEach(b=>b.disabled=on);
- if(on)expr.focus();else msg.focus()}
+function paintYou(div,text,r){
+ const marks=[],nz=r.noticed;
+ (r.you_marks||[]).forEach(m=>{if(m.r>0)marks.push({s:m.s,e:m.e,cls:'upg',title:'said with +'+m.r+(nz&&nz.dose?' · kept ×'+nz.dose:'')});
+  else if(m.r<0)marks.push({s:m.s,e:m.e,cls:'upb',title:'said with −'+Math.abs(m.r)+' · not kept'})});
+ (r.you_felt||[]).forEach(f=>marks.push(pt(f)));
+ seg(div,text,marks,'you: ')}
 async function send(){
- const t=msg.value.trim();if(!t)return;
  if(sleeping){add('sys','~ it’s sleeping — wait for morning ~');return}
  if(busy)return;
- msg.value='';
- const st=exprVal();
- const qd=add('you','you: '+t);
- if(st!==0){const k=document.createElement('span');k.className='lpm '+(st>0?'good':'bad');
-  k.textContent=(st>0?'+':'−')+Math.abs(st);k.title='said with your expression';qd.appendChild(k)}
- itsTurn(true);
- let b;
- try{b=await fetch('/begin',{method:'POST',body:JSON.stringify({text:t,stress:st})}).then(r=>r.json())}
- catch(e){add('sys','~ unreachable — is it awake yet? ~');itsTurn(false);return}
- if(b.error){add('sys','~ '+b.error+' ~');itsTurn(false);return}
- setMood(b.mood);
- turn.bd=add('bot','');turn.th=add('sys think','· · ·');turn.stepping=false;
- await step()}
-async function step(){
- if(!busy||turn.stepping||!turn.bd)return;
- turn.stepping=true;
- let r;
- try{r=await fetch('/step',{method:'POST',body:JSON.stringify({expr:exprVal()})}).then(r=>r.json())}
- catch(e){add('sys','~ the reply was cut off ~');endTurn(null);return}
- if(r.error){add('sys','~ '+r.error+' ~');endTurn(null);return}
- const bd=turn.bd;let fin=null;
- for(const ev of r.events){
-  if(turn.th){turn.th.remove();turn.th=null}
-  if(ev.tok!=null){const sp=document.createElement('span');sp.textContent=ev.tok;
-   if(ev.v!=null&&Math.abs(ev.v)>=0.05){sp.style.background=toneBg(ev.v);sp.title='felt '+ev.v}
-   bd.appendChild(sp);log.scrollTop=1e9}
-  else if(ev.pause){const sp=document.createElement('span');sp.className='pz';sp.textContent=' ·';bd.appendChild(sp)}
-  else if(ev.felt!=null){const mk=document.createElement('span');mk.className='lpm '+(ev.felt>0?'good':'bad');
-   mk.textContent=(ev.felt>0?'+':'−')+Math.abs(ev.felt);bd.appendChild(mk);setMood(ev.mood)}
-  else if(ev.done)fin=ev.done}
- turn.stepping=false;
- if(fin){if(fin.ended_by==='stutter')add('sys','~ it stuttered — its turn ended ~');endTurn(fin)}}
-function endTurn(fin){
- const bd=turn.bd;
- if(turn.th){turn.th.remove();turn.th=null}
- if(fin){setMood(fin.mood);
-  if(fin.reply)paintReply(bd,fin);else{bd.remove();add('sys','~ it said nothing ~')}}
- turn.bd=null;turn.stepping=false;itsTurn(false)}
-document.addEventListener('keydown',e=>{
- if(e.key==='Enter'&&busy&&!sleeping){e.preventDefault();step()}});
+ const rest=msg.value;msg.value='';
+ if(rest.trim())hearFrag(rest);
+ if(!turnQd||!turnText.trim()){turnQd=null;turnText='';return}
+ busy=true;
+ const qd=turnQd,qtext=turnText;turnQd=null;turnText='';
+ let bd=null,th=null;
+ try{
+  await q;
+  let b;
+  try{b=await post('/begin',{})}catch(e){add('sys','~ unreachable — is it awake yet? ~');return}
+  if(b.error){add('sys','~ '+b.error+' ~');return}
+  setMood(b.mood);
+  bd=add('bot','');th=add('sys think','· · ·');
+  let fin=null;
+  while(!fin){
+   await new Promise(res=>{stepWait=res});   // ONE WORD PER ENTER
+   let r;
+   try{r=await post('/step',{expr:exprVal()})}catch(e){add('sys','~ the reply was cut off ~');return}
+   if(r.error){add('sys','~ '+r.error+' ~');return}
+   for(const ev of r.events){
+    if(th){th.remove();th=null}
+    if(ev.tok!=null){const sp=document.createElement('span');sp.textContent=ev.tok;
+     if(ev.v!=null&&Math.abs(ev.v)>=0.05){sp.style.background=toneBg(ev.v);sp.title='felt '+ev.v}
+     bd.appendChild(sp);log.scrollTop=1e9}
+    else if(ev.pause){const sp=document.createElement('span');sp.className='pz';sp.textContent=' ·';bd.appendChild(sp)}
+    else if(ev.felt!=null){mark(bd,ev.felt);setMood(ev.mood)}
+    else if(ev.done)fin=ev.done}}
+  setMood(fin.mood);
+  paintYou(qd,qtext,fin);
+  if(fin.reply)paintReply(bd,fin);else{bd.remove();bd=null;add('sys','~ it said nothing ~')}
+ }finally{if(th)th.remove();busy=false;stepWait=null;msg.focus()}}
 async function sleepy(){
  if(sleeping||busy)return;
  lockup(true);
@@ -1824,8 +1916,9 @@ async function sleepy(){
   const s=(n,w,p)=>n+' '+(n==1?w:(p||w+'s'));
   add('sys','~ morning — it replayed '+s(r.nrem,'memory','memories')+' and dreamt '+s(r.rem,'dream')+' ~');
   if(r.woke_feeling)add('sys','~ it woke feeling '+r.woke_feeling+' ~');
+  turnQd=null;turnText='';clientLevel=0;expr.value=0;faceColor();
  }catch(e){add('sys','~ the night was interrupted — reload me ~')
- }finally{fl.classList.remove('think');lockup(false);pulseMood()}}
+ }finally{fl.classList.remove('think');lockup(false);pulseMood();msg.focus()}}
 async function saveLife(){
  const r=await fetch('/save',{method:'POST'}).then(r=>r.json());
  add('sys','~ saved → '+r.saved+' ~')}
@@ -1873,10 +1966,13 @@ class H(BaseHTTPRequestHandler):
                 if self.path == "/chat":
                     self._json(ORG.chat(body["text"], body.get("temp"),
                                         stress=body.get("stress", 0)))
+                elif self.path == "/hear":
+                    self._json(ORG.hear(body.get("text", ""),
+                                        body.get("expr", 0)))
                 elif self.path == "/begin":
-                    self._json(ORG.chat_begin(body["text"],
+                    self._json(ORG.chat_begin(body.get("text"),
                                               body.get("temp"),
-                                              body.get("stress", 0)))
+                                              body.get("stress")))
                 elif self.path == "/step":
                     self._json(ORG.chat_step(body.get("expr", 0)))
                 elif self.path == "/press":

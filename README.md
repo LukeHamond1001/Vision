@@ -32,8 +32,9 @@ it : A submarine dives by filling its tanks with water and rises
 ## The life — `scripts/organism.py`
 
 **Day** — it measures its own surprise every turn and keeps what
-spikes (budgeted); reward presses are felt as native tokens
-(<+1><+2><−1><−2>) and expressed as graded plasticity; when its answer to something
+spikes (budgeted); the caretaker's expression is felt as native tokens
+(<+1><+2><−1><−2>) whenever it changes, in either turn, and the face
+each word was spoken into becomes that word's plasticity; when its answer to something
 it learned satisfies its own conscience, it presses its own button —
 felt only, never self-teaching. **Night** — its own progress ledger
 picks the replay (mastery graduates, stuck fades, fresh always

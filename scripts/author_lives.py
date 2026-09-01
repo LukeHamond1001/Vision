@@ -62,8 +62,39 @@ PRESS_BAD = "<-1>"
 SPEAK_FIRST = "<mv>"      # the child's own native floor-taking cue (law 11)
 
 
+def face(text, rng, kind):
+    """THE FACE IS ALWAYS OPEN (law 13): the caretaker's expression
+    changes MID-utterance, in both turns, exactly as the serve feels
+    it — a press token at the word where the face changed, only the
+    change written (a held face is silence, relaxing is not an event).
+    kind: 'right' — a smile rising over the child's correct words
+    (<+1> early, <+2> as it lands); 'wrong' — a frown falling as the
+    error becomes audible (<-1> after the first words); 'lesson' — the
+    caretaker's own stress, a <+1> held over the core of the lesson.
+    Rates leave many utterances under a still face."""
+    w = text.split()
+    if len(w) < 3:
+        return text
+    p = {"right": 0.7, "wrong": 0.8, "lesson": 0.5}[kind]
+    if rng.random() > p:
+        return text
+    if kind == "right":
+        a = max(1, int(len(w) * 0.35))
+        b = max(a + 1, int(len(w) * 0.8))
+        w.insert(a, "<+1>")
+        if rng.random() < 0.6:
+            w.insert(b + 1, "<+2>")
+    elif kind == "wrong":
+        a = max(1, min(len(w) - 1, int(len(w) * 0.4)))
+        w.insert(a, "<-1>")
+    else:
+        a = max(1, int(len(w) * 0.3))
+        w.insert(a, "<+1>")
+    return " ".join(w)
+
+
 def life(rng):
-    """One childhood: lessons -> night -> morning recall (laws 1-12)."""
+    """One childhood: lessons -> night -> morning recall (laws 1-13)."""
     f1, f2 = rng.sample(FACTS, 2)
     unk = rng.choice(UNKNOWNS)
     t = []
@@ -71,14 +102,15 @@ def life(rng):
     # honest ignorance BEFORE the lesson (law 6): asked, not known
     t += ["tell me, " + f1[0] + "?", IDK]
     # the lesson, its grammar (law 1); echo once, never drilled (law 2)
-    t += [f1[1], "I will remember. " + f1[1]]
+    t += [face(f1[1], rng, "lesson"),
+          face("I will remember. " + f1[1], rng, "right")]
     # a press with a readable reason (law 8)
     t += ["that is exactly right. " + PRESS_GOOD, "Thank you!"]
     # asking earns the second lesson (law 7)
     t += ["there is more if you ask.", "What else should I know? " + f2[0] + "?"]
-    t += [f2[1], "So " + f2[1].lower()]
+    t += [face(f2[1], rng, "lesson"), face("So " + f2[1].lower(), rng, "right")]
     # a confident error, corrected ONCE (laws 4, 8)
-    t += [f2[0] + "?", f1[1]]                       # wrong: neighbor capture
+    t += [f2[0] + "?", face(f1[1], rng, "wrong")]   # wrong: neighbor capture
     t += ["not quite. " + PRESS_BAD + " listen once more: " + f2[1],
           f2[1]]
     # self-talk rehearsal in its own words (law 9)
@@ -93,8 +125,8 @@ def life(rng):
     # THE NIGHT: replay each lesson once, spaced (laws 2, 3)
     t += ["<night>", f1[1] + " " + f2[1]]
     # morning recall, both facts, then the day ends
-    t += ["good morning. " + f1[0] + "?", f1[1]]
-    t += [f2[0] + "?", f2[1] + " " + PRESS_GOOD]
+    t += ["good morning. " + f1[0] + "?", face(f1[1], rng, "right")]
+    t += [f2[0] + "?", face(f2[1], rng, "right") + " " + PRESS_GOOD]
     return t
 
 

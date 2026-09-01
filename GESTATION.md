@@ -74,6 +74,17 @@ are authored to obey them:
     (fifteen consecutive nights of measurement); lives pair care
     with content on purpose.
 
+13. **The face is always open** — the caretaker's expression is a
+    channel, not a verdict at the end: it changes mid-utterance, in
+    both turns, and only the change is written (a `<+1>` where a
+    smile rises over the child's correct words, a `<+2>` as the
+    answer lands, a `<-1>` where a frown falls as an error becomes
+    audible, a `<+1>` held over the core of a lesson as the caretaker
+    says it). A held face is silence; relaxing is not an event. This
+    is exactly how the serve feels the human's expression, so the
+    body is raised on the distribution it will live in
+    (`author_lives.face`).
+
 ## Pipeline
 
 ```
