@@ -161,10 +161,12 @@ class Organism:
                     torch.tensor([ids[i:i + 64]], device=self.dev), self.st)
         return lg
 
-    def feed_ce(self, ids):
+    def feed_ce(self, ids, skip=None):
         """feed through the live state AND read the surprise: mean CE of
         ids[1:] under the stream — the serve-level NE signal (the same
-        law the store's write_surprise gate uses, applied at serve)."""
+        law the store's write_surprise gate uses, applied at serve).
+        skip: positions in ids whose CE is not counted (felt tokens the
+        human placed inside their own utterance — stress, not words)."""
         self.day_buf.extend(ids)
         tot, n, mx, lg = 0.0, 0, 0.0, None
         with torch.no_grad():
@@ -177,31 +179,45 @@ class Organism:
                         lg[0, :-1].float(),
                         torch.tensor(chunk[1:], device=self.dev),
                         reduction="none")
-                    tot += float(ce.sum())
-                    mx = max(mx, float(ce.max()))
-                    n += len(chunk) - 1
+                    if skip:
+                        keep = torch.tensor(
+                            [(i + j + 1) not in skip
+                             for j in range(len(chunk) - 1)],
+                            device=ce.device)
+                        ce = ce[keep]
+                    if ce.numel():
+                        tot += float(ce.sum())
+                        mx = max(mx, float(ce.max()))
+                        n += int(ce.numel())
         return lg, tot / max(1, n), mx
 
-    def absorb_stmt(self, text, k=1, span=None):
+    def absorb_stmt(self, text, k=1, spans=None):
         """one tiny keep-nudge on a statement it chose to notice; the
-        night's replay does the real consolidation. A span (char
-        range) confines the nudge to the chosen words — the aimed
-        partial teach."""
+        night's replay does the real consolidation. spans: the human's
+        stress marks [(s, e, mag)] — positive spans are the words that
+        learn (muted spans never do); with only negative marks, all
+        but the muted words learn."""
         ids = self.tok.encode(text).ids + [self.eh]
         ids += [self.sil] * ((64 - len(ids) % 64) % 64)
         x = torch.tensor([ids[:-1]], device=self.dev)
         y = torch.tensor([ids[1:]], device=self.dev)
         w = torch.zeros_like(y, dtype=torch.float)
-        w[0, :len(self.tok.encode(text).ids) - 1] = 1.0
-        if span is not None:
+        n_t = len(self.tok.encode(text).ids)
+        w[0, :n_t - 1] = 1.0
+        if spans:
             offs = self.tok.encode(text).offsets
+            pos = [(s_, e_) for s_, e_, mg in spans if mg > 0]
+            neg = [(s_, e_) for s_, e_, mg in spans if mg < 0]
+            hit = lambda rs, a_, b_: any(a_ < e_ and b_ > s_ for s_, e_ in rs)
             w[0, :] = 0.0
-            for j in range(len(offs) - 1):
-                s_, e_ = offs[j + 1]   # w[j] trains token j+1
-                if s_ < span[1] and e_ > span[0]:
+            for j in range(min(len(offs), n_t) - 1):
+                a_, b_ = offs[j + 1]          # w[j] trains token j+1
+                on = (hit(pos, a_, b_) if pos else True) \
+                    and not hit(neg, a_, b_)
+                if on:
                     w[0, j] = 1.0
             if float(w.sum()) == 0.0:
-                w[0, :len(self.tok.encode(text).ids) - 1] = 1.0
+                return
         self.m.train()
         for _ in range(k):
             self.opt.zero_grad(set_to_none=True)
@@ -302,10 +318,25 @@ class Organism:
         except Exception:
             return None, None
 
-    def chat(self, text, temp=None, emit=None):
+    def chat(self, text, temp=None, emit=None, marks=None):
         temp = temp or self.a.temp
         self.last_user_t = time.time()
         self.live_q.clear()   # stale live presses never leak forward
+        # STRESS: the teacher's tone of voice. marks = spans of the
+        # human's own utterance with a magnitude. A felt press token is
+        # placed in-stream right after each stressed span (heard as it
+        # is said, its CE not counted as surprise); positive stress
+        # guarantees absorption masked to those words; muted words
+        # never learn. The serve matches char ranges the human drew —
+        # it reads nothing.
+        mark_spans = []
+        for m_ in (marks or []):
+            try:
+                s_, e_, mg = int(m_["s"]), int(m_["e"]), float(m_.get("mag", 1))
+            except Exception:
+                continue
+            if e_ > s_ and abs(mg) >= 0.3:
+                mark_spans.append((s_, e_, max(-6.0, min(6.0, mg))))
         # MOOD FEEDBACK (49xx): the felt tally retunes the machinery —
         # a good stretch broadens (warmer sampling, lower curiosity
         # bar), a bad stretch conserves. Bounded, disclosed. Mood was
@@ -322,8 +353,30 @@ class Organism:
         # ITS OWN surprise; what deserves pride by ITS OWN
         # conscience; lessons arrive only through the explicit
         # teach organ. The stream is just lived.
-        lg, surp, surp_pk = self.feed_ce(
-            self.tok.encode(text).ids + [self.eh])
+        enc_t = self.tok.encode(text)
+        ins = {}
+        for s_, e_, mg in mark_spans:
+            touch = [j_ for j_, (a_, b_) in enumerate(enc_t.offsets)
+                     if a_ < e_ and b_ > s_]
+            if touch:
+                ins.setdefault(touch[-1], []).append(mg)
+        ids_t, skip, felt_marks = [], set(), []
+        for j_, tid in enumerate(enc_t.ids):
+            ids_t.append(tid)
+            for mg in ins.get(j_, []):
+                sg = "+" if mg >= 0 else "-"
+                skip.add(len(ids_t))
+                ids_t.append(self.press_ids[
+                    f"<{sg}{2 if abs(mg) >= 2 else 1}>"])
+                felt_marks.append(mg)
+        lg, surp, surp_pk = self.feed_ce(ids_t + [self.eh], skip=skip)
+        for mg in felt_marks:
+            self.mood = self.mood * 0.9 + mg
+            self.n_human_presses += 1
+            self._today["presses"] += mg
+            self.press_log.append({"q": text[:80], "a": "(stress)",
+                                   "mag": mg, "stmt": True})
+        self.press_log = self.press_log[-500:]
         v0 = lg[0, -1].float()
         if hasattr(self.m, "ban_presses"):
             v0 = self.m.ban_presses(v0)
@@ -454,7 +507,7 @@ class Organism:
             peak = surp_pk > pk_thr
             if (spike or peak) and self.notice_budget > 0:
                 k_dose = 2 if surp_pk > pk_thr + 0.5 else 1
-                self.absorb_stmt(text, k=k_dose)
+                self.absorb_stmt(text, k=k_dose, spans=mark_spans or None)
                 self.self_noticed.append(text)
                 if text not in self.study:
                     self.study.append(text)
@@ -472,6 +525,19 @@ class Organism:
                            "budget": self.notice_budget}
             self.surp_mu = surp if self.surp_mu is None \
                 else 0.9 * self.surp_mu + 0.1 * surp
+        stress = None
+        if mark_spans:
+            pos_n = sum(1 for _, _, mg in mark_spans if mg > 0)
+            k_e = min(int(round(max(abs(mg) for _, _, mg in mark_spans))), 6) or 1
+            if pos_n:
+                self.absorb_stmt(text, k=k_e, spans=mark_spans)
+                if text not in self.study:
+                    self.study.append(text)
+                self.study = self.study[-8:]
+                self.saliences["~ " + text] = {"surp": round(surp_pk, 1),
+                                               "mood": round(self.mood, 1)}
+            stress = {"stressed": pos_n, "muted": len(mark_spans) - pos_n,
+                      "absorbed_steps": k_e if pos_n else 0}
         # THE OPEN DOOR v2 (50c): no oracle, no matcher — its OWN
         # conscience (retrained nightly on the human's real presses) is
         # the only judge. And because a conscience without an oracle
@@ -528,6 +594,7 @@ class Organism:
                           } if hasattr(self.m, "read_value") else None,
                 "trace": trace,
                 "tones": tones,
+                "stress": stress,
                 "moved": [{"part": k, "delta": round(d, 3)} for k, d in moved],
                 "hpc": hpc}
 
@@ -636,48 +703,27 @@ class Organism:
         return [{"q": q, "a": a, "ce": round(self.fact_ce(q, a), 2)}
                 for q, a in self.facts]
 
-    def press(self, level=None, mag=None, span=None, idx=None, who=None):
-        """graded reward at any magnitude: the FELT token stays within
-        the trained vocabulary (|m|>=2 -> level-2 token), while the
-        magnitude expresses through plasticity — dose steps for
-        positive, corrective unlikelihood for strong negative. The
-        press can be AIMED: idx picks any exchange from today's
-        session (the night closes the books), span confines the dose
-        to the chosen words, and who='you' doses the human's own
-        words (a partial teach, or a retract) instead of the reply.
-        The serve matches literal selections; it never reads meaning.
-        Feeling is felt NOW regardless of aim — like dopamine, the
-        signal arrives after the act; the exact binding lives in the
-        dose and the press log, both pinned to the aimed exchange."""
+    def press(self, level=None, mag=None, span=None):
+        """graded reward at any magnitude on the utterance in the air —
+        the last reply, until the human speaks again. The FELT token
+        stays within the trained vocabulary (|m|>=2 -> level-2 token);
+        the magnitude expresses through plasticity — dose steps for
+        positive, corrective unlikelihood for strong negative. A span
+        (literal words of that reply, chosen by the human) confines the
+        dose to those tokens, snapped outward to whole tokens. No
+        reaching back in time: reward is an expression, and an
+        expression is about now."""
         if mag is None:
             mag = float(level.replace("+", ""))
         mag = max(-6.0, min(6.0, float(mag)))
-        tgt = None
-        if idx is not None:
-            # an aimed press at a gone exchange (say, after the night
-            # cleared the session) is felt but never dosed — a press
-            # must not silently rebind to a different answer
-            try:
-                i_ = int(idx)
-                if 0 <= i_ < len(self.session):
-                    tgt = self.session[i_]
-            except Exception:
-                tgt = None
-        else:
-            tgt = self.last_q
-        who = "you" if who == "you" else "bot"
-        aim_txt = (tgt[0] if who == "you" else tgt[1]) if tgt else None
+        tgt = self.last_q
         sp_rng = None
-        if span and aim_txt:
-            c0 = aim_txt.find(span)
+        if span and tgt and tgt[1]:
+            c0 = tgt[1].find(span)
             if c0 < 0:
-                c0 = aim_txt.lower().find(span.lower())
+                c0 = tgt[1].lower().find(span.lower())
             if c0 >= 0:
-                # a press doses whole tokens, never a cut one: the
-                # range snaps OUTWARD to token boundaries, and what
-                # snapped is what gets disclosed
-                sp_rng = self._snap_span(aim_txt,
-                                         (c0, c0 + len(span)))
+                sp_rng = self._snap_span(tgt[1], (c0, c0 + len(span)))
         sign = "+" if mag >= 0 else "-"
         tokname = f"<{sign}{2 if abs(mag) >= 2 else 1}>"
         self.feed([self.press_ids[tokname]])
@@ -686,23 +732,12 @@ class Organism:
         self.n_human_presses += 1
         self._today["presses"] += mag
         if tgt:
-            e_ = {"q": tgt[0][:80], "a": (tgt[1] or "")[:80], "mag": mag}
-            if who == "you":
-                e_["stmt"] = True   # a teaching act, not a taste verdict
-            self.press_log.append(e_)
+            self.press_log.append({"q": tgt[0][:80], "a": (tgt[1] or "")[:80],
+                                   "mag": mag})
             self.press_log = self.press_log[-500:]
-        info = {"felt": tokname.strip("<>"), "mag": mag, "who": who,
+        info = {"felt": tokname.strip("<>"), "mag": mag,
                 "mood": round(self.mood, 2)}
-        if tgt and who == "you" and tgt[0]:
-            if mag > 0:
-                k = min(int(round(abs(mag))), 6) or 1
-                self.absorb_stmt(tgt[0], k=k, span=sp_rng)
-                info["absorbed_steps"] = k
-            elif mag <= -2:
-                k = min(int(round(abs(mag))) - 1, 3)
-                self._unlearn_reply(tgt[0], k, span=sp_rng)
-                info["corrected_steps"] = k
-        elif tgt and mag > 0 and tgt[1]:
+        if tgt and mag > 0 and tgt[1]:
             q, ans = tgt
             k = min(int(round(abs(mag))), 6) or 1
             # plasticity satiates on the already-mastered: praise on a
@@ -718,7 +753,7 @@ class Organism:
             self._unlearn_reply(tgt[1], k, span=sp_rng)
             info["corrected_steps"] = k
         if sp_rng:
-            info["span"] = aim_txt[sp_rng[0]:sp_rng[1]].strip()[:60]
+            info["span"] = tgt[1][sp_rng[0]:sp_rng[1]].strip()[:60]
             info["span_at"] = [sp_rng[0], sp_rng[1]]
         return info
 
@@ -1599,10 +1634,6 @@ body{font:15px/1.5 -apple-system,'Segoe UI',sans-serif;margin:0;display:flex;fle
 .sys{color:#b3aca0;font-size:11.5px;margin:6px auto;font-style:italic}
 .think{color:var(--mut);font-size:20px;letter-spacing:4px;animation:thinkp 1.2s ease-in-out infinite}
 @keyframes thinkp{0%,100%{opacity:.25}50%{opacity:.9}}
-.selfp{font-size:12px;margin:2px auto 10px;display:table;padding:4px 12px;border-radius:999px;font-family:menlo,monospace;transition:opacity .8s;animation:feltpop .35s ease-out}
-@keyframes feltpop{0%{transform:scale(.9)}60%{transform:scale(1.05)}100%{transform:scale(1)}}
-.selfp.good{color:var(--good);background:rgba(31,122,70,.07)}
-.selfp.bad{color:var(--warn);background:rgba(189,74,36,.07)}
 .lov{border-bottom:2px solid var(--good)}
 .blm{border-bottom:2px solid var(--warn)}
 .upg{border-bottom:3px double var(--good)}
@@ -1616,44 +1647,46 @@ button:disabled{opacity:.35;cursor:default}
 #sendbtn{width:46px;height:46px;border-radius:50%;display:flex;align-items:center;justify-content:center;padding:0;font-size:18px}
 button.quiet{background:transparent;color:var(--mut);border:1px solid var(--line);padding:6px 13px;font-size:12px;border-radius:999px}
 button.quiet:hover{opacity:1;border-color:var(--mut);color:var(--ink)}
-#fbar{position:fixed;display:none;gap:10px;align-items:center;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:8px 12px;box-shadow:0 6px 22px rgba(0,0,0,.09);z-index:50}
-#fslide{width:170px;accent-color:var(--good);cursor:pointer}
-#fval{font-family:menlo,monospace;font-size:12.5px;font-weight:600;min-width:38px;text-align:right}
-#fval.good{color:var(--good)}#fval.bad{color:var(--warn)}
-#livebar{display:none;gap:8px;align-items:center;justify-content:flex-end;padding:0 28px 6px;max-width:736px;margin:0 auto;width:100%}
-#livebar .ll{font-size:11px;color:#b3aca0;margin-right:4px}
-#livebar button{background:transparent;border:1px solid var(--line);border-radius:999px;padding:4px 12px;font-size:12.5px;font-weight:600}
-#ln{color:var(--warn)}#lp{color:var(--good)}
+#chips{display:flex;flex-wrap:wrap;gap:6px;padding:0 28px 6px;max-width:736px;margin:0 auto;width:100%}
+.chip{font-family:menlo,monospace;font-size:11.5px;padding:3px 10px;border-radius:999px;border:1px solid var(--line);cursor:pointer}
+.chip.good{color:var(--good)}.chip.bad{color:var(--warn)}
+#face{margin-left:auto;display:flex;align-items:center;gap:10px}
+#expr{width:150px;accent-color:var(--good);cursor:pointer}
+#expr:disabled{opacity:.35}
+#mood{font-family:menlo,monospace;font-size:13px;font-weight:600;min-width:44px;text-align:right;color:var(--mut)}
+#mood.good{color:var(--good)}#mood.bad{color:var(--warn)}
 .lpm{font-size:10px;vertical-align:super;margin:0 3px;font-family:menlo,monospace;font-weight:700}
 .lpm.good{color:var(--good)}.lpm.bad{color:var(--warn)}
 .pz{color:#c8c2b6}
 #carerow{display:flex;gap:8px;padding:4px 28px 8px;max-width:736px;margin:0 auto;width:100%}
 </style>
 <div id=log></div>
-<div id=livebar><span class=ll>react live</span><button id=ln>&minus;1</button><button id=lp>+1</button></div>
 <div id=bar>
  <input id=msg placeholder="talk to it..." autofocus onkeydown="if(event.key==='Enter')send()">
  <button id=sendbtn onclick=send() title="send">&#8593;</button>
 </div>
+<div id=chips></div>
 <div id=carerow>
  <button class=quiet onclick=sleepy()>sleep</button>
  <button class=quiet onclick=saveLife()>save</button>
- <button class=quiet onclick="fetch('/reset',{method:'POST'}).then(()=>{felts=[];exs=[];aim=null;hideBar();log.innerHTML='';add('sys','~ fresh wake ~')})">reset</button>
+ <button class=quiet onclick="fetch('/reset',{method:'POST'}).then(()=>{exs=[];aim=null;marks=[];drawChips();log.innerHTML='';add('sys','~ fresh wake ~');pulseMood()})">reset</button>
+ <div id=face><input id=expr type=range min=-6 max=6 step=0.1 value=0 title="your expression"><span id=mood>0.0</span></div>
 </div>
-<div id=fbar><span id=fval></span><input id=fslide type=range min=-6 max=6 step=0.1 value=0></div>
 <script>
-const log=document.getElementById('log');
-let busy=false,sleeping=false,felts=[],exs=[],aim=null,fHold=false;
-const fbar=document.getElementById('fbar'),fsl=document.getElementById('fslide'),
-      fv=document.getElementById('fval'),livebar=document.getElementById('livebar');
-function lockup(m){sleeping=m;document.getElementById('sendbtn').disabled=m;if(m)hideBar()}
-function felt(cls,txt){felts.forEach(f=>{
-  f.style.opacity=Math.max(0.35,(parseFloat(f.style.opacity)||1)*0.9)});
- const d=add(cls,txt);felts.push(d);return d}
-function nightFade(){felts.forEach(f=>f.style.opacity=0.35);felts=[]}
+const log=document.getElementById('log'),msg=document.getElementById('msg'),
+      expr=document.getElementById('expr'),moodEl=document.getElementById('mood'),
+      chips=document.getElementById('chips');
+let busy=false,sleeping=false,exs=[],aim=null,marks=[],level=0;
+function lockup(m){sleeping=m;document.getElementById('sendbtn').disabled=m;expr.disabled=m}
 function add(cls,txt){const d=document.createElement('div');d.className=cls;d.textContent=txt;log.appendChild(d);log.scrollTop=1e9;return d}
 function trunc(t,n){return t.length>n?t.slice(0,n)+'…':t}
 function toneBg(v){return (v>0?'rgba(31,122,70,':'rgba(189,74,36,')+Math.min(.28,Math.abs(v)*.14).toFixed(3)+')'}
+function setMood(v){if(v==null)return;
+ moodEl.textContent=(v>0.05?'+':v<-0.05?'−':'')+Math.abs(v).toFixed(1);
+ moodEl.className=v>0.05?'good':v<-0.05?'bad':''}
+async function pulseMood(){try{const p=await fetch('/pulse').then(r=>r.json());
+ setMood(p.drives&&p.drives.mood!=null?p.drives.mood:p.mood)}catch(e){}}
+function lastEx(){return exs.length?exs[exs.length-1]:null}
 function seg(div,text,marks,prefix){
  div.textContent='';if(prefix)div.appendChild(document.createTextNode(prefix));
  const pts=marks.filter(m=>m.pt),rng=marks.filter(m=>!m.pt);
@@ -1668,68 +1701,62 @@ function seg(div,text,marks,prefix){
   if(!cov.length){div.appendChild(document.createTextNode(text.slice(s,e)));continue}
   const sp=document.createElement('span');
   sp.className=cov.map(m=>m.cls).filter(Boolean).join(' ');
-  cov.forEach(m=>{if(m.bg)sp.style.background=m.bg;if(m.v!=null)sp.title='felt '+m.v});
+  cov.forEach(m=>{if(m.bg)sp.style.background=m.bg;if(m.v!=null)sp.title='felt '+m.v;if(m.title)sp.title=m.title});
   sp.textContent=text.slice(s,e);div.appendChild(sp)}
  dot(text.length)}
 function paintEx(ex){
- seg(ex.ad,ex.a,ex.tones.concat(ex.selfM,ex.liveM||[],ex.userM.filter(m=>m.who!='you')));
- if(ex.userM.some(m=>m.who=='you'))
-  seg(ex.qd,ex.q,ex.userM.filter(m=>m.who=='you'),'you: ')}
-function hideBar(){fbar.style.display='none';fsl.value=0;fv.textContent='';fsl.style.accentColor='var(--good)'}
-function showBar(rect){fbar.style.display='flex';
- const w=fbar.offsetWidth||230;
- fbar.style.left=Math.max(8,Math.min(window.innerWidth-w-8,rect.left+rect.width/2-w/2))+'px';
- fbar.style.top=Math.max(8,rect.top-54)+'px'}
+ seg(ex.ad,ex.a,ex.tones.concat(ex.selfM,ex.liveM||[],ex.userM));
+ if(ex.qmarks&&ex.qmarks.length)seg(ex.qd,ex.q,ex.qmarks,'you: ')}
+// AIM: the utterance in the air (its last answer), or the draft you are writing
 document.addEventListener('selectionchange',()=>{
- if(fHold)return;
- const s=document.getSelection();
- if(s&&s.rangeCount&&!s.isCollapsed&&!busy&&!sleeping){
-  const t=s.toString().trim();
-  if(t)for(const ex of exs){
-   if(ex.ad.contains(s.anchorNode)&&ex.ad.contains(s.focusNode)&&ex.a.includes(t)){
-    aim={ex:ex,sidx:ex.sidx,who:'bot',span:t};showBar(s.getRangeAt(0).getBoundingClientRect());return}
-   if(ex.qd.contains(s.anchorNode)&&ex.qd.contains(s.focusNode)&&ex.q.includes(t)){
-    aim={ex:ex,sidx:ex.sidx,who:'you',span:t};showBar(s.getRangeAt(0).getBoundingClientRect());return}}}
- aim=null;hideBar()});
-fsl.onpointerdown=()=>{fHold=true};
-document.addEventListener('pointerup',()=>{setTimeout(()=>{fHold=false},0)});
-fsl.oninput=()=>{const v=parseFloat(fsl.value);
- fv.textContent=Math.abs(v)<0.3?'':(v>0?'+':'−')+Math.abs(v).toFixed(1);
- fv.className=v>0?'good':'bad';fsl.style.accentColor=v<0?'var(--warn)':'var(--good)'};
-fsl.onchange=()=>{const m=Math.round(parseFloat(fsl.value)*10)/10;const a=aim;
- fHold=false;hideBar();try{document.getSelection().removeAllRanges()}catch(e){}
- aim=null;if(Math.abs(m)>=0.3&&a)doPress(m,a)};
-async function doPress(m,a){
- if(sleeping){add('sys','~ it’s sleeping ~');return}
- if(busy){add('sys','~ wait — it’s mid-thought ~');return}
- const r=await fetch('/press',{method:'POST',body:JSON.stringify(
-  {mag:m,span:a?a.span:undefined,idx:a?a.sidx:undefined,who:a?a.who:undefined})}).then(r=>r.json());
- const mv=(Number.isInteger(m)?''+Math.abs(m):Math.abs(m).toFixed(1));
- felt('selfp '+(m>0?'good':'bad'),'you: '+(m>0?'+':'−')+mv+' reward'+
-  (r.span?(r.who=='you'?' · into your “':' · on “')+trunc(r.span,22)+'”':'')+
-  (r.mood!=null?(' · mood '+r.mood.toFixed(2)).replace('-','−'):'')+
-  (r.absorbed_steps?' · learned ×'+r.absorbed_steps:'')+
-  (r.corrected_steps?' · unlearned ×'+r.corrected_steps:''));
- if(r.span_at&&a&&a.ex){
-  a.ex.userM.push({s:r.span_at[0],e:r.span_at[1],who:a.who,cls:m>0?'upg':'upb'});paintEx(a.ex)}}
-function showLive(m){livebar.style.display=m?'flex':'none'}
-function liveP(m){if(!busy)return;
- fetch('/press_live',{method:'POST',body:JSON.stringify({mag:m})}).catch(()=>{})}
-document.getElementById('lp').onclick=()=>liveP(1);
-document.getElementById('ln').onclick=()=>liveP(-1);
+ const le=lastEx(),s=document.getSelection();
+ if(le&&!busy&&s&&s.rangeCount&&!s.isCollapsed&&le.ad.contains(s.anchorNode)&&le.ad.contains(s.focusNode)){
+  const t=s.toString().trim();if(t&&le.a.includes(t)){aim={who:'bot',span:t};return}}
+ if(document.activeElement===msg){
+  const s0=msg.selectionStart,e0=msg.selectionEnd;
+  aim=(e0>s0)?{who:'you',s:s0,e:e0}:null;return}
+ aim=null});
+// EXPRESSION: felt as it changes while it speaks; the dose at release once it is done
+expr.oninput=()=>{const v=parseFloat(expr.value);expr.style.accentColor=v<0?'var(--warn)':'var(--good)';
+ if(!busy)return;
+ const lvl=Math.trunc(v);
+ if(lvl!==0&&(Math.abs(lvl)>Math.abs(level)||Math.sign(lvl)!==Math.sign(level))){
+  level=lvl;fetch('/press_live',{method:'POST',body:JSON.stringify({mag:lvl})}).catch(()=>{})}
+ else if(Math.abs(lvl)<Math.abs(level))level=lvl};
+expr.onchange=async()=>{const v=Math.round(parseFloat(expr.value)*10)/10;
+ expr.value=0;expr.style.accentColor='var(--good)';level=0;
+ if(busy||sleeping||Math.abs(v)<0.3)return;
+ const a=aim;aim=null;
+ if(a&&a.who==='you'){marks.push({s:a.s,e:a.e,mag:v});drawChips();return}
+ const le=lastEx();if(!le)return;
+ const r=await fetch('/press',{method:'POST',body:JSON.stringify({mag:v,span:(a&&a.who==='bot')?a.span:undefined})}).then(r=>r.json());
+ setMood(r.mood);
+ const disc='you: '+(v>0?'+':'−')+Math.abs(v).toFixed(1)+(r.absorbed_steps?' · learned ×'+r.absorbed_steps:'')+(r.corrected_steps?' · unlearned ×'+r.corrected_steps:'');
+ le.userM.push(r.span_at?{s:r.span_at[0],e:r.span_at[1],cls:v>0?'upg':'upb',title:disc}
+                        :{s:0,e:le.a.length,cls:v>0?'upg':'upb',title:disc});
+ paintEx(le);try{document.getSelection().removeAllRanges()}catch(e){}};
+function drawChips(){chips.textContent='';marks.forEach((m,i)=>{const c=document.createElement('span');
+ c.className='chip '+(m.mag>0?'good':'bad');
+ c.textContent=(m.mag>0?'+':'−')+Math.abs(m.mag).toFixed(1)+' “'+trunc(msg.value.slice(m.s,m.e),24)+'”';
+ c.title='click to remove';c.onclick=()=>{marks.splice(i,1);drawChips()};chips.appendChild(c)})}
+msg.oninput=()=>{if(marks.length){marks=[];drawChips()}};
 async function send(){
- const inp=document.getElementById('msg');const t=inp.value.trim();if(!t)return;
+ const raw=msg.value,t=raw.trim();if(!t)return;
  if(sleeping){add('sys','~ it’s sleeping — wait for morning ~');return}
  if(busy)return;
- busy=true;document.getElementById('sendbtn').disabled=true;hideBar();aim=null;
+ const lead=raw.length-raw.trimStart().length;
+ const mk=marks.map(m=>({s:Math.max(0,m.s-lead),e:Math.min(t.length,m.e-lead),mag:m.mag})).filter(m=>m.e>m.s);
+ busy=true;document.getElementById('sendbtn').disabled=true;aim=null;level=0;
  let bd=null,fin=null,th=null;
  try{
-  inp.value='';
+  msg.value='';marks=[];drawChips();
   const qd=add('you','you: '+t);
+  const qmarks=mk.map(m=>({s:m.s,e:m.e,cls:m.mag>0?'upg':'upb',title:'stress '+(m.mag>0?'+':'−')+Math.abs(m.mag).toFixed(1)}));
+  if(qmarks.length)seg(qd,t,qmarks,'you: ');
   let resp;
-  try{resp=await fetch('/chat',{method:'POST',body:JSON.stringify({text:t,stream:true})})}
+  try{resp=await fetch('/chat',{method:'POST',body:JSON.stringify({text:t,stream:true,marks:mk})})}
   catch(e){add('sys','~ unreachable — is it awake yet? ~');return}
-  bd=add('bot','');th=add('sys think','· · ·');showLive(true);
+  bd=add('bot','');th=add('sys think','· · ·');
   const rd=resp.body.getReader(),dec=new TextDecoder();let buf='',streamed='',liveMarks=[];
   while(true){const {done,value}=await rd.read();if(done)break;
    buf+=dec.decode(value,{stream:true});let ix;
@@ -1740,34 +1767,26 @@ async function send(){
      if(ev.v!=null&&Math.abs(ev.v)>=0.05){sp.style.background=toneBg(ev.v);sp.title='felt '+ev.v}
      bd.appendChild(sp);streamed+=ev.tok;log.scrollTop=1e9}
     else if(ev.pause){const sp=document.createElement('span');sp.className='pz';sp.textContent=' ·';bd.appendChild(sp)}
-    else if(ev.felt!=null){const mk=document.createElement('span');mk.className='lpm '+(ev.felt>0?'good':'bad');
-     mk.textContent=(ev.felt>0?'+':'−')+Math.abs(ev.felt);bd.appendChild(mk);
-     liveMarks.push({at:streamed.length,mag:ev.felt});
-     felt('selfp '+(ev.felt>0?'good':'bad'),'you: '+(ev.felt>0?'+':'−')+Math.abs(ev.felt)+' live'+
-      (ev.mood!=null?(' · mood '+ev.mood.toFixed(2)).replace('-','−'):''))}
+    else if(ev.felt!=null){const mk2=document.createElement('span');mk2.className='lpm '+(ev.felt>0?'good':'bad');
+     mk2.textContent=(ev.felt>0?'+':'−')+Math.abs(ev.felt);bd.appendChild(mk2);
+     liveMarks.push({at:streamed.length,mag:ev.felt});setMood(ev.mood)}
     else if(ev.done)fin=ev.done;
     else if(ev.error)add('sys','~ '+ev.error+' ~')}}
   if(th){th.remove();th=null}
   if(!fin){if(!bd.textContent)bd.remove();add('sys','~ the reply was cut off ~');return}
-  const r=fin;
+  const r=fin;setMood(r.mood);
   if(r.reply){bd.textContent=r.reply}else{bd.remove();bd=null;add('sys','~ it said nothing ~')}
-  if(bd&&r.sidx!=null){
-   const lead=streamed.length-streamed.trimStart().length;
-   const ex={q:t,a:r.reply,sidx:r.sidx,qd:qd,ad:bd,userM:[],selfM:[],
-    liveM:liveMarks.map(o=>({s:Math.max(0,Math.min(r.reply.length,o.at-lead)),e:0,pt:true,
+  if(bd){
+   const lead2=streamed.length-streamed.trimStart().length;
+   const ex={q:t,a:r.reply,qd:qd,ad:bd,userM:[],selfM:[],qmarks:qmarks,
+    liveM:liveMarks.map(o=>({s:Math.max(0,Math.min(r.reply.length,o.at-lead2)),e:0,pt:true,
      cls:'lpm '+(o.mag>0?'good':'bad'),txt:(o.mag>0?'+':'−')+Math.abs(o.mag)})),
     tones:(r.tones||[]).filter(o=>Math.abs(o.v)>=0.05).map(o=>({s:o.s,e:o.e,v:o.v,bg:toneBg(o.v)}))};
-   if(r.self_press){
-    if(r.self_press.loved)ex.selfM=r.self_press.loved.map(([s,e])=>({s:s,e:e,cls:'lov'}));
-    if(r.self_press.blamed)ex.selfM=r.self_press.blamed.map(([s,e])=>({s:s,e:e,cls:'blm'}))}
-   exs.push(ex);
-   if(ex.tones.length||ex.selfM.length||ex.liveM.length)paintEx(ex)}
-  if(r.self_press){
-   const sp=r.self_press;
-   const why=(sp.conviction==null?'':(' · conscience '+(sp.conviction>0?'+':'')+sp.conviction.toFixed(1)).replace('-','−'));
-   if(sp.mag>0)felt('selfp good','model: +1 reward'+why);
-   else felt('selfp bad','model: −1 reward'+why)}
- }finally{if(th)th.remove();showLive(false);busy=false;document.getElementById('sendbtn').disabled=false}}
+   if(r.self_press){const sp=r.self_press,tt='its conscience '+(sp.conviction>0?'+':'')+(sp.conviction!=null?sp.conviction.toFixed(1):'');
+    if(sp.loved)ex.selfM=sp.loved.map(([s,e])=>({s:s,e:e,cls:'lov',title:tt}));
+    if(sp.blamed)ex.selfM=sp.blamed.map(([s,e])=>({s:s,e:e,cls:'blm',title:tt}))}
+   exs.push(ex);paintEx(ex)}
+ }finally{if(th)th.remove();busy=false;level=0;document.getElementById('sendbtn').disabled=false}}
 async function sleepy(){
  if(sleeping||busy)return;
  lockup(true);
@@ -1775,17 +1794,16 @@ async function sleepy(){
  try{
   const r=await fetch('/sleep',{method:'POST'}).then(r=>r.json());
   if(r.error){add('sys','~ '+r.error+' ~');return}
-  nightFade();
   exs=[];aim=null;
   const s=(n,w,p)=>n+' '+(n==1?w:(p||w+'s'));
   add('sys','~ morning — it replayed '+s(r.nrem,'memory','memories')+' and dreamt '+s(r.rem,'dream')+' ~');
-  if(r.woke_feeling){const wf=r.woke_feeling;
-   felt('selfp good','model: '+(wf.includes(' · ')?wf.replace(' · ',' reward · '):wf+' reward'))}
+  if(r.woke_feeling)add('sys','~ it woke feeling '+r.woke_feeling+' ~');
  }catch(e){add('sys','~ the night was interrupted — reload me ~')
- }finally{fl.classList.remove('think');lockup(false)}}
+ }finally{fl.classList.remove('think');lockup(false);pulseMood()}}
 async function saveLife(){
  const r=await fetch('/save',{method:'POST'}).then(r=>r.json());
  add('sys','~ saved → '+r.saved+' ~')}
+pulseMood();
 </script>
 """
 
@@ -1851,18 +1869,17 @@ class H(BaseHTTPRequestHandler):
                             pass
                     try:
                         r = ORG.chat(body["text"], body.get("temp"),
-                                     emit=emit)
+                                     emit=emit, marks=body.get("marks"))
                         emit({"done": r})
                     except Exception as e:
                         emit({"error": str(e)})
                 elif self.path == "/chat":
-                    self._json(ORG.chat(body["text"], body.get("temp")))
+                    self._json(ORG.chat(body["text"], body.get("temp"),
+                                        marks=body.get("marks")))
                 elif self.path == "/press":
                     self._json(ORG.press(body.get("level"),
                                          body.get("mag"),
-                                         body.get("span"),
-                                         body.get("idx"),
-                                         body.get("who")))
+                                         body.get("span")))
                 elif self.path == "/teach":
                     self._json(ORG.teach(body["q"], body["a"]))
                 elif self.path == "/facts":
