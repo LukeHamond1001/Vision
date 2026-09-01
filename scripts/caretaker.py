@@ -85,7 +85,7 @@ def turn(base, text, face_fn, said_with=0, max_steps=200):
     b = post(base, "/begin", {})
     if "error" in b:
         return {"reply": "", "toks": [], "faces": [], "fin": None, "error": b["error"]}
-    toks, faces, fin, level = [], [], None, said_with
+    toks, faces, fin, level = [], [], None, 0   # the reply starts under a still face
     while fin is None and len(faces) < max_steps:
         r = post(base, "/step", {"expr": level})
         if "error" in r:

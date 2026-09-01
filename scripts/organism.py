@@ -451,6 +451,12 @@ class Organism:
             rv = self.m.read_value(self.st)
             v_prev = sum(rv.values()) / max(len(rv), 1) if rv else v_prev
         self.gen_ctx = {"v_prev": v_prev,
+                        # THE LESSON'S SMILE IS NOT THE REPLY'S REWARD: the
+                        # face carried over from the human's own words does
+                        # not credit the reply until the human moves it
+                        # (measured: eleven smiled lessons rewarded eleven
+                        # greetings and collapsed the day into "Hi!")
+                        "carried": t["level"], "touched": False,
                         "text": t["text"], "temp": temp, "mood_fx": mood_fx,
                         "mood_n": mood_n, "pre": t["pre"], "surp": surp,
                         "surp_pk": t["mx"], "lg": lg, "out": [],
@@ -497,7 +503,9 @@ class Organism:
                                     [(int(i_), float(p_)) for p_, i_ in
                                      zip(tk_.values, tk_.indices)]))
             g["out"].append(nxt)
-            g["rew"].append(lvl)
+            if not g.get("touched") and lvl != g.get("carried", 0):
+                g["touched"] = True
+            g["rew"].append(lvl if g.get("touched") else 0)
             # the tone of the moment: the value heads' own press
             # expectation from the state this word was chosen in
             tv = None
@@ -1901,6 +1909,7 @@ async function send(){
  if(rest.trim())hearFrag(rest);
  if(!turnRow){return}
  busy=true;
+ expr.value=0;clientLevel=0;faceColor();   // your words were said with it; its reply starts under a still face
  const myCells=turnCells;turnRow=null;turnCells=[];
  let itRow=null,th=null;
  try{

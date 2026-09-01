@@ -74,6 +74,10 @@ def say(text: str, face: int = 0) -> str:
         face: Your expression while saying it, an integer -6..6 (0 = still).
             A statement said with a smile (+1/+2) is kept and learned; said
             with a frown it is not kept. Questions are best asked still.
+            The smile you say a lesson with is NOT a reward for its reply:
+            listen to the reply with face 0 (relaxing is silent) and react
+            at the end with praise(). A face that never moves during the
+            reply credits nothing.
     """
     e = _spend()
     if e:
@@ -216,6 +220,7 @@ Your face is its reward. Every word you say or it says is spoken into your expre
 
 Laws you must respect, all measured on this body:
 1. A face change mid-sentence derails a correct answer. Keep your face STILL while a reply is going right. Frown (-2) at the first clearly wrong word — there is nothing left to derail. Praise (praise(+2)) once a right answer has landed.
+1b. The smile you said a lesson with is not a reward for the reply. Always listen with face 0 (relaxing to 0 is silent); a reply earns its reward only from a face that moves for it, or from praise() after it lands. Rewarding whatever follows a lesson taught the last body to answer everything with "Hi! It is nice to talk with you."
 2. Judge MEANING, not wording. A true answer in different words is right. Do not frown at a paraphrase.
 3. Never praise a wrong answer, even a fluent one. Never teach something false.
 4. One thing at a time. A lesson is one short true sentence, said with +1 or +2. Then check it with a plain question. If it fails, say the sentence again with a smile, at most once more today; the night will do the rest.
