@@ -451,6 +451,18 @@ class Organism:
             # the next word arrives (or the turn ends). Fed word by
             # word the old way, 'magnet' became ' ','m','agn','et' and
             # the reply degenerated.
+            if getattr(self.a, "hear_mode", "word") == "turn":
+                # THE TURN IS ONE FORWARD: fed word by word, each word
+                # became its own chunk and the body's chunk-boundary
+                # machinery (episodic writes among them) fired per word —
+                # a statement heard that way degenerated ('llo is a
+                # zephyr is a zephyr…') while the same sentence in one
+                # forward was fine (measured 2026-09-01). Words are
+                # recorded as they are said; the forward runs at /begin.
+                t["ftone"].append(None)
+                return {"heard": len(fragment), "tokens": [], "felt": felt,
+                        "tone": None, "rpe": None, "mood": round(self.mood, 2),
+                        "level": t["level"]}
             ids = self._hear_new(t, hold=1)
             heard = [self.tok.decode([i_]) for i_ in ids]
             if ids:
@@ -2301,6 +2313,10 @@ def main():
     ap.add_argument("ckpt"); ap.add_argument("tok")
     ap.add_argument("--dev", default="mps")
     ap.add_argument("--port", type=int, default=8016)
+    ap.add_argument("--hear-mode", default="word", choices=["word", "turn"],
+                    help="word: one forward per word as it is said (per-word "
+                         "listening tones); turn: the words run through the body "
+                         "in one forward at the end of the turn (an A/B switch)")
     ap.add_argument("--felt-as", default="event", choices=["event", "token"],
                     help="how a face change reaches it: as a press LEVEL riding "
                          "the next token (the grade as a sense) or as a press "

@@ -116,6 +116,16 @@ are authored to obey them:
     every time, so one-shot recall never happens the same day; the gate
     lets it speak louder exactly when the trunk does not know.
 
+Open item found while wiring law 14 on the 297M body: replies to
+STATEMENTS degenerated into a stutter ('llo is a zephyr is a zephyr…')
+after an afternoon of instrument tests that absorbed statements and
+pressed on degenerate replies, while every question→answer stayed
+solid (report card 0.00). Hearing the turn in one forward did not
+change it, so it is weight damage from testing, not a chunk-boundary
+effect; the serve keeps both hear modes (`--hear-mode word|turn`) as
+an A/B switch. Law for the instrument: test on a scratch copy of the
+life, never on the living body.
+
 Live-body laws that arrived with them (in `scripts/organism.py`, all
 disclosed numbers): every wake dose rehearses one old memory beside
 the new one (no school pass needed to hold the router); the dose
