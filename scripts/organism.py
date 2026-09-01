@@ -330,7 +330,7 @@ class Organism:
             t = {"text": "", "frags": [], "ftone": [], "level": 0,
                  "tot": 0.0, "n": 0, "mx": 0.0, "lg": None,
                  "pre": self._flat(self.st), "felt_ev": [], "v_prev": v0,
-                 "rpe_peak": 0.0}
+                 "rpe_peak": 0.0, "fed": []}
             self.turn_ctx = t
         return t
 
@@ -375,11 +375,23 @@ class Organism:
             t["felt_ev"].append((len(t["text"]), lvl))
             felt = lvl
         fragment = fragment or ""
+        heard = []
         if fragment:
-            ids = self.tok.encode(fragment).ids
+            s0 = len(t["text"])
+            t["text"] += fragment
+            t["frags"].append((s0, s0 + len(fragment), lvl))
+            # WORDS ARE TOKENIZED AS A SENTENCE, NOT AS FRAGMENTS: a
+            # trailing space is not a token of its own, it belongs to
+            # the next word (' magnet'), so the turn is re-tokenized as
+            # one growing text and the last token is held back until
+            # the next word arrives (or the turn ends). Fed word by
+            # word the old way, 'magnet' became ' ','m','agn','et' and
+            # the reply degenerated.
+            ids = self._hear_new(t, hold=1)
+            heard = [self.tok.decode([i_]) for i_ in ids]
             if ids:
-                # surprise accumulates across fragments: a fragment's
-                # first token is scored under the previous logits
+                # surprise accumulates across fragments: the first new
+                # token is scored under the previous logits
                 with torch.no_grad():
                     if t["lg"] is not None:
                         ce0 = float(F.cross_entropy(
@@ -393,9 +405,6 @@ class Organism:
                 t["n"] += max(0, len(ids) - 1)
                 t["mx"] = max(t["mx"], mx_)
                 t["lg"] = lg
-            s0 = len(t["text"])
-            t["text"] += fragment
-            t["frags"].append((s0, s0 + len(fragment), lvl))
             # what it felt hearing these words: the value heads' own
             # press expectation from the state after them
             tv = None
@@ -410,11 +419,22 @@ class Organism:
                 rpe = round((felt or 0) + tv - t["v_prev"], 2)
                 t["v_prev"] = tv
                 t["rpe_peak"] = max(t["rpe_peak"], abs(rpe))
-            return {"heard": len(fragment), "felt": felt, "tone": tv,
-                    "rpe": rpe, "mood": round(self.mood, 2),
+            return {"heard": len(fragment), "tokens": heard, "felt": felt,
+                    "tone": tv, "rpe": rpe, "mood": round(self.mood, 2),
                     "level": t["level"]}
         return {"heard": 0, "felt": felt,
                 "mood": round(self.mood, 2), "level": t["level"]}
+
+    def _hear_new(self, t, hold=0):
+        """the tokens of the turn text not yet fed, holding back the last
+        `hold` (a boundary token that may still merge with the next word).
+        What was fed stays fed; if re-tokenization shifts an already-fed
+        token (rare), the new tokens continue from where feeding stopped."""
+        full = self.tok.encode(t["text"]).ids
+        n_fed = len(t["fed"])
+        new = full[n_fed:len(full) - hold] if len(full) - hold > n_fed else []
+        t["fed"] = t["fed"] + list(new)
+        return list(new)
 
     def chat_begin(self, text=None, temp=None, stress=None):
         """the human's turn ends: what is still unsaid is heard, the
@@ -427,6 +447,22 @@ class Organism:
             self.hear("", stress)
         if not t["text"].strip():
             return {"error": "nothing was said"}
+        # the held-back tail of the last word is heard now
+        tail_ids = self._hear_new(t, hold=0)
+        if tail_ids:
+            with torch.no_grad():
+                if t["lg"] is not None:
+                    ce0 = float(F.cross_entropy(
+                        t["lg"][0, -1:].float(),
+                        torch.tensor([tail_ids[0]], device=self.dev)))
+                    t["tot"] += ce0
+                    t["n"] += 1
+                    t["mx"] = max(t["mx"], ce0)
+            lg_t, s_, mx_ = self.feed_ce(tail_ids)
+            t["tot"] += s_ * max(0, len(tail_ids) - 1)
+            t["n"] += max(0, len(tail_ids) - 1)
+            t["mx"] = max(t["mx"], mx_)
+            t["lg"] = lg_t
         temp = temp or self.a.temp
         # MOOD FEEDBACK (49xx): the felt tally retunes the machinery —
         # a good stretch broadens (warmer sampling, lower curiosity
