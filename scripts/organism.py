@@ -1403,7 +1403,8 @@ body{font:15px/1.5 -apple-system,'Segoe UI',sans-serif;margin:0;display:flex;fle
 .sys{color:#b3aca0;font-size:11.5px;margin:6px auto;font-style:italic}
 .think{color:var(--mut);font-size:20px;letter-spacing:4px;animation:thinkp 1.2s ease-in-out infinite}
 @keyframes thinkp{0%,100%{opacity:.25}50%{opacity:.9}}
-.selfp{font-size:12px;margin:2px auto 10px;display:table;padding:4px 12px;border-radius:999px;font-family:menlo,monospace}
+.selfp{font-size:12px;margin:2px auto 10px;display:table;padding:4px 12px;border-radius:999px;font-family:menlo,monospace;transition:opacity .8s;animation:feltpop .35s ease-out}
+@keyframes feltpop{0%{transform:scale(.9)}60%{transform:scale(1.05)}100%{transform:scale(1)}}
 .selfp.good{color:var(--good);background:rgba(31,122,70,.07)}
 .selfp.bad{color:var(--warn);background:rgba(189,74,36,.07)}
 #bar{display:flex;gap:10px;padding:14px 28px 8px;background:var(--paper);max-width:736px;margin:0 auto;width:100%}
@@ -1437,15 +1438,21 @@ button.quiet:hover{opacity:1;border-color:var(--mut);color:var(--ink)}
 <div id=carerow>
  <button class=quiet onclick=sleepy()>sleep</button>
  <button class=quiet onclick=saveLife()>save</button>
- <button class=quiet onclick="fetch('/reset',{method:'POST'}).then(()=>add('sys','~ fresh wake ~'))">reset</button>
+ <button class=quiet onclick="fetch('/reset',{method:'POST'}).then(()=>{nightFade();add('sys','~ fresh wake ~')})">reset</button>
 </div>
 <script>
 const log=document.getElementById('log');
-let busy=false;
+let busy=false,felts=[];
+function felt(cls,txt){felts.forEach(f=>{
+  f.style.opacity=Math.max(0.35,(parseFloat(f.style.opacity)||1)*0.9)});
+ const d=add(cls,txt);felts.push(d);return d}
+function nightFade(){felts.forEach(f=>f.style.opacity=0.35);felts=[]}
 function add(cls,txt){const d=document.createElement('div');d.className=cls;d.textContent=txt;log.appendChild(d);log.scrollTop=1e9;return d}
 async function doPress(m){
- await fetch('/press',{method:'POST',body:JSON.stringify({mag:m})}).then(r=>r.json());
- add('selfp '+(m>0?'good':'bad'),'you: '+(m>0?'+':'')+m+' reward')}
+ const r=await fetch('/press',{method:'POST',body:JSON.stringify({mag:m})}).then(r=>r.json());
+ felt('selfp '+(m>0?'good':'bad'),'you: '+(m>0?'+':'')+m+' reward'+
+  (r.absorbed_steps?' \u00b7 learned \u00d7'+r.absorbed_steps:'')+
+  (r.corrected_steps?' \u00b7 unlearned \u00d7'+r.corrected_steps:''))}
 async function send(){
  const inp=document.getElementById('msg');const t=inp.value.trim();if(!t)return;
  if(busy)return;
@@ -1456,15 +1463,16 @@ async function send(){
   const r=await fetch('/chat',{method:'POST',body:JSON.stringify({text:t})}).then(r=>r.json());
   log.lastChild.remove();if(r.reply)add('bot',r.reply);else add('sys','~ it said nothing ~');
   if(r.self_press){
-   if(r.self_press.mag>0)add('selfp good','model: +1 reward');
-   else add('selfp bad','model: \u22121 reward')}
+   if(r.self_press.mag>0)felt('selfp good','model: +1 reward');
+   else felt('selfp bad','model: \u22121 reward')}
  }finally{busy=false;document.getElementById('sendbtn').disabled=false}}
 async function sleepy(){
  add('sys','~ falling asleep\u2026 ~');
  const r=await fetch('/sleep',{method:'POST'}).then(r=>r.json());
  if(r.error){add('sys','~ '+r.error+' ~');return}
+ nightFade();
  add('sys','~ it slept \u2014 NREM '+r.nrem+' + REM '+r.rem+' \u00b7 '+r.lived_tokens+' lived tokens ~');
- if(r.woke_feeling)add('selfp good','model: '+r.woke_feeling+' reward');
+ if(r.woke_feeling)felt('selfp good','model: '+r.woke_feeling+' reward');
  if(r.woke_thinking)add('bot',r.woke_thinking)}
 async function saveLife(){
  const r=await fetch('/save',{method:'POST'}).then(r=>r.json());
