@@ -32,9 +32,12 @@ it : A submarine dives by filling its tanks with water and rises
 ## The life — `scripts/organism.py`
 
 **Day** — it measures its own surprise every turn and keeps what
-spikes (budgeted); the caretaker's expression is felt as native tokens
-(<+1><+2><−1><−2>) whenever it changes, in either turn, and the face
-each word was spoken into becomes that word's plasticity; when its answer to something
+spikes (budgeted); the caretaker's expression reaches it as a sense (a press level
+riding the next word) whenever it changes, in either turn; the dose
+follows reward surprise — the face minus what its value heads expected
+— and lands on the words spoken into it; every wake dose rehearses an
+old memory beside the new one; mood clears in minutes; a reply that
+runs long is nudged to breathe; when its answer to something
 it learned satisfies its own conscience, it presses its own button —
 felt only, never self-teaching. **Night** — its own progress ledger
 picks the replay (mastery graduates, stuck fades, fresh always
@@ -75,6 +78,8 @@ about it: [RESULTS.md](RESULTS.md).
 
 ## Tools
 
+`scripts/birth.py` — a fresh life from the birth body (the gestated
+weights, no facts, day 0): everything it will know, it learns live ·
 `scripts/opus_caretaker.py` — Claude Opus raises it itself, from
 scratch: no gold list, no rule for the face; Opus decides what to teach,
 says it in the creature's register, holds a face over every word of the
