@@ -56,6 +56,9 @@ class Organism:
             self.m.set_eot_ids(self.eh, self.em)
         if hasattr(self.m, "read_beta"):
             self.m.read_beta = float(getattr(a, "store_read_beta", 0.0) or 0.0)
+        self.m.store_boost = float(getattr(a, "store_boost", 1.0) or 1.0)
+        if hasattr(self.m, "dopamine"):
+            self.m.dopamine = float(getattr(a, "dopamine", 0.0) or 0.0)
         self.m = self.m.eval()
         src = state.get("st_live") or state.get("st")
         self.st = _to_dev(src if state.get("st_live") else _lane0(src), self.dev) \
@@ -2320,6 +2323,12 @@ def main():
     ap.add_argument("ckpt"); ap.add_argument("tok")
     ap.add_argument("--dev", default="mps")
     ap.add_argument("--port", type=int, default=8016)
+    ap.add_argument("--store-boost", type=float, default=1.0,
+                    help="hippocampus read megaphone: amplify the store's top-8 "
+                         "suggestions per position by this factor (1 = as trained)")
+    ap.add_argument("--dopamine", type=float, default=0.0,
+                    help="kappa: a surprising reward scales the hippocampus write "
+                         "strength at that token, s <- min(1, s(1 + kappa|RPE|)) (0 = off)")
     ap.add_argument("--eou-start", type=int, default=12,
                     help="the breath: after this many content tokens the end of "
                          "the utterance starts gaining logits")
