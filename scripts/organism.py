@@ -1217,30 +1217,52 @@ class Organism:
 
     def _grow_vocab(self, V_new):
         """a tokenizer with more words than the body was born with (law
-        15: its own face tokens) — the tied embedding/head matrix and
-        the press LUT grow by the new rows, initialised small so the new
-        tokens are silent until the diet teaches them."""
+        15: its own face tokens) — EVERY vocabulary-sized tensor grows by
+        the new rows: the tied embedding/head small-random (silent until
+        the diet teaches them), other per-token weights at their mean,
+        the press LUT zero. The saved life is then consistent."""
+        import torch.nn as _nn
         E = self.m.embed.weight
         V0, d = E.shape
         if V_new <= V0:
             return
-        import torch.nn as _nn
+        tied = hasattr(self.m, "head") and self.m.head.weight.data_ptr() == E.data_ptr()
+        grown = []
+
+        def _grow(t, is_embed):
+            extra = V_new - t.shape[0]
+            if t.dim() >= 2 and is_embed:
+                new = torch.empty((extra,) + tuple(t.shape[1:]), device=t.device, dtype=t.dtype)
+                _nn.init.normal_(new, std=float(t.float().std()) * 0.5)
+            elif t.dtype.is_floating_point:
+                new = t.float().mean(0, keepdim=True).expand((extra,) + tuple(t.shape[1:])).to(t.dtype).clone()
+            else:
+                new = torch.zeros((extra,) + tuple(t.shape[1:]), device=t.device, dtype=t.dtype)
+            return torch.cat([t, new], 0)
+
         with torch.no_grad():
-            newE = torch.empty(V_new, d, device=E.device, dtype=E.dtype)
-            newE[:V0] = E
-            _nn.init.normal_(newE[V0:], std=float(E[:V0].std()) * 0.5)
-        emb = _nn.Embedding(V_new, d).to(E.device, E.dtype)
-        emb.weight = _nn.Parameter(newE)
-        self.m.embed = emb
-        if hasattr(self.m, "head"):
-            self.m.head.weight = self.m.embed.weight        # keep the tie
-        if hasattr(self.m, "reward_lut"):
-            lut = torch.zeros(V_new, dtype=self.m.reward_lut.dtype,
-                              device=self.m.reward_lut.device)
-            lut[:V0] = self.m.reward_lut
-            self.m.reward_lut = lut
-        print("[organism] vocabulary grew %d -> %d (its own face tokens)"
-              % (V0, V_new), file=sys.stderr)
+            for name, prm in list(self.m.named_parameters()):
+                if prm.dim() >= 1 and prm.shape[0] == V0:
+                    if tied and name == "head.weight":
+                        continue                       # follows embed
+                    mod = self.m
+                    parts = name.split(".")
+                    for pp in parts[:-1]:
+                        mod = getattr(mod, pp)
+                    setattr(mod, parts[-1], _nn.Parameter(_grow(prm.data, name == "embed.weight")))
+                    grown.append(name)
+            for name, buf in list(self.m.named_buffers()):
+                if buf.dim() >= 1 and buf.shape[0] == V0:
+                    mod = self.m
+                    parts = name.split(".")
+                    for pp in parts[:-1]:
+                        mod = getattr(mod, pp)
+                    setattr(mod, parts[-1], _grow(buf, False))
+                    grown.append(name)
+        if tied:
+            self.m.head.weight = self.m.embed.weight
+        print("[organism] vocabulary grew %d -> %d (%s)" % (V0, V_new, ", ".join(grown)),
+              file=sys.stderr)
 
     def _drives(self):
         self._decay_mood()
