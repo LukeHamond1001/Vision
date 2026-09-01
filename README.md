@@ -74,6 +74,12 @@ about it: [RESULTS.md](RESULTS.md).
 
 ## Tools
 
+`scripts/caretaker.py` — raises it through its face at the serve's own
+protocol: asks word by word, holds a face over every token of the reply
+against the gold (still while right, −2 at the first wrong word, praise
+once the answer lands), teaches back with a smile, sleeps it, checks the
+morning; `--opus` lets Claude Opus paraphrase the asks and judge
+gold-less replies ·
 `scripts/mini_school.py` — balanced interleaved consolidation over
 everything it knows (the periodic deep sleep) ·
 `scripts/stutter_repair.py` — targeted unlikelihood on a degenerate
