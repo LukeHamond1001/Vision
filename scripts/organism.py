@@ -1395,10 +1395,6 @@ PAGE = """<!doctype html><meta charset=utf-8>
  --acc:#2f7d5c;--good:#1f7a46;--warn:#bd4a24}
 *{box-sizing:border-box}
 body{font:15px/1.5 -apple-system,'Segoe UI',sans-serif;margin:0;display:flex;flex-direction:column;height:100vh;background:var(--paper);color:var(--ink)}
-#top{display:flex;align-items:center;gap:14px;padding:12px 22px;background:var(--paper);border-bottom:1px solid var(--line)}
-#status{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--mut);letter-spacing:.3px}
-#alivedot{width:9px;height:9px;border-radius:50%;background:var(--acc);animation:breathe 3.2s ease-in-out infinite}
-@keyframes breathe{0%,100%{opacity:.45;transform:scale(.85)}50%{opacity:1;transform:scale(1.1)}}
 #log{flex:1;overflow-y:auto;padding:28px 0}
 #log>div{max-width:680px;margin-left:auto;margin-right:auto;padding:0 28px;animation:rise .18s ease-out}
 @keyframes rise{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
@@ -1426,9 +1422,6 @@ button.quiet:hover{opacity:1;border-color:var(--mut);color:var(--ink)}
 #carerow{display:flex;gap:8px;padding:4px 28px 8px;max-width:736px;margin:0 auto;width:100%}
 #hint{padding:0 28px 12px;font-size:11px;color:#b3aca0;max-width:736px;margin:0 auto;width:100%}
 </style>
-<div id=top>
- <div id=status><span id=alivedot></span><span id=alivetxt>awake</span></div>
-</div>
 <div id=log></div>
 <div id=bar>
  <input id=msg placeholder="talk to it..." onkeydown="if(event.key==='Enter')send()">
@@ -1451,16 +1444,12 @@ button.quiet:hover{opacity:1;border-color:var(--mut);color:var(--ink)}
 const log=document.getElementById('log');
 let busy=false;
 function add(cls,txt){const d=document.createElement('div');d.className=cls;d.textContent=txt;log.appendChild(d);log.scrollTop=1e9;return d}
-function mood(m){if(m==null)return;
- const ad=document.getElementById('alivedot'),at=document.getElementById('alivetxt');
- ad.style.background=m>1.5?'var(--acc)':(m<-1?'var(--warn)':'#a8b0a6');
- at.textContent='awake \u00b7 mood '+m.toFixed(1)}
 function rwShow(){const v=parseFloat(document.getElementById('rw').value);
  const e=document.getElementById('rwval');e.textContent=(v>0?'+':'')+v;
  e.style.color=v>0?'var(--good)':(v<0?'var(--warn)':'var(--mut)')}
 async function doPress(m){
  const r=await fetch('/press',{method:'POST',body:JSON.stringify({mag:m})}).then(r=>r.json());
- mood(r.mood);document.getElementById('rw').value=0;rwShow();return r}
+ document.getElementById('rw').value=0;rwShow();return r}
 async function pressSlider(){
  const m=parseFloat(document.getElementById('rw').value)||0;
  if(m===0){add('sys','~ move the slider first \u2014 zero is not a judgment ~');return}
@@ -1479,7 +1468,6 @@ async function send(){
   if(r.self_press){
    if(r.self_press.mag>0)add('selfp good','model: +1 reward');
    else add('selfp bad','model: \u22121 reward')}
-  mood(r.mood);
  }finally{busy=false;document.getElementById('sendbtn').disabled=false}}
 async function sleepy(){
  add('sys','~ falling asleep\u2026 ~');
