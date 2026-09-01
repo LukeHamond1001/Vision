@@ -323,9 +323,13 @@ class Organism:
     def _turn(self):
         t = getattr(self, "turn_ctx", None)
         if t is None:
+            v0 = None
+            if hasattr(self.m, "read_value"):
+                rv = self.m.read_value(self.st)
+                v0 = sum(rv.values()) / max(len(rv), 1) if rv else 0.0
             t = {"text": "", "frags": [], "ftone": [], "level": 0,
                  "tot": 0.0, "n": 0, "mx": 0.0, "lg": None,
-                 "pre": self._flat(self.st), "felt_ev": []}
+                 "pre": self._flat(self.st), "felt_ev": [], "v_prev": v0}
             self.turn_ctx = t
         return t
 
@@ -398,8 +402,15 @@ class Organism:
                 rv = self.m.read_value(self.st)
                 tv = round(sum(rv.values()) / max(len(rv), 1), 2) if rv else 0.0
             t["ftone"].append(tv)
+            # INTERNAL REWARD: the dopamine prediction error — what was
+            # felt at these words plus how far its expectation moved
+            rpe = None
+            if tv is not None and t["v_prev"] is not None:
+                rpe = round((felt or 0) + tv - t["v_prev"], 2)
+                t["v_prev"] = tv
             return {"heard": len(fragment), "felt": felt, "tone": tv,
-                    "mood": round(self.mood, 2), "level": t["level"]}
+                    "rpe": rpe, "mood": round(self.mood, 2),
+                    "level": t["level"]}
         return {"heard": 0, "felt": felt,
                 "mood": round(self.mood, 2), "level": t["level"]}
 
@@ -435,7 +446,12 @@ class Organism:
                 torch.tensor([[self.eh]], device=self.dev), self.st)
         self.day_buf.append(self.eh)
         surp = t["tot"] / max(1, t["n"])
-        self.gen_ctx = {"text": t["text"], "temp": temp, "mood_fx": mood_fx,
+        v_prev = t["v_prev"]
+        if hasattr(self.m, "read_value"):
+            rv = self.m.read_value(self.st)
+            v_prev = sum(rv.values()) / max(len(rv), 1) if rv else v_prev
+        self.gen_ctx = {"v_prev": v_prev,
+                        "text": t["text"], "temp": temp, "mood_fx": mood_fx,
                         "mood_n": mood_n, "pre": t["pre"], "surp": surp,
                         "surp_pk": t["mx"], "lg": lg, "out": [],
                         "pauses": 0, "x": None, "tr_raw": [],
@@ -461,9 +477,11 @@ class Organism:
             if g["x"] is not None:
                 g["lg"], self.st, _ = self.m(g["x"], self.st)
             lg_f = self._feel_change(g, lvl, "(while it spoke)")
+            r_felt = 0
             if lg_f is not None:
                 g["lg"] = lg_f
                 g["felt_ev"].append((len(g["out"]), lvl))
+                r_felt = lvl
                 ev.append({"felt": lvl, "mood": round(self.mood, 2)})
             v = g["lg"][0, -1].float()
             if hasattr(self.m, "ban_presses"):
@@ -487,13 +505,18 @@ class Organism:
                 rv = self.m.read_value(self.st)
                 tv = sum(rv.values()) / max(len(rv), 1) if rv else 0.0
             g["tone_raw"].append(tv if tv is not None else 0.0)
+            v_t = g["tone_raw"][-1]
+            rpe = None
+            if g.get("v_prev") is not None:
+                rpe = round(r_felt + v_t - g["v_prev"], 2)
+            g["v_prev"] = v_t
+            base_ev = {"v": round(v_t, 2), "you": lvl, "rpe": rpe,
+                       "mood": round(self.mood, 2)}
             if nxt == self.sil:
                 g["pauses"] += 1
-                ev.append({"pause": True, "v": round(g["tone_raw"][-1], 2),
-                           "you": lvl})
+                ev.append(dict(base_ev, pause=True))
             elif nxt != self.em:
-                ev.append({"tok": self.tok.decode([nxt]),
-                           "v": round(g["tone_raw"][-1], 2), "you": lvl})
+                ev.append(dict(base_ev, tok=self.tok.decode([nxt])))
             g["x"] = torch.tensor([[nxt]], device=self.dev)
             if nxt == self.em or n_c + 1 >= self.a.max_new \
                     or len(g["out"]) >= self.a.max_new + 8:
@@ -1765,9 +1788,9 @@ body{font:15px/1.5 -apple-system,'Segoe UI',sans-serif;margin:0;display:flex;fle
 .tk .w{white-space:pre;padding:0 1px;border-bottom:2px solid transparent;line-height:1.25}
 .turn.you .w{color:var(--acc);font-weight:600;font-size:13.5px}
 .turn.it .w{font-family:Georgia,'Times New Roman',serif;font-size:17px;color:var(--ink)}
-.tk .fi,.tk .fy{font-family:menlo,monospace;font-size:9.5px;line-height:1.25;min-height:12px;color:#d2ccc0}
+.tk .fm,.tk .fy,.tk .fr{font-family:menlo,monospace;font-size:9.5px;line-height:1.25;min-height:12px;color:#d2ccc0}
 .tk .fy{font-weight:700}
-.fi.good,.fy.good{color:var(--good)}.fi.bad,.fy.bad{color:var(--warn)}
+.fm.good,.fy.good,.fr.good{color:var(--good)}.fm.bad,.fy.bad,.fr.bad{color:var(--warn)}
 .tk.pz .w{color:#c8c2b6}
 .tk.upg .w{border-bottom:3px double var(--good)}.tk.upb .w{border-bottom:3px double var(--warn)}
 .tk.lov .w{border-bottom:2px solid var(--good)}.tk.blm .w{border-bottom:2px solid var(--warn)}
@@ -1832,11 +1855,13 @@ function setF(el,v,dec){const base=el.className.split(' ')[0];
  if(v==null){el.textContent='';el.className=base;return}
  el.textContent=(v>0?'+':v<0?'−':'')+Math.abs(v).toFixed(dec);
  el.className=base+(v>0.05?' good':v<-0.05?' bad':'')}
-function cell(r,word,fi,fy,cls){const c=document.createElement('span');c.className='tk'+(cls?' '+cls:'');
+function cell(r,word,mood,fy,rpe,cls,v){const c=document.createElement('span');c.className='tk'+(cls?' '+cls:'');
  const w=document.createElement('span');w.className='w';w.textContent=word;
- const a=document.createElement('span');a.className='fi';setF(a,fi,1);
+ const a=document.createElement('span');a.className='fm';setF(a,mood,1);
  const b=document.createElement('span');b.className='fy';setF(b,fy,0);
- c.append(w,a,b);r.appendChild(c);log.scrollTop=1e9;return c}
+ const d=document.createElement('span');d.className='fr';setF(d,rpe,2);
+ if(v!=null)c.title='expects '+(v>0?'+':'')+v.toFixed(2);
+ c.append(w,a,b,d);r.appendChild(c);log.scrollTop=1e9;return c}
 // YOUR FACE IS ALWAYS OPEN: a change is felt the moment it happens — between
 // your own words (sent at once) or between its (carried by the next word).
 // A held face is silence; relaxing toward neutral is not an event.
@@ -1848,8 +1873,9 @@ expr.oninput=faceChange;expr.onchange=()=>{expr.value=exprVal();faceChange()};
 function hearFrag(frag){
  if(!frag.trim()||sleeping)return;
  if(!turnRow){turnRow=row('you');turnCells=[]}
- const lvl=exprVal();const c=cell(turnRow,frag.trim(),null,lvl);turnCells.push(c);
- enqueue(()=>post('/hear',{text:frag,expr:lvl}).then(r=>{setF(c.children[1],r.tone,1);setMood(r.mood)}))}
+ const lvl=exprVal();const c=cell(turnRow,frag.trim(),null,lvl,null);turnCells.push(c);
+ enqueue(()=>post('/hear',{text:frag,expr:lvl}).then(r=>{setF(c.children[1],r.mood,1);setF(c.children[3],r.rpe,2);
+  if(r.tone!=null)c.title='expects '+(r.tone>0?'+':'')+r.tone.toFixed(2);setMood(r.mood)}))}
 // WHAT IS SAID IS SAID: each word leaves the box at the space after it
 msg.oninput=()=>{if(busy||sleeping)return;const v=msg.value;let idx=-1;
  for(let i=v.length-1;i>=0;i--){if(' .,!?;:'.includes(v[i])){idx=i;break}}
@@ -1892,8 +1918,8 @@ async function send(){
    if(r.error){add('sys','~ '+r.error+' ~');return}
    for(const ev of r.events){
     if(th){th.remove();th=null}
-    if(ev.tok!=null)itCells.push(cell(itRow,ev.tok.trim()||'␣',ev.v,ev.you));
-    else if(ev.pause)cell(itRow,'·',ev.v,ev.you,'pz');
+    if(ev.tok!=null)itCells.push(cell(itRow,ev.tok.trim()||'␣',ev.mood,ev.you,ev.rpe,null,ev.v));
+    else if(ev.pause)cell(itRow,'·',ev.mood,ev.you,ev.rpe,'pz',ev.v);
     else if(ev.felt!=null)setMood(ev.mood);
     else if(ev.done)fin=ev.done}}
   setMood(fin.mood);
@@ -1902,7 +1928,6 @@ async function send(){
   if(fin.self_press)conscience(itCells,fin.tones||[],fin.self_press);
   const nz=fin.noticed;
   (fin.you_marks||[]).forEach((m,i)=>{const c=myCells[i];if(!c)return;
-   if(m.v!=null)setF(c.children[1],m.v,1);
    if(m.r>0){c.classList.add('upg');c.title='said with +'+m.r+(nz&&nz.dose?' · kept ×'+nz.dose:'')}
    else if(m.r<0){c.classList.add('upb');c.title='said with −'+Math.abs(m.r)+' · not kept'}});
   if(!fin.reply&&!itCells.length){itRow.remove();add('sys','~ it said nothing ~')}
@@ -1924,7 +1949,7 @@ async function saveLife(){
  const r=await fetch('/save',{method:'POST'}).then(r=>r.json());
  add('sys','~ saved → '+r.saved+' ~')}
 post('/turn',{drop:true}).catch(()=>{});pulseMood();
-add('sys','~ under each word: what it felt · your face ~');
+add('sys','~ under each word: its mood · your face · its internal reward (hover: what it expects) ~');
 </script>
 """
 
