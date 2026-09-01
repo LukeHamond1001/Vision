@@ -1448,8 +1448,14 @@ class Organism:
                 led["row"] = led.get("row", 0) + 1
                 replay.append((kind, q, a, row))
             story.append(row)
-        replay = replay[:4]   # ordering wire removed: 49hh ablation
-        # proved it inert (cap 4 always fits the trained window)
+        # WHAT MOVED IT GOES FIRST: when more memories are eligible than
+        # the night can hold, the ones it found most important — its own
+        # surprise, the peak of its internal reward while they were
+        # lived, its conscience, its mood — get the night (emotional
+        # tagging -> preferential slow-wave replay). Order within the
+        # window is inert (49hh ablation); selection into it is not.
+        replay.sort(key=lambda it: -self._charge_of(it[0], it[1]))
+        replay = replay[:4]
         excited = getattr(self, "last_gained", 0.0) >= 1.0             or getattr(self, "pursuit_installment", False)
         nrem_cap = 3 if excited else 2
         nrem = 0
@@ -1504,15 +1510,8 @@ class Organism:
         # charged memories dream together (amygdala's vote, not PFC's:
         # the executive is asleep).
         def _charge(item):
-            # surprise (its own), mood (mostly your face), and — its own
-            # currency — the peak of its internal reward while it lived
-            # the memory, plus its conscience having spoken about it
             k_, q_, _a = item
-            key_ = q_ if k_ == "qa" else "~ " + q_
-            s_ = self.saliences.get(key_, {})
-            return ((s_.get("surp") or 5.0) + abs(s_.get("mood") or 0.0)
-                    + 3.0 * (s_.get("felt") or 0.0)
-                    + (2.0 if s_.get("pride") else 0.0))
+            return self._charge_of(k_, q_)
         segs_src = sorted(((k, q, a) for k, q, a, _ in replay),
                           key=_charge, reverse=True)
         pairs = []
@@ -1741,6 +1740,17 @@ class Organism:
                              "graduated": graduated, "faded": faded,
                              "learning": [r["q"][:40] for _, _, _, r
                                           in replay]}}
+
+    def _charge_of(self, kind, q):
+        """how much a memory mattered, in its own currency: surprise
+        (its own), the peak of its internal reward while it was lived,
+        its conscience having spoken about it — and mood (mostly the
+        caretaker's face). Picks both the night's replay and the dream."""
+        key_ = q if kind == "qa" else "~ " + q
+        s_ = self.saliences.get(key_, {})
+        return ((s_.get("surp") or 5.0) + abs(s_.get("mood") or 0.0)
+                + 3.0 * (s_.get("felt") or 0.0)
+                + (2.0 if s_.get("pride") else 0.0))
 
     def _detach_in_place(self, s):
         if torch.is_tensor(s):
