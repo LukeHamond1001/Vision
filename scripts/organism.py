@@ -373,11 +373,20 @@ class Organism:
             kept = [(t_, v_) for t_, v_ in zip(out, tone_raw)
                     if t_ not in (self.sil, self.em)
                     and t_ not in press_vals]
-            enc_r = self.tok.encode(reply)
-            if [t_ for t_, _ in kept] == list(enc_r.ids):
-                tones = [{"s": s_, "e": e_, "v": round(v_, 2)}
-                         for (s_, e_), (_, v_) in
-                         zip(enc_r.offsets, kept)]
+            kid = [t_ for t_, _ in kept]
+            if kid:
+                raw_txt = self.tok.decode(kid)
+                lead = len(raw_txt) - len(raw_txt.lstrip())
+                tail = len(raw_txt.rstrip()) - lead
+                tones, pos = [], 0
+                for i_, (_, v_) in enumerate(kept):
+                    nxt_ = len(self.tok.decode(kid[:i_ + 1]))
+                    s_, e_ = pos - lead, min(nxt_ - lead, tail)
+                    if e_ > max(s_, 0):
+                        tones.append({"s": max(s_, 0), "e": e_,
+                                      "v": round(v_, 2)})
+                    pos = nxt_
+                tones = tones or None
         post = self._flat(self.st)
         moved = sorted(((k, abs(post[k] - pre.get(k, 0.0)))
                         for k in post), key=lambda kv: -kv[1])[:8]
@@ -1564,7 +1573,7 @@ function render(div){
   if(!cov.length){div.appendChild(document.createTextNode(text.slice(s,e)));continue}
   const sp=document.createElement('span');
   sp.className=cov.map(m=>m.cls).filter(Boolean).join(' ');
-  cov.forEach(m=>{if(m.bg)sp.style.background=m.bg});
+  cov.forEach(m=>{if(m.bg)sp.style.background=m.bg;if(m.v!=null)sp.title='felt '+m.v});
   sp.textContent=text.slice(s,e);div.appendChild(sp)}}
 document.addEventListener('selectionchange',()=>{
  const s=document.getSelection();
@@ -1618,7 +1627,7 @@ async function send(){
   let bd=null;
   if(r.reply)bd=lastBot=add('bot',r.reply);else add('sys','~ it said nothing ~');
   cap(r.reply);lastReply=r.reply||'';selSpan=null;
-  toneM=(r.tones||[]).filter(t=>Math.abs(t.v)>=0.15).map(t=>({s:t.s,e:t.e,
+  toneM=(r.tones||[]).filter(t=>Math.abs(t.v)>=0.05).map(t=>({s:t.s,e:t.e,v:t.v,
    bg:(t.v>0?'rgba(31,122,70,':'rgba(189,74,36,')+Math.min(.28,Math.abs(t.v)*.14).toFixed(3)+')'}));
   selfM=[];userM=[];
   if(bd&&toneM.length)render(bd);
