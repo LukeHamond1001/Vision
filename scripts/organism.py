@@ -1412,6 +1412,7 @@ body{font:15px/1.5 -apple-system,'Segoe UI',sans-serif;margin:0;display:flex;fle
 #msg:focus{border-color:var(--acc);box-shadow:0 0 0 3px rgba(47,125,92,.10)}
 button{background:var(--ink);color:var(--paper);border:0;border-radius:12px;padding:11px 18px;cursor:pointer;font-size:14px;transition:opacity .15s}
 button:hover{opacity:.85}
+button:disabled{opacity:.35;cursor:default}
 #sendbtn{width:46px;height:46px;border-radius:50%;display:flex;align-items:center;justify-content:center;padding:0;font-size:18px}
 button.quiet{background:transparent;color:var(--mut);border:1px solid var(--line);padding:6px 13px;font-size:12px;border-radius:999px}
 button.quiet:hover{opacity:1;border-color:var(--mut);color:var(--ink)}
@@ -1425,7 +1426,7 @@ button.quiet:hover{opacity:1;border-color:var(--mut);color:var(--ink)}
 </style>
 <div id=log></div>
 <div id=bar>
- <input id=msg placeholder="talk to it..." onkeydown="if(event.key==='Enter')send()">
+ <input id=msg placeholder="talk to it..." autofocus onkeydown="if(event.key==='Enter')send()">
  <button id=sendbtn onclick=send() title="send">&#8593;</button>
 </div>
 <div id=rewardrow>
@@ -1438,17 +1439,21 @@ button.quiet:hover{opacity:1;border-color:var(--mut);color:var(--ink)}
 <div id=carerow>
  <button class=quiet onclick=sleepy()>sleep</button>
  <button class=quiet onclick=saveLife()>save</button>
- <button class=quiet onclick="fetch('/reset',{method:'POST'}).then(()=>{nightFade();add('sys','~ fresh wake ~')})">reset</button>
+ <button class=quiet onclick="fetch('/reset',{method:'POST'}).then(()=>{felts=[];log.innerHTML='';add('sys','~ fresh wake ~')})">reset</button>
 </div>
 <script>
 const log=document.getElementById('log');
-let busy=false,felts=[];
+let busy=false,sleeping=false,felts=[];
+function lockup(m){sleeping=m;document.getElementById('sendbtn').disabled=m;
+ document.querySelectorAll('.pb').forEach(b=>b.disabled=m)}
 function felt(cls,txt){felts.forEach(f=>{
   f.style.opacity=Math.max(0.35,(parseFloat(f.style.opacity)||1)*0.9)});
  const d=add(cls,txt);felts.push(d);return d}
 function nightFade(){felts.forEach(f=>f.style.opacity=0.35);felts=[]}
 function add(cls,txt){const d=document.createElement('div');d.className=cls;d.textContent=txt;log.appendChild(d);log.scrollTop=1e9;return d}
 async function doPress(m){
+ if(sleeping){add('sys','~ it’s sleeping ~');return}
+ if(busy){add('sys','~ wait — it’s mid-thought ~');return}
  const r=await fetch('/press',{method:'POST',body:JSON.stringify({mag:m})}).then(r=>r.json());
  felt('selfp '+(m>0?'good':'bad'),'you: '+(m>0?'+':'')+m+' reward'+
   (r.mood!=null?(' \u00b7 mood '+r.mood.toFixed(2)).replace('-','\u2212'):'')+
@@ -1456,13 +1461,20 @@ async function doPress(m){
   (r.corrected_steps?' \u00b7 unlearned \u00d7'+r.corrected_steps:''))}
 async function send(){
  const inp=document.getElementById('msg');const t=inp.value.trim();if(!t)return;
+ if(sleeping){add('sys','~ it\u2019s sleeping \u2014 wait for morning ~');return}
  if(busy)return;
  busy=true;document.getElementById('sendbtn').disabled=true;
  try{
   inp.value='';
   add('you','you: '+t);add('sys think','\u00b7 \u00b7 \u00b7');
-  const r=await fetch('/chat',{method:'POST',body:JSON.stringify({text:t})}).then(r=>r.json());
-  log.lastChild.remove();if(r.reply)add('bot',r.reply);else add('sys','~ it said nothing ~');
+  let r;
+  try{r=await fetch('/chat',{method:'POST',body:JSON.stringify({text:t})}).then(r=>r.json())}
+  catch(e){
+   if(log.lastChild&&log.lastChild.classList.contains('think'))log.lastChild.remove();
+   add('sys','~ unreachable \u2014 is it awake yet? ~');return}
+  log.lastChild.remove();
+  if(r.error){add('sys','~ '+r.error+' ~');return}
+  if(r.reply)add('bot',r.reply);else add('sys','~ it said nothing ~');
   if(r.self_press){
    const c=r.self_press.conscience;
    const why=(c==null?'':' \u00b7 conscience '+c.toFixed(2));
@@ -1470,13 +1482,18 @@ async function send(){
    else felt('selfp bad','model: \u22121 reward'+why)}
  }finally{busy=false;document.getElementById('sendbtn').disabled=false}}
 async function sleepy(){
+ if(sleeping||busy)return;
+ lockup(true);
  add('sys','~ falling asleep\u2026 ~');
- const r=await fetch('/sleep',{method:'POST'}).then(r=>r.json());
- if(r.error){add('sys','~ '+r.error+' ~');return}
- nightFade();
- add('sys','~ it slept \u2014 NREM '+r.nrem+' + REM '+r.rem+' \u00b7 '+r.lived_tokens+' lived tokens ~');
- if(r.woke_feeling)felt('selfp good','model: '+r.woke_feeling+' reward');
- if(r.woke_thinking)add('bot',r.woke_thinking)}
+ try{
+  const r=await fetch('/sleep',{method:'POST'}).then(r=>r.json());
+  if(r.error){add('sys','~ '+r.error+' ~');return}
+  nightFade();
+  add('sys','~ it slept \u2014 NREM '+r.nrem+' + REM '+r.rem+' \u00b7 '+r.lived_tokens+' lived tokens ~');
+  if(r.woke_feeling)felt('selfp good','model: '+r.woke_feeling+' reward');
+  if(r.woke_thinking)add('bot',r.woke_thinking)
+ }catch(e){add('sys','~ the night was interrupted \u2014 reload me ~')
+ }finally{lockup(false)}}
 async function saveLife(){
  const r=await fetch('/save',{method:'POST'}).then(r=>r.json());
  add('sys','~ saved \u2192 '+r.saved+' ~')}
