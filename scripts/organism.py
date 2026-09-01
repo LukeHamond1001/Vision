@@ -246,13 +246,18 @@ class Organism:
                 "judgments" % (len(real), self.n_human_presses))
 
     def _critic_score(self, text, reply):
+        """(probability, raw conviction) — the sigmoid gates the press;
+        the logit is what the screen discloses. The probability
+        saturates to 1.000000 on everything mastered, so it reads as
+        scripted; the logit never repeats."""
         if self.critic is None or not reply:
             return None
         E = self.m.embed.weight.detach().float().cpu()
         ids = content_ids(self.tok, text + " " + reply)             or self.tok.encode(reply).ids
         v = torch.nn.functional.normalize(E[ids].mean(0), dim=-1)
         with torch.no_grad():
-            return float(torch.sigmoid(self.critic(v)).item())
+            raw = self.critic(v)
+            return (float(torch.sigmoid(raw).item()), float(raw.item()))
 
     def chat(self, text, temp=None):
         temp = temp or self.a.temp
@@ -370,7 +375,8 @@ class Organism:
         # plasticity channel. Budgeted, deduped, disclosed.
         pride = None
         self_press = None
-        sc = self._critic_score(text, reply) if reply else None
+        scv = self._critic_score(text, reply) if reply else None
+        sc, conv = scv if scv else (None, None)
         key_sp = text.strip().lower()[:60]
         if sc is not None and key_sp not in self._self_pressed_qs:
             if sc > 0.95 and self.self_press_budget > 0:
@@ -384,6 +390,7 @@ class Organism:
                 self.press_log.append({"q": text[:80], "a": reply[:80],
                                        "mag": 1.0, "self": True})
                 self_press = {"mag": 1, "conscience": round(sc, 2),
+                              "conviction": round(conv, 1),
                               "left_today": self.self_press_budget}
             elif sc < 0.15 and self.self_frown_budget > 0:
                 self.feed([self.press_ids["<-1>"]])
@@ -393,6 +400,7 @@ class Organism:
                 self.press_log.append({"q": text[:80], "a": reply[:80],
                                        "mag": -1.0, "self": True})
                 self_press = {"mag": -1, "conscience": round(sc, 2),
+                              "conviction": round(conv, 1),
                               "left_today": self.self_frown_budget}
         self.last_q = (text, reply)
         if reply:
@@ -1476,24 +1484,27 @@ async function send(){
   if(r.error){add('sys','~ '+r.error+' ~');return}
   if(r.reply)add('bot',r.reply);else add('sys','~ it said nothing ~');
   if(r.self_press){
-   const c=r.self_press.conscience;
-   const why=(c==null?'':' \u00b7 conscience '+c.toFixed(2));
+   const c=r.self_press.conviction;
+   const why=(c==null?'':(' \u00b7 conscience '+(c>0?'+':'')+c.toFixed(1)).replace('-','\u2212'));
    if(r.self_press.mag>0)felt('selfp good','model: +1 reward'+why);
    else felt('selfp bad','model: \u22121 reward'+why)}
  }finally{busy=false;document.getElementById('sendbtn').disabled=false}}
 async function sleepy(){
  if(sleeping||busy)return;
  lockup(true);
- add('sys','~ falling asleep\u2026 ~');
+ const fl=add('sys think','~ sleeping\u2026 ~');
  try{
   const r=await fetch('/sleep',{method:'POST'}).then(r=>r.json());
   if(r.error){add('sys','~ '+r.error+' ~');return}
   nightFade();
-  add('sys','~ it slept \u2014 NREM '+r.nrem+' + REM '+r.rem+' \u00b7 '+r.lived_tokens+' lived tokens ~');
-  if(r.woke_feeling)felt('selfp good','model: '+r.woke_feeling+' reward');
-  if(r.woke_thinking)add('bot',r.woke_thinking)
+  const s=(n,w,p)=>n+' '+(n==1?w:(p||w+'s'));
+  add('sys','~ morning \u2014 it replayed '+s(r.nrem,'memory','memories')+' and dreamt '+s(r.rem,'dream')+' ~');
+  if(r.conscience)add('sys','~ '+r.conscience+' ~');
+  if(r.woke_feeling){const wf=r.woke_feeling;
+   felt('selfp good','model: '+(wf.includes(' \u00b7 ')?wf.replace(' \u00b7 ',' reward \u00b7 '):wf+' reward'))}
+  if(r.woke_thinking)add('sys','~ it woke thinking: \u201c'+r.woke_thinking+'\u201d ~')
  }catch(e){add('sys','~ the night was interrupted \u2014 reload me ~')
- }finally{lockup(false)}}
+ }finally{fl.classList.remove('think');lockup(false)}}
 async function saveLife(){
  const r=await fetch('/save',{method:'POST'}).then(r=>r.json());
  add('sys','~ saved \u2192 '+r.saved+' ~')}
