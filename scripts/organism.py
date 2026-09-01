@@ -549,7 +549,10 @@ class Organism:
         # were chosen under the expression — no aiming, no past.
         expression = None
         rews = [t_["r"] for t_ in tones]
-        if reply and any(r_ != 0 for r_ in rews):
+        # never dose a degenerate turn: a smile that caused a stutter
+        # must not then teach the stutter (measured collapse, 2026-09-01)
+        if reply and g.get("ended_by") != "stutter" \
+                and any(r_ != 0 for r_ in rews):
             pos_sp = [(t_["s"], t_["e"]) for t_ in tones
                       if t_["r"] > 0 and t_["e"] > t_["s"]]
             neg_sp = [(t_["s"], t_["e"]) for t_ in tones
