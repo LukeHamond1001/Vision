@@ -32,8 +32,8 @@ it : A submarine dives by filling its tanks with water and rises
 ## The life — `scripts/organism.py`
 
 **Day** — it measures its own surprise every turn and keeps what
-spikes (budgeted); reward presses of any magnitude (−6…+6) are felt
-as tokens and expressed as plasticity; when its answer to something
+spikes (budgeted); reward presses are felt as native tokens
+(<+1><+2><−1><−2>) and expressed as graded plasticity; when its answer to something
 it learned satisfies its own conscience, it presses its own button —
 felt only, never self-teaching. **Night** — its own progress ledger
 picks the replay (mastery graduates, stuck fades, fresh always
@@ -60,8 +60,8 @@ pip install -e .          # torch, tokenizers, numpy
 # put organism_life.pt and ship_tok.json in data/, then:
 python3 scripts/organism.py data/organism_life.pt data/ship_tok.json \
     --dev mps --temp 0.05 --save data/organism_life.pt
-# open http://localhost:8016 — talk to it, teach it, press the
-# slider, and put it to sleep at night
+# open http://localhost:8016 — talk to it, teach it, press its
+# reward buttons, and put it to sleep at night
 ```
 
 First reply after launch takes a few minutes (the model compiles);

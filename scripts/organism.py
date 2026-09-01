@@ -1415,12 +1415,12 @@ button:hover{opacity:.85}
 button.quiet{background:transparent;color:var(--mut);border:1px solid var(--line);padding:6px 13px;font-size:12px;border-radius:999px}
 button.quiet:hover{opacity:1;border-color:var(--mut);color:var(--ink)}
 #rewardrow{display:flex;align-items:center;gap:12px;padding:6px 28px;background:var(--paper);max-width:736px;margin:0 auto;width:100%}
-#rw{flex:1;-webkit-appearance:none;appearance:none;height:6px;border-radius:3px;outline:none;
- background:linear-gradient(to right,#c96a45 0%,#e8e5de 46%,#e8e5de 54%,#3f8f63 100%)}
-#rw::-webkit-slider-thumb{-webkit-appearance:none;width:20px;height:20px;border-radius:50%;background:#fff;border:1.5px solid #c8c2b6;box-shadow:0 1px 3px rgba(0,0,0,.15);cursor:grab}
-#rwval{min-width:44px;text-align:center;font-weight:700;font-size:15px;color:var(--mut);font-variant-numeric:tabular-nums}
+#rwcap{flex:1;font-size:11px;color:#b3aca0}
+.pb{background:transparent;border:1px solid var(--line);border-radius:999px;padding:7px 16px;font-size:13.5px;font-weight:600;font-variant-numeric:tabular-nums}
+.pb.good{color:var(--good)}.pb.bad{color:var(--warn)}
+.pb.good:hover{border-color:var(--good);background:rgba(31,122,70,.06);opacity:1}
+.pb.bad:hover{border-color:var(--warn);background:rgba(189,74,36,.06);opacity:1}
 #carerow{display:flex;gap:8px;padding:4px 28px 8px;max-width:736px;margin:0 auto;width:100%}
-#hint{padding:0 28px 12px;font-size:11px;color:#b3aca0;max-width:736px;margin:0 auto;width:100%}
 </style>
 <div id=log></div>
 <div id=bar>
@@ -1428,39 +1428,29 @@ button.quiet:hover{opacity:1;border-color:var(--mut);color:var(--ink)}
  <button id=sendbtn onclick=send() title="send">&#8593;</button>
 </div>
 <div id=rewardrow>
- <span style="font-size:12px;color:var(--warn)">&minus;6</span>
- <input type=range id=rw min=-6 max=6 step=1 value=0 oninput=rwShow()>
- <span style="font-size:12px;color:var(--good)">+6</span>
- <span id=rwval>0</span>
- <button onclick=pressSlider()>press</button>
+ <span id=rwcap>react to its last answer</span>
+ <button class="pb bad" onclick=doPress(-2)>&minus;2</button>
+ <button class="pb bad" onclick=doPress(-1)>&minus;1</button>
+ <button class="pb good" onclick=doPress(1)>+1</button>
+ <button class="pb good" onclick=doPress(2)>+2</button>
 </div>
 <div id=carerow>
  <button class=quiet onclick=sleepy()>sleep</button>
  <button class=quiet onclick=saveLife()>save</button>
  <button class=quiet onclick="fetch('/reset',{method:'POST'}).then(()=>add('sys','~ fresh wake ~'))">reset</button>
 </div>
-<div id=hint>set the slider before sending — the press applies to its previous answer, then your message goes</div>
 <script>
 const log=document.getElementById('log');
 let busy=false;
 function add(cls,txt){const d=document.createElement('div');d.className=cls;d.textContent=txt;log.appendChild(d);log.scrollTop=1e9;return d}
-function rwShow(){const v=parseFloat(document.getElementById('rw').value);
- const e=document.getElementById('rwval');e.textContent=(v>0?'+':'')+v;
- e.style.color=v>0?'var(--good)':(v<0?'var(--warn)':'var(--mut)')}
 async function doPress(m){
- const r=await fetch('/press',{method:'POST',body:JSON.stringify({mag:m})}).then(r=>r.json());
- document.getElementById('rw').value=0;rwShow();return r}
-async function pressSlider(){
- const m=parseFloat(document.getElementById('rw').value)||0;
- if(m===0){add('sys','~ move the slider first \u2014 zero is not a judgment ~');return}
- await doPress(m)}
+ await fetch('/press',{method:'POST',body:JSON.stringify({mag:m})}).then(r=>r.json());
+ add('selfp '+(m>0?'good':'bad'),'you: '+(m>0?'+':'')+m+' reward')}
 async function send(){
  const inp=document.getElementById('msg');const t=inp.value.trim();if(!t)return;
  if(busy)return;
  busy=true;document.getElementById('sendbtn').disabled=true;
  try{
-  const mv=parseFloat(document.getElementById('rw').value)||0;
-  if(mv!==0)await doPress(mv);
   inp.value='';
   add('you','you: '+t);add('sys think','\u00b7 \u00b7 \u00b7');
   const r=await fetch('/chat',{method:'POST',body:JSON.stringify({text:t})}).then(r=>r.json());
@@ -1479,7 +1469,6 @@ async function sleepy(){
 async function saveLife(){
  const r=await fetch('/save',{method:'POST'}).then(r=>r.json());
  add('sys','~ saved \u2192 '+r.saved+' ~')}
-rwShow();
 </script>
 """
 
