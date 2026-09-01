@@ -18,6 +18,7 @@ import json
 import sys
 import threading
 import time
+from collections import deque
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 import torch
@@ -58,6 +59,7 @@ class Organism:
         self.n_steps = 0
         self.facts = []          # [(q, taught_answer)] — the report card
         self.session = []        # [(q, reply)] — the conversation itself
+        self.live_q = deque()    # live presses arriving mid-utterance
         self.recent_ids = []     # last replies' tokens — anti-attractor
         self.self_noticed = []   # statements IT chose to keep (curiosity)
         self.notice_budget = 4   # per day; waking refills it
@@ -300,9 +302,10 @@ class Organism:
         except Exception:
             return None, None
 
-    def chat(self, text, temp=None):
+    def chat(self, text, temp=None, emit=None):
         temp = temp or self.a.temp
         self.last_user_t = time.time()
+        self.live_q.clear()   # stale live presses never leak forward
         # MOOD FEEDBACK (49xx): the felt tally retunes the machinery —
         # a good stretch broadens (warmer sampling, lower curiosity
         # bar), a bad stretch conserves. Bounded, disclosed. Mood was
@@ -334,6 +337,33 @@ class Organism:
             for _ in range(self.a.max_new + 8):
                 if x is not None:
                     lg, self.st, _ = self.m(x, self.st)
+                # a live press is a felt token INSIDE the utterance: it
+                # steers what follows (state + mood), it never doses
+                # weights (a half-said answer is not a teachable pair),
+                # and it is excluded from conscience recalibration —
+                # steering is not a verdict
+                while self.live_q:
+                    try:
+                        lm = max(-6.0, min(6.0,
+                                           float(self.live_q.popleft())))
+                    except Exception:
+                        continue
+                    sgn = "+" if lm >= 0 else "-"
+                    tnm = f"<{sgn}{2 if abs(lm) >= 2 else 1}>"
+                    xp = torch.tensor([[self.press_ids[tnm]]],
+                                      device=self.dev)
+                    lg, self.st, _ = self.m(xp, self.st)
+                    self.day_buf.append(self.press_ids[tnm])
+                    self.mood = self.mood * 0.9 + lm
+                    self.n_human_presses += 1
+                    self._today["presses"] += lm
+                    self.press_log.append({"q": text[:80],
+                                           "a": "(mid-reply)",
+                                           "mag": lm, "live": True})
+                    self.press_log = self.press_log[-500:]
+                    if emit:
+                        emit({"felt": round(lm, 1),
+                              "mood": round(self.mood, 2)})
                 v = lg[0, -1].float()
                 if hasattr(self.m, "ban_presses"):
                     v = self.m.ban_presses(v)
@@ -355,6 +385,14 @@ class Organism:
                     rv = self.m.read_value(self.st)
                     tone_raw.append(sum(rv.values()) / max(len(rv), 1)
                                     if rv else 0.0)
+                if emit:
+                    if nxt == self.sil:
+                        emit({"pause": True})
+                    elif nxt != self.em:
+                        emit({"tok": self.tok.decode([nxt]),
+                              "v": (round(tone_raw[-1], 2)
+                                    if len(tone_raw) == len(out)
+                                    else None)})
                 if nxt == self.sil:
                     pauses += 1
                 if nxt == self.em or n_c + 1 >= self.a.max_new:
@@ -1435,7 +1473,7 @@ class Organism:
         # closed loop that drifts; the parent's judgment is the ground.
         real = [e for e in self.press_log
                 if "mag" in e and not e.get("self")
-                and not e.get("stmt")]
+                and not e.get("stmt") and not e.get("live")]
         if self.critic is not None and len(real) >= 12 and \
                 self.n_human_presses > getattr(self, "_critic_seen", 0):
             try:
@@ -1578,45 +1616,44 @@ button:disabled{opacity:.35;cursor:default}
 #sendbtn{width:46px;height:46px;border-radius:50%;display:flex;align-items:center;justify-content:center;padding:0;font-size:18px}
 button.quiet{background:transparent;color:var(--mut);border:1px solid var(--line);padding:6px 13px;font-size:12px;border-radius:999px}
 button.quiet:hover{opacity:1;border-color:var(--mut);color:var(--ink)}
-#rewardrow{display:flex;align-items:center;gap:12px;padding:6px 28px;background:var(--paper);max-width:736px;margin:0 auto;width:100%}
-#rwcap{flex:1;font-size:11px;color:#b3aca0}
-#rwslide{flex:2;max-width:300px;accent-color:var(--good);cursor:pointer}
-#rwslide:disabled{opacity:.35;cursor:default}
-#rwval{font-family:menlo,monospace;font-size:13px;font-weight:600;min-width:44px;text-align:right}
-#rwval.good{color:var(--good)}#rwval.bad{color:var(--warn)}
+#fbar{position:fixed;display:none;gap:10px;align-items:center;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:8px 12px;box-shadow:0 6px 22px rgba(0,0,0,.09);z-index:50}
+#fslide{width:170px;accent-color:var(--good);cursor:pointer}
+#fval{font-family:menlo,monospace;font-size:12.5px;font-weight:600;min-width:38px;text-align:right}
+#fval.good{color:var(--good)}#fval.bad{color:var(--warn)}
+#livebar{display:none;gap:8px;align-items:center;justify-content:flex-end;padding:0 28px 6px;max-width:736px;margin:0 auto;width:100%}
+#livebar .ll{font-size:11px;color:#b3aca0;margin-right:4px}
+#livebar button{background:transparent;border:1px solid var(--line);border-radius:999px;padding:4px 12px;font-size:12.5px;font-weight:600}
+#ln{color:var(--warn)}#lp{color:var(--good)}
+.lpm{font-size:10px;vertical-align:super;margin:0 3px;font-family:menlo,monospace;font-weight:700}
+.lpm.good{color:var(--good)}.lpm.bad{color:var(--warn)}
+.pz{color:#c8c2b6}
 #carerow{display:flex;gap:8px;padding:4px 28px 8px;max-width:736px;margin:0 auto;width:100%}
 </style>
 <div id=log></div>
+<div id=livebar><span class=ll>react live</span><button id=ln>&minus;1</button><button id=lp>+1</button></div>
 <div id=bar>
  <input id=msg placeholder="talk to it..." autofocus onkeydown="if(event.key==='Enter')send()">
  <button id=sendbtn onclick=send() title="send">&#8593;</button>
 </div>
-<div id=rewardrow>
- <span id=rwcap>react to its last answer</span>
- <span id=rwval></span>
- <input id=rwslide type=range min=-6 max=6 step=0.1 value=0>
-</div>
 <div id=carerow>
  <button class=quiet onclick=sleepy()>sleep</button>
  <button class=quiet onclick=saveLife()>save</button>
- <button class=quiet onclick="fetch('/reset',{method:'POST'}).then(()=>{felts=[];exs=[];aim=null;log.innerHTML='';cap();add('sys','~ fresh wake ~')})">reset</button>
+ <button class=quiet onclick="fetch('/reset',{method:'POST'}).then(()=>{felts=[];exs=[];aim=null;hideBar();log.innerHTML='';add('sys','~ fresh wake ~')})">reset</button>
 </div>
+<div id=fbar><span id=fval></span><input id=fslide type=range min=-6 max=6 step=0.1 value=0></div>
 <script>
 const log=document.getElementById('log');
-let busy=false,sleeping=false,felts=[],exs=[],aim=null;
-function lockup(m){sleeping=m;document.getElementById('sendbtn').disabled=m;
- document.getElementById('rwslide').disabled=m}
+let busy=false,sleeping=false,felts=[],exs=[],aim=null,fHold=false;
+const fbar=document.getElementById('fbar'),fsl=document.getElementById('fslide'),
+      fv=document.getElementById('fval'),livebar=document.getElementById('livebar');
+function lockup(m){sleeping=m;document.getElementById('sendbtn').disabled=m;if(m)hideBar()}
 function felt(cls,txt){felts.forEach(f=>{
   f.style.opacity=Math.max(0.35,(parseFloat(f.style.opacity)||1)*0.9)});
  const d=add(cls,txt);felts.push(d);return d}
 function nightFade(){felts.forEach(f=>f.style.opacity=0.35);felts=[]}
 function add(cls,txt){const d=document.createElement('div');d.className=cls;d.textContent=txt;log.appendChild(d);log.scrollTop=1e9;return d}
 function trunc(t,n){return t.length>n?t.slice(0,n)+'…':t}
-function lastEx(){return exs.length?exs[exs.length-1]:null}
-function cap(){const rw=document.getElementById('rwcap');
- if(aim){rw.textContent=(aim.who=='you'?'dose your words: “':'react to: “')+trunc(aim.span,28)+'”';return}
- const le=lastEx();
- rw.textContent=le?'react to: “'+trunc(le.a,28)+'”':'react to its last answer'}
+function toneBg(v){return (v>0?'rgba(31,122,70,':'rgba(189,74,36,')+Math.min(.28,Math.abs(v)*.14).toFixed(3)+')'}
 function seg(div,text,marks,prefix){
  div.textContent='';if(prefix)div.appendChild(document.createTextNode(prefix));
  const cl=v=>Math.max(0,Math.min(text.length,v));
@@ -1634,20 +1671,33 @@ function paintEx(ex){
  seg(ex.ad,ex.a,ex.tones.concat(ex.selfM,ex.userM.filter(m=>m.who!='you')));
  if(ex.userM.some(m=>m.who=='you'))
   seg(ex.qd,ex.q,ex.userM.filter(m=>m.who=='you'),'you: ')}
+function hideBar(){fbar.style.display='none';fsl.value=0;fv.textContent='';fsl.style.accentColor='var(--good)'}
+function showBar(rect){fbar.style.display='flex';
+ const w=fbar.offsetWidth||230;
+ fbar.style.left=Math.max(8,Math.min(window.innerWidth-w-8,rect.left+rect.width/2-w/2))+'px';
+ fbar.style.top=Math.max(8,rect.top-54)+'px'}
 document.addEventListener('selectionchange',()=>{
+ if(fHold)return;
  const s=document.getSelection();
- if(s&&s.rangeCount&&!s.isCollapsed){
+ if(s&&s.rangeCount&&!s.isCollapsed&&!busy&&!sleeping){
   const t=s.toString().trim();
   if(t)for(const ex of exs){
    if(ex.ad.contains(s.anchorNode)&&ex.ad.contains(s.focusNode)&&ex.a.includes(t)){
-    aim={ex:ex,sidx:ex.sidx,who:'bot',span:t};cap();return}
+    aim={ex:ex,sidx:ex.sidx,who:'bot',span:t};showBar(s.getRangeAt(0).getBoundingClientRect());return}
    if(ex.qd.contains(s.anchorNode)&&ex.qd.contains(s.focusNode)&&ex.q.includes(t)){
-    aim={ex:ex,sidx:ex.sidx,who:'you',span:t};cap();return}}}
- if(aim){aim=null;cap()}});
-async function doPress(m){
+    aim={ex:ex,sidx:ex.sidx,who:'you',span:t};showBar(s.getRangeAt(0).getBoundingClientRect());return}}}
+ aim=null;hideBar()});
+fsl.onpointerdown=()=>{fHold=true};
+document.addEventListener('pointerup',()=>{setTimeout(()=>{fHold=false},0)});
+fsl.oninput=()=>{const v=parseFloat(fsl.value);
+ fv.textContent=Math.abs(v)<0.3?'':(v>0?'+':'−')+Math.abs(v).toFixed(1);
+ fv.className=v>0?'good':'bad';fsl.style.accentColor=v<0?'var(--warn)':'var(--good)'};
+fsl.onchange=()=>{const m=Math.round(parseFloat(fsl.value)*10)/10;const a=aim;
+ fHold=false;hideBar();try{document.getSelection().removeAllRanges()}catch(e){}
+ aim=null;if(Math.abs(m)>=0.3&&a)doPress(m,a)};
+async function doPress(m,a){
  if(sleeping){add('sys','~ it’s sleeping ~');return}
  if(busy){add('sys','~ wait — it’s mid-thought ~');return}
- const a=aim;
  const r=await fetch('/press',{method:'POST',body:JSON.stringify(
   {mag:m,span:a?a.span:undefined,idx:a?a.sidx:undefined,who:a?a.who:undefined})}).then(r=>r.json());
  const mv=(Number.isInteger(m)?''+Math.abs(m):Math.abs(m).toFixed(1));
@@ -1657,50 +1707,57 @@ async function doPress(m){
   (r.absorbed_steps?' · learned ×'+r.absorbed_steps:'')+
   (r.corrected_steps?' · unlearned ×'+r.corrected_steps:''));
  if(r.span_at&&a&&a.ex){
-  a.ex.userM.push({s:r.span_at[0],e:r.span_at[1],who:a.who,cls:m>0?'upg':'upb'});paintEx(a.ex)}
- try{document.getSelection().removeAllRanges()}catch(e){}
- aim=null;cap()}
-const sl=document.getElementById('rwslide'),rv=document.getElementById('rwval');
-sl.oninput=()=>{const v=parseFloat(sl.value);
- rv.textContent=Math.abs(v)<0.3?'':(v>0?'+':'−')+Math.abs(v).toFixed(1);
- rv.className=v>0?'good':'bad';
- sl.style.accentColor=v<0?'var(--warn)':'var(--good)'};
-sl.onchange=()=>{const m=Math.round(parseFloat(sl.value)*10)/10;
- sl.value=0;rv.textContent='';sl.style.accentColor='var(--good)';
- if(Math.abs(m)>=0.3)doPress(m)};
+  a.ex.userM.push({s:r.span_at[0],e:r.span_at[1],who:a.who,cls:m>0?'upg':'upb'});paintEx(a.ex)}}
+function showLive(m){livebar.style.display=m?'flex':'none'}
+function liveP(m){if(!busy)return;
+ fetch('/press_live',{method:'POST',body:JSON.stringify({mag:m})}).catch(()=>{})}
+document.getElementById('lp').onclick=()=>liveP(1);
+document.getElementById('ln').onclick=()=>liveP(-1);
 async function send(){
  const inp=document.getElementById('msg');const t=inp.value.trim();if(!t)return;
  if(sleeping){add('sys','~ it’s sleeping — wait for morning ~');return}
  if(busy)return;
- busy=true;document.getElementById('sendbtn').disabled=true;
+ busy=true;document.getElementById('sendbtn').disabled=true;hideBar();aim=null;
+ let bd=null,fin=null,th=null;
  try{
   inp.value='';
-  const qd=add('you','you: '+t);add('sys think','· · ·');
-  let r;
-  try{r=await fetch('/chat',{method:'POST',body:JSON.stringify({text:t})}).then(r=>r.json())}
-  catch(e){
-   if(log.lastChild&&log.lastChild.classList.contains('think'))log.lastChild.remove();
-   add('sys','~ unreachable — is it awake yet? ~');return}
-  log.lastChild.remove();
-  if(r.error){add('sys','~ '+r.error+' ~');return}
-  let bd=null;
-  if(r.reply)bd=add('bot',r.reply);else add('sys','~ it said nothing ~');
+  const qd=add('you','you: '+t);
+  let resp;
+  try{resp=await fetch('/chat',{method:'POST',body:JSON.stringify({text:t,stream:true})})}
+  catch(e){add('sys','~ unreachable — is it awake yet? ~');return}
+  bd=add('bot','');th=add('sys think','· · ·');showLive(true);
+  const rd=resp.body.getReader(),dec=new TextDecoder();let buf='';
+  while(true){const {done,value}=await rd.read();if(done)break;
+   buf+=dec.decode(value,{stream:true});let ix;
+   while((ix=buf.indexOf('\n'))>=0){const ln=buf.slice(0,ix);buf=buf.slice(ix+1);
+    if(!ln.trim())continue;let ev;try{ev=JSON.parse(ln)}catch(e){continue}
+    if(th){th.remove();th=null}
+    if(ev.tok!=null){const sp=document.createElement('span');sp.textContent=ev.tok;
+     if(ev.v!=null&&Math.abs(ev.v)>=0.05){sp.style.background=toneBg(ev.v);sp.title='felt '+ev.v}
+     bd.appendChild(sp);log.scrollTop=1e9}
+    else if(ev.pause){const sp=document.createElement('span');sp.className='pz';sp.textContent=' ·';bd.appendChild(sp)}
+    else if(ev.felt!=null){const mk=document.createElement('span');mk.className='lpm '+(ev.felt>0?'good':'bad');
+     mk.textContent=(ev.felt>0?'+':'−')+Math.abs(ev.felt);bd.appendChild(mk)}
+    else if(ev.done)fin=ev.done;
+    else if(ev.error)add('sys','~ '+ev.error+' ~')}}
+  if(th){th.remove();th=null}
+  if(!fin){if(!bd.textContent)bd.remove();add('sys','~ the reply was cut off ~');return}
+  const r=fin;
+  if(r.reply){bd.textContent=r.reply}else{bd.remove();bd=null;add('sys','~ it said nothing ~')}
   if(bd&&r.sidx!=null){
    const ex={q:t,a:r.reply,sidx:r.sidx,qd:qd,ad:bd,userM:[],selfM:[],
-    tones:(r.tones||[]).filter(o=>Math.abs(o.v)>=0.05).map(o=>({s:o.s,e:o.e,v:o.v,
-     bg:(o.v>0?'rgba(31,122,70,':'rgba(189,74,36,')+Math.min(.28,Math.abs(o.v)*.14).toFixed(3)+')'}))};
+    tones:(r.tones||[]).filter(o=>Math.abs(o.v)>=0.05).map(o=>({s:o.s,e:o.e,v:o.v,bg:toneBg(o.v)}))};
    if(r.self_press){
     if(r.self_press.loved)ex.selfM=r.self_press.loved.map(([s,e])=>({s:s,e:e,cls:'lov'}));
     if(r.self_press.blamed)ex.selfM=r.self_press.blamed.map(([s,e])=>({s:s,e:e,cls:'blm'}))}
    exs.push(ex);
    if(ex.tones.length||ex.selfM.length)paintEx(ex)}
-  aim=null;cap();
   if(r.self_press){
    const sp=r.self_press;
    const why=(sp.conviction==null?'':(' · conscience '+(sp.conviction>0?'+':'')+sp.conviction.toFixed(1)).replace('-','−'));
    if(sp.mag>0)felt('selfp good','model: +1 reward'+why);
    else felt('selfp bad','model: −1 reward'+why)}
- }finally{busy=false;document.getElementById('sendbtn').disabled=false}}
+ }finally{if(th)th.remove();showLive(false);busy=false;document.getElementById('sendbtn').disabled=false}}
 async function sleepy(){
  if(sleeping||busy)return;
  lockup(true);
@@ -1709,7 +1766,7 @@ async function sleepy(){
   const r=await fetch('/sleep',{method:'POST'}).then(r=>r.json());
   if(r.error){add('sys','~ '+r.error+' ~');return}
   nightFade();
-  exs=[];aim=null;cap();
+  exs=[];aim=null;
   const s=(n,w,p)=>n+' '+(n==1?w:(p||w+'s'));
   add('sys','~ morning — it replayed '+s(r.nrem,'memory','memories')+' and dreamt '+s(r.rem,'dream')+' ~');
   if(r.woke_feeling){const wf=r.woke_feeling;
@@ -1757,9 +1814,38 @@ class H(BaseHTTPRequestHandler):
     def do_POST(self):
         n = int(self.headers.get("Content-Length") or 0)
         body = json.loads(self.rfile.read(n) or b"{}") if n else {}
+        if self.path == "/press_live":
+            # deliberately outside the LOCK: it must land while a
+            # streamed reply is mid-generation. It only queues.
+            try:
+                ORG.live_q.append(float(body.get("mag", 1)))
+                self._json({"queued": True})
+            except Exception as e:
+                self._json({"error": str(e)}, 500)
+            return
         with LOCK:
             try:
-                if self.path == "/chat":
+                if self.path == "/chat" and body.get("stream"):
+                    self.send_response(200)
+                    self.send_header("Content-Type",
+                                     "application/x-ndjson")
+                    self.send_header("Cache-Control", "no-store")
+                    self.end_headers()
+
+                    def emit(ev):
+                        try:
+                            self.wfile.write(
+                                (json.dumps(ev) + "\n").encode())
+                            self.wfile.flush()
+                        except Exception:
+                            pass
+                    try:
+                        r = ORG.chat(body["text"], body.get("temp"),
+                                     emit=emit)
+                        emit({"done": r})
+                    except Exception as e:
+                        emit({"error": str(e)})
+                elif self.path == "/chat":
                     self._json(ORG.chat(body["text"], body.get("temp")))
                 elif self.path == "/press":
                     self._json(ORG.press(body.get("level"),
