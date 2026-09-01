@@ -1729,7 +1729,7 @@ async function send(){
   const rd=resp.body.getReader(),dec=new TextDecoder();let buf='';
   while(true){const {done,value}=await rd.read();if(done)break;
    buf+=dec.decode(value,{stream:true});let ix;
-   while((ix=buf.indexOf('\n'))>=0){const ln=buf.slice(0,ix);buf=buf.slice(ix+1);
+   while((ix=buf.indexOf('\\n'))>=0){const ln=buf.slice(0,ix);buf=buf.slice(ix+1);
     if(!ln.trim())continue;let ev;try{ev=JSON.parse(ln)}catch(e){continue}
     if(th){th.remove();th=null}
     if(ev.tok!=null){const sp=document.createElement('span');sp.textContent=ev.tok;
