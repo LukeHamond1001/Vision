@@ -60,9 +60,10 @@ pip install -e .          # torch, tokenizers, numpy
 # put organism_life.pt and ship_tok.json in data/, then:
 python3 scripts/organism.py data/organism_life.pt data/ship_tok.json \
     --dev mps --temp 0.05 --save data/organism_life.pt
-# open http://localhost:8016 — talk to it; your expression slider is
-# felt as it changes while it speaks; select words in its answer to
-# dose exactly those, or in your draft to stress them; sleep it at night
+# open http://localhost:8016 — talk to it; the number bottom-right is
+# your expression (−6…6): it is felt when it changes while it speaks,
+# and the face each word was spoken into is that word's reward;
+# sleep it at night
 ```
 
 First reply after launch takes a few minutes (the model compiles);
