@@ -57,8 +57,8 @@ class Organism:
         if hasattr(self.m, "read_beta"):
             self.m.read_beta = float(getattr(a, "store_read_beta", 0.0) or 0.0)
         self.m.store_boost = float(getattr(a, "store_boost", 1.0) or 1.0)
-        if hasattr(self.m, "dopamine"):
-            self.m.dopamine = float(getattr(a, "dopamine", 0.0) or 0.0)
+        if getattr(a, "dopamine", None) is not None and hasattr(self.m, "dopamine"):
+            self.m.dopamine = float(a.dopamine)
         self.m = self.m.eval()
         src = state.get("st_live") or state.get("st")
         self.st = _to_dev(src if state.get("st_live") else _lane0(src), self.dev) \
@@ -2326,9 +2326,10 @@ def main():
     ap.add_argument("--store-boost", type=float, default=1.0,
                     help="hippocampus read megaphone: amplify the store's top-8 "
                          "suggestions per position by this factor (1 = as trained)")
-    ap.add_argument("--dopamine", type=float, default=0.0,
+    ap.add_argument("--dopamine", type=float, default=None,
                     help="kappa: a surprising reward scales the hippocampus write "
-                         "strength at that token, s <- min(1, s(1 + kappa|RPE|)) (0 = off)")
+                         "strength at that token, s <- min(1, s(1 + kappa|RPE|)); "
+                         "unset = as the body was built (its cfg carries kappa)")
     ap.add_argument("--eou-start", type=int, default=12,
                     help="the breath: after this many content tokens the end of "
                          "the utterance starts gaining logits")
