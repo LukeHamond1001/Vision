@@ -1499,10 +1499,8 @@ async function sleepy(){
   nightFade();
   const s=(n,w,p)=>n+' '+(n==1?w:(p||w+'s'));
   add('sys','~ morning \u2014 it replayed '+s(r.nrem,'memory','memories')+' and dreamt '+s(r.rem,'dream')+' ~');
-  if(r.conscience)add('sys','~ '+r.conscience+' ~');
   if(r.woke_feeling){const wf=r.woke_feeling;
    felt('selfp good','model: '+(wf.includes(' \u00b7 ')?wf.replace(' \u00b7 ',' reward \u00b7 '):wf+' reward'))}
-  if(r.woke_thinking)add('sys','~ it woke thinking: \u201c'+r.woke_thinking+'\u201d ~')
  }catch(e){add('sys','~ the night was interrupted \u2014 reload me ~')
  }finally{fl.classList.remove('think');lockup(false)}}
 async function saveLife(){
