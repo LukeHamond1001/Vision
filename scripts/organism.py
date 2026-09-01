@@ -180,15 +180,26 @@ class Organism:
                     n += len(chunk) - 1
         return lg, tot / max(1, n), mx
 
-    def absorb_stmt(self, text, k=1):
+    def absorb_stmt(self, text, k=1, span=None):
         """one tiny keep-nudge on a statement it chose to notice; the
-        night's replay does the real consolidation."""
+        night's replay does the real consolidation. A span (char
+        range) confines the nudge to the chosen words — the aimed
+        partial teach."""
         ids = self.tok.encode(text).ids + [self.eh]
         ids += [self.sil] * ((64 - len(ids) % 64) % 64)
         x = torch.tensor([ids[:-1]], device=self.dev)
         y = torch.tensor([ids[1:]], device=self.dev)
         w = torch.zeros_like(y, dtype=torch.float)
         w[0, :len(self.tok.encode(text).ids) - 1] = 1.0
+        if span is not None:
+            offs = self.tok.encode(text).offsets
+            w[0, :] = 0.0
+            for j in range(len(offs) - 1):
+                s_, e_ = offs[j + 1]   # w[j] trains token j+1
+                if s_ < span[1] and e_ > span[0]:
+                    w[0, j] = 1.0
+            if float(w.sum()) == 0.0:
+                w[0, :len(self.tok.encode(text).ids) - 1] = 1.0
         self.m.train()
         for _ in range(k):
             self.opt.zero_grad(set_to_none=True)
@@ -467,6 +478,7 @@ class Organism:
         if reply:
             self.session.append((text, reply))
         return {"reply": reply, "pauses": pauses,
+                "sidx": (len(self.session) - 1) if reply else None,
                 "surprise": round(surp, 2),
                 "surprise_peak": round(surp_pk, 1), "noticed": noticed,
                 "pride": pride, "self_press": self_press,
@@ -586,24 +598,42 @@ class Organism:
         return [{"q": q, "a": a, "ce": round(self.fact_ce(q, a), 2)}
                 for q, a in self.facts]
 
-    def press(self, level=None, mag=None, span=None):
+    def press(self, level=None, mag=None, span=None, idx=None, who=None):
         """graded reward at any magnitude: the FELT token stays within
         the trained vocabulary (|m|>=2 -> level-2 token), while the
         magnitude expresses through plasticity — dose steps for
-        positive, corrective unlikelihood on the last reply for
-        strong negative (external correction may unlearn; it never
-        becomes felt self-punishment). A span (literal substring of
-        the last reply, chosen by the human) aims the plasticity at
-        those words only — the serve matches text, it never reads it."""
+        positive, corrective unlikelihood for strong negative. The
+        press can be AIMED: idx picks any exchange from today's
+        session (the night closes the books), span confines the dose
+        to the chosen words, and who='you' doses the human's own
+        words (a partial teach, or a retract) instead of the reply.
+        The serve matches literal selections; it never reads meaning.
+        Feeling is felt NOW regardless of aim — like dopamine, the
+        signal arrives after the act; the exact binding lives in the
+        dose and the press log, both pinned to the aimed exchange."""
         if mag is None:
             mag = float(level.replace("+", ""))
         mag = max(-6.0, min(6.0, float(mag)))
+        tgt = None
+        if idx is not None:
+            # an aimed press at a gone exchange (say, after the night
+            # cleared the session) is felt but never dosed — a press
+            # must not silently rebind to a different answer
+            try:
+                i_ = int(idx)
+                if 0 <= i_ < len(self.session):
+                    tgt = self.session[i_]
+            except Exception:
+                tgt = None
+        else:
+            tgt = self.last_q
+        who = "you" if who == "you" else "bot"
+        aim_txt = (tgt[0] if who == "you" else tgt[1]) if tgt else None
         sp_rng = None
-        if span and self.last_q:
-            ans_ = self.last_q[1]
-            c0 = ans_.find(span)
+        if span and aim_txt:
+            c0 = aim_txt.find(span)
             if c0 < 0:
-                c0 = ans_.lower().find(span.lower())
+                c0 = aim_txt.lower().find(span.lower())
             if c0 >= 0:
                 sp_rng = (c0, c0 + len(span))
         sign = "+" if mag >= 0 else "-"
@@ -613,15 +643,25 @@ class Organism:
         self.fatigue += 0.2
         self.n_human_presses += 1
         self._today["presses"] += mag
-        if self.last_q:
-            self.press_log.append(
-                {"q": self.last_q[0][:80], "a": self.last_q[1][:80],
-                 "mag": mag})
+        if tgt:
+            e_ = {"q": tgt[0][:80], "a": (tgt[1] or "")[:80], "mag": mag}
+            if who == "you":
+                e_["stmt"] = True   # a teaching act, not a taste verdict
+            self.press_log.append(e_)
             self.press_log = self.press_log[-500:]
-        info = {"felt": tokname.strip("<>"), "mag": mag,
+        info = {"felt": tokname.strip("<>"), "mag": mag, "who": who,
                 "mood": round(self.mood, 2)}
-        if mag > 0 and self.last_q:
-            q, ans = self.last_q
+        if tgt and who == "you" and tgt[0]:
+            if mag > 0:
+                k = min(int(round(abs(mag))), 6) or 1
+                self.absorb_stmt(tgt[0], k=k, span=sp_rng)
+                info["absorbed_steps"] = k
+            elif mag <= -2:
+                k = min(int(round(abs(mag))) - 1, 3)
+                self._unlearn_reply(tgt[0], k, span=sp_rng)
+                info["corrected_steps"] = k
+        elif tgt and mag > 0 and tgt[1]:
+            q, ans = tgt
             k = min(int(round(abs(mag))), 6) or 1
             # plasticity satiates on the already-mastered: praise on a
             # strong fact is fully FELT, but barely re-absorbed — no
@@ -631,14 +671,12 @@ class Organism:
             loss = self.absorb(q, ans, k, span=sp_rng)
             info["absorbed_steps"] = k
             info["loss"] = round(loss, 3)
-            if sp_rng:
-                info["span"] = span[:60]
-        elif mag <= -2 and self.last_q:
+        elif tgt and mag <= -2 and tgt[1]:
             k = min(int(round(abs(mag))) - 1, 3)
-            self._unlearn_reply(self.last_q[1], k, span=sp_rng)
+            self._unlearn_reply(tgt[1], k, span=sp_rng)
             info["corrected_steps"] = k
-            if sp_rng:
-                info["span"] = span[:60]
+        if sp_rng:
+            info["span"] = span[:60]
         return info
 
     def _unlearn_reply(self, reply, k=1, span=None):
@@ -1381,7 +1419,8 @@ class Organism:
         # learning right-and-wrong from your own self-approval is a
         # closed loop that drifts; the parent's judgment is the ground.
         real = [e for e in self.press_log
-                if "mag" in e and not e.get("self")]
+                if "mag" in e and not e.get("self")
+                and not e.get("stmt")]
         if self.critic is not None and len(real) >= 12 and \
                 self.n_human_presses > getattr(self, "_critic_seen", 0):
             try:
@@ -1547,12 +1586,11 @@ button.quiet:hover{opacity:1;border-color:var(--mut);color:var(--ink)}
 <div id=carerow>
  <button class=quiet onclick=sleepy()>sleep</button>
  <button class=quiet onclick=saveLife()>save</button>
- <button class=quiet onclick="fetch('/reset',{method:'POST'}).then(()=>{felts=[];log.innerHTML='';cap('');add('sys','~ fresh wake ~')})">reset</button>
+ <button class=quiet onclick="fetch('/reset',{method:'POST'}).then(()=>{felts=[];exs=[];aim=null;log.innerHTML='';cap();add('sys','~ fresh wake ~')})">reset</button>
 </div>
 <script>
 const log=document.getElementById('log');
-let busy=false,sleeping=false,felts=[],lastBot=null,lastReply='',selSpan=null,
-    toneM=[],selfM=[],userM=[];
+let busy=false,sleeping=false,felts=[],exs=[],aim=null;
 function lockup(m){sleeping=m;document.getElementById('sendbtn').disabled=m;
  document.querySelectorAll('.pb').forEach(b=>b.disabled=m)}
 function felt(cls,txt){felts.forEach(f=>{
@@ -1560,14 +1598,18 @@ function felt(cls,txt){felts.forEach(f=>{
  const d=add(cls,txt);felts.push(d);return d}
 function nightFade(){felts.forEach(f=>f.style.opacity=0.35);felts=[]}
 function add(cls,txt){const d=document.createElement('div');d.className=cls;d.textContent=txt;log.appendChild(d);log.scrollTop=1e9;return d}
-function cap(t){document.getElementById('rwcap').textContent=
- t?'react to: “'+(t.length>28?t.slice(0,28)+'…':t)+'”':'react to its last answer'}
-function render(div){
- const text=lastReply,marks=toneM.concat(selfM,userM);
+function trunc(t,n){return t.length>n?t.slice(0,n)+'…':t}
+function lastEx(){return exs.length?exs[exs.length-1]:null}
+function cap(){const rw=document.getElementById('rwcap');
+ if(aim){rw.textContent=(aim.who=='you'?'dose your words: “':'react to: “')+trunc(aim.span,28)+'”';return}
+ const le=lastEx();
+ rw.textContent=le?'react to: “'+trunc(le.a,28)+'”':'react to its last answer'}
+function seg(div,text,marks,prefix){
+ div.textContent='';if(prefix)div.appendChild(document.createTextNode(prefix));
+ const cl=v=>Math.max(0,Math.min(text.length,v));
  const bs=new Set([0,text.length]);
- marks.forEach(m=>{bs.add(Math.max(0,Math.min(text.length,m.s)));
-  bs.add(Math.max(0,Math.min(text.length,m.e)))});
- const bl=[...bs].sort((a,b)=>a-b);div.textContent='';
+ marks.forEach(m=>{bs.add(cl(m.s));bs.add(cl(m.e))});
+ const bl=[...bs].sort((a,b)=>a-b);
  for(let i=0;i<bl.length-1;i++){const s=bl[i],e=bl[i+1];if(e<=s)continue;
   const cov=marks.filter(m=>m.s<e&&m.e>s);
   if(!cov.length){div.appendChild(document.createTextNode(text.slice(s,e)));continue}
@@ -1575,28 +1617,36 @@ function render(div){
   sp.className=cov.map(m=>m.cls).filter(Boolean).join(' ');
   cov.forEach(m=>{if(m.bg)sp.style.background=m.bg;if(m.v!=null)sp.title='felt '+m.v});
   sp.textContent=text.slice(s,e);div.appendChild(sp)}}
+function paintEx(ex){
+ seg(ex.ad,ex.a,ex.tones.concat(ex.selfM,ex.userM.filter(m=>m.who!='you')));
+ if(ex.userM.some(m=>m.who=='you'))
+  seg(ex.qd,ex.q,ex.userM.filter(m=>m.who=='you'),'you: ')}
 document.addEventListener('selectionchange',()=>{
  const s=document.getSelection();
- if(lastBot&&s&&s.rangeCount&&!s.isCollapsed
-    &&lastBot.contains(s.anchorNode)&&lastBot.contains(s.focusNode)){
+ if(s&&s.rangeCount&&!s.isCollapsed){
   const t=s.toString().trim();
-  if(t&&lastReply.includes(t)){selSpan=t;cap(t);return}}
- if(selSpan){selSpan=null;cap(lastReply)}});
+  if(t)for(const ex of exs){
+   if(ex.ad.contains(s.anchorNode)&&ex.ad.contains(s.focusNode)&&ex.a.includes(t)){
+    aim={ex:ex,sidx:ex.sidx,who:'bot',span:t};cap();return}
+   if(ex.qd.contains(s.anchorNode)&&ex.qd.contains(s.focusNode)&&ex.q.includes(t)){
+    aim={ex:ex,sidx:ex.sidx,who:'you',span:t};cap();return}}}
+ if(aim){aim=null;cap()}});
 async function doPress(m){
  if(sleeping){add('sys','~ it’s sleeping ~');return}
  if(busy){add('sys','~ wait — it’s mid-thought ~');return}
- const aim=selSpan;
- const r=await fetch('/press',{method:'POST',body:JSON.stringify({mag:m,span:aim||undefined})}).then(r=>r.json());
+ const a=aim;
+ const r=await fetch('/press',{method:'POST',body:JSON.stringify(
+  {mag:m,span:a?a.span:undefined,idx:a?a.sidx:undefined,who:a?a.who:undefined})}).then(r=>r.json());
  const mv=(Number.isInteger(m)?''+Math.abs(m):Math.abs(m).toFixed(1));
  felt('selfp '+(m>0?'good':'bad'),'you: '+(m>0?'+':'−')+mv+' reward'+
-  (r.span?' · on “'+(r.span.length>22?r.span.slice(0,22)+'…':r.span)+'”':'')+
+  (r.span?(r.who=='you'?' · into your “':' · on “')+trunc(r.span,22)+'”':'')+
   (r.mood!=null?(' · mood '+r.mood.toFixed(2)).replace('-','−'):'')+
   (r.absorbed_steps?' · learned ×'+r.absorbed_steps:'')+
   (r.corrected_steps?' · unlearned ×'+r.corrected_steps:''));
- if(r.span&&lastBot){const s0=lastReply.indexOf(aim);
-  if(s0>=0){userM.push({s:s0,e:s0+aim.length,cls:m>0?'upg':'upb'});render(lastBot)}}
+ if(r.span&&a&&a.ex){const tx=a.who=='you'?a.ex.q:a.ex.a;const s0=tx.indexOf(a.span);
+  if(s0>=0){a.ex.userM.push({s:s0,e:s0+a.span.length,who:a.who,cls:m>0?'upg':'upb'});paintEx(a.ex)}}
  try{document.getSelection().removeAllRanges()}catch(e){}
- selSpan=null;cap(lastReply)}
+ aim=null;cap()}
 document.querySelectorAll('.pb').forEach(b=>{
  const base=parseFloat(b.dataset.mag),lbl=b.textContent;
  let t0=null,iv=null,cur=base,armed=false;
@@ -1611,52 +1661,55 @@ document.querySelectorAll('.pb').forEach(b=>{
  b.onpointerleave=()=>{armed=false;stop()}});
 async function send(){
  const inp=document.getElementById('msg');const t=inp.value.trim();if(!t)return;
- if(sleeping){add('sys','~ it\u2019s sleeping \u2014 wait for morning ~');return}
+ if(sleeping){add('sys','~ it’s sleeping — wait for morning ~');return}
  if(busy)return;
  busy=true;document.getElementById('sendbtn').disabled=true;
  try{
   inp.value='';
-  add('you','you: '+t);add('sys think','\u00b7 \u00b7 \u00b7');
+  const qd=add('you','you: '+t);add('sys think','· · ·');
   let r;
   try{r=await fetch('/chat',{method:'POST',body:JSON.stringify({text:t})}).then(r=>r.json())}
   catch(e){
    if(log.lastChild&&log.lastChild.classList.contains('think'))log.lastChild.remove();
-   add('sys','~ unreachable \u2014 is it awake yet? ~');return}
+   add('sys','~ unreachable — is it awake yet? ~');return}
   log.lastChild.remove();
   if(r.error){add('sys','~ '+r.error+' ~');return}
   let bd=null;
-  if(r.reply)bd=lastBot=add('bot',r.reply);else add('sys','~ it said nothing ~');
-  cap(r.reply);lastReply=r.reply||'';selSpan=null;
-  toneM=(r.tones||[]).filter(t=>Math.abs(t.v)>=0.05).map(t=>({s:t.s,e:t.e,v:t.v,
-   bg:(t.v>0?'rgba(31,122,70,':'rgba(189,74,36,')+Math.min(.28,Math.abs(t.v)*.14).toFixed(3)+')'}));
-  selfM=[];userM=[];
-  if(bd&&toneM.length)render(bd);
+  if(r.reply)bd=add('bot',r.reply);else add('sys','~ it said nothing ~');
+  if(bd&&r.sidx!=null){
+   const ex={q:t,a:r.reply,sidx:r.sidx,qd:qd,ad:bd,userM:[],selfM:[],
+    tones:(r.tones||[]).filter(o=>Math.abs(o.v)>=0.05).map(o=>({s:o.s,e:o.e,v:o.v,
+     bg:(o.v>0?'rgba(31,122,70,':'rgba(189,74,36,')+Math.min(.28,Math.abs(o.v)*.14).toFixed(3)+')'}))};
+   if(r.self_press){
+    if(r.self_press.loved)ex.selfM=r.self_press.loved.map(([s,e])=>({s:s,e:e,cls:'lov'}));
+    if(r.self_press.blamed)ex.selfM=r.self_press.blamed.map(([s,e])=>({s:s,e:e,cls:'blm'}))}
+   exs.push(ex);
+   if(ex.tones.length||ex.selfM.length)paintEx(ex)}
+  aim=null;cap();
   if(r.self_press){
    const sp=r.self_press;
    const why=(sp.conviction==null?'':(' · conscience '+(sp.conviction>0?'+':'')+sp.conviction.toFixed(1)).replace('-','−'));
    if(sp.mag>0)felt('selfp good','model: +1 reward'+why);
-   else felt('selfp bad','model: −1 reward'+why);
-   if(sp.loved)selfM=sp.loved.map(([s,e])=>({s:s,e:e,cls:'lov'}));
-   if(sp.blamed)selfM=sp.blamed.map(([s,e])=>({s:s,e:e,cls:'blm'}));
-   if(bd&&selfM.length)render(bd)}
+   else felt('selfp bad','model: −1 reward'+why)}
  }finally{busy=false;document.getElementById('sendbtn').disabled=false}}
 async function sleepy(){
  if(sleeping||busy)return;
  lockup(true);
- const fl=add('sys think','~ sleeping\u2026 ~');
+ const fl=add('sys think','~ sleeping… ~');
  try{
   const r=await fetch('/sleep',{method:'POST'}).then(r=>r.json());
   if(r.error){add('sys','~ '+r.error+' ~');return}
   nightFade();
+  exs=[];aim=null;cap();
   const s=(n,w,p)=>n+' '+(n==1?w:(p||w+'s'));
-  add('sys','~ morning \u2014 it replayed '+s(r.nrem,'memory','memories')+' and dreamt '+s(r.rem,'dream')+' ~');
+  add('sys','~ morning — it replayed '+s(r.nrem,'memory','memories')+' and dreamt '+s(r.rem,'dream')+' ~');
   if(r.woke_feeling){const wf=r.woke_feeling;
-   felt('selfp good','model: '+(wf.includes(' \u00b7 ')?wf.replace(' \u00b7 ',' reward \u00b7 '):wf+' reward'))}
- }catch(e){add('sys','~ the night was interrupted \u2014 reload me ~')
+   felt('selfp good','model: '+(wf.includes(' · ')?wf.replace(' · ',' reward · '):wf+' reward'))}
+ }catch(e){add('sys','~ the night was interrupted — reload me ~')
  }finally{fl.classList.remove('think');lockup(false)}}
 async function saveLife(){
  const r=await fetch('/save',{method:'POST'}).then(r=>r.json());
- add('sys','~ saved \u2192 '+r.saved+' ~')}
+ add('sys','~ saved → '+r.saved+' ~')}
 </script>
 """
 
@@ -1702,7 +1755,9 @@ class H(BaseHTTPRequestHandler):
                 elif self.path == "/press":
                     self._json(ORG.press(body.get("level"),
                                          body.get("mag"),
-                                         body.get("span")))
+                                         body.get("span"),
+                                         body.get("idx"),
+                                         body.get("who")))
                 elif self.path == "/teach":
                     self._json(ORG.teach(body["q"], body["a"]))
                 elif self.path == "/facts":
