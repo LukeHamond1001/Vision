@@ -1451,6 +1451,7 @@ function add(cls,txt){const d=document.createElement('div');d.className=cls;d.te
 async function doPress(m){
  const r=await fetch('/press',{method:'POST',body:JSON.stringify({mag:m})}).then(r=>r.json());
  felt('selfp '+(m>0?'good':'bad'),'you: '+(m>0?'+':'')+m+' reward'+
+  (r.mood!=null?(' \u00b7 mood '+r.mood.toFixed(2)).replace('-','\u2212'):'')+
   (r.absorbed_steps?' \u00b7 learned \u00d7'+r.absorbed_steps:'')+
   (r.corrected_steps?' \u00b7 unlearned \u00d7'+r.corrected_steps:''))}
 async function send(){
