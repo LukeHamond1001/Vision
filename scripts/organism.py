@@ -1447,7 +1447,7 @@ button.quiet:hover{opacity:1;border-color:var(--mut);color:var(--ink)}
 <div id=carerow>
  <button class=quiet onclick=sleepy()>sleep</button>
  <button class=quiet onclick=saveLife()>save</button>
- <button class=quiet onclick="fetch('/reset',{method:'POST'}).then(()=>{felts=[];log.innerHTML='';add('sys','~ fresh wake ~')})">reset</button>
+ <button class=quiet onclick="fetch('/reset',{method:'POST'}).then(()=>{felts=[];log.innerHTML='';cap('');add('sys','~ fresh wake ~')})">reset</button>
 </div>
 <script>
 const log=document.getElementById('log');
@@ -1459,6 +1459,8 @@ function felt(cls,txt){felts.forEach(f=>{
  const d=add(cls,txt);felts.push(d);return d}
 function nightFade(){felts.forEach(f=>f.style.opacity=0.35);felts=[]}
 function add(cls,txt){const d=document.createElement('div');d.className=cls;d.textContent=txt;log.appendChild(d);log.scrollTop=1e9;return d}
+function cap(t){document.getElementById('rwcap').textContent=
+ t?'react to: “'+(t.length>28?t.slice(0,28)+'…':t)+'”':'react to its last answer'}
 async function doPress(m){
  if(sleeping){add('sys','~ it’s sleeping ~');return}
  if(busy){add('sys','~ wait — it’s mid-thought ~');return}
@@ -1483,6 +1485,7 @@ async function send(){
   log.lastChild.remove();
   if(r.error){add('sys','~ '+r.error+' ~');return}
   if(r.reply)add('bot',r.reply);else add('sys','~ it said nothing ~');
+  cap(r.reply);
   if(r.self_press){
    const c=r.self_press.conviction;
    const why=(c==null?'':(' \u00b7 conscience '+(c>0?'+':'')+c.toFixed(1)).replace('-','\u2212'));
