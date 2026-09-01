@@ -60,9 +60,9 @@ pip install -e .          # torch, tokenizers, numpy
 # put organism_life.pt and ship_tok.json in data/, then:
 python3 scripts/organism.py data/organism_life.pt data/ship_tok.json \
     --dev mps --temp 0.05 --save data/organism_life.pt
-# open http://localhost:8016 — talk to it, teach it, press its
-# reward buttons (hold to press harder, select words in its answer
-# to aim the press), and put it to sleep at night
+# open http://localhost:8016 — talk to it, teach it, drag the
+# reward slider (select words in any message to aim the dose at
+# them), and put it to sleep at night
 ```
 
 First reply after launch takes a few minutes (the model compiles);

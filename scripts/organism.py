@@ -635,7 +635,11 @@ class Organism:
             if c0 < 0:
                 c0 = aim_txt.lower().find(span.lower())
             if c0 >= 0:
-                sp_rng = (c0, c0 + len(span))
+                # a press doses whole tokens, never a cut one: the
+                # range snaps OUTWARD to token boundaries, and what
+                # snapped is what gets disclosed
+                sp_rng = self._snap_span(aim_txt,
+                                         (c0, c0 + len(span)))
         sign = "+" if mag >= 0 else "-"
         tokname = f"<{sign}{2 if abs(mag) >= 2 else 1}>"
         self.feed([self.press_ids[tokname]])
@@ -676,8 +680,19 @@ class Organism:
             self._unlearn_reply(tgt[1], k, span=sp_rng)
             info["corrected_steps"] = k
         if sp_rng:
-            info["span"] = span[:60]
+            info["span"] = aim_txt[sp_rng[0]:sp_rng[1]].strip()[:60]
+            info["span_at"] = [sp_rng[0], sp_rng[1]]
         return info
+
+    def _snap_span(self, text, rng):
+        """widen a char range outward to whole-token boundaries — a
+        press can dose only whole tokens, never cut one."""
+        s_, e_ = None, None
+        for (a_, b_) in self.tok.encode(text).offsets:
+            if a_ < rng[1] and b_ > rng[0]:
+                s_ = a_ if s_ is None else min(s_, a_)
+                e_ = b_ if e_ is None else max(e_, b_)
+        return (s_, e_) if s_ is not None else rng
 
     def _unlearn_reply(self, reply, k=1, span=None):
         """corrective unlikelihood on the last reply's own tokens —
@@ -1565,10 +1580,10 @@ button.quiet{background:transparent;color:var(--mut);border:1px solid var(--line
 button.quiet:hover{opacity:1;border-color:var(--mut);color:var(--ink)}
 #rewardrow{display:flex;align-items:center;gap:12px;padding:6px 28px;background:var(--paper);max-width:736px;margin:0 auto;width:100%}
 #rwcap{flex:1;font-size:11px;color:#b3aca0}
-.pb{background:transparent;border:1px solid var(--line);border-radius:999px;padding:7px 16px;font-size:13.5px;font-weight:600;font-variant-numeric:tabular-nums;min-width:58px;touch-action:none;user-select:none}
-.pb.good{color:var(--good)}.pb.bad{color:var(--warn)}
-.pb.good:hover{border-color:var(--good);background:rgba(31,122,70,.06);opacity:1}
-.pb.bad:hover{border-color:var(--warn);background:rgba(189,74,36,.06);opacity:1}
+#rwslide{flex:2;max-width:300px;accent-color:var(--good);cursor:pointer}
+#rwslide:disabled{opacity:.35;cursor:default}
+#rwval{font-family:menlo,monospace;font-size:13px;font-weight:600;min-width:44px;text-align:right}
+#rwval.good{color:var(--good)}#rwval.bad{color:var(--warn)}
 #carerow{display:flex;gap:8px;padding:4px 28px 8px;max-width:736px;margin:0 auto;width:100%}
 </style>
 <div id=log></div>
@@ -1578,10 +1593,8 @@ button.quiet:hover{opacity:1;border-color:var(--mut);color:var(--ink)}
 </div>
 <div id=rewardrow>
  <span id=rwcap>react to its last answer</span>
- <button class="pb bad" data-mag=-2>&minus;2</button>
- <button class="pb bad" data-mag=-1>&minus;1</button>
- <button class="pb good" data-mag=1>+1</button>
- <button class="pb good" data-mag=2>+2</button>
+ <span id=rwval></span>
+ <input id=rwslide type=range min=-6 max=6 step=0.1 value=0>
 </div>
 <div id=carerow>
  <button class=quiet onclick=sleepy()>sleep</button>
@@ -1592,7 +1605,7 @@ button.quiet:hover{opacity:1;border-color:var(--mut);color:var(--ink)}
 const log=document.getElementById('log');
 let busy=false,sleeping=false,felts=[],exs=[],aim=null;
 function lockup(m){sleeping=m;document.getElementById('sendbtn').disabled=m;
- document.querySelectorAll('.pb').forEach(b=>b.disabled=m)}
+ document.getElementById('rwslide').disabled=m}
 function felt(cls,txt){felts.forEach(f=>{
   f.style.opacity=Math.max(0.35,(parseFloat(f.style.opacity)||1)*0.9)});
  const d=add(cls,txt);felts.push(d);return d}
@@ -1643,22 +1656,18 @@ async function doPress(m){
   (r.mood!=null?(' · mood '+r.mood.toFixed(2)).replace('-','−'):'')+
   (r.absorbed_steps?' · learned ×'+r.absorbed_steps:'')+
   (r.corrected_steps?' · unlearned ×'+r.corrected_steps:''));
- if(r.span&&a&&a.ex){const tx=a.who=='you'?a.ex.q:a.ex.a;const s0=tx.indexOf(a.span);
-  if(s0>=0){a.ex.userM.push({s:s0,e:s0+a.span.length,who:a.who,cls:m>0?'upg':'upb'});paintEx(a.ex)}}
+ if(r.span_at&&a&&a.ex){
+  a.ex.userM.push({s:r.span_at[0],e:r.span_at[1],who:a.who,cls:m>0?'upg':'upb'});paintEx(a.ex)}
  try{document.getSelection().removeAllRanges()}catch(e){}
  aim=null;cap()}
-document.querySelectorAll('.pb').forEach(b=>{
- const base=parseFloat(b.dataset.mag),lbl=b.textContent;
- let t0=null,iv=null,cur=base,armed=false;
- const stop=()=>{if(t0){clearTimeout(t0);t0=null}
-  if(iv){clearInterval(iv);iv=null}b.textContent=lbl};
- b.onpointerdown=e=>{e.preventDefault();cur=base;armed=true;
-  t0=setTimeout(()=>{iv=setInterval(()=>{
-   cur=Math.max(-6,Math.min(6,cur+Math.sign(base)*0.1));
-   b.textContent=(cur>0?'+':'−')+Math.abs(cur).toFixed(1)},50)},250)};
- b.onpointerup=()=>{if(!armed)return;armed=false;
-  const m=Math.round(cur*10)/10;stop();doPress(m)};
- b.onpointerleave=()=>{armed=false;stop()}});
+const sl=document.getElementById('rwslide'),rv=document.getElementById('rwval');
+sl.oninput=()=>{const v=parseFloat(sl.value);
+ rv.textContent=Math.abs(v)<0.3?'':(v>0?'+':'−')+Math.abs(v).toFixed(1);
+ rv.className=v>0?'good':'bad';
+ sl.style.accentColor=v<0?'var(--warn)':'var(--good)'};
+sl.onchange=()=>{const m=Math.round(parseFloat(sl.value)*10)/10;
+ sl.value=0;rv.textContent='';sl.style.accentColor='var(--good)';
+ if(Math.abs(m)>=0.3)doPress(m)};
 async function send(){
  const inp=document.getElementById('msg');const t=inp.value.trim();if(!t)return;
  if(sleeping){add('sys','~ it’s sleeping — wait for morning ~');return}
