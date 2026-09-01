@@ -942,7 +942,7 @@ def main():
                          "per-position learned head (A41 candidate)")
     ap.add_argument("--lr-decay", default="none", dest="lr_decay",
                     choices=["none", "cosine"],
-                    help="cosine: decay lr to 10% over the run "
+                    help="cosine: decay lr to 10%% over the run "
                          "(A54: the lr x duration guard)")
     ap.add_argument("--lr-total-steps", type=int, default=None,
                     dest="lr_total_steps",

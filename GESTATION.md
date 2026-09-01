@@ -135,6 +135,30 @@ conscience recalibrates with mismatched question/answer negatives;
 a smile the lesson was said with is not the reply's reward; the night
 keeps and dreams what moved it most in its own currency.
 
+## The local re-gestation (a Mac, a night)
+
+The most a laptop can do, and the honest reason: language needs
+~1e8-1e9 tokens of exposure while a caretaker day gives ~1e3, so a body
+cannot be raised from random weights by talk alone. What CAN be reborn
+locally are the organs that carry the old body's fragilities. Recipe:
+
+```bash
+python3 scripts/author_lives.py --n 20000 --out data/lives_v17.jsonl --seed 17
+python3 -m iga.lm_data_life prepare --out data/gest_v17 --budget 7000000 --lives 8 \
+    --tokenizer data/ship_tok_v17.json --vocab 16388 --lives-file data/lives_v17.jsonl \
+    --no-press-tokens --episodic
+python3 scripts/regestate.py data/ship_scan16_final.pt data/ship_tok_v17.json \
+    --data data/gest_v17 --out data/organism_life_v3.pt --hours 2
+python3 scripts/organism.py data/organism_life_v3.pt data/ship_tok_v17.json --dev mps \
+    --temp 0.05 --save data/organism_life_v3.pt --port 8017
+```
+
+The trunk (the language) is kept from the base and adapts gently; the
+reward slot, value heads, hippocampus, goal query, routing head and
+council slots are born again at their default init and trained on
+lives with the face as a sense (14), faces mid-utterance (13), its own
+face (15) and one-shot recall asked for. Then it is raised live.
+
 ## Pipeline
 
 ```
