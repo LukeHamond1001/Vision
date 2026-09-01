@@ -1656,19 +1656,23 @@ function trunc(t,n){return t.length>n?t.slice(0,n)+'…':t}
 function toneBg(v){return (v>0?'rgba(31,122,70,':'rgba(189,74,36,')+Math.min(.28,Math.abs(v)*.14).toFixed(3)+')'}
 function seg(div,text,marks,prefix){
  div.textContent='';if(prefix)div.appendChild(document.createTextNode(prefix));
+ const pts=marks.filter(m=>m.pt),rng=marks.filter(m=>!m.pt);
  const cl=v=>Math.max(0,Math.min(text.length,v));
  const bs=new Set([0,text.length]);
- marks.forEach(m=>{bs.add(cl(m.s));bs.add(cl(m.e))});
+ rng.forEach(m=>{bs.add(cl(m.s));bs.add(cl(m.e))});pts.forEach(m=>bs.add(cl(m.s)));
  const bl=[...bs].sort((a,b)=>a-b);
- for(let i=0;i<bl.length-1;i++){const s=bl[i],e=bl[i+1];if(e<=s)continue;
-  const cov=marks.filter(m=>m.s<e&&m.e>s);
+ const dot=p=>pts.filter(m=>cl(m.s)===p).forEach(m=>{const k=document.createElement('span');
+  k.className=m.cls;k.textContent=m.txt;div.appendChild(k)});
+ for(let i=0;i<bl.length-1;i++){const s=bl[i],e=bl[i+1];dot(s);if(e<=s)continue;
+  const cov=rng.filter(m=>m.s<e&&m.e>s);
   if(!cov.length){div.appendChild(document.createTextNode(text.slice(s,e)));continue}
   const sp=document.createElement('span');
   sp.className=cov.map(m=>m.cls).filter(Boolean).join(' ');
   cov.forEach(m=>{if(m.bg)sp.style.background=m.bg;if(m.v!=null)sp.title='felt '+m.v});
-  sp.textContent=text.slice(s,e);div.appendChild(sp)}}
+  sp.textContent=text.slice(s,e);div.appendChild(sp)}
+ dot(text.length)}
 function paintEx(ex){
- seg(ex.ad,ex.a,ex.tones.concat(ex.selfM,ex.userM.filter(m=>m.who!='you')));
+ seg(ex.ad,ex.a,ex.tones.concat(ex.selfM,ex.liveM||[],ex.userM.filter(m=>m.who!='you')));
  if(ex.userM.some(m=>m.who=='you'))
   seg(ex.qd,ex.q,ex.userM.filter(m=>m.who=='you'),'you: ')}
 function hideBar(){fbar.style.display='none';fsl.value=0;fv.textContent='';fsl.style.accentColor='var(--good)'}
@@ -1726,7 +1730,7 @@ async function send(){
   try{resp=await fetch('/chat',{method:'POST',body:JSON.stringify({text:t,stream:true})})}
   catch(e){add('sys','~ unreachable — is it awake yet? ~');return}
   bd=add('bot','');th=add('sys think','· · ·');showLive(true);
-  const rd=resp.body.getReader(),dec=new TextDecoder();let buf='';
+  const rd=resp.body.getReader(),dec=new TextDecoder();let buf='',streamed='',liveMarks=[];
   while(true){const {done,value}=await rd.read();if(done)break;
    buf+=dec.decode(value,{stream:true});let ix;
    while((ix=buf.indexOf('\\n'))>=0){const ln=buf.slice(0,ix);buf=buf.slice(ix+1);
@@ -1734,10 +1738,13 @@ async function send(){
     if(th){th.remove();th=null}
     if(ev.tok!=null){const sp=document.createElement('span');sp.textContent=ev.tok;
      if(ev.v!=null&&Math.abs(ev.v)>=0.05){sp.style.background=toneBg(ev.v);sp.title='felt '+ev.v}
-     bd.appendChild(sp);log.scrollTop=1e9}
+     bd.appendChild(sp);streamed+=ev.tok;log.scrollTop=1e9}
     else if(ev.pause){const sp=document.createElement('span');sp.className='pz';sp.textContent=' ·';bd.appendChild(sp)}
     else if(ev.felt!=null){const mk=document.createElement('span');mk.className='lpm '+(ev.felt>0?'good':'bad');
-     mk.textContent=(ev.felt>0?'+':'−')+Math.abs(ev.felt);bd.appendChild(mk)}
+     mk.textContent=(ev.felt>0?'+':'−')+Math.abs(ev.felt);bd.appendChild(mk);
+     liveMarks.push({at:streamed.length,mag:ev.felt});
+     felt('selfp '+(ev.felt>0?'good':'bad'),'you: '+(ev.felt>0?'+':'−')+Math.abs(ev.felt)+' live'+
+      (ev.mood!=null?(' · mood '+ev.mood.toFixed(2)).replace('-','−'):''))}
     else if(ev.done)fin=ev.done;
     else if(ev.error)add('sys','~ '+ev.error+' ~')}}
   if(th){th.remove();th=null}
@@ -1745,13 +1752,16 @@ async function send(){
   const r=fin;
   if(r.reply){bd.textContent=r.reply}else{bd.remove();bd=null;add('sys','~ it said nothing ~')}
   if(bd&&r.sidx!=null){
+   const lead=streamed.length-streamed.trimStart().length;
    const ex={q:t,a:r.reply,sidx:r.sidx,qd:qd,ad:bd,userM:[],selfM:[],
+    liveM:liveMarks.map(o=>({s:Math.max(0,Math.min(r.reply.length,o.at-lead)),e:0,pt:true,
+     cls:'lpm '+(o.mag>0?'good':'bad'),txt:(o.mag>0?'+':'−')+Math.abs(o.mag)})),
     tones:(r.tones||[]).filter(o=>Math.abs(o.v)>=0.05).map(o=>({s:o.s,e:o.e,v:o.v,bg:toneBg(o.v)}))};
    if(r.self_press){
     if(r.self_press.loved)ex.selfM=r.self_press.loved.map(([s,e])=>({s:s,e:e,cls:'lov'}));
     if(r.self_press.blamed)ex.selfM=r.self_press.blamed.map(([s,e])=>({s:s,e:e,cls:'blm'}))}
    exs.push(ex);
-   if(ex.tones.length||ex.selfM.length)paintEx(ex)}
+   if(ex.tones.length||ex.selfM.length||ex.liveM.length)paintEx(ex)}
   if(r.self_press){
    const sp=r.self_press;
    const why=(sp.conviction==null?'':(' · conscience '+(sp.conviction>0?'+':'')+sp.conviction.toFixed(1)).replace('-','−'));
