@@ -704,6 +704,7 @@ class Organism:
                 "tones": tones or None,
                 "felt_at": felt_at,
                 "expression": expression,
+                "you_text": text,
                 "you_marks": [{"s": s_, "e": e_, "r": r_} for s_, e_, r_ in frags],
                 "you_felt": [{"s": s_, "mag": l_} for s_, l_ in (g.get("you_felt") or [])],
                 "ended_by": g.get("ended_by", "eou"),
@@ -1902,7 +1903,7 @@ async function send(){
     else if(ev.felt!=null){mark(bd,ev.felt);setMood(ev.mood)}
     else if(ev.done)fin=ev.done}}
   setMood(fin.mood);
-  paintYou(qd,qtext,fin);
+  paintYou(qd,fin.you_text!=null?fin.you_text:qtext,fin);
   if(fin.reply)paintReply(bd,fin);else{bd.remove();bd=null;add('sys','~ it said nothing ~')}
  }finally{if(th)th.remove();busy=false;stepWait=null;msg.focus()}}
 async function sleepy(){
@@ -1921,7 +1922,7 @@ async function sleepy(){
 async function saveLife(){
  const r=await fetch('/save',{method:'POST'}).then(r=>r.json());
  add('sys','~ saved → '+r.saved+' ~')}
-pulseMood();
+post('/turn',{drop:true}).catch(()=>{});pulseMood();
 </script>
 """
 
@@ -1965,6 +1966,10 @@ class H(BaseHTTPRequestHandler):
                 if self.path == "/chat":
                     self._json(ORG.chat(body["text"], body.get("temp"),
                                         stress=body.get("stress", 0)))
+                elif self.path == "/turn":
+                    # a reloaded page must not inherit a half-said turn
+                    ORG.turn_ctx, ORG.gen_ctx = None, None
+                    self._json({"dropped": True})
                 elif self.path == "/hear":
                     self._json(ORG.hear(body.get("text", ""),
                                         body.get("expr", 0)))
