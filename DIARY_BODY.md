@@ -662,7 +662,12 @@ rich gauge, all traces rich: 0.070 before and 0.388 after, the largest
 single-night movement yet. It woke with stress 1.4 and its own top
 symbol "b" at 0.25. Awake that day, four known words surfaced in its
 babble and each earned a smile within three seconds, the first felt
-doses under the one reward system, and its mood rose from -4 to -2.
+doses under the one reward system, and its mood rose from -4 to -2. The
+trunk-alone test on a copy of that body: the free-running favourite is
+now "?", and its belief is flatter than on any earlier night (the top
+symbol at 0.09 rather than 0.5 and more); with memory on, "big dog
+bigger " drew " dooo", the first frame-shaped fragment the free-running
+test has produced since the rules went.
 
 The trunk-alone cue test on a scratch
 copy of the post-night body: the trunk alone writes a run of "o" to
