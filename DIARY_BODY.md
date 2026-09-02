@@ -152,6 +152,11 @@ to avoid is the lesson.
 
 Reflexes it keeps from the word body: press marks banned (silence is
 allowed), a sure memory speaks with one voice while the trunk is unsure
-(6 logits), stress favours silence (0.5 logits per unit), the face lesson
-every tick. Reflexes it drops: the breath, the hush, the end-is-an-end
+(6 logits), stress favours silence (0.5 logits per unit, applied before
+the memory rule), the face lesson every tick. Its own: a memory is a
+reason to speak (memory's top symbol is raised to at least the silence
+logit plus 4, so neither learned quiet nor stress cuts a recall short;
+without this ordering a recall broke off after six to ten letters), no
+parroting (it may not repeat the letter you just typed in the same tick),
+the quiet lesson, and a new line ends a thought. Reflexes it drops: the breath, the hush, the end-is-an-end
 rule, the bag reset (silence fades the bag instead).

@@ -95,14 +95,14 @@ class Diary(O.Organism):
         _lv = getattr(self.m, "_last_votes", None)
         own_ent = float(getattr(self.m, "_last_own_ent", 0.0) or 0.0)
         mem_max = float(_lv[0][0]) if _lv and _lv[0] else 0.0
+        if self.cortisol > 0:                      # speaking costs: stress favours silence
+            v[self.sil] = v[self.sil] + float(getattr(self.a, "cort_k", 0.5)) * self.cortisol
         if _lv and _lv[1] and mem_max >= float(getattr(self.a, "store_boost_min", 0.0) or 0.0):
             top = int(_lv[1][0])
             if own_ent > 0.9:
                 v[top] = v[top] + float(getattr(self.a, "sure_mem", 6.0))   # a sure memory speaks with one voice
-            # a memory is a reason to speak: a trunk that has learned silence does not silence recall
-            v[top] = torch.maximum(v[top], v[self.sil] + 2.0)
-        if self.cortisol > 0:                      # speaking costs: stress favours silence
-            v[self.sil] = v[self.sil] + float(getattr(self.a, "cort_k", 0.5)) * self.cortisol
+            # a memory is a reason to speak: neither learned silence nor stress silences recall
+            v[top] = torch.maximum(v[top], v[self.sil] + 4.0)
         p1 = torch.softmax(v, -1)
         ent = float(-(p1 * (p1 + 1e-9).log()).sum() / math.log(max(2, p1.numel())))
         pr = torch.softmax(v / max(0.02, float(self.a.temp)), -1).cpu()
