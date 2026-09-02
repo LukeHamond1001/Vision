@@ -547,8 +547,15 @@ REM steps at cosine 0.11, the page replay zero. The gauge: the trunk
 alone predicted 8.6% of the traces' symbols before the night and 20.6%
 after. The first time in this life that a night measurably moved the
 weights toward what the hippocampus holds; uptake on the night's own
-traces, not yet generalization, and the trunk-alone cue test on a scratch
-copy is the retention check that follows. Measured on a scratch copy of the
+traces, not yet generalization. The trunk-alone cue test on a scratch
+copy of the post-night body: the trunk alone writes a run of "o" to
+every cue (its own top symbol moved from the newline to "o" across the
+night, still a single letter at 0.15), while the store, read with the
+old raised voice for comparison, holds every frame including the day's
+"I had milk". The body's speech was, at that hour, o-runs of one to two
+hundred symbols ended by the caregiver's next symbols, stress pinned at
+the stamina ceiling, mood near -4: the regime with the mouth's top symbol
+taken deterministically, on the last hour before temperature went. Measured on a scratch copy of the
 day-13 body before the first served night (CPU): three known lines
 typed with smiles gave two seeds; their traces came back from the store
 alone, " will goong in then I gothen Igoin then Igo n" (48 symbols,
