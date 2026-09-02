@@ -66,7 +66,7 @@ def load_scan(ckpt_path, tok, dev="cpu"):
     sd = {k: v for k, v in state["model"].items()
           if not any(k.startswith(d) or k == d for d in dead)}
     missing, unexpected = m.load_state_dict(sd, strict=False)
-    grafts = [k for k in missing if k.startswith(("goal_", "affect_in", "face_head"))]
+    grafts = [k for k in missing if k.startswith(("goal_", "affect_in", "face_head", "pfc_pred"))]
     hard = [k for k in missing if k not in grafts]
     assert not hard, f"missing non-graft keys: {hard[:4]}"
     if grafts:

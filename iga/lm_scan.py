@@ -424,6 +424,14 @@ class ScanLM(nn.Module):
         # and over a finished sentence its conscience. Zero at birth.
         self.face_head = nn.Linear(d, 1)
         nn.init.zeros_(self.face_head.weight); nn.init.zeros_(self.face_head.bias)
+        # REM's organ (2026-09-02, the user's law): the neocortex always predicts the
+        # next state it will receive from the PFC — one linear forecast per council
+        # slot (the hippocampus read and every band), read from the cortex stream and
+        # scored against the bundle the council hands over at the next symbol
+        self.pfc_pred = nn.ModuleDict({str(i): nn.Linear(d, d)
+                                       for i in range(1 + len(self.ukeys))})
+        self._last_bundle = None
+        self._last_C_rem = None
         self._face = None
         self._face_feat = None
         self._face_loss = None
@@ -996,6 +1004,47 @@ class ScanLM(nn.Module):
         var_hinge = torch.relu(0.5 * wake_std - r_std)
         return loss / k + var_hinge
 
+    @staticmethod
+    def _sigreg(z, n_dirs=64, grid=17, span=5.0):
+        """SIGReg (LeJEPA, arXiv 2511.08544), sketched: random unit directions,
+        each 1-D projection tested against N(0, 1) by the Epps-Pulley statistic
+        on its empirical characteristic function. Pushes a batch of states toward
+        an isotropic Gaussian — the collapse guard for a latent prediction with no
+        tokens in it. z [N, d]."""
+        N, d = z.shape
+        if N < 4:
+            return z.new_zeros(())
+        g = torch.Generator(device="cpu").manual_seed(int(N) * 7919 + int(d))
+        P = nn.functional.normalize(torch.randn(d, n_dirs, generator=g), dim=0).to(z.device, z.dtype)
+        x = z @ P                                             # [N, n_dirs]
+        ts = torch.linspace(-span, span, grid, device=z.device, dtype=z.dtype)
+        tx = x.unsqueeze(-1) * ts                              # [N, n_dirs, grid]
+        re = torch.cos(tx).mean(0); im = torch.sin(tx).mean(0)  # empirical characteristic function
+        target = torch.exp(-0.5 * ts * ts)                     # that of N(0, 1)
+        w = target / math.sqrt(2.0 * math.pi)
+        stat = (((re - target) ** 2 + im ** 2) * w).sum(-1) * (2.0 * span / (grid - 1))
+        return float(N) * stat.mean()
+
+    def rem_pfc_loss(self, sigreg=0.0):
+        """REM (the user's law, 2026-09-02): from the last forward, the cortex
+        stream at t forecasts every slot of the PFC bundle handed over at t+1
+        (targets stop-grad: the future judges and is never pulled toward the
+        dream); cosine error averaged over slots and steps, plus SIGReg on the
+        normalized stream as the collapse guard. None when no bundle exists."""
+        Bd, C = self._last_bundle, self._last_C_rem
+        if Bd is None or C is None or C.shape[1] < 2:
+            return None, None
+        B, T, S, d = Bd.shape
+        terms, cos_all = [], []
+        for s in range(S):
+            pred = self.pfc_pred[str(s)](C[:, :-1])            # [B, T-1, d]
+            cos = nn.functional.cosine_similarity(pred, Bd[:, 1:, s].to(pred.dtype), dim=-1)
+            terms.append((1.0 - cos).mean()); cos_all.append(cos.detach().mean())
+        loss = torch.stack(terms).mean()
+        if sigreg > 0.0:
+            loss = loss + float(sigreg) * self._sigreg(self.lnf(C).reshape(B * T, d).float())
+        return loss, float(torch.stack(cos_all).mean())
+
     def pop_route_aux(self):
         """route mode with ponder_aux > 0: (deep logits [n, V], flat
         B*T indices) of the routed tokens from the last training
@@ -1225,11 +1274,13 @@ class ScanLM(nn.Module):
         S0 = torch.stack(s0s, dim=1)                       # [B, T, d] the PFC's conclusions
         if self.order == "cortex_first":
             C = torch.stack(cs, dim=1)                     # [B, T, d]
+            self._last_bundle, self._last_C_rem = None, C
         else:
             Bd = torch.stack(bundles, dim=1)               # [B, T, 1+K, d]
             C = self._trunk(S0.reshape(B * T, self.d),
                             Bd.reshape(B * T, Bd.shape[2], self.d), dev)
             C = C.reshape(B, T, self.d)
+            self._last_bundle, self._last_C_rem = Bd.detach(), C   # what the PFC handed over, and the stream that must learn to foresee it
         self._route_deep = None
         if self.ponder > 1 and self.ponder_mode == "route" and self.order != "cortex_first":
             # ROUTED CYCLES, batched after the loop (a cycle ticks nothing

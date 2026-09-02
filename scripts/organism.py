@@ -1951,8 +1951,9 @@ class Organism:
             tail_, tail_dropped = self._clean_tail(
                 self.day_buf[-(192 if excited else 128):])
             stream.extend(tail_)
-        elif self.session:
-            # nothing left to learn tonight: replay the lived day itself
+        elif self.session and not getattr(self, "night_no_page", False):
+            # nothing left to learn tonight: replay the lived day itself (the diary
+            # never does: its cortex learns only from hippocampal traces, 2026-09-02)
             stream, tail_dropped = self._clean_tail(self.day_buf[-1024:])
             if len(self.day_faces) == len(self.day_buf):
                 faces_n = self.day_faces[-1024:][:len(stream)]
@@ -2676,6 +2677,18 @@ def build_parser():
                     help="the diary: memory's starting voice over silence (logits); your face on its memory letters moves it, 0..8")
     ap.add_argument("--sil-decay", type=float, default=None,
                     help="the diary: the memory bag's fade per silent tick (how long a thought lasts)")
+    ap.add_argument("--night-rounds", type=int, default=2,
+                    help="the diary's night: passes over the hippocampal traces (NREM)")
+    ap.add_argument("--night-rem", type=int, default=8,
+                    help="the diary's night: traces on which the cortex forecasts the PFC bundle (REM)")
+    ap.add_argument("--night-sigreg", type=float, default=0.1,
+                    help="REM's collapse guard: SIGReg weight on the cortex stream")
+    ap.add_argument("--night-scale", type=float, default=1.0,
+                    help="the night's loss scale over the live rate")
+    ap.add_argument("--seed-cap", type=int, default=48,
+                    help="felt moments kept as dream seeds (the hippocampal index)")
+    ap.add_argument("--seed-nights", type=int, default=5,
+                    help="nights a seed is dreamt before it is let go")
     return ap
 
 

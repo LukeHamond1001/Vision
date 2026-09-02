@@ -48,7 +48,11 @@ and follows the child's attention rather than a schedule.
   word or expansion (day 12: five smiles set from a held 2 to 2 were
   never felt, and trust bled 7.9 to 7.2 until the face was relaxed). A
   correct completion after a cue earns the same smile, before and after
-  the night alike.
+  the night alike. Since day 14 a felt smile is also what the night
+  dreams from: it tags the line being written as a seed, and the night
+  replays that line from the hippocampus into the weights. A day with no
+  felt smile dreams nothing; a smile on a wrong line dreams the wrong
+  line.
 - **Stress is the budget.** Measured on day 11: a line costs about 0.18
   stress per character (it shadows under your hand and pays for every
   letter), forty seconds of quiet returns about 0.7, and whole-word

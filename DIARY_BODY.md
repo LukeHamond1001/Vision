@@ -490,6 +490,53 @@ replay teaching quiet. Gates: fifteen of forty-six ran out the two-minute
 cap in the first hour while the babble held the floor near 3.6; once the
 runs stopped the median gate fell to 55 seconds.
 
+## The night, remade (2026-09-02): the cortex learns only from hippocampal traces
+
+The user's law, in two sentences: the neocortex trains only on what the
+hippocampus hands it, and in REM the neocortex predicts the next state it
+will receive from the PFC. The night that replayed the day's page from a
+buffer is gone; a persisted transcript would be a diet with a bedtime
+story attached, and the old replay, fed the page's silences, taught the
+trunk quiet (day 13: its own top symbol went from "l" at 0.22 to silence
+at 0.82 across one such night).
+
+- **The hippocampal index.** A felt face tags the moment: the memory
+  bag's key at the start of the line being written (the bag after its
+  first three symbols), the felt level and the mood are kept as a dream
+  seed. A vector, not a word; at most 48; let go after five nights.
+- **The trace.** At night each seed's key is handed to the store and
+  memory's top vote is taken as the next symbol, the thought advances
+  with it, and the trace ends where memory has nothing or at a new line.
+  No trunk vote, no stamina, no writes: what the store holds, in its own
+  words, blends and slips included. What never entered the store cannot
+  be consolidated.
+- **NREM.** The trunk runs over the trace as heard, teacher-forced, with
+  memory set aside, and learns to produce it alone (cross-entropy on the
+  trace, the felt face riding along as affect and as the face lesson);
+  two passes over the seeds, the live rate, no scaling down.
+- **REM.** The trunk runs over the trace with memory on, and the cortex
+  stream at each symbol forecasts every slot of the bundle the council
+  hands over at the next symbol (the hippocampus read and each band),
+  one linear forecast per slot, cosine error, targets stop-grad; SIGReg
+  on the normalized stream is the collapse guard. The PFC drives the
+  rollout; the cortex learns to foresee it.
+- **The gauge.** Before and after the night, the trunk alone (memory
+  set aside, teacher-forced) predicts each trace: the fraction it gets
+  right on this day's seeds is uptake, on older seeds retention. The
+  sleep result reports both, with the traces dreamt and the REM cosine.
+
+Flags: `--night-rounds 2 --night-rem 8 --night-sigreg 0.1 --night-scale
+1.0 --seed-cap 48 --seed-nights 5`; the REM organ is `pfc_pred`, grafted
+at default init onto the living body. Measured on a scratch copy of the
+day-13 body before the first served night (CPU): three known lines
+typed with smiles gave two seeds; their traces came back from the store
+alone, " will goong in then I gothen Igoin then Igo n" (48 symbols,
+votes 1.8 to 3.2) and " dog up? because bigdoggr p"; four NREM steps and
+two REM steps ran, the page replay ran zero; the gauge read 0.217 before
+and after (four steps at the live rate move nothing measurable, which
+is the slow bleed: the gauge is there to show it across nights); the
+REM cosine started at 0.0, the forecast organ being newborn.
+
 ## Status
 
 - model: speaker channel, ear-writes by speaker, running bag with
