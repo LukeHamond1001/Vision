@@ -73,9 +73,13 @@ and follows the child's attention rather than a schedule.
   twice). A long chain from memory can spend the whole budget in one
   reply (64 symbols to stress 8 on day 12): that is the stamina law
   working, not a run.
-- **Ask and answer on one line.** A new line ends a thought, so a question
-  on one line cannot chain to its answer on the next: write "where ball?
-  ball on" as one utterance (day 8).
+- **Ask and answer in one utterance.** Write "where ball? ball on" as one
+  utterance (day 8). Since the evening of day 14 no newline symbol is
+  typed at all: utterances are separated by your silence (six seconds or
+  more after the last symbol on the page), as in life. The newline was a
+  page artifact, and with nothing else to hold it back the body made it
+  its own most frequent symbol, writing it on most ticks and paying
+  stress for each.
 - **Tests are clean, and now safer.** A cue is a new line plus a fragment,
   then nothing; never two tests back to back. Since day 9 a cue no longer
   stores quiet under the fragment while the mouth is answering, so up to
