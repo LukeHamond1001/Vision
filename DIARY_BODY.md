@@ -620,7 +620,12 @@ four traces, mean length 5.6 now that the replay tires: "li go upd?",
 Sixty-eight NREM steps, eight REM at cosine 0.26 (rising each night),
 one value step. The rich gauge, every trace rich this time: 0.200 before
 and 0.256 after. It woke with stress 2.1, its own top symbol "i" at
-0.69, and the lived count at zero, a new day of its own making.
+0.69, and the lived count at zero, a new day of its own making. The
+trunk-alone cue test on a copy of that body: a run of "u" to every cue,
+memory on or off; the greedy favourite has been the newline, "o", the
+space, "i" and "u" on successive nights, one letter at a time, while
+the teacher-forced gauge climbs. The free-running trunk still has no
+word in it; the traces are entering as letter statistics first.
 
 The trunk-alone cue test on a scratch
 copy of the post-night body: the trunk alone writes a run of "o" to
