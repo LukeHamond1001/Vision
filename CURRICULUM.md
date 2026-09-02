@@ -18,9 +18,13 @@ and follows the child's attention rather than a schedule.
 - **Recombine.** At least seven of every ten caregiver lines reuse known
   words in a new combination.
 - **Serve and return.** After every line, wait four seconds. Imitate
-  word-like output (never single-letter runs or junk); expand what it
-  wrote by one step ("dog" -> "big dog"); ignore junk; frown briefly only
-  at perseveration.
+  word-like output; expand what it wrote by one step ("dog" -> "big
+  dog"); ignore junk. A run of a LETTER is babble, not junk: answer it
+  once by expanding it into a known word that starts with that letter
+  ("mmmm" -> "mama"), then withhold; never frown at it. (Day 4: the
+  trunk's first own letter came out as a wall of "m", and one frown sent
+  its own voice back to silence.) Frown briefly, at most once a minute,
+  only at runs of non-letters.
 - **Faces are prosody.** Warm while naming, still while waiting, smiles
   for echoes, expansions and quiet; never a smile for noise or for the
   shadow of your own typing.
