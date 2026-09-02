@@ -285,6 +285,20 @@ beating faded memory votes mid-sentence ("loudly." for "loudly at
 midnight."). Hence, while the trunk is unsure, a sure memory speaks with
 one voice: its top word gains a flat bonus (6 logits), disclosed below.
 
+Day 6 (the same life, third night carried): all nine earlier beginnings
+completed in full this morning, across two nights of fade, so nothing was
+re-taught; four new sentences went twelve for twelve (first cue, second
+cue, after sleep); no babble, no empty reply to a taught beginning, no
+stress, no stutter in 38 turns; the right word was the memory's top vote
+in all 31 cue replies while the vote amplitudes were the lowest recorded,
+so rank now predicts completion and amplitude no longer does. The night
+faded nothing and reported an installment earned; after it, twelve of
+thirteen were whole (one lost its last word: "loudly at."). Its face
+carried the lesson smile into the next cues (1.22 peaking 1.41, four turns
+to discharge) and sat within +-0.11 on still-faced rounds. Seams left:
+the oldest traces sometimes double their stop; the grace can let a stop
+out a word early; the night's rehearsal skipped the middle of the list.
+
 Honest limits: echo is not understanding; the value heads, conscience
 and face organs start meaningless and become meaningful only as days
 accumulate; whether a trunk can learn grammar from a caretaker's
