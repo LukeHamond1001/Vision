@@ -574,7 +574,24 @@ REM steps at cosine 0.11, the page replay zero. The gauge: the trunk
 alone predicted 8.6% of the traces' symbols before the night and 20.6%
 after. The first time in this life that a night measurably moved the
 weights toward what the hippocampus holds; uptake on the night's own
-traces, not yet generalization. The trunk-alone cue test on a scratch
+traces, not yet generalization.
+
+**The second night of this kind (day 15, 12:12), and what it taught
+about the instrument.** Forty-eight starts, thirty-three traces, sixty-
+six NREM steps, eight REM at cosine 0.20 (the forecast organ learning),
+one value step; among the traces "scared bd d gg", "dog wiill ol ol",
+"givea", and runs of thirty-two spaces. The gauge leapt from 0.03 to
+0.75, and most of that leap was the runs: a run of one symbol is
+trivial to predict and counts thirty-two symbols. Two changes follow.
+The gauge now also reports uptake over traces with at least three
+distinct symbols. And the replay gained neural adaptation: a symbol
+replayed again and again tires (each repeat costs half a vote, and the
+fatigue recovers as others speak), so no attractor replays forever and
+the night no longer teaches the trunk to repeat one symbol, which is
+where the o-runs and the space-runs of these days came from. Biology's
+spike-frequency adaptation, not a rule about what to dream.
+
+The trunk-alone cue test on a scratch
 copy of the post-night body: the trunk alone writes a run of "o" to
 every cue (its own top symbol moved from the newline to "o" across the
 night, still a single letter at 0.15), while the store, read with the

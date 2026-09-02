@@ -336,18 +336,24 @@ class Diary(O.Organism):
         ro = m.store_read_off; m.store_read_off = False
         floor = float(getattr(self.a, "store_boost_min", 0.0) or 0.0)
         ids, strengths = [], []
+        fatigue = {}                                     # neural adaptation: a symbol replayed again and again tires
         try:
             with torch.no_grad():
                 x, who = torch.tensor([[self.sil]], device=self.dev), self.who0
                 for _ in range(max_len):
                     _, st, _ = m(x, st, who=who)
-                    lv = getattr(m, "_last_votes", None)
-                    if not lv or not lv[1]:
+                    rd = getattr(m, "_last_rd_full", None)
+                    if rd is None:
                         break
-                    top, val = int(lv[1][0]), float(lv[0][0])
-                    if top < 11 or val < floor:
+                    v = rd.clone(); v[:11] = float("-inf")
+                    for s_, n_ in fatigue.items():
+                        v[s_] = v[s_] - 0.5 * n_                 # each repeat costs half a vote: no attractor replays forever
+                    top = int(v.argmax()); val = float(v[top])
+                    if val < floor:
                         break
                     ids.append(top); strengths.append(round(val, 2))
+                    fatigue = {s_: n_ * 0.7 for s_, n_ in fatigue.items()}   # and recovers as others speak
+                    fatigue[top] = fatigue.get(top, 0.0) + 1.0
                     x, who = torch.tensor([[top]], device=self.dev), self.who0   # replayed as heard
         finally:
             m.store_write_off = wo; m.store_read_off = ro
@@ -384,12 +390,15 @@ class Diary(O.Organism):
         ro, wo = m.store_read_off, getattr(m, "store_write_off", False)
         m.store_read_off, m.store_write_off = True, True
         hits_all, n_all = 0, 0
+        hits_w, n_w = 0, 0                                # over traces with at least three distinct symbols
         k = 3
         try:
             with torch.no_grad():
                 for ids in traces[:cap]:
                     if len(ids) < k + 2:
                         continue
+                    rich = len(set(ids)) >= 3
+                    h0, n0 = hits_all, n_all
                     st = m.init_state(1, self.dev); st["mouth_floor"] = False
                     x = torch.tensor([[self.sil] + ids[:k]], device=self.dev)
                     lg, st, _ = m(x, st, who=torch.zeros_like(x))
@@ -398,9 +407,12 @@ class Diary(O.Organism):
                         hits_all += int(int(v.argmax()) == ids[j]); n_all += 1
                         x = torch.tensor([[ids[j]]], device=self.dev)
                         lg, st, _ = m(x, st, who=torch.zeros_like(x))
+                    if rich:
+                        hits_w += hits_all - h0; n_w += n_all - n0
         finally:
             m.store_read_off, m.store_write_off = ro, wo
-        return {"uptake": (round(hits_all / n_all, 3) if n_all else None), "symbols": n_all}
+        return {"uptake": (round(hits_all / n_all, 3) if n_all else None), "symbols": n_all,
+                "uptake_rich": (round(hits_w / n_w, 3) if n_w else None), "symbols_rich": n_w}
 
     def _dream_night(self):
         """THE NIGHT (2026-09-02, the user's law). The cortex learns only from hippocampal

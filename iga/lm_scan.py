@@ -1483,6 +1483,7 @@ class ScanLM(nn.Module):
             with torch.no_grad():
                 _tv = rd_full[:, -1].float().topk(3, dim=-1)
                 self._last_votes = (_tv.values[0].tolist(), _tv.indices[0].tolist())
+                self._last_rd_full = rd_full[0, -1].float().detach()      # memory's whole vote at the last position (the night's replay reads it)
             # A READ THAT CAN STEER: when the trunk is unsure of the next
             # word (high entropy), the hippocampus speaks louder —
             # read_beta = 0 is exactly the trained body (the store's
