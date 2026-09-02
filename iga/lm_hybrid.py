@@ -182,19 +182,20 @@ class LogitStore(nn.Module):
             torch.cos(nn.functional.linear(x, self.proj)
                       + self.phase), dim=-1)
 
-    def write(self, M, K, V, s, stale_ok=False):
+    def write(self, M, K, V, s, stale_ok=False, decay=None):
         """M [B, d, D], K [B, T, D] unit lifted keys, V [B, T, d]
         unit identity values (detached), s [B, T] write strength.
         Convex strength-normalized delta rule (A52 NaN law); recon
         weights detached (A52b anti-gaming law)."""
         beta = self.beta.clone() if stale_ok else self.beta
+        dec = self.decay if decay is None else decay      # per call: the fade this chunk earns (content written)
         if self.exact:
-            return self.write_exact(M, K, V, s, beta)
+            return self.write_exact(M, K, V, s, beta, decay=dec)
         pred = torch.einsum("bij,btj->bti", M, K)
         upd = torch.einsum("bti,btj->bij",
                            s.unsqueeze(-1) * (V - pred), K)
         denom = s.sum(dim=1).clamp(min=1e-3)
-        M = (1 - self.decay) * M + torch.sigmoid(beta) * \
+        M = (1 - dec) * M + torch.sigmoid(beta) * \
             upd / denom.unsqueeze(-1).unsqueeze(-1)
         back = torch.einsum("bij,btj->bti", M, K)
         sa = s.abs()                                             # un-writes (s < 0, v13) weigh by magnitude
@@ -204,7 +205,7 @@ class LogitStore(nn.Module):
                  * w).sum(dim=1).mean()
         return M, recon
 
-    def write_exact(self, M, K, V, s, beta):
+    def write_exact(self, M, K, V, s, beta, decay=None):
         """The sequential delta rule M_t = M_{t-1} + b_t (v_t - M_{t-1} k_t)
         k_t^T for t = 1..T, b_t = sigmoid(beta) s_t, computed exactly for
         the whole chunk: with u_t the rank-1 increment at t,
@@ -215,7 +216,8 @@ class LogitStore(nn.Module):
         exactly — no overshoot, no averaging."""
         B, T, _ = K.shape
         b = torch.sigmoid(beta) * s                              # [B, T]
-        M0 = (1 - self.decay) * M
+        dec = self.decay if decay is None else decay
+        M0 = (1 - dec) * M
         pred = torch.einsum("bij,btj->bti", M0, K)               # M0 k_t
         R = b.unsqueeze(-1) * (V - pred)                         # [B, T, d]
         G = torch.einsum("bti,bsi->bts", K, K)                   # k_t . k_s

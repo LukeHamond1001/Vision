@@ -25,8 +25,8 @@ face on its noise and on its quiet is how it learns when to be still.
   advances the echo; a letter it writes from noise (speaker 1) is in the
   stream but not in the bag.
 - **Memory over letters:** the same content-keyed store with a running
-  bag (decay 0.92 per symbol) that fades in silence (x0.6 per silent
-  tick), so a pause separates one thought from the next without a mark;
+  bag (decay 0.92 per symbol) that fades in silence (x0.95 per silent
+  position, two positions to an idle tick) and is cleared by a new line;
   kernel sharpness 4.5. Measured on a random 2-layer body, letter by
   letter through the two-hand stream: "The s" -> "un is hot and bright.",
   "Cold w" -> "ater freezes into hard ice.", repeated cues intact, its own
@@ -42,12 +42,12 @@ face on its noise and on its quiet is how it learns when to be still.
 
 `data/organism_diary_0p5b.pt`: conceived from nothing, d 1024 x 29
 layers, untied head, content keys 40/0.92, kernel 4.5, three hands
-(speakers 3), silence decay 0.6:
+(speakers 3), silence decay 0.95:
 
 ```bash
 python3 scripts/conceive.py data/organism_diary_0p5b.pt data/tok_char.json \
     --d 1024 --n-layers 29 --content-keys --kc-w 40 --kc-decay 0.92 --kernel 4.5 \
-    --speakers 3 --sil-decay 0.6
+    --speakers 3 --sil-decay 0.95
 ```
 
 ## What to expect
@@ -100,8 +100,11 @@ uncertainty fell to 0.0: it had learned silence completely. It overshot:
 certain silence also silenced recall (a cue that had just echoed "Rain
 falls" came back empty). Hence one more disclosed rule, a memory is a
 reason to speak: when the memory has a vote above its floor, its top
-symbol's logit is raised to at least the silence logit plus 2, so a trunk
-that has learned quiet does not silence what it remembers. The day-1 body is kept as
+symbol's logit is raised to at least the silence logit plus memory's
+TRUST, a scalar your face moves (start 4, bounded 0..8: praise on a
+memory-backed letter raises it by 0.1, a frown lowers it by 0.2), so a
+trunk that has learned quiet does not silence what it remembers, and a
+trunk that learns to speak well can have memory's voice shrink. The day-1 body is kept as
 `organism_diary_0p5b_day1.pt`; day 2 starts from a fresh conception.
 
 ## The thought, measured (2026-09-02, CPU harness with the mouth writing)
@@ -132,15 +135,51 @@ sentences written twice: "My do" -> "g sleeps under a wooden table.",
 "Green" -> " leaves move when wind blows hard.", "Rain " -> "falls on the
 cold grey", and an untaught cue babbles until your face teaches quiet.
 
+## The review (2026-09-02, independent, read-only, with CPU measurements)
+
+Verdict: the mechanism is what it claims. Query/key alignment exact to the
+bit; the empty-key guard fires; the speaker channel keeps the mouth out of
+the thought; the kernel at 4.5 separates a true continuation from its
+one-behind alias about 5:1; a blank body recalls six distinct sentences
+letter-perfect from a five-letter cue; the dose's credit-to-position
+mapping is exact. One architectural flaw and several bugs, all fixed:
+
+- **The store faded per forward pass, not per symbol written.** The
+  ladder was tuned for 64-token training chunks; a diary tick is two
+  one-symbol forwards, so the slowest band forgot in about 128 seconds
+  whether or not anyone wrote, and the day-1 recall tests failed on
+  time, not capacity. Now a chunk fades each band by the share of
+  symbols it actually wrote: half-life = the band's clock in written
+  symbols (8, 64, 512, 4096, 32768 for bands 4-8; band 3 holds the last
+  write). Measured after the fix: a sentence recalled letter-perfect
+  after 1,240 idle ticks and fourteen further sentences. This also
+  explains part of the word body's multi-day fade: its serve fed one
+  token per forward too.
+- **A noise newline wiped the thought.** The mouth's noise never ends a
+  thought now.
+- **The face event fired on the level, not the change.** Easing off a
+  frown counted as a frown, easing off a smile as a smile. Now, as in the
+  word body, only a face that grows or flips sign is an event.
+- **The night trained a speaker-blind trunk from the wrong end of the
+  day.** The two hands now ride the replay, and the most recent chunks
+  are rehearsed first.
+- Operational: a dose window of the last eight ticks (a long dose froze
+  the clock), a bounded page and typing queue, a reset that clears the
+  thought, memory's amplification never lifting a banned mark.
+
 ## Status
 
 - model: speaker channel, ear-writes by speaker, running bag with
   silence decay — built and measured on CPU (2026-09-02).
 - serve: `scripts/diary.py` — the tick loop (two forwards per tick: your
   symbol as the ear, its symbol as the mouth), the page (your letters
-  black, its letters brown; arrow keys move your face; Enter is a new
-  line), rolling doses by the word body's thresholds, the same nights,
-  save and reset. Smoked on a tiny CPU body (2026-09-02): ticks, both
+  black, its memory letters brown, its noise pale; arrow keys move your
+  face; Enter is a new line), doses on its actual choices by the word
+  body's thresholds over the last eight ticks, the same nights, save and
+  reset. Numbers: stress +0.03 per symbol written (half-life 120 s), mood
+  -0.002 x stress per symbol and +0.5 x a felt face; a face registers on
+  whole-unit crossings (int); characters outside the alphabet are dropped;
+  the typing queue holds 600 symbols. Smoked on a tiny CPU body (2026-09-02): ticks, both
   hands on the page, faces felt, a night, a morning.
 - first serve: the word body is parked after seven days; the diary body
   runs on port 8018:

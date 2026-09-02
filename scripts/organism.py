@@ -1961,13 +1961,22 @@ class Organism:
         stream += [self.sil] * ((64 - len(stream) % 64) % 64)
         self.m.train()
         st_s = self.m.init_state(1, self.dev)
-        for i in range(0, len(stream), 64):
+        # the most recent chunks first: what happened last is rehearsed first
+        starts = list(range(0, len(stream), 64))
+        if who_n is not None:
+            starts = starts[::-1]
+        for i in starts:
             if nrem >= nrem_cap:
                 break
             x = torch.tensor([stream[i:i + 64]], device=self.dev)
             af_ = torch.tensor([faces_n[i:i + 64]], device=self.dev, dtype=torch.float32) \
                 if faces_n is not None and len(faces_n) >= i + x.shape[1] else None
-            lg, st_s, _ = self.m(x, st_s, affect=af_, face_target=af_)
+            who_x = None
+            if who_n is not None and getattr(self.m, "speakers", 0) > 0:
+                # the two hands stay distinct in the night: the ear 0, the mouth 1 (praised 2 -> 2)
+                wn = [min(int(w_), 2) for w_ in who_n[i:i + 64]] + [0] * max(0, x.shape[1] - len(who_n[i:i + 64]))
+                who_x = torch.tensor([wn[:x.shape[1]]], device=self.dev)
+            lg, st_s, _ = self.m(x, st_s, affect=af_, face_target=af_, who=who_x)
             y = torch.tensor(stream[i + 1:i + 65] + [self.sil],
                              device=self.dev)[:64]
             self.opt.zero_grad(set_to_none=True)
@@ -2655,6 +2664,8 @@ def build_parser():
                     help="seconds alone before it may speak first")
     ap.add_argument("--diary-period", type=float, default=0.5,
                     help="the diary's tick, seconds (scripts/diary.py)")
+    ap.add_argument("--mem-trust", type=float, default=4.0,
+                    help="the diary: memory's starting voice over silence (logits); your face on its memory letters moves it, 0..8")
     ap.add_argument("--sil-decay", type=float, default=None,
                     help="the diary: the memory bag's fade per silent tick (how long a thought lasts)")
     return ap

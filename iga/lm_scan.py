@@ -790,6 +790,7 @@ class ScanLM(nn.Module):
                 brk = torch.zeros_like(is_sym)
                 for b_ in getattr(self, "kc_break_ids", ()):
                     brk = brk | (tk == int(b_))
+                brk = brk & ~noise                       # the mouth's noise never ends a thought
                 is_sym = is_sym & ~brk
                 is_sym = is_sym.to(E.dtype).unsqueeze(-1)
                 noise = noise.to(E.dtype).unsqueeze(-1)
@@ -1612,12 +1613,17 @@ class ScanLM(nn.Module):
             for k in self.bands:
                 stn = self.stores[str(k)]
                 M_in = st["M"][k].detach()
+                # the fade this chunk earns: half-life = the band's clock in symbols
+                # actually WRITTEN (silence, noise and the mouth fade nothing; a
+                # 64-token training chunk fades exactly as before)
+                n_wr = (sv > 0).float().sum(dim=1).mean()
+                dec_k = 1.0 - 0.5 ** (n_wr / float(self.clocks[k]))
                 if not pass2:
-                    _, rc = stn.write(M_in, stn.lift(k_d), V_id, sv)
+                    _, rc = stn.write(M_in, stn.lift(k_d), V_id, sv, decay=dec_k)
                     recon.append(rc)
                 else:
                     st["M"][k], _ = stn.write(M_in, stn.lift(k_d), V_id, sv,
-                                              stale_ok=True)
+                                              stale_ok=True, decay=dec_k)
         self._recon = torch.stack(recon).mean()
         st["M_fresh"] = True
         if self.press_unwrite:

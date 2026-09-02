@@ -372,3 +372,9 @@ Everything the running body uses that is not a learned weight:
   teaching a fact absorbs up to 12 steps until its loss is under 0.55.
 - Instruments shown, never acting: per-token uncertainty at temperature
   1, per-token memory votes (the top three raw votes), stress, mood.
+- The store's fade (2026-09-02, after the diary's review): each band
+  fades per chunk by the share of symbols actually written, half-life =
+  the band's clock in written tokens (8, 64, 512, 4096, 32768). Before,
+  it faded per forward pass, so a serve feeding one token per forward
+  forgot in hundreds of tokens regardless of content; the word body's
+  overnight losses were partly this.

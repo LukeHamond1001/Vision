@@ -36,7 +36,6 @@ class Diary(O.Organism):
         self.page = []                            # every shown symbol: (text, who, your face, its face)
         self.level = 0                            # the face level felt now
         self.credit = collections.deque(maxlen=64)  # the mouth's recent symbols: [id, credit]
-        self.recent_user = collections.deque(maxlen=240)
         self.last = {}
         self.ticks = 0
         self.awake_ticks = True
@@ -51,8 +50,9 @@ class Diary(O.Organism):
         nl = self.tok.token_to_id("\n")
         if nl is not None:
             self.m.kc_break_ids = {int(nl)}               # a new line ends a thought
-        self.mouth_ticks = collections.deque(maxlen=12)   # the mouth's last ticks: symbol id or sil
         self.stream = collections.deque(maxlen=96)        # (id, who) of what was written, both hands
+        self.page_base = 0                                # items dropped from the front of the page
+        self.trust = float(getattr(a, "mem_trust", 4.0))  # memory's voice is EARNED: your face on its memory letters moves it
         self.m.reset_bag(self.st) if hasattr(self.m, "reset_bag") else None
         threading.Thread(target=self._loop, daemon=True).start()
 
@@ -76,8 +76,12 @@ class Diary(O.Organism):
         face = float(self.face_now)
         lvl = max(-6, min(6, int(face)))
         felt = 0
-        if lvl != self.level:                      # only a change of face is felt
-            felt, self.level = lvl, lvl
+        if lvl != self.level:
+            # only a change of face is felt, and relaxing toward neutral is not an
+            # event: a face that grows or flips sign speaks, one that eases off is silent
+            if abs(lvl) > abs(self.level) or (lvl * self.level < 0):
+                felt = lvl
+            self.level = lvl
         pl = None
         if felt:
             pl = torch.zeros(1, 1, dtype=torch.long, device=self.dev)
@@ -95,12 +99,14 @@ class Diary(O.Organism):
         mem_max = float(_lv[0][0]) if _lv and _lv[0] else 0.0
         if self.cortisol > 0:                      # speaking costs: stress favours silence
             v[self.sil] = v[self.sil] + float(getattr(self.a, "cort_k", 0.5)) * self.cortisol
-        if _lv and _lv[1] and mem_max >= float(getattr(self.a, "store_boost_min", 0.0) or 0.0):
+        if _lv and _lv[1] and int(_lv[1][0]) >= 11 and mem_max >= float(getattr(self.a, "store_boost_min", 0.0) or 0.0):
             top = int(_lv[1][0])
             if own_ent > 0.9:
                 v[top] = v[top] + float(getattr(self.a, "sure_mem", 6.0))   # a sure memory speaks with one voice
-            # a memory is a reason to speak: neither learned silence nor stress silences recall
-            v[top] = torch.maximum(v[top], v[self.sil] + 4.0)
+            # a memory is a reason to speak, as far as you have trusted it: memory's top symbol is
+            # raised to the silence logit plus the trust your face has built (bounded 0..8)
+            if self.trust > 0.0:
+                v[top] = torch.maximum(v[top], v[self.sil] + float(self.trust))
         p1 = torch.softmax(v, -1)
         ent = float(-(p1 * (p1 + 1e-9).log()).sum() / math.log(max(2, p1.numel())))
         pr = torch.softmax(v / max(0.02, float(self.a.temp)), -1).cpu()
@@ -117,24 +123,23 @@ class Diary(O.Organism):
             # favours silence (a physiological brake) and weighs a little on mood
             self.cortisol += float(getattr(self.a, "cort_rate", 0.15)) * 0.2
             self.mood = max(-6.0, min(6.0, self.mood - 0.002 * self.cortisol))
-        self.mouth_ticks.append(nxt)
         self.stream.append((u, 0))
         self.stream.append((nxt, 2 if (backed and u == self.sil) else 1))
         # the day's record, as lived: both hands, silence included (a run of silence is kept
         # to one tick so the night sees pacing without drowning in it)
         if u != self.sil or not self.day_buf or self.day_buf[-1] != self.sil:
             self._who_now = 0; self.day_buf.append(u); self._rec_face(1)
-        if u != self.sil:
-            self.recent_user.append(u)
         if nxt != self.sil or self.day_buf[-1] != self.sil:
             self._who_now = 1; self.day_buf.append(nxt); self._rec_face(1); self._who_now = 0
-        self.credit.append([nxt, 0.0])                # every tick is a choice, silence included
+        self.credit.append([nxt, 0.0, bool(backed and u == self.sil)])   # every tick is a choice, silence included; memory-backed noted
         if felt:
             for k_, item in enumerate(reversed(list(self.credit)[-6:])):
                 item[1] += felt * (0.7 ** k_)
             self.mood = max(-6.0, min(6.0, self.mood + 0.5 * felt))
             self._dose_choices()
         self.ticks += 1
+        if len(self.page) > 40000:                 # a bounded page: the front falls away, indices stay absolute
+            drop = 20000; del self.page[:drop]; self.page_base += drop
         self.page.append(((self.tok.decode([u]) if u != self.sil else ""), 0, round(face, 2),
                           None if its_face is None else round(its_face, 2)))
         self.page.append(((self.tok.decode([nxt]) if nxt != self.sil else ""), 1, round(face, 2),
@@ -146,7 +151,8 @@ class Diary(O.Organism):
                      "felt": felt, "said": self.tok.decode([nxt]) if nxt != self.sil else "", "backed": backed,
                      "own": ([self.tok.decode([self.m._last_own_top[0]]) if self.m._last_own_top[0] >= 11 else "<sil>",
                               round(self.m._last_own_top[1], 3)] if getattr(self.m, "_last_own_top", None) else None),
-                     "dose": getattr(self, "_last_dose", None), "doses": getattr(self, "n_doses", 0)}
+                     "dose": getattr(self, "_last_dose", None), "doses": getattr(self, "n_doses", 0),
+                     "trust": round(self.trust, 2)}
 
     def _dose_choices(self):
         """the only teacher is your face on what it actually did: choices
@@ -159,7 +165,14 @@ class Diary(O.Organism):
         neg = [i for i, it in enumerate(items) if it[1] <= -1.5]
         if not pos and not neg:
             return
-        seq = list(self.stream)[-64:]                # (id, who) as lived, silences included
+        # memory's voice is earned: praise on a memory-backed letter raises trust, a frown lowers it
+        for i in pos:
+            if len(items[i]) > 2 and items[i][2]:
+                self.trust = min(8.0, self.trust + 0.1)
+        for i in neg:
+            if len(items[i]) > 2 and items[i][2]:
+                self.trust = max(0.0, self.trust - 0.2)
+        seq = list(self.stream)[-16:]                # the last eight ticks as lived, silences included (a short dose keeps the clock)
         if len(seq) < 4:
             for it in items: it[1] = 0.0
             return
@@ -203,7 +216,7 @@ class Diary(O.Organism):
         n = 0
         for ch in s:
             i = self.tok.token_to_id(ch)
-            if i is not None and i >= 11:
+            if i is not None and i >= 11 and len(self.queue) < 600:   # a bounded queue: five minutes of typing
                 self.queue.append(i); n += 1
         return {"queued": len(self.queue), "took": n}
 
@@ -216,7 +229,8 @@ class Diary(O.Organism):
 
     def state(self, since=0):
         with self.lock:
-            return {"page": self.page[since:], "n": len(self.page), "last": self.last,
+            k = max(0, int(since) - self.page_base)
+            return {"page": self.page[k:], "n": self.page_base + len(self.page), "last": self.last,
                     "queued": len(self.queue), "awake": self.awake_ticks, "period": self.period,
                     "lived": len(self.day_buf)}
 
@@ -343,7 +357,10 @@ class DH(BaseHTTPRequestHandler):
                     self._json(ORG.save())
             elif self.path == "/reset":
                 with ORG.lock:
-                    ORG.reset(); ORG.page = []; ORG.queue.clear(); ORG.credit.clear(); ORG.level = 0
+                    ORG.reset(); ORG.page = []; ORG.page_base = 0; ORG.queue.clear(); ORG.credit.clear(); ORG.level = 0
+                    ORG.stream.clear()
+                    if hasattr(ORG.m, "reset_bag"):
+                        ORG.m.reset_bag(ORG.st)
                     self._json({"reset": True})
             else:
                 self._json({"error": "unknown path"}, 404)
