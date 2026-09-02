@@ -582,6 +582,29 @@ Mood ran down to -4.6 while lines came close together and back to about
 -1.5 once the rests stretched to two minutes; stress fell from 8.7 to
 5.3 with it. Saved with 87 live steps.
 
+## Day 18 (Opus, consolidation, the day the serve was starved)
+
+Forty-four lines and sixteen valid cues, the caregiver watching every
+symbol, the pace stretched to two minutes between events after the
+first quarter hour (its stress fell from 6.8 to about 4 with the change,
+and its mood reached +0.23 at 16:35, the first positive mood of its
+life). Two multi-letter known words written awake, "my" and "hi", both
+in rests and both smiled at within two seconds; fourteen bare "I"s,
+three smiled at before the caregiver rightly stopped counting a lone
+letter. No cue completed before or after the night, but after it the
+replies to cues lengthened ("kimi", "utpri", "pre" against one or two
+letters before) and its own top symbol became a letter at high
+confidence for the first time ("y" at 0.60), against silence or "?" at
+0.1 to 0.2 before. The night (recorded above) chained "what? scared ball
+ball under" whole and moved the gauge down for the first time, which the
+restored body's extra night on the same store did not repeat. The
+serve's tick loop froze twice while a measurement ran on a second copy
+of the body, the body file was damaged when the frozen process was
+stopped mid-save, and the life was restored from the 17:38 autosave,
+losing the two later smiles; the caregiver marked the frozen windows
+void and rebuilt its smile log from the console. Saved with 79 live
+steps.
+
 ## The night, remade (2026-09-02): the cortex learns only from hippocampal traces
 
 The user's law, in two sentences: the neocortex trains only on what the
