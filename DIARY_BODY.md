@@ -99,6 +99,33 @@ symbol's logit is raised to at least the silence logit plus 2, so a trunk
 that has learned quiet does not silence what it remembers. The day-1 body is kept as
 `organism_diary_0p5b_day1.pt`; day 2 starts from a fresh conception.
 
+## The thought, measured (2026-09-02, CPU harness with the mouth writing)
+
+Recall failed whenever the mouth wrote during the lessons, and the
+memory-vote instrument found three reasons, each now a rule:
+
+- **Noise must leave the thought untouched.** A noise letter was fading
+  the running bag like a silent tick, so keys were written into a decayed
+  context and cues never matched them. Now a noise letter neither adds to
+  nor fades the thought; only silence fades it.
+- **A memory letter joins the thought only when your hand is still.**
+  While you write, its shadowing letters interleaved with yours inside
+  the bag and corrupted the keys; now they stay out, and only a completion
+  written while you are silent advances the thought.
+- **A new line ends a thought.** With a slow fade (5% per silent tick) the
+  previous sentence's residue outweighed a five-letter cue; with a fast
+  fade a two-second typing pause erased the sentence. The symbol you
+  already use to separate thoughts resolves it: a new line clears the bag.
+  Start every sentence and every cue on a new line.
+- **No parroting.** The one-letter-behind echo is a memory alias (the
+  key of the letter just written is almost the current bag), so the mouth
+  may not repeat, in the same tick, the letter you just typed.
+
+With all four, on a random body with the mouth babbling through three
+sentences written twice: "My do" -> "g sleeps under a wooden table.",
+"Green" -> " leaves move when wind blows hard.", "Rain " -> "falls on the
+cold grey", and an untaught cue babbles until your face teaches quiet.
+
 ## Status
 
 - model: speaker channel, ear-writes by speaker, running bag with

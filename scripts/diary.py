@@ -48,6 +48,9 @@ class Diary(O.Organism):
         self._bans = [i for i in range(11) if i != self.sil]   # it may choose silence, never a mark
         if getattr(a, "sil_decay", None):
             self.m.kc_sil_decay = float(a.sil_decay)      # how long a thought lasts in silence
+        nl = self.tok.token_to_id("\n")
+        if nl is not None:
+            self.m.kc_break_ids = {int(nl)}               # a new line ends a thought
         self.mouth_ticks = collections.deque(maxlen=12)   # the mouth's last ticks: symbol id or sil
         self.stream = collections.deque(maxlen=96)        # (id, who) of what was written, both hands
         self.m.reset_bag(self.st) if hasattr(self.m, "reset_bag") else None
@@ -87,6 +90,8 @@ class Diary(O.Organism):
         # the mouth chooses: its own logits, memory's vote inside them
         v = lg[0, -1].float().clone()
         v[self._bans] = float("-inf")
+        if u != self.sil:
+            v[u] = float("-inf")                   # no parroting: it does not repeat the letter you just typed
         _lv = getattr(self.m, "_last_votes", None)
         own_ent = float(getattr(self.m, "_last_own_ent", 0.0) or 0.0)
         mem_max = float(_lv[0][0]) if _lv and _lv[0] else 0.0
@@ -105,8 +110,10 @@ class Diary(O.Organism):
         backed = bool(_lv and _lv[1] and int(_lv[1][0]) == nxt and nxt != self.sil
                       and mem_max >= float(getattr(self.a, "store_boost_min", 0.0) or 0.0))
         with torch.no_grad():
+            # a memory letter continues the thought only when your hand is still;
+            # while you write, its letters (shadow or noise) stay out of the thought
             _, self.st, _ = self.m(torch.tensor([[nxt]], device=self.dev), self.st, affect=aff,
-                                    who=(self.who2 if backed else self.who1))
+                                    who=(self.who2 if (backed and u == self.sil) else self.who1))
         if nxt != self.sil:
             # speaking costs: each symbol adds stress (half-life 120 s); stress
             # favours silence (a physiological brake) and weighs a little on mood

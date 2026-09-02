@@ -545,6 +545,7 @@ class ScanLM(nn.Module):
         # (each silent tick multiplies it by kc_sil_decay), so a pause
         # separates one thought from the next without any turn mark
         self.kc_sil_decay = float(kc_sil_decay)
+        self.kc_break_ids = set()          # symbols that end a thought outright (the diary: a new line)
         if self.speakers > 0:
             self.who_in = nn.Embedding(self.speakers, d)
             with torch.no_grad():
@@ -779,13 +780,22 @@ class ScanLM(nn.Module):
                 excl_l.append(nn.functional.normalize(bag, dim=-1))
                 tk = tokens[:, t_]
                 is_sym = (tk >= skip)
+                noise = torch.zeros_like(is_sym)
                 if who is not None:
                     # the diary's three hands: the ear (0) and the mouth-from-memory (2)
-                    # carry the thought; the mouth's noise (1) is not part of it
-                    is_sym = is_sym & (who[:, t_].to(tk.device) != 1)
+                    # carry the thought; the mouth's noise (1) is not part of it and
+                    # does not fade it either — only silence fades a thought
+                    noise = (who[:, t_].to(tk.device) == 1) & is_sym
+                    is_sym = is_sym & ~noise
+                brk = torch.zeros_like(is_sym)
+                for b_ in getattr(self, "kc_break_ids", ()):
+                    brk = brk | (tk == int(b_))
+                is_sym = is_sym & ~brk
                 is_sym = is_sym.to(E.dtype).unsqueeze(-1)
-                bag = bag * (self.kc_decay * is_sym + self.kc_sil_decay * (1.0 - is_sym)) \
-                    + E[tk.clamp(min=0)] * is_sym
+                noise = noise.to(E.dtype).unsqueeze(-1)
+                keep = self.kc_decay * is_sym + self.kc_sil_decay * (1.0 - is_sym - noise) + noise
+                keep = keep * (1.0 - brk.to(E.dtype).unsqueeze(-1))       # a new line ends the thought
+                bag = bag * keep + E[tk.clamp(min=0)] * is_sym
                 incl_l.append(nn.functional.normalize(bag, dim=-1))
             st["bag_state"] = bag.detach()
             incl = torch.stack(incl_l, dim=1)
