@@ -1366,6 +1366,8 @@ class ScanLM(nn.Module):
             # an instrument: how uniform the trunk's OWN belief is at the last position
             _po = torch.softmax(logits_own[:, -1].float(), dim=-1)
             self._last_own_ent = float(-(_po[0] * (_po[0] + 1e-9).log()).sum() / math.log(max(2, _po.shape[-1])))
+            _ot = _po[0].topk(1)
+            self._last_own_top = (int(_ot.indices[0]), float(_ot.values[0]))   # the trunk's own choice, memory aside
         if hasattr(self, "face_head"):
             feat_f = self.lnf(C)
             face = self.face_head(feat_f).squeeze(-1) * 6.0            # [B, T], face units

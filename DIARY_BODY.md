@@ -75,10 +75,15 @@ Four causes, four fixes:
 - **A thought faded too fast.** The bag lost 40% per silent tick, so a
   four-second pause erased the cue before the mouth could use it. Now 5%
   per silent tick: a thought lasts about half a minute of silence.
-- **A frown lowered letters but never raised silence.** THE QUIET LESSON:
-  a frown on babble, and a smile on quiet, both set the target at the
-  mouth's recent positions to silence, one gradient step at the diary's
-  live rate. The trunk's cheapest attractor becomes the right one.
+- **A frown lowered letters but never raised silence.** First answer: a
+  QUIET LESSON that wrote silence as the target wherever it babbled. It
+  worked (babble 1.0 to 0.0 in eight lessons) and was withdrawn the same
+  day on the user's principle: silence is not something we teach. Now the
+  only teacher is your face on what it actually did. Every tick is a
+  choice, silence included; a choice whose credit rises above 0.5 is
+  absorbed, a choice at or below -1.5 is unlearned (its probability pushed
+  down to a floor of 3 nats, never replaced by a hand-written target). It
+  finds quiet only where quiet paid, and where speaking cost it.
 - **Stress and mood were miscalibrated.** Each symbol now adds twice the
   stress (a physiological brake toward silence under nonstop babble) and
   a fifth of the mood cost.
@@ -117,9 +122,10 @@ memory-vote instrument found three reasons, each now a rule:
   fade a two-second typing pause erased the sentence. The symbol you
   already use to separate thoughts resolves it: a new line clears the bag.
   Start every sentence and every cue on a new line.
-- **No parroting.** The one-letter-behind echo is a memory alias (the
-  key of the letter just written is almost the current bag), so the mouth
-  may not repeat, in the same tick, the letter you just typed.
+- **No parroting** was tried and withdrawn: banning the letter you just
+  typed hid a memory alias but restricted what it may say. The only
+  restriction on the mouth is stamina; the alias echo is now simply
+  visible, and your face decides what becomes of it.
 
 With all four, on a random body with the mouth babbling through three
 sentences written twice: "My do" -> "g sleeps under a wooden table.",
@@ -150,13 +156,18 @@ frowns must teach a newborn mouth is silence, which is the cheapest
 attractor a trunk can fall into, so here the collapse the word body had
 to avoid is the lesson.
 
-Reflexes it keeps from the word body: press marks banned (silence is
-allowed), a sure memory speaks with one voice while the trunk is unsure
-(6 logits), stress favours silence (0.5 logits per unit, applied before
-the memory rule), the face lesson every tick. Its own: a memory is a
-reason to speak (memory's top symbol is raised to at least the silence
-logit plus 4, so neither learned quiet nor stress cuts a recall short;
-without this ordering a recall broke off after six to ten letters), no
-parroting (it may not repeat the letter you just typed in the same tick),
-the quiet lesson, and a new line ends a thought. Reflexes it drops: the breath, the hush, the end-is-an-end
+The principle (the user's, 2026-09-02): the only restriction on the mouth
+is stamina. What remains: the bookkeeping marks it cannot emit (plumbing,
+not language); stress leaning it toward silence (0.5 logits per unit,
+applied before the memory rule) and weighing on mood; the face lesson
+every tick; a new line ends a thought. Not restrictions but memory's
+voice, disclosed: a sure memory speaks with one voice while the trunk is
+unsure (6 logits), and a memory is a reason to speak (memory's top symbol
+raised to at least the silence logit plus 4, so neither learned quiet nor
+stress cuts a recall short). The night replays the day as lived, silences
+included (runs kept to one tick), so a quiet tick can be learned as
+thinking time. Instruments per tick: its face, mood, stress, uncertainty,
+memory's votes, and the trunk's own top symbol with memory set aside (the
+measurement that will show the day the trunk itself begins to propose
+letters). Reflexes it drops: the breath, the hush, the end-is-an-end
 rule, the bag reset (silence fades the bag instead).

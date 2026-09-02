@@ -90,8 +90,6 @@ class Diary(O.Organism):
         # the mouth chooses: its own logits, memory's vote inside them
         v = lg[0, -1].float().clone()
         v[self._bans] = float("-inf")
-        if u != self.sil:
-            v[u] = float("-inf")                   # no parroting: it does not repeat the letter you just typed
         _lv = getattr(self.m, "_last_votes", None)
         own_ent = float(getattr(self.m, "_last_own_ent", 0.0) or 0.0)
         mem_max = float(_lv[0][0]) if _lv and _lv[0] else 0.0
@@ -120,28 +118,22 @@ class Diary(O.Organism):
             self.cortisol += float(getattr(self.a, "cort_rate", 0.15)) * 0.2
             self.mood = max(-6.0, min(6.0, self.mood - 0.002 * self.cortisol))
         self.mouth_ticks.append(nxt)
+        self.stream.append((u, 0))
+        self.stream.append((nxt, 2 if (backed and u == self.sil) else 1))
+        # the day's record, as lived: both hands, silence included (a run of silence is kept
+        # to one tick so the night sees pacing without drowning in it)
+        if u != self.sil or not self.day_buf or self.day_buf[-1] != self.sil:
+            self._who_now = 0; self.day_buf.append(u); self._rec_face(1)
         if u != self.sil:
-            self.stream.append((u, 0))
-        if nxt != self.sil:
-            self.stream.append((nxt, 2 if backed else 1))
-        # the day's record (what was written, both hands; silences are not rehearsed)
-        if u != self.sil:
-            self._who_now = 0; self.day_buf.append(u); self._rec_face(1); self.recent_user.append(u)
-        if nxt != self.sil:
+            self.recent_user.append(u)
+        if nxt != self.sil or self.day_buf[-1] != self.sil:
             self._who_now = 1; self.day_buf.append(nxt); self._rec_face(1); self._who_now = 0
-            self.credit.append([nxt, 0.0])
+        self.credit.append([nxt, 0.0])                # every tick is a choice, silence included
         if felt:
             for k_, item in enumerate(reversed(list(self.credit)[-6:])):
                 item[1] += felt * (0.7 ** k_)
             self.mood = max(-6.0, min(6.0, self.mood + 0.5 * felt))
-            recent = list(self.mouth_ticks)[-6:]
-            noisy = sum(1 for x in recent if x != self.sil)
-            if felt <= -1 and noisy >= 2:
-                self._teach_quiet(min(2, -felt))        # a frown on babble: silence here
-            elif felt >= 1 and noisy == 0:
-                self._teach_quiet(1)                    # a smile on quiet: yes, this
-            else:
-                self._dose_if_due()
+            self._dose_choices()
         self.ticks += 1
         self.page.append(((self.tok.decode([u]) if u != self.sil else ""), 0, round(face, 2),
                           None if its_face is None else round(its_face, 2)))
@@ -151,59 +143,60 @@ class Diary(O.Organism):
                      "face": None if its_face is None else round(its_face, 2),
                      "mood": round(self.mood, 2), "cort": round(self.cortisol, 2), "ent": round(ent, 2),
                      "mem": [[self.tok.decode([int(i_)]), round(float(v_), 2)] for v_, i_ in zip(*_lv)] if _lv else None,
-                     "felt": felt, "said": self.tok.decode([nxt]) if nxt != self.sil else "", "backed": backed}
+                     "felt": felt, "said": self.tok.decode([nxt]) if nxt != self.sil else "", "backed": backed,
+                     "own": ([self.tok.decode([self.m._last_own_top[0]]) if self.m._last_own_top[0] >= 11 else "<sil>",
+                              round(self.m._last_own_top[1], 3)] if getattr(self.m, "_last_own_top", None) else None),
+                     "dose": getattr(self, "_last_dose", None), "doses": getattr(self, "n_doses", 0)}
 
-    def _teach_quiet(self, k=1):
-        """THE QUIET LESSON: at the mouth's recent positions the target is
-        silence. A frown on babble and a smile on quiet teach the same
-        thing; the trunk's cheapest attractor becomes the right one."""
-        seq = list(self.stream)[-64:]
-        if len(seq) < 4:
-            return
-        ids = [i for i, _ in seq]; who = [w for _, w in seq]
-        x = torch.tensor([ids[:-1]], device=self.dev)
-        wx = torch.tensor([who[:-1]], device=self.dev)
-        y = torch.tensor([[self.sil if who[j + 1] != 0 else ids[j + 1] for j in range(len(ids) - 1)]], device=self.dev)
-        wgt = torch.tensor([[1.0 if who[j + 1] != 0 else 0.0 for j in range(len(ids) - 1)]], device=self.dev)
-        if float(wgt.sum()) == 0.0:
-            return
-        self.m.train()
-        try:
-            for _ in range(k):
-                self.opt.zero_grad(set_to_none=True)
-                st_d = self.m.init_state(1, self.dev)
-                lg, st_d, _ = self.m(x, st_d, None, who=wx)
-                ce = torch.nn.functional.cross_entropy(lg[0].float(), y[0], reduction="none")
-                loss = (ce * wgt[0]).sum() / wgt.sum()
-                loss.backward()
-                self.opt.step()
-        finally:
-            self.m.eval()
-        self.last["quiet_lesson"] = k
-
-    def _dose_if_due(self):
-        """rolling doses: the mouth's recent symbols carrying credit above 0.5
-        are absorbed as its answer to your recent text; at or below -1.5,
-        unlearned. The same thresholds as the word body (LIVE_BODY §10)."""
+    def _dose_choices(self):
+        """the only teacher is your face on what it actually did: choices
+        (letters or silences) whose credit rose above 0.5 are absorbed,
+        choices at or below -1.5 are unlearned (their probability pushed
+        down to a floor, never a hand-written replacement). Silence is
+        never the target unless it chose silence and you warmed to it."""
         items = list(self.credit)
-        pos = [it for it in items if it[1] > 0.5]
-        neg = [it for it in items if it[1] <= -1.5]
+        pos = [i for i, it in enumerate(items) if it[1] > 0.5]
+        neg = [i for i, it in enumerate(items) if it[1] <= -1.5]
         if not pos and not neg:
             return
-        q = self.tok.decode(list(self.recent_user)[-80:])
-        ans = self.tok.decode([it[0] for it in items[-16:]])
-        if pos and ans.strip():
-            try:
-                self.absorb(q, ans, 1)
-            except Exception as e:
-                self.last["dose_error"] = str(e)[:120]
-        if neg and ans.strip():
-            try:
-                self._unlearn_reply(ans, 1)
-            except Exception as e:
-                self.last["dose_error"] = str(e)[:120]
-        for it in items:
-            it[1] = 0.0
+        seq = list(self.stream)[-64:]                # (id, who) as lived, silences included
+        if len(seq) < 4:
+            for it in items: it[1] = 0.0
+            return
+        ids = [i for i, _ in seq]; who = [w for _, w in seq]
+        n_m = len(items)
+        # the mouth's recent choices sit at the end of the stream in order; map credit to them
+        mouth_pos = [j for j in range(1, len(ids)) if who[j] != 0][-n_m:]
+        sign = {}
+        for k_, j in enumerate(mouth_pos):
+            idx = n_m - len(mouth_pos) + k_
+            if idx in pos: sign[j] = 1.0
+            elif idx in neg: sign[j] = -1.0
+        if not sign:
+            for it in items: it[1] = 0.0
+            return
+        x = torch.tensor([ids[:-1]], device=self.dev); wx = torch.tensor([who[:-1]], device=self.dev)
+        y = torch.tensor([ids[1:]], device=self.dev)
+        sg = torch.zeros(1, len(ids) - 1, device=self.dev)
+        for j, sgn in sign.items():
+            sg[0, j - 1] = sgn
+        self.m.train()
+        try:
+            self.opt.zero_grad(set_to_none=True)
+            st_d = self.m.init_state(1, self.dev)
+            lg, st_d, _ = self.m(x, st_d, None, who=wx)
+            ce = torch.nn.functional.cross_entropy(lg[0].float(), y[0], reduction="none")
+            absorb = (ce * (sg[0] > 0).float()).sum()
+            # unlearn: push the chosen symbol's log-probability down until its loss is at least 3 nats
+            unlearn = (torch.relu(3.0 - ce) * (sg[0] < 0).float()).sum()
+            loss = (absorb + unlearn) / sg.abs().sum().clamp(min=1.0)
+            loss.backward()
+            self.opt.step()
+        finally:
+            self.m.eval()
+        self._last_dose = {"absorbed": int((sg > 0).sum()), "unlearned": int((sg < 0).sum()), "tick": self.ticks}
+        self.n_doses = getattr(self, "n_doses", 0) + 1
+        for it in items: it[1] = 0.0
 
     # ---- your hand ----
     def type_text(self, s):
@@ -226,6 +219,10 @@ class Diary(O.Organism):
             return {"page": self.page[since:], "n": len(self.page), "last": self.last,
                     "queued": len(self.queue), "awake": self.awake_ticks, "period": self.period,
                     "lived": len(self.day_buf)}
+
+    def _clean_tail(self, seq):
+        """a diary has no turns to clean: the night replays the day as lived"""
+        return list(seq), 0
 
     def night(self):
         self.awake_ticks = False
