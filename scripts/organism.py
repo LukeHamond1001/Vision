@@ -14,6 +14,8 @@ Run: python3 scripts/organism.py data/organism_life.pt \
          data/ship_tok.json --dev mps --save data/organism_life.pt
 """
 import argparse
+import os as _os
+import shutil as _shutil
 import json
 import math
 import sys
@@ -2233,7 +2235,9 @@ class Organism:
                                  "extra": self._life_extra(),
                                  "n_human_presses":
                                      self.n_human_presses}},
-                       self.a.save)
+                       self.a.save + ".tmp")
+            _os.replace(self.a.save + ".tmp", self.a.save)      # atomic: a stopped save never damages the body on disk
+            self._night_backup()
             saved = self.a.save
         card_post = self.report_card()
         return {"nrem": nrem, "rem": remc, "lived_tokens": lived,
@@ -2307,6 +2311,25 @@ class Organism:
         """what a subclass keeps beside the life (the diary: memory's trust)"""
         return {}
 
+    def _night_backup(self, keep=3):
+        """the body as it was at each night, the last few kept beside the life (2026-09-02:
+        a save stopped mid-write damaged the only copy; the night's copy restored it)"""
+        try:
+            src = self.a.save
+            if not src or not _os.path.exists(src):
+                return
+            d = _os.path.join(_os.path.dirname(src) or ".", "backups")
+            _os.makedirs(d, exist_ok=True)
+            base = _os.path.basename(src)
+            dst = _os.path.join(d, f"{base}.night{int(self.day_n)}.pt")
+            _shutil.copyfile(src, dst)
+            olds = sorted([f for f in _os.listdir(d) if f.startswith(base + ".night")],
+                          key=lambda f: _os.path.getmtime(_os.path.join(d, f)))
+            for f in olds[:-keep]:
+                _os.remove(_os.path.join(d, f))
+        except Exception:
+            pass
+
     def save(self):
         torch.save({"model": self.m.state_dict(),
                     "step": self.state_meta.get("step"),
@@ -2326,7 +2349,8 @@ class Organism:
                              "saliences": self.saliences,
                              "n_human_presses": self.n_human_presses,
                              "extra": self._life_extra()}},
-                   self.a.save)
+                   self.a.save + ".tmp")
+        _os.replace(self.a.save + ".tmp", self.a.save)          # atomic: a stopped save never damages the body on disk
         return {"saved": self.a.save, "live_steps": self.n_steps}
 
 

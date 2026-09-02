@@ -510,14 +510,17 @@ class Diary(O.Organism):
                 if not self.session:
                     self.session = [{"diary": True}]     # the night's bookkeeping wants a day
                 dream = self._dream_night() if len(self.day_buf) >= 65 else None
+                _p0 = self.sleep_pressure
+                self.sleep_pressure = 0                  # before the night's autosave: a restored body wakes rested
                 res = self.sleep()
+                if not (isinstance(res, dict) and not res.get("error")):
+                    self.sleep_pressure = _p0
                 if isinstance(res, dict) and dream is not None:
                     res["dream"] = dream
                     # the top-level counters name the night that actually happened
                     res["nrem"] = int(dream.get("nrem_steps", 0) or 0)
                     res["rem"] = int(dream.get("rem_steps", 0) or 0)
                 if isinstance(res, dict) and not res.get("error"):
-                    self.sleep_pressure = 0
                     self.nights += 1
                     self.last_night = {"tick": self.ticks, "night": self.nights,
                                        "dream": res.get("dream"), "lived_tokens": res.get("lived_tokens"),
