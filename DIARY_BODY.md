@@ -330,6 +330,29 @@ are never used as spacers; and the night reported "starving" at 1,239
 lived tokens, so a day needs about thirty lines at the wide spacing, not
 fewer.
 
+## Day 8 (Opus, stage 3: where, not, give)
+
+Thirty-two lines at nine- to thirty-second returns with fourteen minutes of
+rests; 326 of 326 symbols after the first line from memory. Five of five
+recalls identical across the night; all three new elements took on the
+day given, each choosing the most recent partner ("where " -> "book",
+"give " -> "book", "not " -> "up"). "dog going " -> "in" from a cue ending
+in going settles that it is memory, not alias. New elements became
+writable within the session (the shadow of "where" went from
+unrenderable to "here" by its second use). The shadow now anticipates:
+four times it began the answer before the cue was finished. "where" never
+drew the place frame written on the next line, because a new line ends a
+thought, so a question cannot chain to an answer on the following line:
+from day 9 the caregiver asks and answers on one line with a question
+mark ("where ball? ball on"). "going" was never written, only shadowed;
+the plural still does not generalize; its own letter weakened as doses
+were absorbed and silence outranked it after the night. Trust unmoved at
+its cap of 8 for a third day. The budget is stress: each line costs about
+0.4, forty seconds of quiet returns about 0.9, and every whole-word
+completion came below 3; twenty-second returns were as productive as nine.
+The night did not report starving on 875 lived tokens, so hunger is not a
+token count.
+
 ## Status
 
 - model: speaker channel, ear-writes by speaker, running bag with

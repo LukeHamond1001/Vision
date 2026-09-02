@@ -39,6 +39,12 @@ and follows the child's attention rather than a schedule.
   its post-line letters appear (credit reaches back six seconds, no more);
   smiles for echoes, expansions and quiet; never a smile for noise or for
   the shadow of your own typing.
+- **Stress is the budget.** A line costs about 0.4 stress, forty seconds
+  of quiet returns about 0.9, and whole-word completions come only below
+  about 3: keep returns near twenty seconds and watch the stress reading.
+- **Ask and answer on one line.** A new line ends a thought, so a question
+  on one line cannot chain to its answer on the next: write "where ball?
+  ball on" as one utterance (day 8).
 - **Tests are rare and clean.** At most five recall tests before a night
   and the same five after; a cue is a new line plus a fragment, then
   nothing; never two tests back to back.
