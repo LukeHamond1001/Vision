@@ -102,6 +102,37 @@ def press_levels_from_events(events, B, T, device=None):
     return lev
 
 
+def affect_from_events(events, x, hold, eot_ids=None, device=None):
+    """[B, T] float: the caretaker's face as a continuous sense — each
+    button event's level held until the next event or a turn end (an
+    eot token relaxes it to 0), carried across chunks by `hold` (a
+    per-lane list this call updates). None when every lane is still,
+    so a faceless chunk reads bit-identically to the plain path."""
+    B, T = x.shape
+    af = torch.zeros(B, T, dtype=torch.float32)
+    xs = x.tolist() if eot_ids else None
+    eots = set(int(e) for e in (eot_ids or ()))
+    any_ = False
+    for lane in range(B):
+        lv = float(hold[lane]) if lane < len(hold) else 0.0
+        evs = {}
+        for p, kind, d in (events[lane] if events and lane < len(events) else ()):
+            if kind == "button" and 0 <= p < T:
+                evs[int(p)] = float(d.get("v", 0))
+        row = af[lane]
+        for t_ in range(T):
+            if t_ in evs:
+                lv = evs[t_]
+            if xs is not None and xs[lane][t_] in eots:
+                lv = 0.0
+            row[t_] = lv
+        if lv != 0.0 or bool(row.any()):
+            any_ = True
+        if lane < len(hold):
+            hold[lane] = lv
+    return af.to(device) if any_ else None
+
+
 def _lift_read(M, q, proj, phase, alpha):
     """one band's hippocampus read: alpha * M . lift(q); M [B, d, D],
     q [B, T, d] unit queries, proj [D, d], phase [D] -> [B, T, d].

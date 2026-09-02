@@ -158,16 +158,24 @@ def process_chunk(model, drive, conveyor, T, device, opt=None,
         if hasattr(model, "reward_lut"):
             # the grade as a sense: press levels from the chunk's button
             # events (None when the chunk holds none -> the LUT path)
-            from .lm_scan import press_levels_from_events
+            from .lm_scan import press_levels_from_events, affect_from_events
             _pl = press_levels_from_events(events, x.shape[0], T, device)
+            _af = None
+            if hasattr(model, "affect_in"):
+                if not hasattr(model, "_affect_hold") or len(model._affect_hold) != x.shape[0]:
+                    model._affect_hold = [0.0] * x.shape[0]
+                _af = affect_from_events(events, x, model._affect_hold,
+                                         getattr(model, "eot_ids", None), device)
             _dl = None
             if getattr(model, "store_wipe", None):
                 # v13: the lanes whose day closed in this chunk — their
                 # stores are wiped after the chunk's write (training only)
                 _dl = [lane for lane, evs in enumerate(events)
                        for (_p, _k, _d) in evs if _k == "day"]
-            logits, model._st, ticks = model(x, model._st, None, press_levels=_pl, day_lanes=_dl)
+            logits, model._st, ticks = model(x, model._st, None, press_levels=_pl, day_lanes=_dl,
+                                             affect=_af, face_target=_af)
         else:
+            _af = None
             logits, model._st, ticks = model(x, model._st, None)
     _t = _tmark("fwd", _t, device)
     if getattr(model, "gate_mode", "") == "entropy":
@@ -195,6 +203,9 @@ def process_chunk(model, drive, conveyor, T, device, opt=None,
             reduction="none").reshape(y.shape)
         ce = (_ce_t * _cw.to(_ce_t.dtype)).mean()
     losses = [ce]
+    if _af is not None and hasattr(model, "pop_face_loss"):
+        # its face learns to forecast the caretaker's (LIVE_BODY.md §1)
+        losses.append(0.5 * model.pop_face_loss())
     _zw = float(getattr(model, "z_w", 0.0) or 0.0)
     if _zw > 0:
         # z-loss (PaLM/Gemma): pins logsumexp near 0 so the head's
