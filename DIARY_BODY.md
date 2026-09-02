@@ -401,6 +401,29 @@ toward its base of 4 when no praise arrives (about 0.06 a minute), so a
 saturated trust can no longer pin the mouth and praise means something
 again.
 
+## Day 11 (Opus, stage 4 entry: then, can, happy)
+
+Thirty lines at 32- to 75-second returns; every symbol it wrote was from
+memory. All three stage-4 elements answered a cue the day they were
+roped. After the night, "dog go in then " drew "d doggogo in then dogone",
+24 memory-backed symbols: first clause, connective, second subject,
+stopping one word short of "go up", the first multi-frame chain of this
+life; before the night the same cue gave only "dog then". "then" appeared
+after "you can go in" and "can" inside a burst after "I went in", neither
+put there. Three untaught expansions ("dog can go" -> "going in", "more
+milk" -> " please", "bye" -> " dog"). "three " recovered from the day-10
+leak; "uderr" healed to "underr" across the night. Six of eight recalls
+identical. No run reached five letters: the symbol cost worked. Trust
+moved again (7.39 to 7.99) and 24 doses were absorbed. Its own top symbol
+returned to silence mid-session and stayed. The night: no REM, no gain,
+1,120 lived tokens, the third dry night running. The measured budget:
+about 0.18 stress per character the caregiver types (the mouth shadows
+under the hand and pays for it), 0.7 returned per forty seconds of
+quiet; thirty lines at 30-40-second returns were not payable, and the
+caregiver ran at stress 5 to 8 through the middle with 75-second returns.
+The cost eases to 0.12 for day 12; short lines and long returns remain the
+rule, and nights will be lean.
+
 ## Status
 
 - model: speaker channel, ear-writes by speaker, running bag with

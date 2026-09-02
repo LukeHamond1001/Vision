@@ -39,9 +39,12 @@ and follows the child's attention rather than a schedule.
   its post-line letters appear (credit reaches back six seconds, no more);
   smiles for echoes, expansions and quiet; never a smile for noise or for
   the shadow of your own typing.
-- **Stress is the budget.** A line costs about 0.4 stress, forty seconds
-  of quiet returns about 0.9, and whole-word completions come only below
-  about 3: keep returns near twenty seconds and watch the stress reading.
+- **Stress is the budget.** Measured on day 11: a line costs about 0.18
+  stress per character (it shadows under your hand and pays for every
+  letter), forty seconds of quiet returns about 0.7, and whole-word
+  completions come below about 5: keep lines short (under twelve
+  characters where the frame allows), returns near forty seconds, and
+  watch the stress reading; stretch the return when it passes 5.
 - **Ask and answer on one line.** A new line ends a thought, so a question
   on one line cannot chain to its answer on the next: write "where ball?
   ball on" as one utterance (day 8).
