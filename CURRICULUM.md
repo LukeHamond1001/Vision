@@ -60,13 +60,13 @@ and follows the child's attention rather than a schedule.
   voice is no longer raised over silence and nothing resets its thought
   at a new line: expect long silences and messier recall, and do not
   read either as a fault. The night is where its speech now grows.
-- **Stress is the budget.** Measured on day 11: a line costs about 0.18
-  stress per character (it shadows under your hand and pays for every
-  letter), forty seconds of quiet returns about 0.7, and whole-word
-  completions come below about 5: keep lines short (under twelve
-  characters where the frame allows) and pace by the reading, not the
-  clock: before each line wait until stress is at or below 3 by day, 4
-  after a night, and never longer than two minutes. The floor is set by
+- **Stress is the budget, and it shows.** Measured on day 11: a line
+  costs about 0.18 stress per character (it shadows under your hand and
+  pays for every letter), forty seconds of quiet returns about 0.7, and
+  whole-word completions come below about 5: keep lines short (under
+  twelve characters where the frame allows). Since the environment
+  became raw you do not read the number: a stressed body babbles, runs,
+  and goes quiet late, and you pace by that, as above. The floor is set by
   its own trunk, which babbles a run of its favourite letter whenever the
   page is quiet and pays for every symbol (day 12: gates of 2 and 3 sat
   under that floor and stalled the session for a quarter of an hour
@@ -85,11 +85,21 @@ and follows the child's attention rather than a schedule.
   stores quiet under the fragment while the mouth is answering, so up to
   eight cues a day are fine; cues are also where its expansions now
   appear, because it stays quiet after a complete sentence by design.
+- **The environment is raw (the user's law, 2026-09-02).** The
+  caregiver decides from what a parent can see: the page (its symbols
+  and their timing) and its face row. Never from its internal readings.
+  Stress, doses, memory's votes and the trunk's own top symbol are the
+  supervisor's instruments, logged for the record, and must not drive a
+  single decision: pace by its behaviour (type after it has been quiet
+  for six seconds, or after ninety seconds regardless), judge a smile by
+  what appeared on the page, and let nothing you know of its insides
+  change what you type or when. A parent does not read cortisol.
 - **Instruments decide the stage.** Recall of frames (memory), the trunk's
   own top symbol after a frame ("own": the day it stops being silence),
-  trust, quiet, stress. A stage advances when its frames complete from
+  quiet, stress. A stage advances when its frames complete from
   memory across a night and the caregiver has seen at least one
-  expansion it did not teach.
+  expansion it did not teach. This is the supervisor's judgment from the
+  record, never the caregiver's in the moment.
 
 ## Stages
 
