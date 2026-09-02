@@ -612,6 +612,16 @@ the night no longer teaches the trunk to repeat one symbol, which is
 where the o-runs and the space-runs of these days came from. Biology's
 spike-frequency adaptation, not a rule about what to dream.
 
+**The first night it took by itself (day 16, 14:00, tick 12,000).** The
+switch flipped on its own a hundred minutes after waking, the queue was
+emptied, and it slept about three minutes. Forty-eight starts, thirty-
+four traces, mean length 5.6 now that the replay tires: "li go upd?",
+" ball undero", "scared blu", "hio", all the caregiver's frames, no runs.
+Sixty-eight NREM steps, eight REM at cosine 0.26 (rising each night),
+one value step. The rich gauge, every trace rich this time: 0.200 before
+and 0.256 after. It woke with stress 2.1, its own top symbol "i" at
+0.69, and the lived count at zero, a new day of its own making.
+
 The trunk-alone cue test on a scratch
 copy of the post-night body: the trunk alone writes a run of "o" to
 every cue (its own top symbol moved from the newline to "o" across the
