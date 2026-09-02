@@ -546,6 +546,7 @@ class ScanLM(nn.Module):
         # separates one thought from the next without any turn mark
         self.kc_sil_decay = float(kc_sil_decay)
         self.kc_break_ids = set()          # symbols that end a thought outright (the diary: a new line)
+        self.sil_id = None                 # the silence symbol (the diary sets it): the ear's quiet is a memory value
         if self.speakers > 0:
             self.who_in = nn.Embedding(self.speakers, d)
             with torch.no_grad():
@@ -776,10 +777,21 @@ class ScanLM(nn.Module):
                 prev = torch.zeros(B, self.d, device=tokens.device, dtype=E.dtype)
             excl_l, incl_l = [], []
             bag = prev
+            sil_id = getattr(self, "sil_id", None)
+            was_word = st.get("ear_was_word")
+            if was_word is None or was_word.shape[0] != B:
+                was_word = torch.zeros(B, dtype=torch.bool, device=tokens.device)
+            quiet_l = []
             for t_ in range(T):
                 excl_l.append(nn.functional.normalize(bag, dim=-1))
                 tk = tokens[:, t_]
                 is_sym = (tk >= skip)
+                if who is not None and sil_id is not None:
+                    ear = (who[:, t_].to(tk.device) == 0)
+                    quiet_l.append(ear & (tk == int(sil_id)) & was_word)   # the first quiet after the ear's word
+                    was_word = torch.where(ear, is_sym, was_word)
+                else:
+                    quiet_l.append(torch.zeros_like(is_sym))
                 noise = torch.zeros_like(is_sym)
                 if who is not None:
                     # the diary's three hands: the ear (0) and the mouth-from-memory (2)
@@ -799,6 +811,8 @@ class ScanLM(nn.Module):
                 bag = bag * keep + E[tk.clamp(min=0)] * is_sym
                 incl_l.append(nn.functional.normalize(bag, dim=-1))
             st["bag_state"] = bag.detach()
+            st["ear_was_word"] = was_word
+            st["_quiet_mask"] = torch.stack(quiet_l, dim=1)      # [B, T]: the quiet that ended a thought
             incl = torch.stack(incl_l, dim=1)
             excl = torch.stack(excl_l, dim=1)
             st["bag_prev"] = incl[:, -1].detach()
@@ -1471,7 +1485,14 @@ class ScanLM(nn.Module):
         if self.keyed_content:
             # turn marks and press marks are not words on the value side either:
             # a cue followed by the turn-end must not teach "this beginning ends here"
-            smask = smask * (tokens >= int(getattr(self, "kc_skip", 0))).to(smask.dtype)
+            is_word = (tokens >= int(getattr(self, "kc_skip", 0)))
+            qm = st.get("_quiet_mask")
+            if qm is not None and qm.shape == tokens.shape:
+                # THE EAR'S QUIET IS A MEMORY, once: the first silent tick after your word is
+                # what followed it, and recalling it is how the mouth learns to stop from
+                # memory instead of running on its own alias ("goneeeee")
+                is_word = is_word | qm.to(tokens.device)
+            smask = smask * is_word.to(smask.dtype)
         if who is not None and getattr(self, "speakers", 0) > 0:
             smask = smask * (who.to(smask.device) == 0).to(smask.dtype)   # only the ear's symbols become memories
         if kc:

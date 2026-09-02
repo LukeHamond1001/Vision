@@ -50,6 +50,7 @@ class Diary(O.Organism):
         nl = self.tok.token_to_id("\n")
         if nl is not None:
             self.m.kc_break_ids = {int(nl)}               # a new line ends a thought
+        self.m.sil_id = int(self.sil)                     # your quiet after a thought is remembered
         self.stream = collections.deque(maxlen=96)        # (id, who) of what was written, both hands
         self.page_base = 0                                # items dropped from the front of the page
         self.trust = float(getattr(a, "mem_trust", 4.0))  # memory's voice is EARNED: your face on its memory letters moves it

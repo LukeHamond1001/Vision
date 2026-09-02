@@ -196,6 +196,24 @@ mapping is exact. One architectural flaw and several bugs, all fixed:
   the clock), a bounded page and typing queue, a reset that clears the
   thought, memory's amplification never lifting a banned mark.
 
+## Day 3, watched live: the run, and remembered quiet
+
+Supervising Opus's third session (the child curriculum) showed the one
+pathology the alias leaves: after "all gone" the mouth wrote
+"goneeeeeeee". Nothing true follows the last letter of a thought (the
+newline is never a value), so the memory's top vote is the one-behind
+alias of the letter just written, the mouth writes it, the bag still
+matches, and the loop feeds itself until stress stops it. Restricting the
+mouth is out (only stamina restricts), so the answer is on the memory's
+value side: THE EAR'S QUIET IS A MEMORY. The first silent tick after your
+word is stored as what followed it, once per pause; the memory then
+recalls quiet where you fell quiet, and the mouth stops from memory
+instead of running on its alias. Measured on a CPU body: "ball " ->
+"all gone" then silence; "more " -> "milk" then silence; "my " -> "dog
+runs" then silence (without it: "all goneeiiiiiiii"). Written once per
+pause on purpose: writing it on every silent tick over-weighted quiet and
+cut "all gone" to "al".
+
 ## Status
 
 - model: speaker channel, ear-writes by speaker, running bag with
