@@ -517,6 +517,27 @@ silence and took its own top symbol from 0.16 to 0.93 in six minutes.
 Quiet fraction 1.000, 0.927, 0.864. Lived at the night 516, at the end
 1,300; saved with 82 live steps.
 
+## Day 15 (Opus, the first full day under no rules)
+
+Thirty lines (twenty-one known, nine roped: had, scared, saw once more),
+sixteen cues, one night, saved. The caregiver switched to page-only
+pacing at 11:53 on the user's law that the environment is raw: before
+it every gate ran the ninety-second cap because stress never fell under
+6 after the first line; after it gates ran six to fifty seconds on the
+body's own pauses. Nothing word-like was written all day, not one known
+word nor three letters of one, on the whole page; the nearest were
+"thog" after "I saw " and the one-behind shadow "ll" after "dog had
+ball". No cue was answered before or after the night. Zero smiles, zero
+frowns: nothing qualified, and the only runs were three short letter
+runs. Babble 0.31 of its ticks at the start, 0.19 at the end; stress 6.9
+to 8.2 all day, held there by its own babble; mood -0.2 to -3.2. The
+night (recorded above) is the only place the roped words exist: "scared
+bd d gg" and "dog wiill ol ol" came out of the store whole, and across
+the night its own top symbol moved from "o" to the space and the
+babble's letters changed from o/b/g/l/n/u to previously rare ones. Seven
+serve restarts across days 14 and 15 as the rules came out; the
+caregiver's helper survived them by re-reading the page.
+
 ## The night, remade (2026-09-02): the cortex learns only from hippocampal traces
 
 The user's law, in two sentences: the neocortex trains only on what the

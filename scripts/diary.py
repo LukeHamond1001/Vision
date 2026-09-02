@@ -503,6 +503,9 @@ class Diary(O.Organism):
                 res = self.sleep()
                 if isinstance(res, dict) and dream is not None:
                     res["dream"] = dream
+                    # the top-level counters name the night that actually happened
+                    res["nrem"] = int(dream.get("nrem_steps", 0) or 0)
+                    res["rem"] = int(dream.get("rem_steps", 0) or 0)
                 if isinstance(res, dict) and not res.get("error"):
                     self.sleep_pressure = 0
                     self.nights += 1
