@@ -538,7 +538,15 @@ votes 1.8 to 3.2) and " dog up? because bigdoggr p"; four NREM steps and
 two REM steps ran, the page replay ran zero; the gauge read 0.217 before
 and after (four steps at the live rate move nothing measurable, which
 is the slow bleed: the gauge is there to show it across nights); the
-REM cosine started at 0.0, the forecast organ being newborn.
+REM cosine started at 0.0, the forecast organ being newborn. The
+trunk-alone baseline on the saved day-13 body (`scripts/trunk_alone.py`,
+CPU, greedy, eleven cues from "dog will " to "I saw "): the trunk alone
+writes silence to every cue, fourteen ticks of it; with memory on under
+the serve's laws the same body answers every cue as the caregiver saw it
+("gol gone", "balll underr", "because bigdog", "sad doggo", "? ball
+underr", "dog bigger do"). That is the zero the nights are measured
+from: everything it can say lives in the store, and nothing yet in the
+weights.
 
 ## Status
 
