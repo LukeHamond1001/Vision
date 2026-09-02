@@ -775,8 +775,22 @@ class Organism:
                 _lv = getattr(self.m, "_last_votes", None)
                 mem_max = float(_lv[0][0]) if _lv and _lv[0] else 0.0
                 own_ent = float(getattr(self.m, "_last_own_ent", 0.0) or 0.0)
-                if mem_max < float(getattr(self.a, "store_boost_min", 0.0) or 0.0) and own_ent > hush:
-                    v[self.em] = v[self.em] + 12.0        # nothing to say: it stops
+                _hm = getattr(self.a, "hush_mem", None)
+                hush_mem = float(_hm) if _hm is not None else float(getattr(self.a, "store_boost_min", 0.0) or 0.0)
+                if mem_max >= hush_mem:
+                    g["mem_said"] = g.get("mem_said", 0) + 1
+                    g["mem_quiet"] = 0
+                    if own_ent > hush and _lv and _lv[1]:
+                        # a sure memory speaks with one voice while the trunk is
+                        # unsure: its top word gains a flat bonus (disclosed, §10)
+                        v[int(_lv[1][0])] = v[int(_lv[1][0])] + float(getattr(self.a, "sure_mem", 6.0))
+                else:
+                    g["mem_quiet"] = g.get("mem_quiet", 0) + 1
+                    # grace: a completion in progress may place one word of its
+                    # own (its stop) before the hush; a cold start hushes at once
+                    grace = 1 if g.get("mem_said", 0) > 0 else 0
+                    if own_ent > hush and g["mem_quiet"] > grace:
+                        v[self.em] = v[self.em] + 12.0    # nothing to say: it stops
             pr = torch.softmax(v / g["temp"], -1).cpu()
             nxt = int(torch.multinomial(pr, 1, generator=self.gen))
             if len(g["tr_raw"]) < 64:
@@ -2579,6 +2593,10 @@ def main():
     ap.add_argument("--store-boost", type=float, default=1.0,
                     help="hippocampus read megaphone: amplify the store's top-8 "
                          "suggestions per position by this factor (1 = as trained)")
+    ap.add_argument("--sure-mem", type=float, default=6.0,
+                    help="flat logit bonus for memory's top word while the trunk is unsure (0 = none)")
+    ap.add_argument("--hush-mem", type=float, default=None,
+                    help="hush only when memory's top raw vote is below this (default: the boost floor); a faint vote still counts as something to say")
     ap.add_argument("--hush-ent", type=float, default=0.0,
                     help="hush: end the utterance when its belief is this uniform (normalized entropy; 0 = never)")
     ap.add_argument("--store-boost-min", type=float, default=0.0,

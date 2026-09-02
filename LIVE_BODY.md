@@ -259,6 +259,32 @@ faded memories after one word, because a faded vote that still wins the
 sample reads as uncertainty at temperature 1; the rule now asks the two
 organs separately. Silence is not authored; it is the absence of a word.
 
+Day 5 (the same life, memories carried at the 10% fade): four new
+sentences, four for four on the first cue and again on the second; a
+single re-teaching recovered a lost lesson and roughly doubled its vote;
+zero babble, zero stress, no stutters in 38 turns. The hush overshot by
+one token: eleven of eleven completions lost their final full stop,
+because the stop's memory vote sits just under the amplification floor
+and the hush was reusing that floor. The hush now has its own lower
+floor (`--hush-mem 0.06`): a faint vote still counts as something to
+say, and only a truly empty memory plus a uniform trunk ends the turn.
+Its face now tracks with a lag: it is silent during lessons, so the
+smile you said them with surfaces in the next round of cues.
+
+Two more facts from the day-5 life, measured with the memory-vote
+instrument. First, the full stop is the first thing this memory forgets:
+it is stored under every sentence's final key, and the delta rule's
+error-correction blurs a value that many keys share, so after nine
+sentences the vote for "." at a sentence's true end fell under the hush
+floor while the content words stayed clear. Hence a grace: a completion
+in progress may place one word of its own (its stop, or a stray) before
+the hush ends the turn; a cold start still hushes at once. Second, the
+trunk's first learning is the unigram: "." is the most frequent token it
+hears, and after a few days its bias for "." (about four logits) began
+beating faded memory votes mid-sentence ("loudly." for "loudly at
+midnight."). Hence, while the trunk is unsure, a sure memory speaks with
+one voice: its top word gains a flat bonus (6 logits), disclosed below.
+
 Honest limits: echo is not understanding; the value heads, conscience
 and face organs start meaningless and become meaningful only as days
 accumulate; whether a trunk can learn grammar from a caretaker's
@@ -287,7 +313,10 @@ Everything the running body uses that is not a learned weight:
   four identical tokens in a row end the reply as a stutter, and a
   stuttered reply is never dosed; hush: when memory has no vote above
   its floor and the trunk's own belief has normalized entropy above 0.9,
-  the utterance end gains 12 logits.
+  the utterance end gains 12 logits (memory floor for the hush 0.06; a
+  completion in progress gets one word of grace); while the trunk's
+  belief is that uniform and memory has a vote, memory's top word gains a
+  flat 6 logits.
 - Memory: content bag of the last 8 tokens with decay 0.7, specials (ids
   below 11) excluded on both key and value side; kernel scale 3.0; store
   write strength sigmoid(0.85), read gain 1.0; read into logits gated by

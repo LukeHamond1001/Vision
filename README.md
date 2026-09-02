@@ -114,7 +114,7 @@ no-cheats audit, 2026-09-01).
 python3 scripts/conceive.py data/organism_life_blank_0p5b.pt data/tok_0p5b.json --d 1024 --n-layers 29 --content-keys
 python3 scripts/organism.py data/organism_life_blank_0p5b.pt data/tok_0p5b.json --dev mps --temp 0.05 \
     --save data/organism_life_blank_0p5b.pt --pursuit-adopt 0.45 --pursuit-target 0.3 --port 8016 --max-new 28 \
-    --store-read-beta 1.0 --store-boost 16 --store-boost-min 0.15 --live-lr 1e-6 --store-decay 0.9 --hush-ent 0.9
+    --store-read-beta 1.0 --store-boost 16 --store-boost-min 0.15 --live-lr 1e-6 --store-decay 0.9 --hush-ent 0.9 --hush-mem 0.06
 ```
 
 ## The live body
