@@ -214,6 +214,28 @@ runs" then silence (without it: "all goneeiiiiiiii"). Written once per
 pause on purpose: writing it on every silent tick over-weighted quiet and
 cut "all gone" to "al".
 
+## Day 3 (Opus, the child curriculum, stage 0 to 1)
+
+Ten first words (hi, bye, no, more, up, mama, dog, ball, milk, all gone),
+41 lines, then twelve pivot pairs three times each, 36 lines; nothing
+outside the ten. Recall: five of five cues drew a taught partner before
+and after the night ("hi " -> "dog up", "dog " -> "up", "my " -> "ball all
+gone"), three of them the same default chain. Nine untaught expansions
+across five frames: "big dog" and "hi dog" drew " up" from "dog up";
+"more milk", "my milk" and "no milk" drew " all gone" from "milk all
+gone"; "ball" drew "gone" before they were ever paired. That is the
+memory linking pairs through their shared word: relational
+generalization by mechanism, the first sign the curriculum was made for.
+The trunk's own top symbol went from silence at 0.998 to "m" at 0.60.
+The night consolidated nothing but reset mood and stress; every
+association survived it. Two caregiver errors, diagnosed by Opus itself:
+a face warm while typing (smiling at its own shadow) bred the "eeeeeeee"
+runs and broke the learned quiet within forty minutes; nine frowns then
+pinned mood at the floor. Withholding response repaired both. Rules for
+the next sessions: face still while your letters enter, warmth only after
+the line for what it did; at most one brief frown a minute, and only at a
+run of five or more identical letters; otherwise withhold.
+
 ## Status
 
 - model: speaker channel, ear-writes by speaker, running bag with
