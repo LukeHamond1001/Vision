@@ -135,6 +135,35 @@ sentences written twice: "My do" -> "g sleeps under a wooden table.",
 "Green" -> " leaves move when wind blows hard.", "Rain " -> "falls on the
 cold grey", and an untaught cue babbles until your face teaches quiet.
 
+## Day 2 (Opus, on the old fade) and the child curriculum
+
+Five new sentences written twice each: five of five came back in full
+through the stop from a five-letter cue. Then the recall tests poisoned
+what they measured: twenty cue fragments, each followed by the next cue's
+leading newline, taught the memory "a short fragment, then the thought
+ends", and later cues stopped after the fragment. The newline is the
+thought-break symbol; it is now never a memory value, so a cue cannot
+teach an ending. Quiet held the whole session (0.0 of idle ticks), with
+no frowns given because it produced no noise.
+
+Day 3 onward is raised like a child, not fed a list (the user's
+direction). Children's first produced words are mostly relational and
+social (hi, bye, no, more, up, all gone, uh oh) plus a few names of what
+matters (mama, dog, ball, milk); "mommy" is produced by 93% and "ball" by
+64% of children by sixteen months in the MacArthur-Bates CDI norms, and
+the first grammar is pivot pairs built from a small set of relational
+words ("more milk", "no milk", "milk all gone", "dog up", "my ball"). So
+the caregiver: greets, says little, waits, imitates what the child
+offers, expands it by one step, responds within seconds, never frowns at
+babble, and teaches relations by recombining the same few words. Recall
+tests are few, never back to back, and never followed by a newline. The
+instrument that decides whether the trunk learns anything is "own": its
+own top symbol with memory set aside; the day it becomes a letter after
+"more " is the day the trunk knows something.
+
+Sources: the MacArthur-Bates CDI (Fenson et al., https://mb-cdi.stanford.edu/documents/Fensonetal2000.pdf)
+and its Wordbank update (https://www.ncbi.nlm.nih.gov/pmc/articles/PMC10264806/).
+
 ## The review (2026-09-02, independent, read-only, with CPU measurements)
 
 Verdict: the mechanism is what it claims. Query/key alignment exact to the
