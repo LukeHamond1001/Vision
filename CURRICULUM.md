@@ -20,7 +20,10 @@ and follows the child's attention rather than a schedule.
 - **Serve and return.** After every line, wait six seconds (day 6: a
   four-second return was shorter than the words it was assembling, and
   fifteen lines with no gap shrank its replies to single letters); about
-  twenty-five lines a session, not fifty. Imitate
+  thirty lines a session at that spacing (fewer left the night "starving"
+  at 1,239 lived tokens), never fifty; rests of twenty to forty seconds
+  every few lines. Never a periodic word ("mama") as a spacer: its
+  one-behind alias is exact and it runs. Imitate
   word-like output; expand what it wrote by one step ("dog" -> "big
   dog"); ignore junk. A run of a LETTER is babble, not junk: answer it
   once by expanding it into a known word that starts with that letter

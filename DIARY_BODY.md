@@ -309,6 +309,27 @@ Caregiver lesson: fifteen lines with almost no gap shrank its replies to
 single echoed letters and sank mood to -2.1; a 6.5-second return brought
 them back. Say less, wait longer.
 
+## Day 7 (Opus, stage 3: on, going, want)
+
+Twenty-five lines at six to nine seconds apart with nine minutes of
+deliberate silence; 100% of its 123 symbols from memory. Five of five
+recalls identical before and after the night: "I want " -> "ball", "ball "
+-> "all gone" (four days old, chosen over today's "on"), "dog going " ->
+"in", "you " -> "want ball" (a two-hop crossing of two frames taught
+separately), "two " -> "dogs". "want" took hardest and appeared where it
+was never put; "going" took only as a link and was never written; "on"
+took after book and dog. The plural still does not generalize. The wait is
+the instrument: a line after thirty seconds of silence draws a whole word,
+three lines close together draw single letters and sink mood. Two costs:
+the spacer word "mama" ran for 46 seconds and 88 symbols (a periodic word
+makes the memory's one-behind alias exact, so the remembered quiet ties
+with it, and with trust at its cap of 8 the stamina brake needed stress 16
+to win), so stress now weighs 1.0 per unit against memory's voice
+(`--cort-k 1.0`: no run outlasts about fifty symbols), and periodic words
+are never used as spacers; and the night reported "starving" at 1,239
+lived tokens, so a day needs about thirty lines at the wide spacing, not
+fewer.
+
 ## Status
 
 - model: speaker channel, ear-writes by speaker, running bag with
