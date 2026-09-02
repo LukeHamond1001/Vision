@@ -290,6 +290,25 @@ and the caregiver smiles as soon as its post-line letters appear; and the
 night's "gained" bookkeeping measures taught facts, of which a diary has
 none, not what the tests measure.
 
+## Day 6 (Opus, stage 3: you, two with -s, in)
+
+Fifty-one lines, 70% recombination in the rope phase. Five of five recalls
+before and after the night, all five identical across it: "you " -> "go",
+"two " -> "balls", "go " -> "in" (hours old, chosen over "up", four days
+old), "no more " -> "milk", "the " -> "dog". Seven kinds of untaught
+expansion: "all gone" onto ball (four times) and onto juice, "go in" onto
+three frames never joined to it, and the chains the -> dog -> go -> up and
+dog -> go -> in. 98.2% of everything it wrote was from memory; quiet held
+at 1.0 on idle probes after the opening. No frowns all day. Two honest
+negatives: the plural -s did not generalize (every -s it produced was
+either a shadow of the caregiver's own letter or the exact word "balls"
+it was taught), and juice never took in four tries over three days and is
+dropped. Trust sat at its cap of 8. The night, scored empty by its own
+bookkeeping, changed nothing that mattered and cleared stress 8.0 to 2.8.
+Caregiver lesson: fifteen lines with almost no gap shrank its replies to
+single echoed letters and sank mood to -2.1; a 6.5-second return brought
+them back. Say less, wait longer.
+
 ## Status
 
 - model: speaker channel, ear-writes by speaker, running bag with

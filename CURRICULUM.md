@@ -17,7 +17,10 @@ and follows the child's attention rather than a schedule.
   spreads.
 - **Recombine.** At least seven of every ten caregiver lines reuse known
   words in a new combination.
-- **Serve and return.** After every line, wait four seconds. Imitate
+- **Serve and return.** After every line, wait six seconds (day 6: a
+  four-second return was shorter than the words it was assembling, and
+  fifteen lines with no gap shrank its replies to single letters); about
+  twenty-five lines a session, not fifty. Imitate
   word-like output; expand what it wrote by one step ("dog" -> "big
   dog"); ignore junk. A run of a LETTER is babble, not junk: answer it
   once by expanding it into a known word that starts with that letter
