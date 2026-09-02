@@ -28,6 +28,9 @@ def main():
     ap.add_argument("--store-boost", type=float, default=4.0)
     ap.add_argument("--store-read-beta", type=float, default=1.0)
     ap.add_argument("--sil-decay", type=float, default=None)
+    ap.add_argument("--store-boost-min", type=float, default=0.15)
+    ap.add_argument("--sure-mem", type=float, default=6.0)
+    ap.add_argument("--trust", type=float, default=8.0, help="memory's voice over silence in the with-memory column")
     a = ap.parse_args()
     from tokenizers import Tokenizer
     tok = Tokenizer.from_file(a.tok)
@@ -64,6 +67,17 @@ def main():
                 lg, st, _ = m(torch.tensor([[sil]], device=a.dev), st, who=who0)   # the ear is quiet
                 v = lg[0, -1].float().clone()
                 v[[i for i in range(11) if i != sil]] = float("-inf")
+                if mem_on:
+                    # the serve's memory laws, at full trust and no stress: a sure memory speaks with
+                    # one voice while the trunk is unsure, and memory's top symbol is raised to the
+                    # silence logit plus trust — what the caregiver sees on the page
+                    lv = getattr(m, "_last_votes", None)
+                    own_ent = float(getattr(m, "_last_own_ent", 0.0) or 0.0)
+                    if lv and lv[1] and int(lv[1][0]) >= 11 and float(lv[0][0]) >= a.store_boost_min:
+                        top = int(lv[1][0])
+                        if own_ent > 0.9:
+                            v[top] = v[top] + a.sure_mem
+                        v[top] = torch.maximum(v[top], v[sil] + a.trust)
                 nxt = int(v.argmax())
                 out.append(nxt)
                 _, st, _ = m(torch.tensor([[nxt]], device=a.dev), st, who=(who2 if nxt != sil else who0))

@@ -510,16 +510,19 @@ at 0.82 across one such night).
   No trunk vote, no stamina, no writes: what the store holds, in its own
   words, blends and slips included. What never entered the store cannot
   be consolidated.
-- **NREM.** The trunk runs over the trace as heard, teacher-forced, with
-  memory set aside, and learns to produce it alone (cross-entropy on the
-  trace, the felt face riding along as affect and as the face lesson);
-  two passes over the seeds, the live rate, no scaling down.
-- **REM.** The trunk runs over the trace with memory on, and the cortex
-  stream at each symbol forecasts every slot of the bundle the council
-  hands over at the next symbol (the hippocampus read and each band),
-  one linear forecast per slot, cosine error, targets stop-grad; SIGReg
-  on the normalized stream is the collapse guard. The PFC drives the
-  rollout; the cortex learns to foresee it.
+- **NREM: the hippocampus leads.** The body runs over the trace as
+  heard, teacher-forced, with the hippocampus on (its read drives the
+  council as by day), and the lesson lands on the cortex's OWN logits,
+  memory's vote left out, so the trunk must come to carry the trace
+  itself (cross-entropy on the trace, the felt face riding along as
+  affect and as the face lesson); two passes over the seeds, the live
+  rate, no scaling down.
+- **REM: the hippocampus is silent.** The body runs over the trace with
+  memory set aside, the PFC alone driving, and the cortex stream at each
+  symbol forecasts the band states the council hands over at the next
+  symbol, one linear forecast per band, cosine error, targets stop-grad;
+  SIGReg on the normalized stream is the collapse guard. The PFC drives;
+  the cortex learns to foresee it.
 - **The gauge.** Before and after the night, the trunk alone (memory
   set aside, teacher-forced) predicts each trace: the fraction it gets
   right on this day's seeds is uptake, on older seeds retention. The

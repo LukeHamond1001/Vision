@@ -338,9 +338,9 @@ class Diary(O.Organism):
 
     def _student(self, ids, felt, mem_on):
         """the cortex over a trace, teacher-forced, the trace as heard (the ear's hand),
-        the felt face riding along as affect and as the face lesson; memory set aside for
-        NREM (the trunk must carry the trace alone), memory on for REM (the bundle the
-        PFC hands over includes the hippocampus read)"""
+        the felt face riding along as affect and as the face lesson; memory on for NREM
+        (the hippocampus leads, the lesson lands on the trunk's own logits), memory set
+        aside for REM (the PFC alone drives what the cortex must foresee)"""
         m = self.m
         x = torch.tensor([[self.sil] + ids[:-1]], device=self.dev)
         y = torch.tensor(ids, device=self.dev)
@@ -393,9 +393,10 @@ class Diary(O.Organism):
     def _dream_night(self):
         """THE NIGHT (2026-09-02, the user's law). The cortex learns only from hippocampal
         traces: each felt moment's key is handed to the store, which replays what it holds
-        from there (the trace); NREM runs the trunk over the trace with memory set aside and
-        teaches it the trace; REM runs it with memory on and teaches the cortex stream to
-        forecast the PFC bundle it receives at the next symbol (targets stop-grad, SIGReg
+        from there (the trace); NREM runs the body over the trace with the hippocampus leading (its read on) and
+        teaches the trunk's own logits the trace; REM runs it with the hippocampus silent
+        (memory set aside) and teaches the cortex stream to forecast the band states it
+        receives at the next symbol (targets stop-grad, SIGReg
         as the collapse guard). Seeds fade after a few nights; the gauge is taken before
         and after. Nothing lived reaches the weights except through the store."""
         import torch.nn.functional as F
@@ -423,9 +424,14 @@ class Diary(O.Organism):
         m.train()
         for _ in range(int(getattr(a, "night_rounds", 2) or 0)):
             for s_, ids in traces:
-                lg, y = self._student(ids, s_["felt"], mem_on=False)
+                # NREM: the hippocampus leads — its read is on, driving the council as by day —
+                # and the lesson lands on the cortex's OWN logits, memory's vote left out, so
+                # the trunk must come to carry the trace itself
+                lg, y = self._student(ids, s_["felt"], mem_on=True)
+                own = getattr(m, "_last_logits_own", None)
+                own = lg if own is None else own
                 self.opt.zero_grad(set_to_none=True)
-                loss = F.cross_entropy(lg[0].float(), y) * scale
+                loss = F.cross_entropy(own[0].float(), y) * scale
                 fl = m.pop_face_loss() if hasattr(m, "pop_face_loss") else None
                 if fl is not None:
                     loss = loss + 0.5 * fl
@@ -434,8 +440,10 @@ class Diary(O.Organism):
         cos_log = []
         sig = float(getattr(a, "night_sigreg", 0.1) or 0.0)
         for s_, ids in traces[:int(getattr(a, "night_rem", 8) or 0)]:
-            self._student(ids, s_["felt"], mem_on=True)
-            loss, cosv = m.rem_pfc_loss(sigreg=sig) if hasattr(m, "rem_pfc_loss") else (None, None)
+            # REM: the hippocampus is silent — memory set aside, the PFC (the bands) drives —
+            # and the cortex stream forecasts the band states it receives next along the trace
+            self._student(ids, s_["felt"], mem_on=False)
+            loss, cosv = m.rem_pfc_loss(sigreg=sig, slot_from=1) if hasattr(m, "rem_pfc_loss") else (None, None)
             if hasattr(m, "pop_face_loss"):
                 m.pop_face_loss()
             self._pop_side_losses()

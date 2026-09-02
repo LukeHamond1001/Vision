@@ -1025,7 +1025,7 @@ class ScanLM(nn.Module):
         stat = (((re - target) ** 2 + im ** 2) * w).sum(-1) * (2.0 * span / (grid - 1))
         return float(N) * stat.mean()
 
-    def rem_pfc_loss(self, sigreg=0.0):
+    def rem_pfc_loss(self, sigreg=0.0, slot_from=0):
         """REM (the user's law, 2026-09-02): from the last forward, the cortex
         stream at t forecasts every slot of the PFC bundle handed over at t+1
         (targets stop-grad: the future judges and is never pulled toward the
@@ -1036,7 +1036,7 @@ class ScanLM(nn.Module):
             return None, None
         B, T, S, d = Bd.shape
         terms, cos_all = [], []
-        for s in range(S):
+        for s in range(int(slot_from), S):                     # slot 0 is the hippocampus read: left out when memory is set aside
             pred = self.pfc_pred[str(s)](C[:, :-1])            # [B, T-1, d]
             cos = nn.functional.cosine_similarity(pred, Bd[:, 1:, s].to(pred.dtype), dim=-1)
             terms.append((1.0 - cos).mean()); cos_all.append(cos.detach().mean())
@@ -1433,6 +1433,7 @@ class ScanLM(nn.Module):
                     C = C + self.imag_gate * imag
         logits = self.head(self.lnf(C))
         logits_own = logits                               # the cortex's belief before memory
+        self._last_logits_own = logits_own                # NREM learns on this: the trunk's own voice, memory's vote left out
         with torch.no_grad():
             # an instrument: how uniform the trunk's OWN belief is at the last position
             _po = torch.softmax(logits_own[:, -1].float(), dim=-1)
