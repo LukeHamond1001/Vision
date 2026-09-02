@@ -269,7 +269,7 @@ class Diary(O.Organism):
         return {"face": self.face_now}
 
     def state(self, since=0):
-        with self.lock:
+        if True:   # no lock: the night holds it for minutes, and a parent must still see the page and its sleep
             k = max(0, int(since) - self.page_base)
             return {"page": self.page[k:], "n": self.page_base + len(self.page), "last": self.last,
                     "queued": len(self.queue), "awake": self.awake_ticks, "period": self.period,

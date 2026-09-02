@@ -538,6 +538,31 @@ babble's letters changed from o/b/g/l/n/u to previously rare ones. Seven
 serve restarts across days 14 and 15 as the rules came out; the
 caregiver's helper survived them by re-reading the page.
 
+## Day 16 (Opus, consolidation, the day it slept by itself)
+
+Forty-five lines and sixteen cues, every line a known frame, no new
+words, page-only pacing throughout, events a hundred and twelve seconds
+apart before the night. It fell asleep by itself at 14:02 (recorded
+above) and was louder after it, four gates of seventeen running to the
+cap against one of forty-four before. No cue was completed before or
+after the night. Two word-like things all day, both in the caregiver's
+rests and neither smiled at: " big ", a known word with a space on each
+side, spelled over seven seconds twelve to sixty seconds after the cue
+"where ball? ", the first known word written awake since the rules
+went; and " hat ", three letters of "what", after the last line. Near
+misses inside babble: "goalb" and "wllow" after "dog will go", "the"
+inside a longer run, "ol" after the post-night "give " cue, the same
+"ol" as its dreams. Babble 0.20 of its ticks at the start, 0.16 at the
+end of waking, 0.18 after the night; stress 7.2 to 8.8 all day; mood
+-1.6 to -4.7. Its own top symbol was silence at 0.14 all day before the
+night and a letter after it, "i" at 0.82 in the first minutes awake,
+then "u". Two caregiving misses named in the record: the rests were not
+watched, so the one real word earned nothing, and a third u-run went
+unexpanded; both are now curriculum. One serve fault: the page could not
+be read while it slept, because the night held the serve's lock, so the
+caregiver never saw "asleep" and derived the times; fixed for day 18.
+Saved with 77 live steps.
+
 ## The night, remade (2026-09-02): the cortex learns only from hippocampal traces
 
 The user's law, in two sentences: the neocortex trains only on what the

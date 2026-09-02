@@ -39,8 +39,15 @@ and follows the child's attention rather than a schedule.
   non-letters. Never smile at a completion's tail ("all gone") more than
   once in a row; smiles on a tail bred a forty-tick run of its last
   letter.
-- **Faces are prosody.** Still while your letters enter; smile the moment
-  its post-line letters appear (credit reaches back six seconds, no more);
+- **Faces are prosody, and you are always watching.** Still while your
+  letters enter; smile the moment its post-line letters appear (credit
+  reaches back six seconds, no more). Watch every symbol it writes at all
+  times, rests and waits included, and a known word anywhere on the page
+  (a space or the edge on both sides) earns its smile within three
+  seconds of its last letter: on day 16 it wrote " big " in a rest gap
+  and " hat " after the last line, and neither was smiled at because the
+  caregiver watched only the reply windows. Count letter runs across the
+  whole page too, so the third return gets its one expansion at once;
   smiles for echoes, expansions and quiet; never a smile for noise or for
   the shadow of your own typing. Smile from a resting face: only a face
   that grows or flips sign is felt, and easing back to 0 is silent, so
