@@ -535,7 +535,20 @@ at 0.82 across one such night).
 
 Flags: `--night-rounds 2 --night-rem 8 --night-sigreg 0.1 --night-scale
 1.0 --night-starts 48`; the REM organ is `pfc_pred`, grafted at default
-init onto the living body. Measured on a scratch copy of the
+init onto the living body.
+
+**The first served night of this kind (day 14, 10:53).** Forty-eight
+starts from the store's own strongest keys, thirty-seven traces (eleven
+keys drew nothing), mean length 14; among them " eball undr", "one bok",
+"little dog", "all under", "give ball bigger ball", and one run of "e"
+the store held from the hour before the efference copy was in place,
+with newline tails from the day's typing. Seventy-four NREM steps, eight
+REM steps at cosine 0.11, the page replay zero. The gauge: the trunk
+alone predicted 8.6% of the traces' symbols before the night and 20.6%
+after. The first time in this life that a night measurably moved the
+weights toward what the hippocampus holds; uptake on the night's own
+traces, not yet generalization, and the trunk-alone cue test on a scratch
+copy is the retention check that follows. Measured on a scratch copy of the
 day-13 body before the first served night (CPU): three known lines
 typed with smiles gave two seeds; their traces came back from the store
 alone, " will goong in then I gothen Igoin then Igo n" (48 symbols,
