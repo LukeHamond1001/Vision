@@ -33,7 +33,9 @@ and follows the child's attention rather than a schedule.
   ("eeee"), write any ordinary known line: that breaks a run where
   expansion cannot. A run that starts while you are waiting on the gate
   is ended by your next line, which it then answers as a frame (day 12);
-  expand it once only if it comes back three times. Frown briefly, at most once a minute, only at runs of
+  expand it once when it comes back a third time, and do it then, not
+  later: on day 13 the one expansion ("little dog up") ended the letter
+  runs for the day, and the silences filled with whole words after it. Frown briefly, at most once a minute, only at runs of
   non-letters. Never smile at a completion's tail ("all gone") more than
   once in a row; smiles on a tail bred a forty-tick run of its last
   letter.

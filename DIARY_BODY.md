@@ -462,6 +462,34 @@ curriculum: smile from a resting face; gate at 3 by day and 4 after a
 night, never waiting past two minutes; a babble run is ended by typing the
 next line, and expanded once if it recurs.
 
+## Day 13 (Opus, stage 4: first/then, bigger, saw)
+
+Thirty lines, nine roped and twenty-one known (seventy-thirty exactly),
+paced by the stress gate; sixteen cues, all answered before the night
+and seven of eight identical after it; every reply of the day was from
+memory. "first milk then " drew "ball" after a single exposure and again
+unchanged after the night: the ordered story frame completing its second
+item on the day it was roped. "bigger" appeared four times where nobody
+put it, twice written whole into a silence during a gate wait (" dog
+biger", "ger dog up"), misspelt all day and spelt right after the night,
+when the why-cue answered "because bigdog biggr dog": a two-day-old frame
+with a one-day-old word welded on. "saw" never took, and "I saw " was the
+one cue that lost its answer across the night. Five untaught expansions,
+among them "dog can go up" written into silence, a fusion of "dog can go"
+and "I can go up" that was never typed. "dog go in then " did not reach
+"dog go up" before or after the night; both times it answered with the
+chain from the line typed just before it, recency beating the cue's own
+subject. Trust 7.43 to 7.95; twenty-one smiles from a resting face, every
+one felt (doses 22 to 46); no frowns. Eight runs, all during gate waits
+and all ended by the next line; one expansion of the l-run into "little
+dog up" came late, and after it no letter run returned, the silences
+filling with whole words instead. The night: 3,153 lived tokens, two
+NREM passes, no REM, gain 0, "starving" by its own bookkeeping; its own
+top symbol went from "l" at 0.22 to silence at 0.82 across it, the page
+replay teaching quiet. Gates: fifteen of forty-six ran out the two-minute
+cap in the first hour while the babble held the floor near 3.6; once the
+runs stopped the median gate fell to 55 seconds.
+
 ## Status
 
 - model: speaker channel, ear-writes by speaker, running bag with
