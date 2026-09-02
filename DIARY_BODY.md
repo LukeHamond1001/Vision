@@ -652,6 +652,18 @@ space, "i" and "u" on successive nights, one letter at a time, while
 the teacher-forced gauge climbs. The free-running trunk still has no
 word in it; the traces are entering as letter statistics first.
 
+**The second night it took by itself (day 17, 15:47, tick 8,799 after a
+carried pressure).** Thirty-nine traces, mean length 13, and this time
+the frames chained: "big dog hablger dog hbdog her", "give baldro
+gbalder og dogh b", "scared ball unreg dobalr?e bal l", "what? sl", the
+day's consolidation lines running into one another out of the store.
+Seventy-eight NREM steps, eight REM at cosine 0.30, one value step. The
+rich gauge, all traces rich: 0.070 before and 0.388 after, the largest
+single-night movement yet. It woke with stress 1.4 and its own top
+symbol "b" at 0.25. Awake that day, four known words surfaced in its
+babble and each earned a smile within three seconds, the first felt
+doses under the one reward system, and its mood rose from -4 to -2.
+
 The trunk-alone cue test on a scratch
 copy of the post-night body: the trunk alone writes a run of "o" to
 every cue (its own top symbol moved from the newline to "o" across the
