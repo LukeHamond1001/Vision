@@ -57,5 +57,23 @@ with noise.
 
 - model: speaker channel, ear-writes by speaker, running bag with
   silence decay — built and measured on CPU (2026-09-02).
-- serve: the tick loop, the diary page, rolling doses — next.
-- first serve: after the word body's day 7 report (one 0.5B at a time).
+- serve: `scripts/diary.py` — the tick loop (two forwards per tick: your
+  symbol as the ear, its symbol as the mouth), the page (your letters
+  black, its letters brown; arrow keys move your face; Enter is a new
+  line), rolling doses by the word body's thresholds, the same nights,
+  save and reset. Smoked on a tiny CPU body (2026-09-02): ticks, both
+  hands on the page, faces felt, a night, a morning.
+- first serve: the word body is parked after seven days; the diary body
+  runs on port 8018:
+
+```bash
+python3 scripts/diary.py data/organism_diary_0p5b.pt data/tok_char.json --dev mps --port 8018 \
+    --temp 0.05 --store-read-beta 1.0 --store-boost 16 --store-boost-min 0.15 \
+    --live-lr 1e-6 --store-decay 0.9 --save data/organism_diary_0p5b.pt --diary-period 0.5
+```
+
+Reflexes it keeps from the word body: press marks banned (silence is
+allowed), a sure memory speaks with one voice while the trunk is unsure
+(6 logits), stress favours silence (0.5 logits per unit), the face lesson
+every tick. Reflexes it drops: the breath, the hush, the end-is-an-end
+rule, the bag reset (silence fades the bag instead).

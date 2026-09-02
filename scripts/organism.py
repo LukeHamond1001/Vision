@@ -2572,8 +2572,8 @@ class H(BaseHTTPRequestHandler):
                 self._json({"error": str(e)}, 500)
 
 
-def main():
-    global ORG
+def build_parser():
+    """the genome's knobs, shared with the diary serve (scripts/diary.py)"""
     ap = argparse.ArgumentParser()
     ap.add_argument("ckpt"); ap.add_argument("tok")
     ap.add_argument("--dev", default="mps")
@@ -2653,7 +2653,14 @@ def main():
                     help="seconds without novelty before it ruminates")
     ap.add_argument("--lone-bar", type=float, default=480.0,
                     help="seconds alone before it may speak first")
-    a = ap.parse_args()
+    ap.add_argument("--diary-period", type=float, default=0.5,
+                    help="the diary's tick, seconds (scripts/diary.py)")
+    return ap
+
+
+def main():
+    global ORG
+    a = build_parser().parse_args()
     print("[organism] the body alone — no assists exist in this build",
           file=sys.stderr)
     ORG = Organism(a)
