@@ -205,7 +205,7 @@ class ScanLM(nn.Module):
                  store_wipe=None, write_surprise=0.0, press_unwrite=False,
                  ponder_reenter="token", route_cap=0.125, tie_embed=False,
                  z_w=0.0, plan_m=0, rem_k=32, plan_cand=0,
-                 intrinsic_w=0.0, imag_k=0, **legacy):
+                 intrinsic_w=0.0, imag_k=0, keyed_content=False, **legacy):
         # removed organs (v16 refactor, Plan 49): vetoes (convicted),
         # ctx store + ctx_sparse (inert x4), novelty loop (unused).
         # Old checkpoints' cfgs still carry the kwargs — accepted ONLY
@@ -530,6 +530,11 @@ class ScanLM(nn.Module):
         self.query_proj = nn.Linear(d, d, bias=False)
         nn.init.eye_(self.key_proj.weight)
         nn.init.eye_(self.query_proj.weight)
+        # CONTENT KEYS (LIVE_BODY.md): the hippocampus keyed by the words
+        # themselves, not by a learned projection of the state — recall
+        # becomes a mechanism a body with no training already has
+        self.keyed_content = bool(keyed_content)
+        self.kc_w, self.kc_decay = 8, 0.7
         self.tok_u = nn.Parameter(torch.zeros(vocab_size))
         self.stores = nn.ModuleDict()
         for k in self.bands:
@@ -737,6 +742,33 @@ class ScanLM(nn.Module):
         x = x.float() if self.autocast_bf16 else x
         return x[:, 0]
 
+    def _content_bags(self, tokens, st):
+        """content keys: a recency-weighted bag of the last kc_w token
+        embeddings, unit norm, detached. Returns (incl, excl): incl[t]
+        includes x_t (the read query at t: what follows this?), excl[t]
+        ends at x_{t-1} (the write key at t, whose value is x_t) — so
+        query(t) == key(t+1) by construction. The tail rides in st."""
+        B, T = tokens.shape
+        w = self.kc_w
+        E = self.embed.weight.detach()
+        tail = st.get("tail_toks")
+        if tail is None or tail.shape[0] != B:
+            tail = torch.full((B, w - 1), -1, dtype=torch.long, device=tokens.device)
+        seq = torch.cat([tail, tokens], dim=1)                       # [B, w-1+T]
+        valid = (seq >= 0).to(E.dtype).unsqueeze(-1)
+        e = E[seq.clamp(min=0)] * valid                              # [B, w-1+T, d]
+        acc = torch.zeros(B, T, self.d, device=tokens.device, dtype=E.dtype)
+        for i in range(w):
+            acc = acc + (self.kc_decay ** i) * e[:, w - 1 - i: w - 1 - i + T]
+        incl = nn.functional.normalize(acc, dim=-1)
+        prev = st.get("bag_prev")
+        if prev is None or prev.shape[0] != B:
+            prev = torch.zeros(B, self.d, device=tokens.device, dtype=E.dtype)
+        excl = torch.cat([prev.unsqueeze(1).to(incl.dtype), incl[:, :-1]], dim=1)
+        st["tail_toks"] = seq[:, -(w - 1):].detach()
+        st["bag_prev"] = incl[:, -1].detach()
+        return incl, excl
+
     def _read(self, st, q_hidden, read_ok):
         """the hippocampus read: identity-space vectors from the
         previous chunks' M, alpha-weighted; q_hidden [B, d] (one token)
@@ -744,7 +776,8 @@ class ScanLM(nn.Module):
         if not read_ok or self.store_read_off:
             return None
         one = q_hidden.dim() == 2
-        q = nn.functional.normalize(self.query_proj(q_hidden), dim=-1)
+        q = q_hidden if self.keyed_content else \
+            nn.functional.normalize(self.query_proj(q_hidden), dim=-1)
         if one:
             q = q.unsqueeze(1)
         rsum = None
@@ -765,7 +798,8 @@ class ScanLM(nn.Module):
         store per routed position: ~2 GB per band at 32 lanes)."""
         if not read_ok or self.store_read_off:
             return None
-        qn = nn.functional.normalize(self.query_proj(q), dim=-1)     # [n, d]
+        qn = q if self.keyed_content else \
+            nn.functional.normalize(self.query_proj(q), dim=-1)     # [n, d]
         out = None
         for b in torch.unique(lane_idx).tolist():
             sel = (lane_idx == b)
@@ -964,7 +998,13 @@ class ScanLM(nn.Module):
         h_all = torch.stack([st["h"][u] for u in self.ukeys], dim=1)    # [B, U, d]
         acc_all = torch.stack([st["acc"][u] for u in self.ukeys], dim=1)  # [B, U, d]
         m = self._slots_from(h_all, W_mem)
-        rd0 = self._read(st, st["prev_c"], read_ok) if st["chunk"] > 0 else None
+        kc = self.keyed_content
+        if kc:
+            q0 = st.get("bag_prev")
+            rd0 = self._read(st, q0, read_ok) if (st["chunk"] > 0 and q0 is not None) else None
+            bag_incl, bag_excl = self._content_bags(tokens, st)
+        else:
+            rd0 = self._read(st, st["prev_c"], read_ok) if st["chunk"] > 0 else None
         r_slot = self.store_in(rd0 * getattr(self, "store_slot_gain", 1.0)) if rd0 is not None \
             else torch.zeros(B, self.d, device=dev)
         c_slot = None
@@ -1129,7 +1169,8 @@ class ScanLM(nn.Module):
                 rw_r = (rslots.reshape(B * T, self.d)[idx]
                         if rslots is not None else None)
                 for _cyc in range(self.ponder - 1):
-                    rdb = self._read_flat(st, s_r, lane_idx, read_ok)
+                    rdb = self._read_flat(st, bag_incl.reshape(B * T, self.d)[idx] if kc else s_r,
+                                          lane_idx, read_ok)
                     r_b = self.store_in(rdb * getattr(self, "store_slot_gain", 1.0)) if rdb is not None else torch.zeros_like(s_r)
                     c_b = None
                     im_b = None
@@ -1284,7 +1325,7 @@ class ScanLM(nn.Module):
         self._aux_hidden = None
         # the hippocampus is a PFC organ: keyed and queried by the
         # council's token slot (in cortex_first that is the cortex output)
-        R = self._read(st, S0, read_ok)                   # batched, [B, T, d]
+        R = self._read(st, bag_incl if kc else S0, read_ok)   # batched, [B, T, d]
         rd_full = None
         if R is not None:
             if self.aux_trunk > 0 and self.training:
@@ -1310,6 +1351,11 @@ class ScanLM(nn.Module):
                 k = 8
                 thr = rd_full.topk(k, dim=-1).values[..., -1:]
                 mask = (rd_full >= thr).float()
+                _vmin = float(getattr(self, "store_boost_min", 0.0) or 0.0)
+                if _vmin > 0.0:
+                    # memory speaks up only when it is sure: a faint vote is
+                    # left as a whisper, not amplified into a sentence
+                    mask = mask * (rd_full > _vmin).float()
                 logits = logits + rd_full + (_sb - 1.0) * rd_full * mask
             else:
                 logits = logits + rd_full
@@ -1342,9 +1388,14 @@ class ScanLM(nn.Module):
         # ---- store writes, once per chunk: key_t = proj(s'_{t-1}) — the
         # PFC's conclusion about the previous token — value = identity of
         # x_t; recon pass live, store pass cloned
-        h_prev_live = torch.cat([st["prev_c"].unsqueeze(1), S0[:, :-1]], dim=1)
+        if kc:
+            h_prev_live = bag_excl.to(S0.dtype)            # the words before x_t, as they are
+        else:
+            h_prev_live = torch.cat([st["prev_c"].unsqueeze(1), S0[:, :-1]], dim=1)
         h_prev_det = h_prev_live.detach()
         smask = torch.ones(B, T, device=dev)
+        if getattr(self, "store_write_off", False):
+            smask = smask * 0.0                            # the ear writes, the mouth does not
         if st["chunk"] == 0:
             smask[:, 0] = 0.0                              # nothing before
         dopa = None
@@ -1473,7 +1524,7 @@ class ScanLM(nn.Module):
             tu = self.tok_u.clone() if pass2 else self.tok_u
             Wk = self.key_proj.weight.clone() if pass2 else self.key_proj.weight
             hp = hp_det if pass2 else hp_live
-            k_d = nn.functional.normalize(hp @ Wk.t(), dim=-1)
+            k_d = hp if kc else nn.functional.normalize(hp @ Wk.t(), dim=-1)
             sv = (torch.sigmoid(tu[toks_all]) * sm_all).clamp(max=1.0)
             if not pass2 and self.plan_m > 0 and self.training:
                 # REM seed (49b): the live chunk's write strengths — the

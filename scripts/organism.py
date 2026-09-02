@@ -58,6 +58,7 @@ class Organism:
         if hasattr(self.m, "read_beta"):
             self.m.read_beta = float(getattr(a, "store_read_beta", 0.0) or 0.0)
         self.m.store_boost = float(getattr(a, "store_boost", 1.0) or 1.0)
+        self.m.store_boost_min = float(getattr(a, "store_boost_min", 0.0) or 0.0)
         self.m.store_slot_gain = float(getattr(a, "store_slot_gain", 1.0) or 1.0)
         # LIVE_BODY: the face is continuous and always present; its face is a
         # forecast head taught at every token; the value heads take an
@@ -693,8 +694,12 @@ class Organism:
                     pl[0, 0] = g["pending_level"]
                     g["pending_level"] = 0
                 g["h_prev"] = {u: h.detach().clone() for u, h in (self.st.get("h") or {}).items()}
-                g["lg"], self.st, _ = self.m(g["x"], self.st, press_levels=pl,
-                                             affect=self._aff(1))
+                self.m.store_write_off = True          # the ear writes, the mouth does not
+                try:
+                    g["lg"], self.st, _ = self.m(g["x"], self.st, press_levels=pl,
+                                                 affect=self._aff(1))
+                finally:
+                    self.m.store_write_off = False
         if g["x"] is not None:
             # ITS FACE for the word about to be said, taught by yours now
             its_face = self._face_lesson(self.face_now)
@@ -715,6 +720,11 @@ class Organism:
             v = g["lg"][0, -1].float()
             if hasattr(self.m, "ban_presses"):
                 v = self.m.ban_presses(v)
+            if self.eh is not None and self.eh != self.em:
+                # an end is an end: what memory knows as the ear's turn-end
+                # is the mouth's turn-end; the mouth never says the ear's mark
+                v[self.em] = torch.maximum(v[self.em], v[self.eh])
+                v[self.eh] = float("-inf")
             n_c = len([t_ for t_ in g["out"] if t_ != self.sil])
             if g["pauses"] >= 6:
                 v[self.sil] = float("-inf")
@@ -818,9 +828,11 @@ class Organism:
         tail = [out[-1]] if out and out[-1] == self.em else \
             (out[-1:] + [self.em] if out else [self.em])
         with torch.no_grad():
+            self.m.store_write_off = True         # its own tail: heard by the state, not stored as fact
             _, self.st, _ = self.m(
                 torch.tensor([tail], device=self.dev), self.st,
                 affect=self._aff(len(tail)))
+            self.m.store_write_off = False
         if not out or out[-1] != self.em:
             self.day_buf.append(self.em)
             self._rec_face(1)
@@ -1062,6 +1074,7 @@ class Organism:
 
         def run(off):
             self.m.store_read_off = off
+            self.m.store_write_off = True             # an appraisal is not an experience
             st = self._clone(self.st)
             outs = []
             with torch.no_grad():
@@ -1070,6 +1083,7 @@ class Organism:
                         torch.tensor([ids[i:i + 64]], device=self.dev), st)
                     outs.append(lg[0].float())
             self.m.store_read_off = False
+            self.m.store_write_off = False
             return torch.cat(outs, 0)
 
         try:
@@ -1866,6 +1880,7 @@ class Organism:
             else:
                 stream.extend(self.tok.encode(q).ids + [self.eh])
         tail_dropped = 0
+        faces_n = None                       # the day's faces ride only the lived-day replay
         if stream:
             tail_, tail_dropped = self._clean_tail(
                 self.day_buf[-(192 if excited else 128):])
@@ -1873,7 +1888,6 @@ class Organism:
         elif self.session:
             # nothing left to learn tonight: replay the lived day itself
             stream, tail_dropped = self._clean_tail(self.day_buf[-1024:])
-            faces_n = None
             if len(self.day_faces) == len(self.day_buf):
                 faces_n = self.day_faces[-1024:][:len(stream)]
         stream += [self.sil] * ((64 - len(stream) % 64) % 64)
@@ -2493,6 +2507,8 @@ def main():
     ap.add_argument("--store-boost", type=float, default=1.0,
                     help="hippocampus read megaphone: amplify the store's top-8 "
                          "suggestions per position by this factor (1 = as trained)")
+    ap.add_argument("--store-boost-min", type=float, default=0.0,
+                    help="memory speaks up only when its raw vote exceeds this many logits (0 = always)")
     ap.add_argument("--dopamine", type=float, default=None,
                     help="kappa: a surprising reward scales the hippocampus write "
                          "strength at that token, s <- min(1, s(1 + kappa|RPE|)); "

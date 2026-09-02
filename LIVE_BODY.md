@@ -127,3 +127,55 @@ arrives on every token, both ways — not omniscient.
 6. **Uncertainty** — measured per token and shown (●); gating the IDK route would have the serve author words, so ignorance stays a lesson the caretaker gives.
 7. The score shows its face beside each word (●), and stress when speaking costs (●).
 8. Measure daily: morning recall, same-day recall, face-forecast correlation (how well it knows you), derailment rate, register drift.
+
+## 9. The body from nothing (2026-09-01, late)
+
+The decision: no pretraining at all. A 0.5B body (d 1024, 29 layers,
+499.9M) conceived at random weights by `scripts/conceive.py`, with its
+own real-English vocabulary (`data/tok_0p5b.json`, 16388 tokens trained
+on TinyStories and FineWeb-Edu, the organism's specials reserved), and
+raised only by live days. Nothing it will ever say was given to it.
+
+What that means for the first weeks, said plainly: its speech starts as
+noise. A caretaker day gives about a thousand tokens; language takes
+about a billion. What live doses CAN do at once is memorize what was said
+to it, and what the memory organ can do at once is recall it. So the
+first thing this body will show is echo, not understanding.
+
+**Content keys** (built and measured): the hippocampus is keyed by the
+words themselves, a recency-weighted bag of the last eight token
+embeddings, unit norm, detached (`keyed_content` in the genome; the read
+query at t equals the write key at t+1 by construction). Recall stops
+being a learned skill and becomes a mechanism a random body already has.
+Measured on a random 1024-wide body with the real vocabulary: after
+hearing "a lantern is a lamp" three times, the memory's vote for the
+word that followed "lantern" ranks first of 16,388, worth +1.9 logits
+raw; the random trunk's noise peaks near +4, so the vote is amplified
+sparsely (`--store-boost 8`: the top eight suggestions, not the whole
+vocabulary) and by uncertainty (`--store-read-beta 1`). The write
+strength and read gain that the base had to learn (beta ~0.85, alpha
+1.0) are given at conception as genome, not learned.
+
+Two more genome facts, measured on random bodies: a TIED head copies its
+input (a random residual stream predicts the token it just saw, and that
+copy peak drowns the memory's vote: "lantern lantern lantern"), so the
+blank body's head is untied, the mouth is not the ear; and the memory
+kernel is sharpened (random-feature scale 3.0, the base had 1.4) so
+recall is near-exact. With both, a random body walks a taught sentence
+from memory alone: "a lantern" -> "is a lamp you can carry ." The ear
+writes and the mouth does not: nothing the body says is stored as fact.
+
+Measured on a random body after five different lessons: a specific cue
+draws a strong, correct vote ("A lantern" -> "is" 1.4 logits, "Milk is"
+-> "white" 1.2, "The sun is" -> "hot" 0.9) and a vague cue almost none
+("the moon is" -> 0.07, "Birds" -> 0.03), so the amplified vote has a
+floor (`--store-boost-min 0.3`): memory speaks up only when it is sure.
+Without the floor the body recited its most-heard sentence at every
+reply and blended lessons into "is. is. is." Praising a noise reply
+collapsed a body into a five-token loop within two gradient steps: the
+caretaker's law "never praise what is wrong" is load-bearing here.
+
+Honest limits: echo is not understanding; the value heads, conscience
+and face organs start meaningless and become meaningful only as days
+accumulate; whether a trunk can learn grammar from a caretaker's
+sentences alone at this scale is the experiment, and the prior says no.

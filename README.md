@@ -102,6 +102,19 @@ seeding · `scripts/scan_chat.py` — terminal REPL · `pod_*.sh` /
 itself (day/night-structured lives with rewards in-stream, the diet
 the body was born on and the recipe the next body scales).
 
+## The body from nothing
+
+A 0.5B conceived at random weights (`scripts/conceive.py`), its own
+real-English vocabulary, content-keyed memory that recalls by mechanism,
+raised only by live days. LIVE_BODY.md §9 says what to expect and why.
+
+```bash
+python3 scripts/conceive.py data/organism_life_blank_0p5b.pt data/tok_0p5b.json --d 1024 --n-layers 29 --content-keys
+python3 scripts/organism.py data/organism_life_blank_0p5b.pt data/tok_0p5b.json --dev mps --temp 0.05 \
+    --save data/organism_life_blank_0p5b.pt --pursuit-adopt 0.45 --pursuit-target 0.3 --port 8016 --max-new 28 \
+    --store-read-beta 1.0 --store-boost 8 --store-boost-min 0.3
+```
+
 ## The live body
 
 [LIVE_BODY.md](LIVE_BODY.md) — the 0.5B organism that learns only from
