@@ -1,0 +1,80 @@
+# The curriculum: raising the diary like a child
+
+The user's rule (2026-09-02): connections, not vocabulary. A new word
+enters only through a relation it already knows, and each stage teaches
+what a child of that age knows about language and the connections
+between its parts. No lists. The caregiver says little, waits, imitates
+what the child offers, expands it by one step, responds within seconds,
+and follows the child's attention rather than a schedule.
+
+## Principles every session obeys
+
+- **Relations first.** The words that combine with everything (more, no,
+  all gone, my, big, up, here, hi, bye) are the words it sees most.
+- **Rope, never drop.** At most three new words a session, each introduced
+  inside a frame it already knows: knowing "more milk" makes "more juice"
+  the way juice enters; knowing "big dog" makes "big ball" the way big
+  spreads.
+- **Recombine.** At least seven of every ten caregiver lines reuse known
+  words in a new combination.
+- **Serve and return.** After every line, wait four seconds. Imitate
+  word-like output (never single-letter runs or junk); expand what it
+  wrote by one step ("dog" -> "big dog"); ignore junk; frown briefly only
+  at perseveration.
+- **Faces are prosody.** Warm while naming, still while waiting, smiles
+  for echoes, expansions and quiet; never a smile for noise or for the
+  shadow of your own typing.
+- **Tests are rare and clean.** At most five recall tests before a night
+  and the same five after; a cue is a new line plus a fragment, then
+  nothing; never two tests back to back.
+- **Instruments decide the stage.** Recall of frames (memory), the trunk's
+  own top symbol after a frame ("own": the day it stops being silence),
+  trust, quiet, stress. A stage advances when its frames complete from
+  memory across a night and the caregiver has seen at least one
+  expansion it did not teach.
+
+## Stages
+
+**0. Serve and return (the first months).** Greeting and babble. hi, bye,
+mama, uh oh, no, more, up, all gone. Imitation games: it writes "mam",
+you write "mama". Nothing else.
+
+**1. First words (12 to 18 months).** Ten to twenty words, every one
+anchored: names of what matters (dog, ball, milk, book, baby, car),
+actions (go, eat, up, down), states (hot, wet, big). Each enters beside a
+known word ("more milk", "dog up") and is repeated four to six times
+across the session.
+
+**2. Two words (18 to 24 months).** The relations of first grammar, each
+practiced with several partners: recurrence (more X), negation (no X),
+disappearance (X all gone), possession (my X), attribute (big X, hot X),
+location (X here, X up, X in), agent and action (dog run, baby eat),
+action and object (eat milk, kick ball). Questions begin as frames: "where
+ball" answered by "ball here".
+
+**3. What a three-year-old knows (2 to 3 years).** Three-word sentences
+("the dog runs", "I want milk"). Pronouns (I, you, me, my, it). Plurals
+(dogs). Progressive (running). Prepositions (in, on, under). Simple past
+(ran, ate). "Don't" and "not". Yes/no questions and "what's that" naming
+games. Adjective pairs (big/little, hot/cold, wet/dry). Counting to three.
+The world grows only through known frames: "the dog is in the box" makes
+"the ball is in the box" the way box enters.
+
+**4. What a four-year-old knows (3 to 4 years).** Four- and five-word
+sentences. Why and because. When, before, after, first and then: little
+stories in order. Irregular past (went, saw, had). Can and will.
+Comparing (bigger, more than). Feeling words (happy, sad, angry,
+scared), which is also where its own face row becomes something to talk
+about. Rules ("we don't hit"). Conversation with two turns: it asks
+"what?" and "where?"; you answer inside known frames.
+
+**5. Toward five (4 to 5 years).** Longer stories with time words. Rhymes
+and letter sounds. Jokes built on known frames. "If" and "so". Answering
+why with a reason of its own. Only when stages 3 and 4 hold across nights.
+
+## What each session reports
+
+The lines written and how often; what it wrote back at each stage and
+whether from memory; every recall test with the exact text and the "own"
+reading; trust, quiet fraction and stress at start, middle and end; any
+expansion it produced that was not taught (the first sign of the trunk).
