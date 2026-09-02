@@ -2229,6 +2229,7 @@ class Organism:
                                      self._budget_history,
                                  "day_n": self.day_n,
                                  "saliences": self.saliences,
+                                 "extra": self._life_extra(),
                                  "n_human_presses":
                                      self.n_human_presses}},
                        self.a.save)
