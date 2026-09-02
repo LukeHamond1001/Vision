@@ -2685,10 +2685,8 @@ def build_parser():
                     help="REM's collapse guard: SIGReg weight on the cortex stream")
     ap.add_argument("--night-scale", type=float, default=1.0,
                     help="the night's loss scale over the live rate")
-    ap.add_argument("--seed-cap", type=int, default=48,
-                    help="felt moments kept as dream seeds (the hippocampal index)")
-    ap.add_argument("--seed-nights", type=int, default=5,
-                    help="nights a seed is dreamt before it is let go")
+    ap.add_argument("--night-starts", type=int, default=48,
+                    help="the diary's night: dreams started from the store's strongest keys")
     return ap
 
 

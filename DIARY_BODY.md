@@ -500,16 +500,20 @@ story attached, and the old replay, fed the page's silences, taught the
 trunk quiet (day 13: its own top symbol went from "l" at 0.22 to silence
 at 0.82 across one such night).
 
-- **The hippocampal index.** A felt face tags the moment: the memory
-  bag's key at the start of the line being written (the bag after its
-  first three symbols), the felt level and the mood are kept as a dream
-  seed. A vector, not a word; at most 48; let go after five nights.
-- **The trace.** At night each seed's key is handed to the store and
-  memory's top vote is taken as the next symbol, the thought advances
-  with it, and the trace ends where memory has nothing or at a new line.
-  No trunk vote, no stamina, no writes: what the store holds, in its own
-  words, blends and slips included. What never entered the store cannot
-  be consolidated.
+- **Where a dream starts: the memory itself.** Nothing is kept on the
+  body's behalf, no index of moments or lines (the user judged such an
+  index a cheat, mid day 14, and it was removed the same hour). At night
+  each band's store is asked what it holds most strongly: the leading
+  key directions of its matrix, each turned back into a context the
+  store can be queried with (the key's preimage under the random-feature
+  lift, found by a few steps of descent), ranked by the vote it draws.
+  Spontaneous reactivation, as near as a matrix memory allows; salience
+  is already inside the matrix, since writes are scaled by surprise.
+- **The trace.** From each such context memory's top vote is taken as
+  the next symbol, the thought advances with it, and the trace ends where
+  memory has nothing. No trunk vote, no stamina, no writes: what the
+  store holds, in its own words, blends and slips included. What never
+  entered the store cannot be consolidated.
 - **NREM: the hippocampus leads.** The body runs over the trace as
   heard, teacher-forced, with the hippocampus on (its read drives the
   council as by day), and the lesson lands on the cortex's OWN logits,
@@ -525,12 +529,13 @@ at 0.82 across one such night).
   the cortex learns to foresee it.
 - **The gauge.** Before and after the night, the trunk alone (memory
   set aside, teacher-forced) predicts each trace: the fraction it gets
-  right on this day's seeds is uptake, on older seeds retention. The
-  sleep result reports both, with the traces dreamt and the REM cosine.
+  right is uptake. Retention is read by `scripts/trunk_alone.py` on a
+  scratch copy, with the known cues. The sleep result reports the
+  traces dreamt, the steps, the REM cosine and the gauge.
 
 Flags: `--night-rounds 2 --night-rem 8 --night-sigreg 0.1 --night-scale
-1.0 --seed-cap 48 --seed-nights 5`; the REM organ is `pfc_pred`, grafted
-at default init onto the living body. Measured on a scratch copy of the
+1.0 --night-starts 48`; the REM organ is `pfc_pred`, grafted at default
+init onto the living body. Measured on a scratch copy of the
 day-13 body before the first served night (CPU): three known lines
 typed with smiles gave two seeds; their traces came back from the store
 alone, " will goong in then I gothen Igoin then Igo n" (48 symbols,

@@ -805,13 +805,9 @@ class ScanLM(nn.Module):
                     was_word = torch.where(ear, is_sym, was_word)
                 else:
                     quiet_l.append(torch.zeros_like(is_sym))
+                # every symbol written by either hand enters the thought (the three-hands
+                # rule that kept the mouth's noise out was removed 2026-09-02: no rules)
                 noise = torch.zeros_like(is_sym)
-                if who is not None:
-                    # the diary's three hands: the ear (0) and the mouth-from-memory (2)
-                    # carry the thought; the mouth's noise (1) is not part of it and
-                    # does not fade it either — only silence fades a thought
-                    noise = (who[:, t_].to(tk.device) == 1) & is_sym
-                    is_sym = is_sym & ~noise
                 brk = torch.zeros_like(is_sym)
                 for b_ in getattr(self, "kc_break_ids", ()):
                     brk = brk | (tk == int(b_))
@@ -1550,8 +1546,8 @@ class ScanLM(nn.Module):
                 # memory instead of running on its own alias ("goneeeee")
                 is_word = is_word | qm.to(tokens.device)
             smask = smask * is_word.to(smask.dtype)
-        if who is not None and getattr(self, "speakers", 0) > 0:
-            smask = smask * (who.to(smask.device) == 0).to(smask.dtype)   # only the ear's symbols become memories
+        # every symbol written by either hand becomes a memory (the ear-only write rule
+        # was removed 2026-09-02: no rules; who wrote it stays a sense, not a law)
         if kc:
             smask = smask * (bag_excl.norm(dim=-1) > 1e-6).to(smask.dtype)   # no context, no key: not stored
             for b_ in getattr(self, "kc_break_ids", ()):

@@ -48,10 +48,10 @@ and follows the child's attention rather than a schedule.
   word or expansion (day 12: five smiles set from a held 2 to 2 were
   never felt, and trust bled 7.9 to 7.2 until the face was relaxed). A
   correct completion after a cue earns the same smile, before and after
-  the night alike. Since day 14 every line you write is indexed by the
-  hippocampus as a dream seed by itself, and the night replays it from
-  memory into the weights; a felt smile on a line only raises its
-  priority. So no smile is needed for quiet, and none should be given:
+  the night alike. Since day 14 the night starts its dreams from what
+  the memory itself holds most strongly and replays that into the
+  weights; no index of lines or moments is kept, and your smiles play
+  no part in it. So no smile is needed for quiet, and none should be given:
   a smile lands as a dose on its choices of the last six seconds, and
   when it is silent those choices are all silence (day 14: eight smiles
   at quiet in six minutes took its own top symbol from silence at 0.16

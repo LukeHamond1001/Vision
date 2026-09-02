@@ -57,22 +57,11 @@ class Diary(O.Organism):
         self.stream = collections.deque(maxlen=96)        # (id, who) of what was written, both hands
         self.page_base = 0                                # items dropped from the front of the page
         _ex = ((self.state_meta.get("life") or {}).get("extra") or {})
-        # THE HIPPOCAMPAL INDEX (2026-09-02, the user's law: the cortex learns only from
-        # hippocampal traces): every felt face tags the moment — the memory bag's key at
-        # that tick, the felt level, the mood. The night dreams from these keys; no page,
-        # no transcript, ever reaches the weights. Seeds are let go after a few nights.
-        self.seeds = []
-        for s_ in ((_ex.get("seeds") or []) if isinstance(_ex, dict) else []):
-            try:
-                self.seeds.append({"key": torch.tensor(s_["key"], dtype=torch.float32),
-                                   "felt": int(s_["felt"]), "mood": float(s_.get("mood", 0.0)),
-                                   "nights": int(s_.get("nights", 0)), "day": int(s_.get("day", 0))})
-            except Exception:
-                pass
+        # THE NIGHT (2026-09-02, the user's law): the cortex learns only from hippocampal
+        # traces, and no index is kept on the body's behalf — no page, no transcript, no
+        # list of lines. A dream starts where the memory itself is strongest (the store's
+        # own key directions, below), and what follows is what the store holds.
         self.night_no_page = True
-        self._th_n, self._th_key = 0, None                # the thought's first symbols: where a dream starts
-        self._th_seed = None                              # the seed of the line being written (every line is indexed)
-        self._nl = self.tok.token_to_id("\n")
         self.m.reset_bag(self.st) if hasattr(self.m, "reset_bag") else None
         threading.Thread(target=self._loop, daemon=True).start()
 
@@ -113,22 +102,6 @@ class Diary(O.Organism):
         with torch.no_grad():
             lg, self.st, _ = self.m(torch.tensor([[u]], device=self.dev), self.st,
                                     press_levels=pl, affect=aff, who=self.who0)
-        # THE HIPPOCAMPAL INDEX: every line the ear writes is an episode and is indexed as a
-        # dream seed by itself — the bag's key after its first (up to three) symbols — with
-        # the mood of the moment; a felt face on the line raises its charge, so the night
-        # dreams the charged lines first, but nothing heard goes unindexed
-        if self._nl is not None and u == self._nl:
-            self._th_n, self._th_key, self._th_seed = 0, None, None
-        elif u >= 11 and u != self.sil:
-            self._th_n += 1
-            if self._th_n <= 3 and isinstance(self.st, dict) and self.st.get("bag_state") is not None:
-                self._th_key = self.st["bag_state"][0].detach().float().cpu().clone()
-                if self._th_seed is None:
-                    self._th_seed = {"key": self._th_key, "felt": 0, "mood": round(float(self.mood), 2),
-                                     "nights": 0, "day": int(self.day_n)}
-                    self._add_seed(self._th_seed)
-                else:
-                    self._th_seed["key"] = self._th_key
         its_face = self._face_lesson(face)
         # the mouth chooses: its own logits, memory's vote inside them
         v = lg[0, -1].float().clone()
@@ -147,10 +120,8 @@ class Diary(O.Organism):
         backed = bool(_lv and _lv[1] and int(_lv[1][0]) == nxt and nxt != self.sil
                       and mem_max >= float(getattr(self.a, "store_boost_min", 0.0) or 0.0))
         with torch.no_grad():
-            # a memory letter continues the thought only when your hand is still;
-            # while you write, its letters (shadow or noise) stay out of the thought
-            _, self.st, _ = self.m(torch.tensor([[nxt]], device=self.dev), self.st, affect=aff,
-                                    who=(self.who2 if (backed and u == self.sil) else self.who1))
+            # its symbol enters the stream as its own (speaker 1), whatever it came from
+            _, self.st, _ = self.m(torch.tensor([[nxt]], device=self.dev), self.st, affect=aff, who=self.who1)
         self._prev_mouth = nxt
         if nxt != self.sil:
             # speaking costs: each symbol adds stress (half-life 120 s); stress
@@ -172,7 +143,6 @@ class Diary(O.Organism):
             for k_, item in enumerate(reversed(list(self.credit)[-12:])):
                 item[1] += felt * (0.8 ** k_)
             self.mood = max(-6.0, min(6.0, self.mood + 0.5 * felt))
-            self._capture_seed(felt)
             self._dose_choices()
         self.ticks += 1
         if len(self.page) > 40000:                 # a bounded page: the front falls away, indices stay absolute
@@ -264,43 +234,65 @@ class Diary(O.Organism):
                     "lived": len(self.day_buf)}
 
     def _life_extra(self):
-        cap = int(getattr(self.a, "seed_cap", 48) or 48)
-        return {"seeds": [{"key": [round(float(v), 5) for v in s_["key"].tolist()], "felt": s_["felt"],
-                           "mood": s_["mood"], "nights": s_["nights"], "day": s_["day"]}
-                          for s_ in self.seeds[-cap:]]}
+        return {}
 
-    # ---- the hippocampal index and the night ----
-    def _add_seed(self, seed):
-        """index an episode; when the index is full the least charged of the oldest
-        already-dreamt seeds goes first, then the least charged of the oldest day"""
-        if float(seed["key"].norm()) < 1e-6:
-            return
-        self.seeds.append(seed)
-        cap = int(getattr(self.a, "seed_cap", 48) or 48)
-        charge = lambda s_: abs(s_["felt"]) + abs(s_["mood"])
-        while len(self.seeds) > cap:
-            old = [i for i, s_ in enumerate(self.seeds) if s_["nights"] > 0 and s_ is not seed]
-            pool = old if old else [i for i in range(len(self.seeds)) if self.seeds[i] is not seed]
-            i = min(pool, key=lambda i_: (self.seeds[i_]["day"], charge(self.seeds[i_])))
-            del self.seeds[i]
+    # ---- the night ----
+    def _dream_starts(self, n):
+        """where a dream starts, from the memory itself: the strongest key directions of
+        each band's store (its own structure; nothing is kept on its behalf), each turned
+        back into a context the store can be queried with, ranked by the strength of the
+        vote it draws. Spontaneous reactivation, as near as a matrix memory allows."""
+        m = self.m
+        M = self.st.get("M") if isinstance(self.st, dict) else None
+        if not M:
+            return []
+        E = m.embed.weight.detach().float().cpu()
+        floor = float(getattr(self.a, "store_boost_min", 0.0) or 0.0)
+        norms = {k: float(v.abs().sum()) for k, v in M.items()}
+        tot = sum(norms.values()) or 1.0
+        starts = []
+        for k, Mk in M.items():
+            share = int(round(n * norms[k] / tot)) if norms[k] > 0 else 0
+            if share <= 0 or str(k) not in m.stores:
+                continue
+            A = Mk[0].detach().float().cpu()                       # [d, D]: values by lifted keys
+            q = max(1, min(share, min(A.shape) - 2))
+            try:
+                U, S, V = torch.svd_lowrank(A, q=q, niter=4)       # V [D, q]: the key directions
+            except Exception:
+                continue
+            stn = m.stores[str(k)]
+            P = stn.proj.detach().float().cpu(); ph = stn.phase.detach().float().cpu()
+            for j in range(V.shape[1]):
+                best = None
+                for sign in (1.0, -1.0):                            # a singular direction has no sign of its own
+                    u = sign * V[:, j]
+                    x = torch.nn.functional.normalize(P.t() @ u, dim=0).clone().requires_grad_(True)
+                    opt = torch.optim.Adam([x], lr=0.05)
+                    for _ in range(40):                             # the store's key, turned back into a context
+                        lift = torch.nn.functional.normalize(torch.cos(P @ torch.nn.functional.normalize(x, dim=0) + ph), dim=0)
+                        loss = 1.0 - (lift * u).sum()
+                        opt.zero_grad(); loss.backward(); opt.step()
+                    with torch.no_grad():
+                        xn = torch.nn.functional.normalize(x, dim=0)
+                        lift = torch.nn.functional.normalize(torch.cos(P @ xn + ph), dim=0)
+                        votes = (A @ lift) @ E.t()
+                        votes[:11] = float("-inf")
+                        v = float(votes.max())
+                    if best is None or v > best[0]:
+                        best = (v, xn.detach().clone())
+                if best is not None and best[0] >= floor:
+                    starts.append((best[0], k, best[1]))
+        starts.sort(key=lambda s_: -s_[0])
+        return starts[:n]
 
-    def _capture_seed(self, felt):
-        """a felt face charges the episode being lived: the line in progress (or the last
-        line, until the next new line) takes the felt level, so the night dreams it first"""
-        if int(felt) == 0 or self._th_seed is None:
-            return
-        if abs(int(felt)) >= abs(int(self._th_seed.get("felt", 0))):
-            self._th_seed["felt"] = int(felt)
-        self._th_seed["mood"] = round(float(self.mood), 2)
-
-    def _dream_trace(self, seed, max_len=48):
-        """the hippocampus replays: from a felt moment's key, memory's top vote is taken as
-        the next symbol, the thought advances with it, and the trace ends where memory has
-        nothing (or at a new line). No trunk vote, no stamina, no writes: what the store
-        holds, in its own words."""
+    def _dream_trace(self, key, max_len=48):
+        """the hippocampus replays: from a context, memory's top vote is taken as the next
+        symbol, the thought advances with it, and the trace ends where memory has nothing.
+        No trunk vote, no stamina, no writes: what the store holds, in its own words."""
         m = self.m
         st = m.lane_state(self.st, 0)
-        key = seed["key"].to(self.dev)
+        key = key.to(self.dev)
         edt = m.embed.weight.dtype
         st["bag_state"] = key.unsqueeze(0).to(edt)
         st["bag_prev"] = torch.nn.functional.normalize(key.unsqueeze(0), dim=-1).to(edt)
@@ -309,7 +301,6 @@ class Diary(O.Organism):
         wo = getattr(m, "store_write_off", False); m.store_write_off = True
         ro = m.store_read_off; m.store_read_off = False
         floor = float(getattr(self.a, "store_boost_min", 0.0) or 0.0)
-        brk = set(int(b_) for b_ in (getattr(m, "kc_break_ids", ()) or ()))
         ids, strengths = [], []
         try:
             with torch.no_grad():
@@ -320,19 +311,19 @@ class Diary(O.Organism):
                     if not lv or not lv[1]:
                         break
                     top, val = int(lv[1][0]), float(lv[0][0])
-                    if top < 11 or val < floor or top in brk:
+                    if top < 11 or val < floor:
                         break
                     ids.append(top); strengths.append(round(val, 2))
-                    x, who = torch.tensor([[top]], device=self.dev), self.who2
+                    x, who = torch.tensor([[top]], device=self.dev), self.who0   # replayed as heard
         finally:
             m.store_write_off = wo; m.store_read_off = ro
         return ids, strengths
 
-    def _student(self, ids, felt, mem_on):
-        """the cortex over a trace, teacher-forced, the trace as heard (the ear's hand),
-        the felt face riding along as affect and as the face lesson; memory on for NREM
-        (the hippocampus leads, the lesson lands on the trunk's own logits), memory set
-        aside for REM (the PFC alone drives what the cortex must foresee)"""
+    def _student(self, ids, mem_on):
+        """the cortex over a trace, teacher-forced, the trace as heard (the ear's hand);
+        memory on for NREM (the hippocampus leads, the lesson lands on the trunk's own
+        logits), memory set aside for REM (the PFC alone drives what the cortex must
+        foresee). No face rides along: the face is learned by day."""
         m = self.m
         x = torch.tensor([[self.sil] + ids[:-1]], device=self.dev)
         y = torch.tensor(ids, device=self.dev)
@@ -341,103 +332,88 @@ class Diary(O.Organism):
         st["mouth_floor"] = False
         ro, wo = m.store_read_off, getattr(m, "store_write_off", False)
         m.store_read_off, m.store_write_off = (not mem_on), True
-        af = torch.full((1, x.shape[1]), float(felt), device=self.dev)
         try:
-            lg, _, _ = m(x, st, affect=af, face_target=af, who=torch.zeros_like(x))
+            lg, _, _ = m(x, st, who=torch.zeros_like(x))
         finally:
             m.store_read_off, m.store_write_off = ro, wo
         return lg, y
 
     def _pop_side_losses(self):
-        for name in ("pop_value_loss", "pop_plan_aux", "pop_ponder_loss", "pop_route_aux", "pop_bg_loss"):
+        for name in ("pop_value_loss", "pop_face_loss", "pop_plan_aux", "pop_ponder_loss", "pop_route_aux", "pop_bg_loss"):
             if hasattr(self.m, name):
                 getattr(self.m, name)()
 
     def _gauge(self, traces, cap=24):
         """the morning gauge: over each trace, the trunk ALONE (memory set aside, teacher-
-        forced) — the fraction of the hippocampus's symbols it predicts itself. New seeds
-        measure uptake, older seeds retention."""
+        forced) — the fraction of the hippocampus's symbols it predicts itself (uptake)."""
         m = self.m; m.eval()
         ro, wo = m.store_read_off, getattr(m, "store_write_off", False)
         m.store_read_off, m.store_write_off = True, True
-        out = {"new": [], "old": []}
+        hits_all, n_all = 0, 0
         k = 3
         try:
             with torch.no_grad():
-                for seed, ids in traces[:cap]:
+                for ids in traces[:cap]:
                     if len(ids) < k + 2:
                         continue
                     st = m.init_state(1, self.dev); st["mouth_floor"] = False
                     x = torch.tensor([[self.sil] + ids[:k]], device=self.dev)
                     lg, st, _ = m(x, st, who=torch.zeros_like(x))
-                    hits = 0
                     for j in range(k, len(ids)):
                         v = lg[0, -1].float().clone(); v[:11] = float("-inf")
-                        hits += int(int(v.argmax()) == ids[j])
+                        hits_all += int(int(v.argmax()) == ids[j]); n_all += 1
                         x = torch.tensor([[ids[j]]], device=self.dev)
                         lg, st, _ = m(x, st, who=torch.zeros_like(x))
-                    out["old" if seed["nights"] > 0 else "new"].append(hits / float(len(ids) - k))
         finally:
             m.store_read_off, m.store_write_off = ro, wo
-        mean = lambda xs: (round(sum(xs) / len(xs), 3) if xs else None)
-        return {"new": mean(out["new"]), "old": mean(out["old"]), "n_new": len(out["new"]), "n_old": len(out["old"])}
+        return {"uptake": (round(hits_all / n_all, 3) if n_all else None), "symbols": n_all}
 
     def _dream_night(self):
         """THE NIGHT (2026-09-02, the user's law). The cortex learns only from hippocampal
-        traces: each felt moment's key is handed to the store, which replays what it holds
-        from there (the trace); NREM runs the body over the trace with the hippocampus leading (its read on) and
-        teaches the trunk's own logits the trace; REM runs it with the hippocampus silent
-        (memory set aside) and teaches the cortex stream to forecast the band states it
-        receives at the next symbol (targets stop-grad, SIGReg
-        as the collapse guard). Seeds fade after a few nights; the gauge is taken before
-        and after. Nothing lived reaches the weights except through the store."""
+        traces, and nothing is kept on its behalf: a dream starts where the store itself is
+        strongest, and what follows is what the store holds. NREM runs the body over each
+        trace with the hippocampus leading (its read on) and teaches the trunk's own logits
+        the trace; REM runs it with the hippocampus silent (memory set aside) and teaches the
+        cortex stream to forecast the band states it receives at the next symbol (targets
+        stop-grad, SIGReg as the collapse guard). The gauge is taken before and after."""
         import torch.nn.functional as F
         a = self.a
-        if not self.seeds:
-            return {"seeds": 0, "note": "no felt moments to dream from"}
         m = self.m; m.eval()
-        charge = lambda s_: abs(s_["felt"]) + abs(s_["mood"]) + (0.5 if s_["nights"] == 0 else 0.0)
-        order = sorted(self.seeds, key=charge, reverse=True)
+        starts = self._dream_starts(int(getattr(a, "night_starts", 48) or 48))
+        if not starts:
+            return {"starts": 0, "note": "the store holds nothing to replay"}
         traces, empty = [], 0
-        for s_ in order:
-            ids, _ = self._dream_trace(s_)
+        for strength, k, x in starts:
+            ids, _ = self._dream_trace(x)
             if len(ids) >= 2:
-                traces.append((s_, ids))
+                traces.append(ids)
             else:
                 empty += 1
         if not traces:
-            for s_ in self.seeds:
-                s_["nights"] += 1
-            self.seeds = [s_ for s_ in self.seeds if s_["nights"] < int(getattr(a, "seed_nights", 5) or 5)]
-            return {"seeds": len(order), "traces": 0, "empty": empty, "note": "the store had nothing to replay"}
+            return {"starts": len(starts), "traces": 0, "empty": empty, "note": "the store's strongest keys drew no trace"}
         gauge_before = self._gauge(traces)
         scale = float(getattr(a, "night_scale", 1.0) or 1.0)
         nrem = rem = 0
         m.train()
         for _ in range(int(getattr(a, "night_rounds", 2) or 0)):
-            for s_, ids in traces:
+            for ids in traces:
                 # NREM: the hippocampus leads — its read is on, driving the council as by day —
                 # and the lesson lands on the cortex's OWN logits, memory's vote left out, so
                 # the trunk must come to carry the trace itself
-                lg, y = self._student(ids, s_["felt"], mem_on=True)
+                lg, y = self._student(ids, mem_on=True)
                 own = getattr(m, "_last_logits_own", None)
                 own = lg if own is None else own
                 self.opt.zero_grad(set_to_none=True)
                 loss = F.cross_entropy(own[0].float(), y) * scale
-                fl = m.pop_face_loss() if hasattr(m, "pop_face_loss") else None
-                if fl is not None:
-                    loss = loss + 0.5 * fl
                 self._pop_side_losses()
                 loss.backward(); self.opt.step(); self.n_steps += 1; nrem += 1
         cos_log = []
         sig = float(getattr(a, "night_sigreg", 0.1) or 0.0)
-        for s_, ids in traces[:int(getattr(a, "night_rem", 8) or 0)]:
+        for ids in traces[:int(getattr(a, "night_rem", 8) or 0)]:
             # REM: the hippocampus is silent — memory set aside, the PFC (the bands) drives —
             # and the cortex stream forecasts the band states it receives next along the trace
-            self._student(ids, s_["felt"], mem_on=False)
+            self._student(ids, mem_on=False)
             loss, cosv = m.rem_pfc_loss(sigreg=sig, slot_from=1) if hasattr(m, "rem_pfc_loss") else (None, None)
-            if hasattr(m, "pop_face_loss"):
-                m.pop_face_loss()
             self._pop_side_losses()
             if loss is None:
                 continue
@@ -446,23 +422,13 @@ class Diary(O.Organism):
             cos_log.append(cosv)
         m.eval()
         gauge_after = self._gauge(traces)
-        dreamt = set(id(s_) for s_, _ in traces)
-        for s_ in self.seeds:
-            if id(s_) in dreamt:
-                s_["nights"] += 1
-        keep_n = int(getattr(a, "seed_nights", 5) or 5)
-        self.seeds = [s_ for s_ in self.seeds if s_["nights"] < keep_n and (id(s_) in dreamt or s_["nights"] == 0)]
-        dec = lambda ids: self.tok.decode([i_ for i_ in ids])
-        return {"seeds": len(order), "traces": len(traces), "empty": empty,
-                "mean_len": round(sum(len(i_) for _, i_ in traces) / len(traces), 1),
-                "examples": [dec(i_)[:32] for _, i_ in traces[:6]],
+        dec = lambda ids: self.tok.decode(list(ids))
+        return {"starts": len(starts), "traces": len(traces), "empty": empty,
+                "mean_len": round(sum(len(i_) for i_ in traces) / len(traces), 1),
+                "examples": [dec(i_)[:32] for i_ in traces[:8]],
                 "nrem_steps": nrem, "rem_steps": rem,
                 "rem_cos": (round(sum(cos_log) / len(cos_log), 3) if cos_log else None),
                 "gauge": {"before": gauge_before, "after": gauge_after}}
-
-    def _clean_tail(self, seq):
-        """a diary has no turns to clean: the night replays the day as lived"""
-        return list(seq), 0
 
     def night(self):
         self.awake_ticks = False
