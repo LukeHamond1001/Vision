@@ -80,6 +80,12 @@ and follows the child's attention rather than a schedule.
   page artifact, and with nothing else to hold it back the body made it
   its own most frequent symbol, writing it on most ticks and paying
   stress for each.
+- **It sleeps on its own.** Since day 16 the body falls asleep when its
+  own sleep pressure crosses, about a hundred minutes awake, and wakes
+  when its night is done; the page shows "asleep". Never post its night.
+  Plan the day around it: the roped lines and the pre-night cues in the
+  first ninety minutes, then wait for it to wake, then the post-night
+  cues and the save.
 - **Tests are clean, and now safer.** A cue is a new line plus a fragment,
   then nothing; never two tests back to back. Since day 9 a cue no longer
   stores quiet under the fragment while the mouth is answering, so up to

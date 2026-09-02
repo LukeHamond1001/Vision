@@ -65,6 +65,14 @@ class Diary(O.Organism):
         # list of lines. A dream starts where the memory itself is strongest (the store's
         # own key directions, below), and what follows is what the store holds.
         self.night_no_page = True
+        # SLEEP BY ITS OWN FATIGUE (2026-09-02, the user's order): sleep pressure rises with
+        # every waking tick (Process S, adenosine) and the body falls asleep by itself when
+        # it crosses the switch; nobody posts its night. Persisted across restarts.
+        self.wake_ticks = int(getattr(a, "wake_ticks", 12000) or 12000)
+        self.sleep_pressure = int(_ex.get("sleep_pressure", 0) or 0) if isinstance(_ex, dict) else 0
+        self.nights = int(_ex.get("nights", 0) or 0) if isinstance(_ex, dict) else 0
+        self.asleep = False
+        self.last_night = None
         self.m.reset_bag(self.st) if hasattr(self.m, "reset_bag") else None
         threading.Thread(target=self._loop, daemon=True).start()
 
@@ -148,6 +156,10 @@ class Diary(O.Organism):
             self.mood = max(-6.0, min(6.0, self.mood + 0.5 * felt))
             self._dose_choices(level=int(pl[0, 0]) if pl is not None else 0)
         self.ticks += 1
+        self.sleep_pressure += 1
+        if self.sleep_pressure >= self.wake_ticks and len(self.day_buf) >= 65:
+            # the switch flips: it falls asleep on its own, and wakes when the night is done
+            self._sleep_now()
         if len(self.page) > 40000:                 # a bounded page: the front falls away, indices stay absolute
             drop = 20000; del self.page[:drop]; self.page_base += drop
         self.page.append(((self.tok.decode([u]) if u != self.sil else ""), 0, round(face, 2),
@@ -251,10 +263,12 @@ class Diary(O.Organism):
             k = max(0, int(since) - self.page_base)
             return {"page": self.page[k:], "n": self.page_base + len(self.page), "last": self.last,
                     "queued": len(self.queue), "awake": self.awake_ticks, "period": self.period,
+                    "asleep": self.asleep, "sleep_pressure": int(self.sleep_pressure), "wake_ticks": self.wake_ticks,
+                    "nights": int(self.nights), "last_night": self.last_night,
                     "lived": len(self.day_buf)}
 
     def _life_extra(self):
-        return {}
+        return {"sleep_pressure": int(self.sleep_pressure), "nights": int(self.nights)}
 
     # ---- the night ----
     def _dream_starts(self, n):
@@ -458,8 +472,17 @@ class Diary(O.Organism):
                 "rem_cos": (round(sum(cos_log) / len(cos_log), 3) if cos_log else None),
                 "gauge": {"before": gauge_before, "after": gauge_after}}
 
+    def _sleep_now(self):
+        """the body's own night: called from the tick when its sleep pressure crosses"""
+        try:
+            self.queue.clear()                       # a sleeping child hears nothing typed at it
+            self.night()
+        except Exception as e:
+            self.last = {"error": "night: " + str(e)[:160], "tick": self.ticks}
+
     def night(self):
         self.awake_ticks = False
+        self.asleep = True
         try:
             with self.lock:
                 if not self.session:
@@ -468,11 +491,18 @@ class Diary(O.Organism):
                 res = self.sleep()
                 if isinstance(res, dict) and dream is not None:
                     res["dream"] = dream
+                if isinstance(res, dict) and not res.get("error"):
+                    self.sleep_pressure = 0
+                    self.nights += 1
+                    self.last_night = {"tick": self.ticks, "night": self.nights,
+                                       "dream": res.get("dream"), "lived_tokens": res.get("lived_tokens"),
+                                       "store_carried": res.get("store_carried")}
                 if hasattr(self.m, "reset_bag"):
                     self.m.reset_bag(self.st)
                 self.level = 0
                 self.credit.clear()
         finally:
+            self.asleep = False
             self.awake_ticks = True
         return res
 

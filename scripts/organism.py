@@ -2685,6 +2685,8 @@ def build_parser():
                     help="REM's collapse guard: SIGReg weight on the cortex stream")
     ap.add_argument("--night-scale", type=float, default=1.0,
                     help="the night's loss scale over the live rate")
+    ap.add_argument("--wake-ticks", type=int, default=12000,
+                    help="the diary: waking ticks until sleep pressure flips the switch (12000 = 100 minutes)")
     ap.add_argument("--value-w", type=float, default=0.5,
                     help="the diary: weight of the value ladder's lesson (reward at every band's timescale)")
     ap.add_argument("--night-starts", type=int, default=48,

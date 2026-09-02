@@ -702,6 +702,22 @@ the fast band's value error was 0.08 within the window, and the ladder
 held lived pairs for bands 3 to 6 (32, 32, 13 and 1) after a few minutes
 of life. Flag: `--value-w 0.5`, the weight of the ladder's lesson.
 
+## Sleep by its own fatigue (2026-09-02, evening)
+
+Nobody posts its night any more. Sleep pressure rises by one with every
+waking tick (Process S, adenosine in a body that lives on a clock) and
+when it crosses the switch, 12,000 ticks or a hundred minutes awake, the
+body falls asleep by itself: the typing queue is emptied (a sleeping
+child hears nothing said at it), the night runs as built, the pressure
+returns to zero, and it wakes. The pressure is part of its life and
+survives a restart. The page reports "asleep", the pressure and the
+count of nights, so a caregiver sees it sleep and wake as a parent
+would; the caregiver's /sleep is now the supervisor's plumbing for tests
+on scratch copies and nothing else. The one constant is the switch,
+`--wake-ticks 12000`, physiology disclosed. With it, the last decision
+the environment made for the body is gone: what it hears is the
+caregiver's, when it sleeps is its own.
+
 ## Status
 
 - model: speaker channel, ear-writes by speaker, running bag with
@@ -723,7 +739,8 @@ of life. Flag: `--value-w 0.5`, the weight of the ladder's lesson.
 python3 scripts/diary.py data/organism_diary_0p5b.pt data/tok_char.json --dev mps --port 8018 \
     --temp 1.0 --store-read-beta 0 --store-boost 1 --store-boost-min 0.15 \
     --live-lr 1e-5 --store-decay 0.9 --save data/organism_diary_0p5b.pt --diary-period 0.5 \
-    --diary-cost 0.12 --cort-k 1.0 --value-w 0.5 --night-rounds 2 --night-rem 8 --night-sigreg 0.1 --night-starts 48
+    --diary-cost 0.12 --cort-k 1.0 --value-w 0.5 --wake-ticks 12000 \
+    --night-rounds 2 --night-rem 8 --night-sigreg 0.1 --night-starts 48
 ```
 
 The live rate is ten times the word body's on purpose: the first thing
