@@ -548,6 +548,39 @@ underr", "dog bigger do"). That is the zero the nights are measured
 from: everything it can say lives in the store, and nothing yet in the
 weights.
 
+## Three laws removed (2026-09-02, mid day 14): no fancy rules
+
+The user's order: no hand-written rules; find the architecture humans use
+and let it learn without little cheats. Removed from the serve, mid
+session, with the caregiver told:
+
+- **Memory's raised voice.** The rule that lifted memory's top symbol to
+  the silence logit plus an earned trust, and the six-logit "sure memory"
+  boost. Trust is gone with it. The mouth chooses from its own belief,
+  memory's vote inside it as the organ reads it, and only stress leans
+  it toward silence.
+- **Memory's amplification.** The serve-time store boost (four) and the
+  louder-when-unsure read (read beta) are set to one and zero: the
+  store's vote enters at its own learned strength (the per-band alpha,
+  which the nights now train), not at a volume a hand chose.
+- **A new line ends a thought.** The memory bag no longer resets at a
+  newline; a thought only fades.
+- **Your quiet is a memory.** The ear's first silence after a word is no
+  longer stored as a value. Nothing recalls a stop; only stamina ends a
+  run.
+
+Expected and accepted: near-total silence for a while, since the trunk
+alone says nothing and memory's raw vote does not beat its lean to
+silence. Speech has to grow back from the nights: the caregiver's lines,
+tagged by smiles, replayed from the hippocampus into the weights until
+the trunk's own logits carry them. What still stands, and is physiology
+rather than a rule: the cost of a symbol and its lean toward silence,
+the doses on its own choices under a felt face (absorb above 0.5,
+unlearn at or below -1.5, credit twelve ticks back at 0.8), the store's
+fade, the face lesson, the night's rate and rounds, and the sampling
+temperature (0.05), which is the one decoding choice left that a hand
+made and the next candidate to go.
+
 ## Status
 
 - model: speaker channel, ear-writes by speaker, running bag with
@@ -567,7 +600,7 @@ weights.
 
 ```bash
 python3 scripts/diary.py data/organism_diary_0p5b.pt data/tok_char.json --dev mps --port 8018 \
-    --temp 0.05 --store-read-beta 1.0 --store-boost 4 --store-boost-min 0.15 \
+    --temp 0.05 --store-read-beta 0 --store-boost 1 --store-boost-min 0.15 \
     --live-lr 1e-5 --store-decay 0.9 --save data/organism_diary_0p5b.pt --diary-period 0.5 \
     --diary-cost 0.12 --cort-k 1.0
 ```
@@ -578,14 +611,12 @@ attractor a trunk can fall into, so here the collapse the word body had
 to avoid is the lesson.
 
 The principle (the user's, 2026-09-02): the only restriction on the mouth
-is stamina. What remains: the bookkeeping marks it cannot emit (plumbing,
-not language); stress leaning it toward silence (0.5 logits per unit,
-applied before the memory rule) and weighing on mood; the face lesson
-every tick; a new line ends a thought. Not restrictions but memory's
-voice, disclosed: a sure memory speaks with one voice while the trunk is
-unsure (6 logits), and a memory is a reason to speak (memory's top symbol
-raised to at least the silence logit plus 4, so neither learned quiet nor
-stress cuts a recall short). The night replays the day as lived, silences
+is stamina, and no hand-written rules. What remains: the bookkeeping
+marks it cannot emit (plumbing, not language); stress leaning it toward
+silence (cort_k logits per unit) and weighing on mood; the face lesson
+every tick. Memory's voice is the organ's own: its read enters the logits
+at its learned strength, nothing raises it, and nothing resets or stores
+on the caregiver's behalf (the three laws removed mid day 14, above). The night replays the day as lived, silences
 included (runs kept to one tick), so a quiet tick can be learned as
 thinking time. Instruments per tick: its face, mood, stress, uncertainty,
 memory's votes, and the trunk's own top symbol with memory set aside (the

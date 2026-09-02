@@ -52,7 +52,10 @@ and follows the child's attention rather than a schedule.
   dreams from: it tags the line being written as a seed, and the night
   replays that line from the hippocampus into the weights. A day with no
   felt smile dreams nothing; a smile on a wrong line dreams the wrong
-  line.
+  line. From the afternoon of day 14 memory's voice is no longer raised
+  over silence and nothing resets its thought at a new line: expect long
+  silences and messier recall, and do not read either as a fault. The
+  smile rules do not change; the night is where its speech now grows.
 - **Stress is the budget.** Measured on day 11: a line costs about 0.18
   stress per character (it shadows under your hand and pays for every
   letter), forty seconds of quiet returns about 0.7, and whole-word

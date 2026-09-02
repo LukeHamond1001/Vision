@@ -47,16 +47,16 @@ class Diary(O.Organism):
         self._bans = [i for i in range(11) if i != self.sil]   # it may choose silence, never a mark
         if getattr(a, "sil_decay", None):
             self.m.kc_sil_decay = float(a.sil_decay)      # how long a thought lasts in silence
-        nl = self.tok.token_to_id("\n")
-        if nl is not None:
-            self.m.kc_break_ids = {int(nl)}               # a new line ends a thought
-        self.m.sil_id = int(self.sil)                     # your quiet after a thought is remembered
+        # THREE LAWS REMOVED (2026-09-02, the user's order): a new line no longer ends a
+        # thought (the bag only fades), your quiet is no longer stored as a memory, and
+        # memory's voice is no longer raised over silence (no trust, no sure-memory boost).
+        # The mouth chooses from its own belief, memory's vote inside it as the organ reads
+        # it; only stamina leans it to silence.
+        self.m.kc_break_ids = set()
+        self.m.sil_id = None
         self.stream = collections.deque(maxlen=96)        # (id, who) of what was written, both hands
         self.page_base = 0                                # items dropped from the front of the page
-        self.trust = float(getattr(a, "mem_trust", 4.0))  # memory's voice is EARNED: your face on its memory letters moves it
         _ex = ((self.state_meta.get("life") or {}).get("extra") or {})
-        if isinstance(_ex, dict) and _ex.get("trust") is not None:
-            self.trust = float(_ex["trust"])              # trust earned in earlier days carries over
         # THE HIPPOCAMPAL INDEX (2026-09-02, the user's law: the cortex learns only from
         # hippocampal traces): every felt face tags the moment — the memory bag's key at
         # that tick, the felt level, the mood. The night dreams from these keys; no page,
@@ -128,17 +128,8 @@ class Diary(O.Organism):
         mem_max = float(_lv[0][0]) if _lv and _lv[0] else 0.0
         if self.cortisol > 0:                      # speaking costs: stress favours silence
             v[self.sil] = v[self.sil] + float(getattr(self.a, "cort_k", 0.5)) * self.cortisol
-        if _lv and _lv[1] and int(_lv[1][0]) >= 11 and mem_max >= float(getattr(self.a, "store_boost_min", 0.0) or 0.0):
-            top = int(_lv[1][0])
-            if own_ent > 0.9:
-                v[top] = v[top] + float(getattr(self.a, "sure_mem", 6.0))   # a sure memory speaks with one voice
-            # a memory is a reason to speak, as far as you have trusted it and as far as it has
-            # the stamina: memory's top symbol is raised to the silence logit plus the trust your
-            # face has built, minus what stress has taken — so a tired mouth can fall silent even
-            # on a memory, and no run outlasts its stamina
-            voice = float(self.trust) - float(getattr(self.a, "cort_k", 0.5)) * float(self.cortisol)
-            if voice > 0.0:
-                v[top] = torch.maximum(v[top], v[self.sil] + voice)
+        # no hand-written voice for memory (removed 2026-09-02): its vote is already in the
+        # logits as the organ reads it, and the mouth chooses from that belief alone
         p1 = torch.softmax(v, -1)
         ent = float(-(p1 * (p1 + 1e-9).log()).sum() / math.log(max(2, p1.numel())))
         pr = torch.softmax(v / max(0.02, float(self.a.temp)), -1).cpu()
@@ -151,11 +142,6 @@ class Diary(O.Organism):
             _, self.st, _ = self.m(torch.tensor([[nxt]], device=self.dev), self.st, affect=aff,
                                     who=(self.who2 if (backed and u == self.sil) else self.who1))
         self._prev_mouth = nxt
-        # memory's voice must keep being earned: without praise, trust drifts back toward
-        # its starting value (about 0.06 a minute), so a saturated trust cannot pin the mouth
-        base = float(getattr(self.a, "mem_trust", 4.0))
-        if self.trust > base:
-            self.trust = max(base, self.trust - 0.0005)
         if nxt != self.sil:
             # speaking costs: each symbol adds stress (half-life 120 s); stress
             # favours silence (a physiological brake) and weighs a little on mood
@@ -192,8 +178,7 @@ class Diary(O.Organism):
                      "felt": felt, "said": self.tok.decode([nxt]) if nxt != self.sil else "", "backed": backed,
                      "own": ([self.tok.decode([self.m._last_own_top[0]]) if self.m._last_own_top[0] >= 11 else "<sil>",
                               round(self.m._last_own_top[1], 3)] if getattr(self.m, "_last_own_top", None) else None),
-                     "dose": getattr(self, "_last_dose", None), "doses": getattr(self, "n_doses", 0),
-                     "trust": round(self.trust, 2)}
+                     "dose": getattr(self, "_last_dose", None), "doses": getattr(self, "n_doses", 0)}
 
     def _dose_choices(self):
         """the only teacher is your face on what it actually did: choices
@@ -206,13 +191,6 @@ class Diary(O.Organism):
         neg = [i for i, it in enumerate(items) if it[1] <= -1.5]
         if not pos and not neg:
             return
-        # memory's voice is earned: praise on a memory-backed letter raises trust, a frown lowers it
-        for i in pos:
-            if len(items[i]) > 2 and items[i][2]:
-                self.trust = min(8.0, self.trust + 0.1)
-        for i in neg:
-            if len(items[i]) > 2 and items[i][2]:
-                self.trust = max(0.0, self.trust - 0.2)
         seq = list(self.stream)[-26:]                # the last thirteen ticks as lived, silences included (a short dose keeps the clock)
         if len(seq) < 4:
             for it in items: it[1] = 0.0
@@ -277,8 +255,7 @@ class Diary(O.Organism):
 
     def _life_extra(self):
         cap = int(getattr(self.a, "seed_cap", 48) or 48)
-        return {"trust": round(float(self.trust), 3),
-                "seeds": [{"key": [round(float(v), 5) for v in s_["key"].tolist()], "felt": s_["felt"],
+        return {"seeds": [{"key": [round(float(v), 5) for v in s_["key"].tolist()], "felt": s_["felt"],
                            "mood": s_["mood"], "nights": s_["nights"], "day": s_["day"]}
                           for s_ in self.seeds[-cap:]]}
 
