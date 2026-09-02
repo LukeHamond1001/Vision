@@ -1476,6 +1476,10 @@ class ScanLM(nn.Module):
             smask = smask * (who.to(smask.device) == 0).to(smask.dtype)   # only the ear's symbols become memories
         if kc:
             smask = smask * (bag_excl.norm(dim=-1) > 1e-6).to(smask.dtype)   # no context, no key: not stored
+            for b_ in getattr(self, "kc_break_ids", ()):
+                # the symbol that ends a thought is never a memory value: a cue fragment must not
+                # teach "and then the thought ends" (day 2 of the diary: cues taught the newline)
+                smask = smask * (tokens != int(b_)).to(smask.dtype)
         if st["chunk"] == 0:
             smask[:, 0] = 0.0                              # nothing before
         dopa = None
