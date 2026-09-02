@@ -2301,6 +2301,10 @@ class Organism:
         self.cortisol = 0.0          # a fresh wake carries no stress
         self._fill_goal_slots()
 
+    def _life_extra(self):
+        """what a subclass keeps beside the life (the diary: memory's trust)"""
+        return {}
+
     def save(self):
         torch.save({"model": self.m.state_dict(),
                     "step": self.state_meta.get("step"),
@@ -2318,7 +2322,8 @@ class Organism:
                              "budget_history": self._budget_history,
                              "day_n": self.day_n,
                              "saliences": self.saliences,
-                             "n_human_presses": self.n_human_presses}},
+                             "n_human_presses": self.n_human_presses,
+                             "extra": self._life_extra()}},
                    self.a.save)
         return {"saved": self.a.save, "live_steps": self.n_steps}
 

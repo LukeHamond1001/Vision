@@ -54,6 +54,9 @@ class Diary(O.Organism):
         self.stream = collections.deque(maxlen=96)        # (id, who) of what was written, both hands
         self.page_base = 0                                # items dropped from the front of the page
         self.trust = float(getattr(a, "mem_trust", 4.0))  # memory's voice is EARNED: your face on its memory letters moves it
+        _ex = ((self.state_meta.get("life") or {}).get("extra") or {})
+        if isinstance(_ex, dict) and _ex.get("trust") is not None:
+            self.trust = float(_ex["trust"])              # trust earned in earlier days carries over
         self.m.reset_bag(self.st) if hasattr(self.m, "reset_bag") else None
         threading.Thread(target=self._loop, daemon=True).start()
 
@@ -234,6 +237,9 @@ class Diary(O.Organism):
             return {"page": self.page[k:], "n": self.page_base + len(self.page), "last": self.last,
                     "queued": len(self.queue), "awake": self.awake_ticks, "period": self.period,
                     "lived": len(self.day_buf)}
+
+    def _life_extra(self):
+        return {"trust": round(float(self.trust), 3)}
 
     def _clean_tail(self, seq):
         """a diary has no turns to clean: the night replays the day as lived"""
