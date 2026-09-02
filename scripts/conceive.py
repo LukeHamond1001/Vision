@@ -30,6 +30,10 @@ def main():
     ap.add_argument("--content-keys", action="store_true", help="hippocampus keyed by the words themselves")
     ap.add_argument("--kernel", type=float, default=3.0, help="memory kernel sharpness (random-feature scale; the base had 1.4)")
     ap.add_argument("--tied-head", action="store_true", help="tie the head to the embedding (a random tied head copies its input; default untied)")
+    ap.add_argument("--kc-w", type=int, default=8, help="memory bag width in symbols (letters: 40)")
+    ap.add_argument("--kc-decay", type=float, default=0.7, help="memory bag decay per symbol (letters: 0.92)")
+    ap.add_argument("--speakers", type=int, default=0, help="2 for the diary body: two writers in one stream")
+    ap.add_argument("--sil-decay", type=float, default=0.0, help="diary: the memory bag fades by this per silent tick (0 = windowed word bag)")
     ap.add_argument("--seed", type=int, default=0)
     a = ap.parse_args()
     from tokenizers import Tokenizer
@@ -41,6 +45,11 @@ def main():
     scan["tie_embed"] = bool(a.tied_head)          # the mouth is not the ear
     if a.content_keys:
         scan["keyed_content"] = True
+        scan["kc_w"], scan["kc_decay"] = a.kc_w, a.kc_decay
+    if a.speakers:
+        scan["speakers"] = a.speakers
+    if a.sil_decay:
+        scan["kc_sil_decay"] = a.sil_decay
     torch.manual_seed(a.seed)
     m = ScanLM(V, d=a.d, n_layers=a.n_layers, n_heads=a.n_heads, max_T=64,
                clocks={int(k): v for k, v in CLOCKS.items()}, mlp="gelu", aux_trunk=0.2,
@@ -59,6 +68,7 @@ def main():
            "precision": "bf16", "clocks": CLOCKS, "scan": scan, "mlp": "gelu", "store": "matrix",
            "keyed": "hidden", "aux_trunk": 0.2, "gate_init": -2.0,
            "conceived": {"tokenizer": os.path.basename(a.tokenizer), "seed": a.seed, "from": "nothing",
+                         "diary": bool(a.speakers),
                          "kernel": a.kernel, "genome": {"beta": 0.85, "alpha": 1.0}}}
     life = {"model": m.state_dict(), "cfg": cfg, "step": 0, "nursery_steps": 0, "st": None,
             "life": {"facts": [], "study": [], "progress": {}, "surp_mu": None,

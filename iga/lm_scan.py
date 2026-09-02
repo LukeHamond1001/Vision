@@ -205,7 +205,8 @@ class ScanLM(nn.Module):
                  store_wipe=None, write_surprise=0.0, press_unwrite=False,
                  ponder_reenter="token", route_cap=0.125, tie_embed=False,
                  z_w=0.0, plan_m=0, rem_k=32, plan_cand=0,
-                 intrinsic_w=0.0, imag_k=0, keyed_content=False, **legacy):
+                 intrinsic_w=0.0, imag_k=0, keyed_content=False, kc_w=8, kc_decay=0.7,
+                 speakers=0, kc_sil_decay=0.0, **legacy):
         # removed organs (v16 refactor, Plan 49): vetoes (convicted),
         # ctx store + ctx_sparse (inert x4), novelty loop (unused).
         # Old checkpoints' cfgs still carry the kwargs — accepted ONLY
@@ -534,7 +535,20 @@ class ScanLM(nn.Module):
         # themselves, not by a learned projection of the state — recall
         # becomes a mechanism a body with no training already has
         self.keyed_content = bool(keyed_content)
-        self.kc_w, self.kc_decay = 8, 0.7
+        self.kc_w, self.kc_decay = int(kc_w), float(kc_decay)   # a word body: 8 / 0.7; a letter body: ~40 / 0.9
+        # THE DIARY (two writers, one stream): each position carries who wrote
+        # it; a fixed small speaker vector joins the embedding so a blank body
+        # can tell the two hands apart from birth; the ear (speaker 0) writes
+        # memories, the mouth (speaker 1) does not
+        self.speakers = int(speakers)
+        # the diary's bag is a running memory of symbols: silence lets it fade
+        # (each silent tick multiplies it by kc_sil_decay), so a pause
+        # separates one thought from the next without any turn mark
+        self.kc_sil_decay = float(kc_sil_decay)
+        if self.speakers > 0:
+            self.who_in = nn.Embedding(self.speakers, d)
+            with torch.no_grad():
+                self.who_in.weight.mul_(0.3)
         self.kc_skip = 11            # turn marks and press marks are not words: ids below this stay out of the bag
         self.tok_u = nn.Parameter(torch.zeros(vocab_size))
         self.stores = nn.ModuleDict()
@@ -752,6 +766,27 @@ class ScanLM(nn.Module):
         B, T = tokens.shape
         w = self.kc_w
         E = self.embed.weight.detach()
+        if self.kc_sil_decay > 0.0:
+            # running-state form (the diary): bag <- decay*bag + E[x] on a symbol,
+            # bag <- sil_decay*bag on a special (silence, marks)
+            skip = int(getattr(self, "kc_skip", 0))
+            prev = st.get("bag_state")
+            if prev is None or prev.shape[0] != B:
+                prev = torch.zeros(B, self.d, device=tokens.device, dtype=E.dtype)
+            excl_l, incl_l = [], []
+            bag = prev
+            for t_ in range(T):
+                excl_l.append(nn.functional.normalize(bag, dim=-1))
+                tk = tokens[:, t_]
+                is_sym = (tk >= skip).to(E.dtype).unsqueeze(-1)
+                bag = bag * (self.kc_decay * is_sym + self.kc_sil_decay * (1.0 - is_sym)) \
+                    + E[tk.clamp(min=0)] * is_sym
+                incl_l.append(nn.functional.normalize(bag, dim=-1))
+            st["bag_state"] = bag.detach()
+            incl = torch.stack(incl_l, dim=1)
+            excl = torch.stack(excl_l, dim=1)
+            st["bag_prev"] = incl[:, -1].detach()
+            return incl, excl
         tail = st.get("tail_toks")
         if tail is None or tail.shape[0] != B:
             tail = torch.full((B, w - 1), -1, dtype=torch.long, device=tokens.device)
@@ -776,6 +811,7 @@ class ScanLM(nn.Module):
         if isinstance(st, dict):
             st.pop("tail_toks", None)
             st.pop("bag_prev", None)
+            st.pop("bag_state", None)
 
     def _read(self, st, q_hidden, read_ok):
         """the hippocampus read: identity-space vectors from the
@@ -952,7 +988,7 @@ class ScanLM(nn.Module):
 
     # ---------------- forward ----------------
     def forward(self, tokens, st, scene_starts=None, press_levels=None, day_lanes=None,
-                affect=None, face_target=None):
+                affect=None, face_target=None, who=None):
         """press_levels [B, T] long (optional): the press level at each
         position from the stream's button EVENTS (1..4 = +1 +2 -1 -2) —
         the grade as a sense. Combined by max with the token LUT, so a
@@ -968,6 +1004,8 @@ class ScanLM(nn.Module):
         ticks = [[] for _ in range(max(N_BANDS, max(self.bands) + 1))]
         wcost = []
         emb = self.embed(tokens) * self.emb_scale        # [B, T, d] (tied: sqrt(d) read)
+        if who is not None and getattr(self, "speakers", 0) > 0:
+            emb = emb + self.who_in(who.to(emb.device).clamp(0, self.speakers - 1))
         if affect is not None and hasattr(self, "affect_in"):
             a_ = affect.to(emb.device, emb.dtype).clamp(-6.0, 6.0) / 6.0     # [B, T]
             prev = st.get("affect_prev")
@@ -1416,6 +1454,8 @@ class ScanLM(nn.Module):
             # turn marks and press marks are not words on the value side either:
             # a cue followed by the turn-end must not teach "this beginning ends here"
             smask = smask * (tokens >= int(getattr(self, "kc_skip", 0))).to(smask.dtype)
+        if who is not None and getattr(self, "speakers", 0) > 0:
+            smask = smask * (who.to(smask.device) == 0).to(smask.dtype)   # only the ear's symbols become memories
         if st["chunk"] == 0:
             smask[:, 0] = 0.0                              # nothing before
         dopa = None

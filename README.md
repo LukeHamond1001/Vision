@@ -102,6 +102,13 @@ seeding · `scripts/scan_chat.py` — terminal REPL · `pod_*.sh` /
 itself (day/night-structured lives with rewards in-stream, the diet
 the body was born on and the recipe the next body scales).
 
+## The diary body
+
+[DIARY_BODY.md](DIARY_BODY.md): two writers, one page, one symbol at a
+time on a shared clock; no turns, no end marks, silence is a symbol it
+must choose. The model has a speaker channel and a letter-level memory
+that fades in silence; the serve is next.
+
 ## The body from nothing
 
 A 0.5B conceived at random weights (`scripts/conceive.py`), its own
