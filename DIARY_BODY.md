@@ -740,6 +740,22 @@ the fast band's value error was 0.08 within the window, and the ladder
 held lived pairs for bands 3 to 6 (32, 32, 13 and 1) after a few minutes
 of life. Flag: `--value-w 0.5`, the weight of the ladder's lesson.
 
+**Secondary reinforcers (the same evening).** The doses are now driven
+by dopamine itself, the fast band's signed error of the world's reward,
+read at both halves of the tick. At a felt face that error is the face
+minus what was expected, so while the ladder is young a smile doses as
+before; as the ladder learns, an expected smile doses less, and a
+predictor of a smile fires the error before any face arrives and doses
+the choices that led there. Reward learned at long timescales thereby
+teaches choices at the short one. A burst of at least half a small
+smile pays the lesson (a budget for the backward pass, not a judgment).
+Two readings were chosen and are disclosed: the intrinsic reward, the
+body's own prediction success, stays out of the value ladder and rides
+the store's write gate as salience only, so the body never doses its own
+choices for having predicted them (the standing law that intrinsic value
+manages computation, never content); and the basal-ganglia gate now
+learns from the world's reward error rather than the total.
+
 ## Sleep by its own fatigue (2026-09-02, evening)
 
 Nobody posts its night any more. Sleep pressure rises by one with every

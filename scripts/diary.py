@@ -113,6 +113,8 @@ class Diary(O.Organism):
         with torch.no_grad():
             lg, self.st, _ = self.m(torch.tensor([[u]], device=self.dev), self.st,
                                     press_levels=pl, affect=aff, who=self.who0)
+        _rs = getattr(self.m, "_rpe_signed", None)
+        delta_ear = float(_rs[0, -1]) if _rs is not None and _rs.numel() else 0.0   # the world's reward error at the ear's step
         its_face = self._face_lesson(face)
         # the mouth chooses: its own logits, memory's vote inside them
         v = lg[0, -1].float().clone()
@@ -149,11 +151,19 @@ class Diary(O.Organism):
             self._who_now = 1; self.day_buf.append(nxt); self._rec_face(1); self._who_now = 0
         self.credit.append([nxt, 0.0, bool(backed and u == self.sil)])   # every tick is a choice, silence included; memory-backed noted
         if felt:
-            # eligibility: a caregiver answers two to four seconds after the line, so the
-            # trace reaches twelve ticks back (six seconds), decaying 0.8 per tick
-            for k_, item in enumerate(reversed(list(self.credit)[-12:])):
-                item[1] += felt * (0.8 ** k_)
             self.mood = max(-6.0, min(6.0, self.mood + 0.5 * felt))
+        # DOPAMINE DOSES (2026-09-02, the user's aim: reward at every timescale): the fast
+        # band's prediction error of the world's reward is the dopamine. At a felt face it
+        # is the face minus what was expected; at a predictor of a face it fires before
+        # any face (a secondary reinforcer, once the ladder has learned). Either way it
+        # spreads over the last twelve ticks (six seconds, 0.8 per tick), and a burst
+        # (|error| at least 0.5, the size of half a small smile) pays the lesson.
+        rs = getattr(self.m, "_rpe_signed", None)
+        delta = delta_ear + (float(rs[0, -1]) if rs is not None and rs.numel() else 0.0)   # both halves of the tick
+        if abs(delta) >= 1e-3:
+            for k_, item in enumerate(reversed(list(self.credit)[-12:])):
+                item[1] += delta * (0.8 ** k_)
+        if abs(delta) >= 0.5:
             self._dose_choices(level=int(pl[0, 0]) if pl is not None else 0)
         self.ticks += 1
         self.sleep_pressure += 1

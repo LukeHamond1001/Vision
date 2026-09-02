@@ -1102,14 +1102,18 @@ class ScanLM(nn.Module):
         lev = self.reward_lut[tokens]                    # [B, T] press level per token
         if press_levels is not None:
             lev = torch.maximum(lev, press_levels.to(lev.device, lev.dtype))
-        rew = self.reward_val[lev]                       # [B, T] its value
+        rew = self.reward_val[lev]                       # [B, T] its value: the felt face, from outside
+        rew_int = torch.zeros_like(rew)
         if self.intrinsic_w > 0:
             ps = st.get("prev_surp")
             if ps is not None and ps.shape == rew.shape:
                 # 49i: one chunk delayed (logits exist only after the
-                # decode); bounded like a press
-                rew = rew + (self.intrinsic_w
-                             * (self.surp_mu - ps)).clamp(-2.0, 2.0)
+                # decode); bounded like a press. Since 2026-09-02 the intrinsic
+                # reward stays OUT of the value ladder: the ladder foresees the
+                # world's reward, and prediction success manages computation only
+                # (it rides the write gate below as salience, never content)
+                rew_int = (self.intrinsic_w * (self.surp_mu - ps)).clamp(-2.0, 2.0)
+        self._rew_int = rew_int.detach()
         rew_cum = torch.cat([rew.new_zeros(B, 1), rew.cumsum(1)], dim=1)   # [B, T+1]
         rslots = self.reward_emb(lev) if self.reward_slot else None        # [B, T, d]
         if rslots is not None and self.reward_off:
@@ -1575,9 +1579,14 @@ class ScanLM(nn.Module):
             dopa = torch.stack([torch.zeros(B, device=dev) if r is None else r for r in rpe], dim=1)
         if self.dopamine > 0:
             # the dopamine gain per token rides the write mask: values > 1
-            # are applied after the strength sigmoid (clamped to 1 below)
-            smask = smask * (1.0 + self.dopamine * dopa)
+            # are applied after the strength sigmoid (clamped to 1 below);
+            # the world's prediction error and the body's own prediction
+            # success (salience) both strengthen encoding
+            smask = smask * (1.0 + self.dopamine * (dopa + rew_int.abs()))
         self._dopa_trace = None if dopa is None else dopa.detach()
+        # the SIGNED prediction error of the fast band, the world's reward only: the
+        # dopamine that doses the mouth's choices (secondary reinforcers, 2026-09-02)
+        self._rpe_signed = torch.stack([torch.zeros(B, device=dev) if r is None else r for r in rpe_s], dim=1).detach()
         if self.plasticity > 0:
             # SIGN-AWARE (2026-08-23): a dopamine BURST teaches the
             # interval harder, a DIP teaches it less (LTD) — the old
