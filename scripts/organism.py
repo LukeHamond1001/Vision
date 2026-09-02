@@ -767,6 +767,16 @@ class Organism:
                 self.mood -= 0.03 * self.cortisol
             if self.cortisol > 0:
                 v[self.em] = v[self.em] + float(getattr(self.a, "cort_k", 0.5)) * self.cortisol
+            # HUSH (genome): when neither memory nor trunk has anything to say
+            # (its belief at temperature 1 is near-uniform), it stops instead
+            # of babbling — silence is not authored, it is the absence of a word
+            hush = float(getattr(self.a, "hush_ent", 0.0) or 0.0)
+            if hush > 0.0:
+                _lv = getattr(self.m, "_last_votes", None)
+                mem_max = float(_lv[0][0]) if _lv and _lv[0] else 0.0
+                own_ent = float(getattr(self.m, "_last_own_ent", 0.0) or 0.0)
+                if mem_max < float(getattr(self.a, "store_boost_min", 0.0) or 0.0) and own_ent > hush:
+                    v[self.em] = v[self.em] + 12.0        # nothing to say: it stops
             pr = torch.softmax(v / g["temp"], -1).cpu()
             nxt = int(torch.multinomial(pr, 1, generator=self.gen))
             if len(g["tr_raw"]) < 64:
@@ -2569,6 +2579,8 @@ def main():
     ap.add_argument("--store-boost", type=float, default=1.0,
                     help="hippocampus read megaphone: amplify the store's top-8 "
                          "suggestions per position by this factor (1 = as trained)")
+    ap.add_argument("--hush-ent", type=float, default=0.0,
+                    help="hush: end the utterance when its belief is this uniform (normalized entropy; 0 = never)")
     ap.add_argument("--store-boost-min", type=float, default=0.0,
                     help="memory speaks up only when its raw vote exceeds this many logits (0 = always)")
     ap.add_argument("--dopamine", type=float, default=None,

@@ -1309,6 +1309,10 @@ class ScanLM(nn.Module):
                     C = C + self.imag_gate * imag
         logits = self.head(self.lnf(C))
         logits_own = logits                               # the cortex's belief before memory
+        with torch.no_grad():
+            # an instrument: how uniform the trunk's OWN belief is at the last position
+            _po = torch.softmax(logits_own[:, -1].float(), dim=-1)
+            self._last_own_ent = float(-(_po[0] * (_po[0] + 1e-9).log()).sum() / math.log(max(2, _po.shape[-1])))
         if hasattr(self, "face_head"):
             feat_f = self.lnf(C)
             face = self.face_head(feat_f).squeeze(-1) * 6.0            # [B, T], face units

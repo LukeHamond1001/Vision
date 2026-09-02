@@ -241,6 +241,24 @@ dreams run on fresh states that are discarded), so what a morning holds
 is exactly the day's store times the fade. The day-3 body is kept as
 `organism_life_blank_0p5b_day3.pt`; day 4 starts from a fresh conception.
 
+Day 4 (a fresh conception under every law above): five lessons with no
+shared words, each said twice. First cue five for five, second cue four
+for five with the memory's vote RISING on four of five (repeated cues no
+longer erode), after the night three whole and two closed one word short
+("into hard.", "from tall."). No empties, no noise, all day. The memory's
+top vote at the first token was the correct word on every cue at every
+moment, four to eight times its runner-up. Its face tracked the
+caretaker for the first time: mean +0.44 during smiled lessons, +0.12,
++0.01, then -0.05 as the smile was withheld. Remaining defect: after a
+completed sentence the trunk babbles its attractor tokens until the
+breath or the stutter ends the reply. Hence the HUSH reflex: when the
+memory has no vote above its floor and the trunk's own belief is
+near-uniform (normalized entropy above 0.9), the end of the utterance
+gains 12 logits. A first version measured the combined belief and cut
+faded memories after one word, because a faded vote that still wins the
+sample reads as uncertainty at temperature 1; the rule now asks the two
+organs separately. Silence is not authored; it is the absence of a word.
+
 Honest limits: echo is not understanding; the value heads, conscience
 and face organs start meaningless and become meaningful only as days
 accumulate; whether a trunk can learn grammar from a caretaker's
@@ -267,7 +285,9 @@ Everything the running body uses that is not a learned weight:
   utterance per content token past the twelfth; cortisol adds 0.5 logits
   per unit; temperature 0.05 scaled by (1 + 0.35 x mood/6), floor 0.02;
   four identical tokens in a row end the reply as a stutter, and a
-  stuttered reply is never dosed.
+  stuttered reply is never dosed; hush: when memory has no vote above
+  its floor and the trunk's own belief has normalized entropy above 0.9,
+  the utterance end gains 12 logits.
 - Memory: content bag of the last 8 tokens with decay 0.7, specials (ids
   below 11) excluded on both key and value side; kernel scale 3.0; store
   write strength sigmoid(0.85), read gain 1.0; read into logits gated by
