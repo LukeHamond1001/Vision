@@ -378,6 +378,29 @@ Now the ear's quiet ends a thought only when the mouth is also quiet;
 while the mouth has the floor, your silence is its turn, not an ending.
 On a CPU body four repeated cues of "where ball" kept "? ball on".
 
+## Day 10 (Opus, stage 3: three, went, what)
+
+Thirty-six lines at thirty- to forty-second returns; 508 of 508 symbols
+before the night from memory. Six of eight recalls identical across the
+night; every cue answered. The first true frame transfer: "I went " drew
+"up" though "I went in" was the only "I" past written, carried from "dog
+went up" and "you went up" through the shared word. Two whole-word
+completions after lines ("little ball" -> " all gone", never written that
+day; "bye" -> " dog"). Its own top symbol began the day as a letter and
+stayed one. Plural and past never spread to a word they were not taught
+on; the new words are keys it turns, not things it says. Two costs: a
+75-letter "e" run lasted six minutes after the last cue (trust pinned at
+its cap of 8, stress reaching only 5.2: the brake could not beat it; it
+stopped on the caregiver's next line), and the strongest chain ("where
+ball? ball under") leaked into the unrelated cue "three " after the night,
+the first sign of interference with the store at 45,000 and growing. The
+night: no REM, no gain, "starving" at 1,217 lived tokens. Changes: each
+symbol now costs 0.2 stress (`--diary-cost 0.2`), so a run of about forty
+symbols exhausts memory's voice even at full trust, and trust drifts back
+toward its base of 4 when no praise arrives (about 0.06 a minute), so a
+saturated trust can no longer pin the mouth and praise means something
+again.
+
 ## Status
 
 - model: speaker channel, ear-writes by speaker, running bag with

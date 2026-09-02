@@ -129,6 +129,11 @@ class Diary(O.Organism):
             _, self.st, _ = self.m(torch.tensor([[nxt]], device=self.dev), self.st, affect=aff,
                                     who=(self.who2 if (backed and u == self.sil) else self.who1))
         self._prev_mouth = nxt
+        # memory's voice must keep being earned: without praise, trust drifts back toward
+        # its starting value (about 0.06 a minute), so a saturated trust cannot pin the mouth
+        base = float(getattr(self.a, "mem_trust", 4.0))
+        if self.trust > base:
+            self.trust = max(base, self.trust - 0.0005)
         if nxt != self.sil:
             # speaking costs: each symbol adds stress (half-life 120 s); stress
             # favours silence (a physiological brake) and weighs a little on mood
