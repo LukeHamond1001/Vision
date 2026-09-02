@@ -73,7 +73,13 @@ and follows the child's attention rather than a schedule.
   whole-word completions come below about 5: keep lines short (under
   twelve characters where the frame allows). Since the environment
   became raw you do not read the number: a stressed body babbles, runs,
-  and goes quiet late, and you pace by that, as above. The floor is set by
+  and goes quiet late, and you pace by that, as above. Day 17 measured
+  the spacing itself: with lines twenty to forty seconds apart its mood
+  sank to -4.6 and its stress sat near 8.7; with about two minutes
+  between events its mood came back to -1.5 and its stress to 5.3, and
+  its words appeared in those rests. About two minutes between events,
+  a session of thirty lines and eight cues filling the time before its
+  night, is the pace. The floor is set by
   its own trunk, which babbles a run of its favourite letter whenever the
   page is quiet and pays for every symbol (day 12: gates of 2 and 3 sat
   under that floor and stalled the session for a quarter of an hour
