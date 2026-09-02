@@ -353,6 +353,31 @@ completion came below 3; twenty-second returns were as productive as nine.
 The night did not report starving on 875 lived tokens, so hunger is not a
 token count.
 
+## Day 9 (Opus, stage 3: little, under, one; questions answered on one line)
+
+Thirty-three lines at twenty- to thirty-eight-second returns; 524 of 524
+symbols from memory; zero pale all day. "where ball" as a bare fragment
+drew "? ball under": the question mark, the space, the noun and the
+preposition, a three-hop chain, with the once-taught "under" chosen over
+the thrice-taught "on" (recency). Four of five recalls identical across
+the night, the fifth identical for eleven symbols. The one completion it
+produced after a full line ("one dog" -> " in") flipped its own top
+symbol from silence to a letter, where it stayed and strengthened
+through the night: a single absorbed dose moved the trunk. It stays quiet
+after complete sentences by design (the remembered quiet), so expansions
+now come at cues, not after lines, and the caregiver's smiles are rare.
+Stress costs measured: a 19-character line +1.1, a 9-character line +0.6,
+a 20-second return -0.45, a 40-second return -0.9. The night: no REM, no
+gain, nothing faded, for the fourth day: recall stability across nights
+is the store's persistence, not consolidation. Trust unmoved at 8.
+
+Design gap closed after the day: when the caregiver fell quiet after a
+cue fragment, the remembered-quiet rule stored "quiet follows this
+fragment", which over many cues would erode the recall the cues test.
+Now the ear's quiet ends a thought only when the mouth is also quiet;
+while the mouth has the floor, your silence is its turn, not an ending.
+On a CPU body four repeated cues of "where ball" kept "? ball on".
+
 ## Status
 
 - model: speaker channel, ear-writes by speaker, running bag with

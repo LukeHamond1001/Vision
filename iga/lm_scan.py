@@ -781,6 +781,8 @@ class ScanLM(nn.Module):
             was_word = st.get("ear_was_word")
             if was_word is None or was_word.shape[0] != B:
                 was_word = torch.zeros(B, dtype=torch.bool, device=tokens.device)
+            floor = st.get("mouth_floor")            # the serve marks when the mouth has the floor
+            floor = bool(floor) if floor is not None else False
             quiet_l = []
             for t_ in range(T):
                 excl_l.append(nn.functional.normalize(bag, dim=-1))
@@ -788,7 +790,10 @@ class ScanLM(nn.Module):
                 is_sym = (tk >= skip)
                 if who is not None and sil_id is not None:
                     ear = (who[:, t_].to(tk.device) == 0)
-                    quiet_l.append(ear & (tk == int(sil_id)) & was_word)   # the first quiet after the ear's word
+                    q_ = ear & (tk == int(sil_id)) & was_word          # the first quiet after the ear's word
+                    if floor:
+                        q_ = torch.zeros_like(q_)                       # ...unless the mouth is speaking: then your quiet is its turn, not an ending
+                    quiet_l.append(q_)
                     was_word = torch.where(ear, is_sym, was_word)
                 else:
                     quiet_l.append(torch.zeros_like(is_sym))

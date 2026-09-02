@@ -45,9 +45,11 @@ and follows the child's attention rather than a schedule.
 - **Ask and answer on one line.** A new line ends a thought, so a question
   on one line cannot chain to its answer on the next: write "where ball?
   ball on" as one utterance (day 8).
-- **Tests are rare and clean.** At most five recall tests before a night
-  and the same five after; a cue is a new line plus a fragment, then
-  nothing; never two tests back to back.
+- **Tests are clean, and now safer.** A cue is a new line plus a fragment,
+  then nothing; never two tests back to back. Since day 9 a cue no longer
+  stores quiet under the fragment while the mouth is answering, so up to
+  eight cues a day are fine; cues are also where its expansions now
+  appear, because it stays quiet after a complete sentence by design.
 - **Instruments decide the stage.** Recall of frames (memory), the trunk's
   own top symbol after a frame ("own": the day it stops being silence),
   trust, quiet, stress. A stage advances when its frames complete from

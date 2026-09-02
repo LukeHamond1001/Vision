@@ -91,6 +91,9 @@ class Diary(O.Organism):
             pl = torch.zeros(1, 1, dtype=torch.long, device=self.dev)
             pl[0, 0] = min(felt, 2) if felt > 0 else 2 - max(felt, -2)   # 1..4 = +1 +2 -1 -2
         aff = self._aff(1)
+        # the mouth has the floor when its previous symbol was a letter: then your silence
+        # is its turn to write, not the end of your thought
+        self.st["mouth_floor"] = bool(getattr(self, "_prev_mouth", self.sil) != self.sil)
         with torch.no_grad():
             lg, self.st, _ = self.m(torch.tensor([[u]], device=self.dev), self.st,
                                     press_levels=pl, affect=aff, who=self.who0)
@@ -125,6 +128,7 @@ class Diary(O.Organism):
             # while you write, its letters (shadow or noise) stay out of the thought
             _, self.st, _ = self.m(torch.tensor([[nxt]], device=self.dev), self.st, affect=aff,
                                     who=(self.who2 if (backed and u == self.sil) else self.who1))
+        self._prev_mouth = nxt
         if nxt != self.sil:
             # speaking costs: each symbol adds stress (half-life 120 s); stress
             # favours silence (a physiological brake) and weighs a little on mood
