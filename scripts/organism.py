@@ -27,7 +27,15 @@ import torch.nn.functional as F
 sys.path.insert(0, ".")
 from scripts.scan_infer import load_scan            # noqa: E402
 from scripts.scan_chat import _lane0, _to_dev        # noqa: E402
-from scripts.scan_nursery import content_ids         # noqa: E402
+def content_ids(tok, text):
+    """the words of a text as the tokenizer sees them, minus the special
+    marks — no stopword table, no lexical knowledge in the serve (audit
+    2026-09-01: the old English STOP list was the one leak of knowledge)"""
+    try:
+        special = set(int(i) for i in tok.get_added_tokens_decoder().keys())
+    except Exception:
+        special = set()
+    return [i for i in tok.encode(text).ids if i not in special]
 
 LOCK = threading.Lock()
 
@@ -136,8 +144,13 @@ class Organism:
         # how much it mattered, not by list position.
         self.saliences = dict(life.get("saliences", {}))
         self.critic = None
+        _from_nothing = (state.get("cfg") or {}).get("conceived", {}).get("from") == "nothing"
         try:
             import torch.nn as _nn
+            if _from_nothing:
+                # a body from nothing has no conscience yet: data/critic.pt was
+                # fitted in another body's embedding space (audit 2026-09-01)
+                raise RuntimeError("no foreign conscience for a body from nothing")
             ck = torch.load("data/critic.pt", map_location="cpu",
                             weights_only=False)
             self.critic = _nn.Sequential(
@@ -781,11 +794,13 @@ class Organism:
             p1 = torch.softmax(v, -1)
             ent = float(-(p1 * (p1 + 1e-9).log()).sum() / math.log(max(2, p1.numel())))
             g["face_raw"].append(its_face)
+            _lv = getattr(self.m, "_last_votes", None)
+            mem_votes = [[self.tok.decode([int(i_)]), round(float(v_), 2)] for v_, i_ in zip(*_lv)] if _lv else None
             g["cort_raw"].append(round(self.cortisol, 2))
             base_ev = {"v": round(v_t, 2), "you": lvl, "rpe": rpe,
                        "mood": round(self.mood, 2),
                        "face": None if its_face is None else round(its_face, 2),
-                       "cort": round(self.cortisol, 2), "ent": round(ent, 2)}
+                       "cort": round(self.cortisol, 2), "ent": round(ent, 2), "mem": mem_votes}
             if nxt == self.sil:
                 g["pauses"] += 1
                 ev.append(dict(base_ev, pause=True))
@@ -844,6 +859,8 @@ class Organism:
                 torch.tensor([tail], device=self.dev), self.st,
                 affect=self._aff(len(tail)))
             self.m.store_write_off = False
+        if hasattr(self.m, "reset_bag"):
+            self.m.reset_bag(self.st)              # its turn is over: the next words are yours, keyed by yours
         if not out or out[-1] != self.em:
             self.day_buf.append(self.em)
             self._rec_face(1)
@@ -1113,6 +1130,7 @@ class Organism:
 
         finally:
             self.m.store_read_off = False
+            self.m.store_write_off = False      # never leave the ear deaf after a swallowed error
 
     def exch(self, q, ans):
         tok = self.tok
@@ -1531,6 +1549,8 @@ class Organism:
                     affect=self._aff(len(tail)))
             finally:
                 self.m.store_write_off = False
+        if hasattr(self.m, "reset_bag"):
+            self.m.reset_bag(self.st)              # its turn is over: the next words are yours, keyed by yours
         if not out or out[-1] != self.em:
             self.day_buf.append(self.em)
             self._rec_face(1)

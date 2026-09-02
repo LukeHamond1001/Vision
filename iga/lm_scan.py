@@ -1339,6 +1339,10 @@ class ScanLM(nn.Module):
             if self.aux_trunk > 0 and self.training:
                 self._aux_hidden = C
             rd_full = R @ lg_E.t()
+            # an instrument: memory's raw top votes at the last position (what it would say)
+            with torch.no_grad():
+                _tv = rd_full[:, -1].float().topk(3, dim=-1)
+                self._last_votes = (_tv.values[0].tolist(), _tv.indices[0].tolist())
             # A READ THAT CAN STEER: when the trunk is unsure of the next
             # word (high entropy), the hippocampus speaks louder —
             # read_beta = 0 is exactly the trained body (the store's
@@ -1404,6 +1408,10 @@ class ScanLM(nn.Module):
         smask = torch.ones(B, T, device=dev)
         if getattr(self, "store_write_off", False):
             smask = smask * 0.0                            # the ear writes, the mouth does not
+        if self.keyed_content:
+            # turn marks and press marks are not words on the value side either:
+            # a cue followed by the turn-end must not teach "this beginning ends here"
+            smask = smask * (tokens >= int(getattr(self, "kc_skip", 0))).to(smask.dtype)
         if st["chunk"] == 0:
             smask[:, 0] = 0.0                              # nothing before
         dopa = None

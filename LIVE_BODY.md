@@ -120,7 +120,7 @@ arrives on every token, both ways — not omniscient.
 ## 8. Build order (live-only, no gestation) — status 2026-09-01 night
 
 1. **Scalar face + tonic/phasic split** — built (●): `affect_in`, zero-init, on the trunk input; the day's faces are recorded and replayed at night.
-2. **Expression head** (its face = forecast of yours) — built (●): `face_head`, taught head-only at every token it speaks and every word it hears (Adam, lr 2e-5: a newborn organ that drifts, never lurches), and again in the night's replay; shown as the first row under every word. Its own-face tokens remain in the vocabulary, unused.
+2. **Expression head** (its face = forecast of yours) — built (●): `face_head`, taught head-only at every token it speaks and every word it hears (Adam, lr 2e-5: a newborn organ that drifts, never lurches), and again in the night's replay; shown as the first row under every word. Its own-face tokens remain in the vocabulary; if the body emits one it is stripped from the text and rendered on the face row, never spoken.
 3. **Eligibility traces** — built (●): λ 0.7, six words back. **Dose by surprise** uses the value heads' expectation (●); the forecast head becomes the baseline once its error is small (a switch, not yet flipped).
 4. **Online TD** — built (●): the value heads step at every felt change, γ 0.9.
 5. **Steering read** — knobs only (◐): read gain by uncertainty (β), slot gain; the zero-init gated slot is still to build; same-day recall still fails.
@@ -192,9 +192,9 @@ Then "hot" opened every reply and grew a letter per new lesson ("hotR",
 "hotRB", "hotRBS": Rain, Birds, Snow), and the night kept it. Cause one:
 the mouth does not write memories, but its babble still formed the KEY
 under which the next lesson's first word was stored, so saying "hot hot"
-recalled "R". Now the memory's word-bag resets at your first word of a turn (not
-between your cue and its reply, which silenced the memory when tried):
-your words are keyed by your words. Cause two: the night replayed the
+recalled "R". Now the memory's word-bag resets at your first word of a turn and again
+the moment its own reply ends (not between your cue and its reply, which
+silenced the memory when tried): your words are keyed by your words. Cause two: the night replayed the
 whole lived day, babble included, and the trunk rehearsed its own noise.
 Now the day's record carries who said each token (the ear, the mouth, the
 mouth praised) and the night rehearses only what was heard and what was
@@ -225,7 +225,69 @@ learning rate 2e-5, expected for weeks), and the uncertainty shown per
 token measures the trunk's belief at temperature 1, where memory's vote
 is small, so a perfect completion from memory still reads as uncertain.
 
+Day 3 found the deeper poison. This morning every old beginning came
+back EMPTY, and the numbers said why: memory voted hard on each cue,
+the right next word was there as runner-up, and the winner was the
+turn-end mark. Every cue had taught the memory "after 'The sun is' the
+speaker stops": the turn-end fed at /begin was written as a value under
+the cue's own words, and the delta rule replaces, so each repetition of
+a cue erased more of the lesson under that key. Fresh material still
+went in clean (four new sentences, four exact completions) and one night
+still knocked it to fragments, because the cues and the praised absorbs
+had written the same poison before sleep. Now turn marks are not words
+on the value side either: a special token is never written as a memory
+value. The nights themselves do not touch the living store (replay and
+dreams run on fresh states that are discarded), so what a morning holds
+is exactly the day's store times the fade. The day-3 body is kept as
+`organism_life_blank_0p5b_day3.pt`; day 4 starts from a fresh conception.
+
 Honest limits: echo is not understanding; the value heads, conscience
 and face organs start meaningless and become meaningful only as days
 accumulate; whether a trunk can learn grammar from a caretaker's
 sentences alone at this scale is the experiment, and the prior says no.
+
+## 10. Disclosed constants and reflexes (audit of 2026-09-01)
+
+An independent read-only audit of the serve and model found the doctrine
+holding: every word is sampled from the body's own logits, recall comes
+from the model's store, reward is the face number and never a parse of
+your sentence. It found one leak of lexical knowledge (an English
+stopword table used to pick features for the goal organ and the
+conscience) and one foreign checkpoint (a conscience fitted in an older
+body's embedding space, loaded into the blank one). Both are removed: the
+serve now takes every non-special token as content, and a body conceived
+from nothing starts with no conscience until its own nights grow one. A
+bug that could leave the ear deaf after a swallowed error is fixed.
+
+Everything the running body uses that is not a learned weight:
+
+- Decoding reflexes: press marks banned; the ear's turn-end vote mapped
+  onto the mouth's turn-end and the ear's mark never spoken; at most six
+  pauses per reply; the breath adds 0.35 logits to the end of the
+  utterance per content token past the twelfth; cortisol adds 0.5 logits
+  per unit; temperature 0.05 scaled by (1 + 0.35 x mood/6), floor 0.02;
+  four identical tokens in a row end the reply as a stutter, and a
+  stuttered reply is never dosed.
+- Memory: content bag of the last 8 tokens with decay 0.7, specials (ids
+  below 11) excluded on both key and value side; kernel scale 3.0; store
+  write strength sigmoid(0.85), read gain 1.0; read into logits gated by
+  uncertainty (read_beta 1.0), the top eight votes amplified 16x when the
+  raw vote exceeds 0.15 logits; nightly fade 0.9; the bag resets at your
+  first word and after every reply; the mouth's forwards never write.
+- Dose: absorb when a word's credit exceeds 0.5, unlearn at or below
+  -1.5; eligibility traces lambda 0.7 over six words; at most 6 absorb
+  and 3 unlearn steps; satiation when a fact's loss is under 0.3; a
+  rehearsal of one old memory rides every dose (weight 0.5); live
+  learning rate 1e-6; face head 2e-5; value heads 1e-3.
+- Curiosity and pursuit: notice margin 0.75, floor 3.5, peak 15.5 with a
+  nightly drift of +-0.3 inside [14.5, 17.5]; pursuit adopt 0.45, target
+  0.3; mood lowers the peak bar by 0.6 x mood/6 and the margin by 0.3 x
+  mood/6.
+- Conscience (once one exists): self-praise above 0.95 and self-frown
+  below 0.15, budgets 4 and 3 a day, felt only, never absorbed.
+- Night: the lived-day replay drops a model turn that is empty or whose
+  modal token exceeds half of a body of six or more tokens; dream pairs
+  are chosen by charge = surprise + |mood| + 3 x felt + 2 x pride;
+  teaching a fact absorbs up to 12 steps until its loss is under 0.55.
+- Instruments shown, never acting: per-token uncertainty at temperature
+  1, per-token memory votes (the top three raw votes), stress, mood.

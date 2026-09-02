@@ -106,7 +106,9 @@ the body was born on and the recipe the next body scales).
 
 A 0.5B conceived at random weights (`scripts/conceive.py`), its own
 real-English vocabulary, content-keyed memory that recalls by mechanism,
-raised only by live days. LIVE_BODY.md §9 says what to expect and why.
+raised only by live days. LIVE_BODY.md §9 says what to expect and why;
+§10 lists every constant and reflex the running body uses (an independent
+no-cheats audit, 2026-09-01).
 
 ```bash
 python3 scripts/conceive.py data/organism_life_blank_0p5b.pt data/tok_0p5b.json --d 1024 --n-layers 29 --content-keys
