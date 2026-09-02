@@ -299,6 +299,22 @@ to discharge) and sat within +-0.11 on still-faced rounds. Seams left:
 the oldest traces sometimes double their stop; the grace can let a stop
 out a word early; the night's rehearsal skipped the middle of the list.
 
+Day 7 (the same life, four nights carried, seventeen sentences): the
+store, not the laws, is now the ceiling. Morning 7 of 13 earlier
+beginnings whole; one re-hearing repaired all six failures at once and
+tripled their votes; the four new sentences went twelve for twelve; after
+the night 4 of 13 old ones were whole, one taught beginning went silent,
+two returned only a stop, and the memory's vote for a cue's own last word
+began to rival the vote for the right continuation (a one-position alias
+that a bag key cannot separate once the true trace has faded). Presses
+left no visible mark on next-morning recall two nights running. The
+night never refreshes the store: its replays run on scratch states, so a
+trace lives only on its fade (0.9 a night) against growing interference,
+and only a re-hearing restores it, buying about a day. Two remedies are
+open: no fade at all (`--store-decay 1.0`), and a night pass that
+re-writes what was heard that day into the living store. This life is
+parked saved after seven days while the diary body takes the machine.
+
 Honest limits: echo is not understanding; the value heads, conscience
 and face organs start meaningless and become meaningful only as days
 accumulate; whether a trunk can learn grammar from a caretaker's
