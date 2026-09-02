@@ -251,6 +251,26 @@ caregiver's rule from the same session: a run of a letter is babble, to
 be expanded once into a known word, never frowned at (one frown on the
 trunk's first own "mmmm" sent its own voice back to silence).
 
+## Day 4 (Opus, stage 2 with three roped words)
+
+Thirty-four lines, 73.5% recombination of known words; juice, book and go
+entered only inside known frames. Twenty of thirty-four responses
+contained a word not put in that frame, with two-hop chains ("bye dog" ->
+"go up": dog to go to up, through two different shared words). "go" took
+on its first exposure, "book" on two, "juice" never. Five of five recalls
+before and after the night, and the night moved "more " and "my " off the
+default "ball" onto the partner each frame was actually taught with (milk,
+book) and stripped the "goneee" tails: by its own bookkeeping the night
+did nothing, by the tests it did a lot. Face discipline perfect (no letter
+entered under a warm face; 17 smiles, 0 frowns). One caregiver error: four
+smiles on "all gone" completions over-rewarded that tail and bred a
+40-tick "e" run; a plain known line broke it. Two corrections to the
+record: the supervisor's claim that a frown had returned the trunk to
+silence was wrong (no frown had been given; "own" moved on its own, and it
+is read in whatever context the tick is in, so only like contexts
+compare), and the babble rule needs an answer for letters that start no
+known word: write an ordinary known line.
+
 ## Status
 
 - model: speaker channel, ear-writes by speaker, running bag with

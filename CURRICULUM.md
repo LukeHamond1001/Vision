@@ -23,8 +23,12 @@ and follows the child's attention rather than a schedule.
   once by expanding it into a known word that starts with that letter
   ("mmmm" -> "mama"), then withhold; never frown at it. (Day 4: the
   trunk's first own letter came out as a wall of "m", and one frown sent
-  its own voice back to silence.) Frown briefly, at most once a minute,
-  only at runs of non-letters.
+  its own voice back to silence.) If no known word starts with the letter
+  ("eeee"), write any ordinary known line: that breaks a run where
+  expansion cannot. Frown briefly, at most once a minute, only at runs of
+  non-letters. Never smile at a completion's tail ("all gone") more than
+  once in a row; smiles on a tail bred a forty-tick run of its last
+  letter.
 - **Faces are prosody.** Warm while naming, still while waiting, smiles
   for echoes, expansions and quiet; never a smile for noise or for the
   shadow of your own typing.
