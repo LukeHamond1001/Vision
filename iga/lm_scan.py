@@ -535,6 +535,7 @@ class ScanLM(nn.Module):
         # becomes a mechanism a body with no training already has
         self.keyed_content = bool(keyed_content)
         self.kc_w, self.kc_decay = 8, 0.7
+        self.kc_skip = 11            # turn marks and press marks are not words: ids below this stay out of the bag
         self.tok_u = nn.Parameter(torch.zeros(vocab_size))
         self.stores = nn.ModuleDict()
         for k in self.bands:
@@ -755,7 +756,7 @@ class ScanLM(nn.Module):
         if tail is None or tail.shape[0] != B:
             tail = torch.full((B, w - 1), -1, dtype=torch.long, device=tokens.device)
         seq = torch.cat([tail, tokens], dim=1)                       # [B, w-1+T]
-        valid = (seq >= 0).to(E.dtype).unsqueeze(-1)
+        valid = (seq >= int(getattr(self, "kc_skip", 0))).to(E.dtype).unsqueeze(-1)   # specials and pads carry no content
         e = E[seq.clamp(min=0)] * valid                              # [B, w-1+T, d]
         acc = torch.zeros(B, T, self.d, device=tokens.device, dtype=E.dtype)
         for i in range(w):

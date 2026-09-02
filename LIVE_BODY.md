@@ -175,6 +175,16 @@ reply and blended lessons into "is. is. is." Praising a noise reply
 collapsed a body into a five-token loop within two gradient steps: the
 caretaker's law "never praise what is wrong" is load-bearing here.
 
+Launch flags after six smokes: memory amplified 16x when sure (floor
+0.3), turn marks kept out of the content bag (a query ending in the
+turn mark matched nothing, and memory fell silent exactly when the body
+began to speak), the ear's turn-end counted as the mouth's, and the live
+learning rate cut to 1e-6: at 1e-5 the blank trunk collapsed to "is. is."
+by the fourth lesson and drowned the memory; at 1e-6 six lessons left it
+babbling but intact, and the cue "a lantern" answered "is a lamp you can
+carry." The trunk therefore learns slowly on purpose; what changes day to
+day is what the memory holds and what the nights consolidate.
+
 Honest limits: echo is not understanding; the value heads, conscience
 and face organs start meaningless and become meaningful only as days
 accumulate; whether a trunk can learn grammar from a caretaker's
