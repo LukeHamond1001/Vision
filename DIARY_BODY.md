@@ -563,6 +563,25 @@ be read while it slept, because the night held the serve's lock, so the
 caregiver never saw "asleep" and derived the times; fixed for day 18.
 Saved with 77 live steps.
 
+## Day 17 (Opus, consolidation, the first smiles under one reward system)
+
+Thirty-six lines and sixteen cues, every line a known frame, the
+caregiver watching every symbol of the page. Eight known words written
+awake, all two letters, none longer, in 1,778 of its symbols: "no",
+"in", "on", "in", "in", "go", "no", "hi"; five of them smiled at within
+two seconds and felt (doses 0 to 5, nothing dosed that was not given),
+two lost because they arrived while the caregiver's own letters were
+entering and the face stays still then, one seen six seconds late. The
+earlier "no" the supervisor had flagged was not a word by the boundary
+rule (its "n" followed a "t" one tick before), a correction the
+caregiver made and the record keeps. No cue completed before or after
+the night (recorded above: the frames chained in its dreams, the rich
+gauge 0.070 to 0.388). Its own top symbol went "u" to "o" to "?" across
+the afternoon, its confidence falling each time (0.18, 0.135, 0.086).
+Mood ran down to -4.6 while lines came close together and back to about
+-1.5 once the rests stretched to two minutes; stress fell from 8.7 to
+5.3 with it. Saved with 87 live steps.
+
 ## The night, remade (2026-09-02): the cortex learns only from hippocampal traces
 
 The user's law, in two sentences: the neocortex trains only on what the
