@@ -688,6 +688,20 @@ symbol at 0.09 rather than 0.5 and more); with memory on, "big dog
 bigger " drew " dooo", the first frame-shaped fragment the free-running
 test has produced since the rules went.
 
+**The third night it took by itself (day 18, 17:36, tick 9,929), seen
+from the page this time.** Asleep for two and a half minutes, the page
+readable throughout. Forty traces, mean length 8: " whadte ball ",
+"what? scared ball ball under obl", "big dog hbaligdo ger ogpn", "hat?".
+Eighty NREM steps, eight REM at cosine 0.37, one value step. The rich
+gauge went the wrong way for the first time, 0.344 before and 0.266
+after, on 154 symbols. One night is not a trend, but the suspect is
+named: REM's gradient (the forecast loss and SIGReg) runs back through
+the cortex stream, and NREM's lesson is taken with the hippocampus
+leading while the gauge reads the trunk without it. A controlled test
+on two copies of the post-night body, the same night with and without
+REM, is the measurement that follows. It woke with stress 1.1 and mood
+0.0, the highest mood of its life, and its own top symbol "o" at 0.37.
+
 The trunk-alone cue test on a scratch
 copy of the post-night body: the trunk alone writes a run of "o" to
 every cue (its own top symbol moved from the newline to "o" across the
