@@ -201,6 +201,15 @@ mouth praised) and the night rehearses only what was heard and what was
 praised. The day-1 body is kept as `organism_life_blank_0p5b_day1.pt`;
 day 2 starts from a fresh conception under the corrected laws.
 
+The memory's floor settled at 0.15 after a casing lesson: the bag is
+token-level, so the cue "the sun is" against the lesson "The sun is"
+loses one of three tokens and its vote fell under 0.3; at 0.15 both
+casings echo ("hot and bright."), "A dog can" -> "run and bark.",
+"Rain falls" -> "down from grey clouds.", and "the moon is" (never
+taught) stays silent. A second hearing of a whole sentence is answered
+with nothing: memory recalls that the turn ended after the full stop,
+which is correct, so cue with beginnings.
+
 Honest limits: echo is not understanding; the value heads, conscience
 and face organs start meaningless and become meaningful only as days
 accumulate; whether a trunk can learn grammar from a caretaker's
