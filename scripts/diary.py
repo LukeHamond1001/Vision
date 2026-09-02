@@ -107,10 +107,13 @@ class Diary(O.Organism):
             top = int(_lv[1][0])
             if own_ent > 0.9:
                 v[top] = v[top] + float(getattr(self.a, "sure_mem", 6.0))   # a sure memory speaks with one voice
-            # a memory is a reason to speak, as far as you have trusted it: memory's top symbol is
-            # raised to the silence logit plus the trust your face has built (bounded 0..8)
-            if self.trust > 0.0:
-                v[top] = torch.maximum(v[top], v[self.sil] + float(self.trust))
+            # a memory is a reason to speak, as far as you have trusted it and as far as it has
+            # the stamina: memory's top symbol is raised to the silence logit plus the trust your
+            # face has built, minus what stress has taken — so a tired mouth can fall silent even
+            # on a memory, and no run outlasts its stamina
+            voice = float(self.trust) - float(getattr(self.a, "cort_k", 0.5)) * float(self.cortisol)
+            if voice > 0.0:
+                v[top] = torch.maximum(v[top], v[self.sil] + voice)
         p1 = torch.softmax(v, -1)
         ent = float(-(p1 * (p1 + 1e-9).log()).sum() / math.log(max(2, p1.numel())))
         pr = torch.softmax(v / max(0.02, float(self.a.temp)), -1).cpu()
@@ -125,7 +128,7 @@ class Diary(O.Organism):
         if nxt != self.sil:
             # speaking costs: each symbol adds stress (half-life 120 s); stress
             # favours silence (a physiological brake) and weighs a little on mood
-            self.cortisol += float(getattr(self.a, "cort_rate", 0.15)) * 0.2
+            self.cortisol += float(getattr(self.a, "diary_cost", 0.08))     # the cost of one symbol
             self.mood = max(-6.0, min(6.0, self.mood - 0.002 * self.cortisol))
         self.stream.append((u, 0))
         self.stream.append((nxt, 2 if (backed and u == self.sil) else 1))

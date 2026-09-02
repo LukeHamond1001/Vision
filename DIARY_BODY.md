@@ -236,6 +236,21 @@ the next sessions: face still while your letters enter, warmth only after
 the line for what it did; at most one brief frown a minute, and only at a
 run of five or more identical letters; otherwise withhold.
 
+## Day 4, watched live: memory's voice is trust minus tiredness
+
+With the trunk collapsed toward silence, memory's letters were the only
+thing it wrote, and a memory alias could run ("eeee...", "go go go") for
+a hundred ticks because memory's amplified vote (16x) sat far above
+anything stress could add to silence: the only restriction is stamina,
+and stamina could never win. So memory's voice over silence is now trust
+minus tiredness (trust - 0.5 x stress), each symbol costs 0.08 stress
+(half-life two minutes), and the diary runs with a smaller memory
+amplification (--store-boost 4): a fresh memory speaks clearly, a tired
+mouth falls quiet even on a memory, and no run outlasts its stamina. The
+caregiver's rule from the same session: a run of a letter is babble, to
+be expanded once into a known word, never frowned at (one frown on the
+trunk's first own "mmmm" sent its own voice back to silence).
+
 ## Status
 
 - model: speaker channel, ear-writes by speaker, running bag with

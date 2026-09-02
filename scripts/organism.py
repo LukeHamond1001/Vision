@@ -2670,6 +2670,8 @@ def build_parser():
                     help="seconds alone before it may speak first")
     ap.add_argument("--diary-period", type=float, default=0.5,
                     help="the diary's tick, seconds (scripts/diary.py)")
+    ap.add_argument("--diary-cost", type=float, default=0.08,
+                    help="the diary: stress added per symbol it writes (half-life 120 s)")
     ap.add_argument("--mem-trust", type=float, default=4.0,
                     help="the diary: memory's starting voice over silence (logits); your face on its memory letters moves it, 0..8")
     ap.add_argument("--sil-decay", type=float, default=None,
