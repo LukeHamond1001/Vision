@@ -2655,6 +2655,8 @@ def build_parser():
                     help="seconds alone before it may speak first")
     ap.add_argument("--diary-period", type=float, default=0.5,
                     help="the diary's tick, seconds (scripts/diary.py)")
+    ap.add_argument("--sil-decay", type=float, default=None,
+                    help="the diary: the memory bag's fade per silent tick (how long a thought lasts)")
     return ap
 
 

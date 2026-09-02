@@ -1461,6 +1461,8 @@ class ScanLM(nn.Module):
             smask = smask * (tokens >= int(getattr(self, "kc_skip", 0))).to(smask.dtype)
         if who is not None and getattr(self, "speakers", 0) > 0:
             smask = smask * (who.to(smask.device) == 0).to(smask.dtype)   # only the ear's symbols become memories
+        if kc:
+            smask = smask * (bag_excl.norm(dim=-1) > 1e-6).to(smask.dtype)   # no context, no key: not stored
         if st["chunk"] == 0:
             smask[:, 0] = 0.0                              # nothing before
         dopa = None

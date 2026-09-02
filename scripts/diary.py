@@ -46,6 +46,10 @@ class Diary(O.Organism):
         self.who1 = torch.tensor([[1]], device=self.dev)   # the mouth's noise
         self.who2 = torch.tensor([[2]], device=self.dev)   # the mouth from memory (part of the thought)
         self._bans = [i for i in range(11) if i != self.sil]   # it may choose silence, never a mark
+        if getattr(a, "sil_decay", None):
+            self.m.kc_sil_decay = float(a.sil_decay)      # how long a thought lasts in silence
+        self.mouth_ticks = collections.deque(maxlen=12)   # the mouth's last ticks: symbol id or sil
+        self.stream = collections.deque(maxlen=96)        # (id, who) of what was written, both hands
         self.m.reset_bag(self.st) if hasattr(self.m, "reset_bag") else None
         threading.Thread(target=self._loop, daemon=True).start()
 
@@ -86,8 +90,12 @@ class Diary(O.Organism):
         _lv = getattr(self.m, "_last_votes", None)
         own_ent = float(getattr(self.m, "_last_own_ent", 0.0) or 0.0)
         mem_max = float(_lv[0][0]) if _lv and _lv[0] else 0.0
-        if _lv and _lv[1] and mem_max >= float(getattr(self.a, "store_boost_min", 0.0) or 0.0) and own_ent > 0.9:
-            v[int(_lv[1][0])] = v[int(_lv[1][0])] + float(getattr(self.a, "sure_mem", 6.0))
+        if _lv and _lv[1] and mem_max >= float(getattr(self.a, "store_boost_min", 0.0) or 0.0):
+            top = int(_lv[1][0])
+            if own_ent > 0.9:
+                v[top] = v[top] + float(getattr(self.a, "sure_mem", 6.0))   # a sure memory speaks with one voice
+            # a memory is a reason to speak: a trunk that has learned silence does not silence recall
+            v[top] = torch.maximum(v[top], v[self.sil] + 2.0)
         if self.cortisol > 0:                      # speaking costs: stress favours silence
             v[self.sil] = v[self.sil] + float(getattr(self.a, "cort_k", 0.5)) * self.cortisol
         p1 = torch.softmax(v, -1)
@@ -100,10 +108,15 @@ class Diary(O.Organism):
             _, self.st, _ = self.m(torch.tensor([[nxt]], device=self.dev), self.st, affect=aff,
                                     who=(self.who2 if backed else self.who1))
         if nxt != self.sil:
-            # speaking costs: each symbol adds a little stress (half-life 120 s),
-            # stress favours silence and weighs a little on mood
-            self.cortisol += float(getattr(self.a, "cort_rate", 0.15)) * 0.1
-            self.mood = max(-6.0, min(6.0, self.mood - 0.01 * self.cortisol))
+            # speaking costs: each symbol adds stress (half-life 120 s); stress
+            # favours silence (a physiological brake) and weighs a little on mood
+            self.cortisol += float(getattr(self.a, "cort_rate", 0.15)) * 0.2
+            self.mood = max(-6.0, min(6.0, self.mood - 0.002 * self.cortisol))
+        self.mouth_ticks.append(nxt)
+        if u != self.sil:
+            self.stream.append((u, 0))
+        if nxt != self.sil:
+            self.stream.append((nxt, 2 if backed else 1))
         # the day's record (what was written, both hands; silences are not rehearsed)
         if u != self.sil:
             self._who_now = 0; self.day_buf.append(u); self._rec_face(1); self.recent_user.append(u)
@@ -114,17 +127,52 @@ class Diary(O.Organism):
             for k_, item in enumerate(reversed(list(self.credit)[-6:])):
                 item[1] += felt * (0.7 ** k_)
             self.mood = max(-6.0, min(6.0, self.mood + 0.5 * felt))
-            self._dose_if_due()
+            recent = list(self.mouth_ticks)[-6:]
+            noisy = sum(1 for x in recent if x != self.sil)
+            if felt <= -1 and noisy >= 2:
+                self._teach_quiet(min(2, -felt))        # a frown on babble: silence here
+            elif felt >= 1 and noisy == 0:
+                self._teach_quiet(1)                    # a smile on quiet: yes, this
+            else:
+                self._dose_if_due()
         self.ticks += 1
         self.page.append(((self.tok.decode([u]) if u != self.sil else ""), 0, round(face, 2),
                           None if its_face is None else round(its_face, 2)))
         self.page.append(((self.tok.decode([nxt]) if nxt != self.sil else ""), 1, round(face, 2),
-                          None if its_face is None else round(its_face, 2)))
+                          None if its_face is None else round(its_face, 2), bool(backed)))
         self.last = {"tick": self.ticks, "you": round(face, 2),
                      "face": None if its_face is None else round(its_face, 2),
                      "mood": round(self.mood, 2), "cort": round(self.cortisol, 2), "ent": round(ent, 2),
                      "mem": [[self.tok.decode([int(i_)]), round(float(v_), 2)] for v_, i_ in zip(*_lv)] if _lv else None,
                      "felt": felt, "said": self.tok.decode([nxt]) if nxt != self.sil else "", "backed": backed}
+
+    def _teach_quiet(self, k=1):
+        """THE QUIET LESSON: at the mouth's recent positions the target is
+        silence. A frown on babble and a smile on quiet teach the same
+        thing; the trunk's cheapest attractor becomes the right one."""
+        seq = list(self.stream)[-64:]
+        if len(seq) < 4:
+            return
+        ids = [i for i, _ in seq]; who = [w for _, w in seq]
+        x = torch.tensor([ids[:-1]], device=self.dev)
+        wx = torch.tensor([who[:-1]], device=self.dev)
+        y = torch.tensor([[self.sil if who[j + 1] != 0 else ids[j + 1] for j in range(len(ids) - 1)]], device=self.dev)
+        wgt = torch.tensor([[1.0 if who[j + 1] != 0 else 0.0 for j in range(len(ids) - 1)]], device=self.dev)
+        if float(wgt.sum()) == 0.0:
+            return
+        self.m.train()
+        try:
+            for _ in range(k):
+                self.opt.zero_grad(set_to_none=True)
+                st_d = self.m.init_state(1, self.dev)
+                lg, st_d, _ = self.m(x, st_d, None, who=wx)
+                ce = torch.nn.functional.cross_entropy(lg[0].float(), y[0], reduction="none")
+                loss = (ce * wgt[0]).sum() / wgt.sum()
+                loss.backward()
+                self.opt.step()
+        finally:
+            self.m.eval()
+        self.last["quiet_lesson"] = k
 
     def _dose_if_due(self):
         """rolling doses: the mouth's recent symbols carrying credit above 0.5
@@ -192,13 +240,13 @@ PAGE = """<!doctype html><meta charset=utf-8><title>the diary</title>
 <style>
 body{margin:0;background:#f5f1e6;color:#222;font:16px/1.6 Georgia,serif}
 #pg{white-space:pre-wrap;padding:32px 40px 120px;min-height:70vh;max-width:820px;margin:0 auto}
-.u{color:#1a1a1a}.m{color:#7a2e0e}
+.u{color:#1a1a1a}.m{color:#7a2e0e}.n{color:#c9b8a5}
 #bar{position:fixed;left:0;right:0;bottom:0;background:#eae4d3;border-top:1px solid #cbbfa3;padding:10px 40px;font:13px ui-monospace,monospace;display:flex;gap:18px;flex-wrap:wrap;align-items:center}
 #bar b{font-weight:600}
 button{font:12px ui-monospace,monospace;padding:4px 10px;background:#f5f1e6;border:1px solid #cbbfa3;cursor:pointer}
 #hint{color:#6b6250;font:13px Georgia,serif;padding:12px 40px 0;max-width:820px;margin:0 auto}
 </style>
-<div id=hint>Type anywhere: your letters go in as you type, one per tick. Its letters appear in brown. Arrow up / down: your face (&minus;6..6). Enter: a new line. Nothing is edited; this is a diary.</div>
+<div id=hint>Type anywhere: your letters go in as you type, one per tick. Its letters from memory appear in brown, its noise in pale sand. Arrow up / down: your face (&minus;6..6): frown at noise, smile at quiet and at echoes. Enter: a new line. Nothing is edited; this is a diary.</div>
 <div id=pg></div>
 <div id=bar>
  <span>you <b id=you>0.0</b></span><span>its face <b id=face>–</b></span><span>mood <b id=mood>–</b></span>
@@ -219,9 +267,9 @@ document.addEventListener('keydown',e=>{
   if(e.key.length===1){post('/type',{text:e.key});e.preventDefault()}
 });
 function render(items){
-  for(const [t,who] of items){
+  for(const [t,who,_y,_f,backed] of items){
     if(!t)continue;
-    const s=document.createElement('span');s.className=who?'m':'u';s.textContent=t;pg.appendChild(s);
+    const s=document.createElement('span');s.className=who?(backed?'m':'n'):'u';s.textContent=t;pg.appendChild(s);
   }
   window.scrollTo(0,document.body.scrollHeight);
 }

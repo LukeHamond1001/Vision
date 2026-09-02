@@ -59,6 +59,46 @@ what you write, it can write back from a few letters. The first thing
 your face has to teach is silence; until then it fills every quiet tick
 with noise.
 
+## Day 1 (Opus, 2026-09-02, 25 minutes, six sentences written twice)
+
+Shadowing on 18 of 18 writings: on a second pass it rode the whole
+sentence one letter behind with 30 memory-backed letters. Recall after a
+cue failed every time, and the memory-vote instrument showed why: the
+votes were right ("Snow c-o-vers" in order) while the hand wrote a
+carrier letter. Twenty frowns did not teach quiet; they moved the babble
+from one carrier to the next ("}", "i", "a", "s", "f", "n", "g", "b").
+Mood sat at the floor all session. After the night it wrote "Rain S"
+unprompted from memory and repeated it every 39 ticks.
+
+Four causes, four fixes:
+
+- **A thought faded too fast.** The bag lost 40% per silent tick, so a
+  four-second pause erased the cue before the mouth could use it. Now 5%
+  per silent tick: a thought lasts about half a minute of silence.
+- **A frown lowered letters but never raised silence.** THE QUIET LESSON:
+  a frown on babble, and a smile on quiet, both set the target at the
+  mouth's recent positions to silence, one gradient step at the diary's
+  live rate. The trunk's cheapest attractor becomes the right one.
+- **Stress and mood were miscalibrated.** Each symbol now adds twice the
+  stress (a physiological brake toward silence under nonstop babble) and
+  a fifth of the mood cost.
+- **An empty page recalled beginnings.** The first symbol of a thought was
+  written under an empty key, and an empty bag matched it. No context, no
+  key: such positions are not stored. (This applies to the word body too.)
+
+The page now shows its memory-backed letters in brown and its noise in
+pale sand, so the two hands are visible.
+
+Measured after the fixes (a fresh conception): eight face lessons took
+the babble fraction from 1.0 to 0.0 in under a minute, and the trunk's
+uncertainty fell to 0.0: it had learned silence completely. It overshot:
+certain silence also silenced recall (a cue that had just echoed "Rain
+falls" came back empty). Hence one more disclosed rule, a memory is a
+reason to speak: when the memory has a vote above its floor, its top
+symbol's logit is raised to at least the silence logit plus 2, so a trunk
+that has learned quiet does not silence what it remembers. The day-1 body is kept as
+`organism_diary_0p5b_day1.pt`; day 2 starts from a fresh conception.
+
 ## Status
 
 - model: speaker channel, ear-writes by speaker, running bag with
