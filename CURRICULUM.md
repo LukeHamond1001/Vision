@@ -48,14 +48,18 @@ and follows the child's attention rather than a schedule.
   word or expansion (day 12: five smiles set from a held 2 to 2 were
   never felt, and trust bled 7.9 to 7.2 until the face was relaxed). A
   correct completion after a cue earns the same smile, before and after
-  the night alike. Since day 14 a felt smile is also what the night
-  dreams from: it tags the line being written as a seed, and the night
-  replays that line from the hippocampus into the weights. A day with no
-  felt smile dreams nothing; a smile on a wrong line dreams the wrong
-  line. From the afternoon of day 14 memory's voice is no longer raised
-  over silence and nothing resets its thought at a new line: expect long
-  silences and messier recall, and do not read either as a fault. The
-  smile rules do not change; the night is where its speech now grows.
+  the night alike. Since day 14 every line you write is indexed by the
+  hippocampus as a dream seed by itself, and the night replays it from
+  memory into the weights; a felt smile on a line only raises its
+  priority. So no smile is needed for quiet, and none should be given:
+  a smile lands as a dose on its choices of the last six seconds, and
+  when it is silent those choices are all silence (day 14: eight smiles
+  at quiet in six minutes took its own top symbol from silence at 0.16
+  to silence at 0.93). Smile only at what it WRITES: a taught word, an
+  expansion, a correct completion. From the afternoon of day 14 memory's
+  voice is no longer raised over silence and nothing resets its thought
+  at a new line: expect long silences and messier recall, and do not
+  read either as a fault. The night is where its speech now grows.
 - **Stress is the budget.** Measured on day 11: a line costs about 0.18
   stress per character (it shadows under your hand and pays for every
   letter), forty seconds of quiet returns about 0.7, and whole-word

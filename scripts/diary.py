@@ -71,6 +71,8 @@ class Diary(O.Organism):
                 pass
         self.night_no_page = True
         self._th_n, self._th_key = 0, None                # the thought's first symbols: where a dream starts
+        self._th_seed = None                              # the seed of the line being written (every line is indexed)
+        self._nl = self.tok.token_to_id("\n")
         self.m.reset_bag(self.st) if hasattr(self.m, "reset_bag") else None
         threading.Thread(target=self._loop, daemon=True).start()
 
@@ -111,14 +113,22 @@ class Diary(O.Organism):
         with torch.no_grad():
             lg, self.st, _ = self.m(torch.tensor([[u]], device=self.dev), self.st,
                                     press_levels=pl, affect=aff, who=self.who0)
-        # a dream starts where the thought started: the bag after the first (up to three)
-        # symbols of the line being written, kept until the next new line
-        if u in getattr(self.m, "kc_break_ids", ()):
-            self._th_n, self._th_key = 0, None
+        # THE HIPPOCAMPAL INDEX: every line the ear writes is an episode and is indexed as a
+        # dream seed by itself — the bag's key after its first (up to three) symbols — with
+        # the mood of the moment; a felt face on the line raises its charge, so the night
+        # dreams the charged lines first, but nothing heard goes unindexed
+        if self._nl is not None and u == self._nl:
+            self._th_n, self._th_key, self._th_seed = 0, None, None
         elif u >= 11 and u != self.sil:
             self._th_n += 1
             if self._th_n <= 3 and isinstance(self.st, dict) and self.st.get("bag_state") is not None:
                 self._th_key = self.st["bag_state"][0].detach().float().cpu().clone()
+                if self._th_seed is None:
+                    self._th_seed = {"key": self._th_key, "felt": 0, "mood": round(float(self.mood), 2),
+                                     "nights": 0, "day": int(self.day_n)}
+                    self._add_seed(self._th_seed)
+                else:
+                    self._th_seed["key"] = self._th_key
         its_face = self._face_lesson(face)
         # the mouth chooses: its own logits, memory's vote inside them
         v = lg[0, -1].float().clone()
@@ -260,23 +270,28 @@ class Diary(O.Organism):
                           for s_ in self.seeds[-cap:]]}
 
     # ---- the hippocampal index and the night ----
-    def _capture_seed(self, felt):
-        """a felt face tags the moment: the memory bag's key at this tick is kept as a
-        dream seed (a vector, not a word) with the felt level and the mood"""
-        bag = self.st.get("bag_state") if isinstance(self.st, dict) else None
-        if int(felt) == 0 or (bag is None and self._th_key is None):
+    def _add_seed(self, seed):
+        """index an episode; when the index is full the least charged of the oldest
+        already-dreamt seeds goes first, then the least charged of the oldest day"""
+        if float(seed["key"].norm()) < 1e-6:
             return
-        key = self._th_key if self._th_key is not None else bag[0].detach().float().cpu()
-        if float(key.norm()) < 1e-6:
-            return
+        self.seeds.append(seed)
         cap = int(getattr(self.a, "seed_cap", 48) or 48)
-        self.seeds.append({"key": key, "felt": int(felt), "mood": round(float(self.mood), 2),
-                           "nights": 0, "day": int(self.day_n)})
+        charge = lambda s_: abs(s_["felt"]) + abs(s_["mood"])
         while len(self.seeds) > cap:
-            old = [i for i, s_ in enumerate(self.seeds) if s_["nights"] > 0]
-            i = old[0] if old else min(range(len(self.seeds)),
-                                       key=lambda i_: (self.seeds[i_]["day"], abs(self.seeds[i_]["felt"])))
+            old = [i for i, s_ in enumerate(self.seeds) if s_["nights"] > 0 and s_ is not seed]
+            pool = old if old else [i for i in range(len(self.seeds)) if self.seeds[i] is not seed]
+            i = min(pool, key=lambda i_: (self.seeds[i_]["day"], charge(self.seeds[i_])))
             del self.seeds[i]
+
+    def _capture_seed(self, felt):
+        """a felt face charges the episode being lived: the line in progress (or the last
+        line, until the next new line) takes the felt level, so the night dreams it first"""
+        if int(felt) == 0 or self._th_seed is None:
+            return
+        if abs(int(felt)) >= abs(int(self._th_seed.get("felt", 0))):
+            self._th_seed["felt"] = int(felt)
+        self._th_seed["mood"] = round(float(self.mood), 2)
 
     def _dream_trace(self, seed, max_len=48):
         """the hippocampus replays: from a felt moment's key, memory's top vote is taken as
