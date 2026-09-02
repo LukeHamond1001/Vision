@@ -210,6 +210,21 @@ taught) stays silent. A second hearing of a whole sentence is answered
 with nothing: memory recalls that the turn ended after the full stop,
 which is correct, so cue with beginnings.
 
+Day 2 (a fresh conception under the corrected laws): six lessons, each
+said twice, sharing almost no words; before sleep all six beginnings
+completed exactly ("My blue cup" -> "sits on that shelf.", "Two small
+birds" -> "ate every seed."), the night rehearsed only the six sentences,
+and the morning broke continuation: every sentence still gave its correct
+next word, then four of six fell into periods. The cause is the night's
+store fade, 0.6 by default, a hand-off meant for a trunk that absorbs
+episodes overnight. This trunk cannot absorb yet, so the day's memories
+must survive the night: `--store-decay 0.9` (a tenth fades per night;
+a memory lives about three weeks unless rehearsed). Two more day-2 facts:
+its face row moved but did not track the caretaker (born at zero, head
+learning rate 2e-5, expected for weeks), and the uncertainty shown per
+token measures the trunk's belief at temperature 1, where memory's vote
+is small, so a perfect completion from memory still reads as uncertain.
+
 Honest limits: echo is not understanding; the value heads, conscience
 and face organs start meaningless and become meaningful only as days
 accumulate; whether a trunk can learn grammar from a caretaker's
