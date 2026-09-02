@@ -140,8 +140,10 @@ class Diary(O.Organism):
             self._who_now = 1; self.day_buf.append(nxt); self._rec_face(1); self._who_now = 0
         self.credit.append([nxt, 0.0, bool(backed and u == self.sil)])   # every tick is a choice, silence included; memory-backed noted
         if felt:
-            for k_, item in enumerate(reversed(list(self.credit)[-6:])):
-                item[1] += felt * (0.7 ** k_)
+            # eligibility: a caregiver answers two to four seconds after the line, so the
+            # trace reaches twelve ticks back (six seconds), decaying 0.8 per tick
+            for k_, item in enumerate(reversed(list(self.credit)[-12:])):
+                item[1] += felt * (0.8 ** k_)
             self.mood = max(-6.0, min(6.0, self.mood + 0.5 * felt))
             self._dose_choices()
         self.ticks += 1
@@ -179,7 +181,7 @@ class Diary(O.Organism):
         for i in neg:
             if len(items[i]) > 2 and items[i][2]:
                 self.trust = max(0.0, self.trust - 0.2)
-        seq = list(self.stream)[-16:]                # the last eight ticks as lived, silences included (a short dose keeps the clock)
+        seq = list(self.stream)[-26:]                # the last thirteen ticks as lived, silences included (a short dose keeps the clock)
         if len(seq) < 4:
             for it in items: it[1] = 0.0
             return

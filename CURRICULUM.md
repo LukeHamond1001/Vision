@@ -29,9 +29,10 @@ and follows the child's attention rather than a schedule.
   non-letters. Never smile at a completion's tail ("all gone") more than
   once in a row; smiles on a tail bred a forty-tick run of its last
   letter.
-- **Faces are prosody.** Warm while naming, still while waiting, smiles
-  for echoes, expansions and quiet; never a smile for noise or for the
-  shadow of your own typing.
+- **Faces are prosody.** Still while your letters enter; smile the moment
+  its post-line letters appear (credit reaches back six seconds, no more);
+  smiles for echoes, expansions and quiet; never a smile for noise or for
+  the shadow of your own typing.
 - **Tests are rare and clean.** At most five recall tests before a night
   and the same five after; a cue is a new line plus a fragment, then
   nothing; never two tests back to back.

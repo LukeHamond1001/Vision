@@ -271,6 +271,25 @@ is read in whatever context the tick is in, so only like contexts
 compare), and the babble rule needs an answer for letters that start no
 known word: write an ordinary known line.
 
+## Day 5 (Opus, stage 3 entry)
+
+Thirty-six lines, 75% recombination; please, I and the entered only inside
+known frames. Eleven kinds of untaught expansion and six multi-hop chains
+("the " -> "big dog up", "I " -> "go up"); "please" moved to a frame it was
+never taught on ("no more milk" -> "please") after a single exposure. Five
+of five recalls before and after the night, four identical across it.
+Zero runs into an idle page all session; the two runs that occurred ended
+without a frown, one on an ordinary known line and one on its own as
+stress rose, which is the stamina rule working. The trunk's own top
+symbol was a letter ("p") on every cue from line 30 onward, rising 0.37
+to 0.70 and holding through the night. Juice never took in three days:
+every frame it was put in has a stronger tenant. Caregiver findings: a
+smile four seconds after a line fell outside the six-tick credit window
+and landed on silence, so the trace now reaches twelve ticks (0.8 a tick)
+and the caregiver smiles as soon as its post-line letters appear; and the
+night's "gained" bookkeeping measures taught facts, of which a diary has
+none, not what the tests measure.
+
 ## Status
 
 - model: speaker channel, ear-writes by speaker, running bag with
