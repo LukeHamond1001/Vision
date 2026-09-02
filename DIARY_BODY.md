@@ -424,6 +424,44 @@ caregiver ran at stress 5 to 8 through the middle with 75-second returns.
 The cost eases to 0.12 for day 12; short lines and long returns remain the
 rule, and nights will be lean.
 
+## Day 12 (Opus, stage 4: will, sad, why/because; the cost eased to 0.12)
+
+Twenty-two lines (nine roped, nine known, four warm-up) at two- to
+four-minute returns, paced by its stress instead of the clock; every
+symbol it wrote was from memory except two babble runs. The eased cost
+showed its other face at once: "dog can go" drew a 64-symbol chain ("oin
+then d doggo can go then dgo then dog goin then d doggo cango") that
+stopped only when stress passed trust (7.95), one reply spending the whole
+budget; at the old cost the same material stopped at 24 symbols. "then"
+chains reached the second clause's verb repeatedly and unprompted: "then
+dog go up" after "sad dog", after "dog will go" and after "you will go
+in"; "then dog go in" three times over after "why in? because dog go in".
+The one-line "why ...? because" frame answered its cue after one exposure
+("why dog up? " -> "becausebig") and survived the night character-
+identical. "sad" answered the old naming cue "what? " (sad dog, over dog,
+ball, milk and happy dog) before and after the night; "will" surfaced in a
+line with no will in it ("go will gone thn dog goin then dog go up" after
+"what? sad dog"). All sixteen cues answered from memory, six of eight
+identical across the night; "sad " chose dog before the night and ball
+after, the only switch. Trust 7.60 to 7.97 to 7.78; 22 doses; no frowns.
+Two babble runs, both while the caregiver waited on its stress gate and
+the page was quiet: about 101 g's after waking (its own top symbol was g)
+and 138 l's after "what? " (own l), each ended by the caregiver's next
+letters, which it then answered as a frame; neither was expanded. The
+night: 1,356 lived tokens, no REM, no gain, the fourth dry night running.
+
+Supervision found two things. The caregiver's held smile: five smiles were
+2 -> 2, which is not felt (only a face that grows or flips sign is), and
+trust bled 7.90 to 7.17 until the face was relaxed to 0 after every reply;
+from then on every smile landed (14 of 19 confirmed by a dose). And the
+stress gate: with its own trunk babbling whenever the page is quiet,
+stress rests near 2.3 after a night and near 3.4 late in the day, so gates
+of 2 and 3 never opened, and stalls of 12 to 15 minutes ate the
+recombination lines (9 known of 22, short of seven in ten). Entered in the
+curriculum: smile from a resting face; gate at 3 by day and 4 after a
+night, never waiting past two minutes; a babble run is ended by typing the
+next line, and expanded once if it recurs.
+
 ## Status
 
 - model: speaker channel, ear-writes by speaker, running bag with
@@ -443,8 +481,9 @@ rule, and nights will be lean.
 
 ```bash
 python3 scripts/diary.py data/organism_diary_0p5b.pt data/tok_char.json --dev mps --port 8018 \
-    --temp 0.05 --store-read-beta 1.0 --store-boost 16 --store-boost-min 0.15 \
-    --live-lr 1e-5 --store-decay 0.9 --save data/organism_diary_0p5b.pt --diary-period 0.5
+    --temp 0.05 --store-read-beta 1.0 --store-boost 4 --store-boost-min 0.15 \
+    --live-lr 1e-5 --store-decay 0.9 --save data/organism_diary_0p5b.pt --diary-period 0.5 \
+    --diary-cost 0.12 --cort-k 1.0
 ```
 
 The live rate is ten times the word body's on purpose: the first thing

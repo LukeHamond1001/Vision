@@ -31,20 +31,35 @@ and follows the child's attention rather than a schedule.
   trunk's first own letter came out as a wall of "m", and one frown sent
   its own voice back to silence.) If no known word starts with the letter
   ("eeee"), write any ordinary known line: that breaks a run where
-  expansion cannot. Frown briefly, at most once a minute, only at runs of
+  expansion cannot. A run that starts while you are waiting on the gate
+  is ended by your next line, which it then answers as a frame (day 12);
+  expand it once only if it comes back three times. Frown briefly, at most once a minute, only at runs of
   non-letters. Never smile at a completion's tail ("all gone") more than
   once in a row; smiles on a tail bred a forty-tick run of its last
   letter.
 - **Faces are prosody.** Still while your letters enter; smile the moment
   its post-line letters appear (credit reaches back six seconds, no more);
   smiles for echoes, expansions and quiet; never a smile for noise or for
-  the shadow of your own typing.
+  the shadow of your own typing. Smile from a resting face: only a face
+  that grows or flips sign is felt, and easing back to 0 is silent, so
+  relax to 0 after each reply and smile 0 -> 2 once at the first taught
+  word or expansion (day 12: five smiles set from a held 2 to 2 were
+  never felt, and trust bled 7.9 to 7.2 until the face was relaxed). A
+  correct completion after a cue earns the same smile, before and after
+  the night alike.
 - **Stress is the budget.** Measured on day 11: a line costs about 0.18
   stress per character (it shadows under your hand and pays for every
   letter), forty seconds of quiet returns about 0.7, and whole-word
   completions come below about 5: keep lines short (under twelve
-  characters where the frame allows), returns near forty seconds, and
-  watch the stress reading; stretch the return when it passes 5.
+  characters where the frame allows) and pace by the reading, not the
+  clock: before each line wait until stress is at or below 3 by day, 4
+  after a night, and never longer than two minutes. The floor is set by
+  its own trunk, which babbles a run of its favourite letter whenever the
+  page is quiet and pays for every symbol (day 12: gates of 2 and 3 sat
+  under that floor and stalled the session for a quarter of an hour
+  twice). A long chain from memory can spend the whole budget in one
+  reply (64 symbols to stress 8 on day 12): that is the stamina law
+  working, not a run.
 - **Ask and answer on one line.** A new line ends a thought, so a question
   on one line cannot chain to its answer on the next: write "where ball?
   ball on" as one utterance (day 8).
