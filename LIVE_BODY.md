@@ -283,8 +283,10 @@ Everything the running body uses that is not a learned weight:
   nightly drift of +-0.3 inside [14.5, 17.5]; pursuit adopt 0.45, target
   0.3; mood lowers the peak bar by 0.6 x mood/6 and the margin by 0.3 x
   mood/6.
-- Conscience (once one exists): self-praise above 0.95 and self-frown
-  below 0.15, budgets 4 and 3 a day, felt only, never absorbed.
+- Conscience: a body from nothing has none until a night finds at least
+  twelve of your judgments, then grows one in its own embedding space and
+  saves it beside its life file; once it exists, self-praise above 0.95
+  and self-frown below 0.15, budgets 4 and 3 a day, felt only, never absorbed.
 - Night: the lived-day replay drops a model turn that is empty or whose
   modal token exceeds half of a body of six or more tokens; dream pairs
   are chosen by charge = surprise + |mood| + 3 x felt + 2 x pride;

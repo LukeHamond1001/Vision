@@ -397,7 +397,7 @@ class Organism:
             opt.step()
         self.critic.eval()
         torch.save({"sd": self.critic.state_dict(), "dim": X.shape[1]},
-                   "data/critic.pt")
+                   (getattr(self.a, "save", None) or "data/organism_life.pt") + ".critic.pt")
         return ("conscience recalibrated on the last %d of your %d "
                 "judgments" % (len(real), self.n_human_presses))
 
@@ -2157,9 +2157,16 @@ class Organism:
         real = [e for e in self.press_log
                 if "mag" in e and not e.get("self")
                 and not e.get("stmt") and not e.get("live")]
-        if self.critic is not None and len(real) >= 12 and \
+        if len(real) >= 12 and \
                 self.n_human_presses > getattr(self, "_critic_seen", 0):
             try:
+                if self.critic is None:
+                    # a body from nothing grows its conscience from its own
+                    # caretaker's judgments, in its own embedding space
+                    import torch.nn as _nn
+                    self.critic = _nn.Sequential(
+                        _nn.Linear(int(self.m.d), 64), _nn.ReLU(), _nn.Linear(64, 1))
+                    self.critic.eval()
                 recal_note = self._recalibrate_conscience(real)
                 self._critic_seen = self.n_human_presses
             except Exception as e_:
