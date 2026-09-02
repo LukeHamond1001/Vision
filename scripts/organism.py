@@ -65,6 +65,7 @@ class Organism:
         # online TD step at every felt change; speaking costs (cortisol)
         self.face_now = 0.0
         self.day_faces = []
+        self.day_who = []
         self.cortisol = 0.0
         self._cort_t = None
         self.opt_face = torch.optim.Adam(self.m.face_head.parameters(), lr=float(a.face_lr)) \
@@ -184,6 +185,13 @@ class Organism:
     def _rec_face(self, n):
         """the day's record of the face, aligned with the day's tokens"""
         self.day_faces.extend([float(self.face_now)] * n)
+        self.day_who.extend([int(getattr(self, "_who_now", 0))] * n)   # 0 the ear, 1 the mouth, 2 the mouth praised
+
+    def _mark_praised(self):
+        """the reply that just landed was praised: its words may be rehearsed tonight"""
+        n = int(getattr(self, "_last_out_n", 0) or 0)
+        if n and len(self.day_who) >= n:
+            self.day_who[-n:] = [2] * n
 
     CORT_HALF_LIFE_S = 120.0   # genome: stress clears in two quiet minutes
 
@@ -504,6 +512,8 @@ class Organism:
         fragment at a time — under the face of that moment. What is
         said is said: there is no message, only the turn."""
         t = self._turn()
+        if not t["text"] and hasattr(self.m, "reset_bag"):
+            self.m.reset_bag(self.st)              # your first word: your words are keyed by your words
         self.last_user_t = time.time()
         self._decay_mood()
         self._decay_cort()
@@ -820,6 +830,7 @@ class Organism:
         g = self.gen_ctx
         text, out, pre = g["text"], g["out"], g["pre"]
         surp, surp_pk, mood_n = g["surp"], g["surp_pk"], g["mood_n"]
+        self._who_now = 1                              # the mouth's words
         self.day_buf.extend(out)
         self._rec_face(len(out))
         self.fatigue += 0.15 + len(out) / 80.0
@@ -836,6 +847,8 @@ class Organism:
         if not out or out[-1] != self.em:
             self.day_buf.append(self.em)
             self._rec_face(1)
+        self._last_out_n = len(out) + (0 if out and out[-1] == self.em else 1)
+        self._who_now = 0
         press_vals = {v_: k_ for k_, v_ in self.press_ids.items()}
         keep_i = [i_ for i_, t_ in enumerate(out)
                   if t_ not in (self.sil, self.em) and t_ not in press_vals
@@ -1223,6 +1236,7 @@ class Organism:
             if k:
                 loss = self.absorb(q, ans, k, span=sp_rng)
                 info["absorbed_steps"] = k
+                self._mark_praised()
                 info["loss"] = round(loss, 3)
         elif tgt and mag <= -2 and tgt[1]:
             k = max(0, min(int(round(-mag + max(0.0, v_exp))) - 1, 3))
@@ -1504,17 +1518,24 @@ class Organism:
                         [t_ for t_ in out if t_ != self.sil]) >= max_new:
                     break
                 x = torch.tensor([[nxt]], device=self.dev)
+        self._who_now = 1                              # the mouth's words
         self.day_buf.extend(out)
         self._rec_face(len(out))
         tail = [out[-1]] if out and out[-1] == self.em else \
             (out[-1:] + [self.em] if out else [self.em])
         with torch.no_grad():
-            _, self.st, _ = self.m(
-                torch.tensor([tail], device=self.dev), self.st,
-                affect=self._aff(len(tail)))
+            self.m.store_write_off = True
+            try:
+                _, self.st, _ = self.m(
+                    torch.tensor([tail], device=self.dev), self.st,
+                    affect=self._aff(len(tail)))
+            finally:
+                self.m.store_write_off = False
         if not out or out[-1] != self.em:
             self.day_buf.append(self.em)
             self._rec_face(1)
+        self._last_out_n = len(out) + (0 if out and out[-1] == self.em else 1)
+        self._who_now = 0
         self.last_trace = [
             {"t": self._tok_word(n_), "p": round(p_, 3),
              "alt": [[self._tok_word(i_), round(pp_, 3)]
@@ -1881,6 +1902,7 @@ class Organism:
                 stream.extend(self.tok.encode(q).ids + [self.eh])
         tail_dropped = 0
         faces_n = None                       # the day's faces ride only the lived-day replay
+        who_n = None
         if stream:
             tail_, tail_dropped = self._clean_tail(
                 self.day_buf[-(192 if excited else 128):])
@@ -1890,6 +1912,8 @@ class Organism:
             stream, tail_dropped = self._clean_tail(self.day_buf[-1024:])
             if len(self.day_faces) == len(self.day_buf):
                 faces_n = self.day_faces[-1024:][:len(stream)]
+            if len(self.day_who) == len(self.day_buf):
+                who_n = self.day_who[-1024:][:len(stream)]
         stream += [self.sil] * ((64 - len(stream) % 64) % 64)
         self.m.train()
         st_s = self.m.init_state(1, self.dev)
@@ -1903,7 +1927,16 @@ class Organism:
             y = torch.tensor(stream[i + 1:i + 65] + [self.sil],
                              device=self.dev)[:64]
             self.opt.zero_grad(set_to_none=True)
-            night_loss = 0.1 * F.cross_entropy(lg[0], y)
+            if who_n is not None:
+                # the night rehearses what was heard and what was praised;
+                # the mouth's unpraised babble is not rehearsed into the weights
+                wt = [0.0 if (j < len(who_n) and who_n[j] == 1) else 1.0
+                      for j in range(i + 1, i + 1 + int(y.shape[0]))]
+                w_ = torch.tensor(wt, device=self.dev)
+                night_loss = 0.1 * (F.cross_entropy(lg[0], y, reduction="none") * w_).sum() \
+                    / w_.sum().clamp(min=1.0)
+            else:
+                night_loss = 0.1 * F.cross_entropy(lg[0], y)
             vl = self.m.pop_value_loss() \
                 if hasattr(self.m, "pop_value_loss") else None
             if vl is not None:
@@ -1979,6 +2012,7 @@ class Organism:
         lived = len(self.day_buf)
         self.day_buf = []
         self.day_faces = []
+        self.day_who = []
         self.cortisol *= 0.3          # sleep clears most of the day's stress
         fid = {str(k): round(float(v), 3)
                for k, v in getattr(self.m, "rem_fid", {}).items()}
@@ -2191,6 +2225,7 @@ class Organism:
         self._flush_working(self.st)
         self.day_buf, self.session = [], []
         self.day_faces = []
+        self.day_who = []
         self.turn_ctx, self.gen_ctx = None, None
         self.last_q = None
         self.self_noticed = []

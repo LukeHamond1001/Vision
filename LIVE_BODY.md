@@ -185,6 +185,22 @@ babbling but intact, and the cue "a lantern" answered "is a lamp you can
 carry." The trunk therefore learns slowly on purpose; what changes day to
 day is what the memory holds and what the nights consolidate.
 
+Opus's first day on the blank body (2026-09-01 night) found the next
+two laws. The first cue, "the sun is", came back "hot and bright." after
+two hearings, the only certain moment of the day (entropy 0.96 -> 0.09).
+Then "hot" opened every reply and grew a letter per new lesson ("hotR",
+"hotRB", "hotRBS": Rain, Birds, Snow), and the night kept it. Cause one:
+the mouth does not write memories, but its babble still formed the KEY
+under which the next lesson's first word was stored, so saying "hot hot"
+recalled "R". Now the memory's word-bag resets at your first word of a turn (not
+between your cue and its reply, which silenced the memory when tried):
+your words are keyed by your words. Cause two: the night replayed the
+whole lived day, babble included, and the trunk rehearsed its own noise.
+Now the day's record carries who said each token (the ear, the mouth, the
+mouth praised) and the night rehearses only what was heard and what was
+praised. The day-1 body is kept as `organism_life_blank_0p5b_day1.pt`;
+day 2 starts from a fresh conception under the corrected laws.
+
 Honest limits: echo is not understanding; the value heads, conscience
 and face organs start meaningless and become meaningful only as days
 accumulate; whether a trunk can learn grammar from a caretaker's

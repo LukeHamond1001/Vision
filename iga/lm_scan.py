@@ -770,6 +770,13 @@ class ScanLM(nn.Module):
         st["bag_prev"] = incl[:, -1].detach()
         return incl, excl
 
+    def reset_bag(self, st):
+        """a new turn begins: the ear's words are keyed by the ear's words,
+        never by whatever the mouth was babbling before them"""
+        if isinstance(st, dict):
+            st.pop("tail_toks", None)
+            st.pop("bag_prev", None)
+
     def _read(self, st, q_hidden, read_ok):
         """the hippocampus read: identity-space vectors from the
         previous chunks' M, alpha-weighted; q_hidden [B, d] (one token)
