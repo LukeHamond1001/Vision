@@ -582,7 +582,12 @@ old raised voice for comparison, holds every frame including the day's
 "I had milk". The body's speech was, at that hour, o-runs of one to two
 hundred symbols ended by the caregiver's next symbols, stress pinned at
 the stamina ceiling, mood near -4: the regime with the mouth's top symbol
-taken deterministically, on the last hour before temperature went. Measured on a scratch copy of the
+taken deterministically, on the last hour before temperature went. Read
+again with memory at the organ's own strength and no raised voice (the
+serve as it is now), the with-memory column is the same run of "o": the
+store's raw vote, one to three logits, does not carry through a trunk
+that prefers one letter. Speech will have to come from the weights, and
+the nights are the only road there. Measured on a scratch copy of the
 day-13 body before the first served night (CPU): three known lines
 typed with smiles gave two seeds; their traces came back from the store
 alone, " will goong in then I gothen Igoin then Igo n" (48 symbols,
