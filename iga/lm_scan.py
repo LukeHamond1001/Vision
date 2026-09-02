@@ -1586,6 +1586,11 @@ class ScanLM(nn.Module):
                 else:
                     s0_ = torch.full((B,), float(self.surp_mu), device=dev)
                 surp = torch.cat([s0_.unsqueeze(1), sp], dim=1)                                             # [B, T]
+                if who is not None and getattr(self, "speakers", 0) > 0:
+                    # COROLLARY DISCHARGE (2026-09-02): what the mouth itself wrote was foretold by
+                    # its own efference copy, so its arrival carries no surprise — self-generated
+                    # symbols are encoded weakly, as in life, and earn no intrinsic reward
+                    surp = torch.where(who.to(surp.device) == 1, torch.zeros_like(surp), surp)
                 if self.training:
                     m_ = surp.mean()
                     if float(self.surp_n) == 0:

@@ -582,9 +582,33 @@ the trunk's own logits carry them. What still stands, and is physiology
 rather than a rule: the cost of a symbol and its lean toward silence,
 the doses on its own choices under a felt face (absorb above 0.5,
 unlearn at or below -1.5, credit twelve ticks back at 0.8), the store's
-fade, the face lesson, the night's rate and rounds, and the sampling
-temperature (0.05), which is the one decoding choice left that a hand
-made and the next candidate to go.
+fade, the face lesson, and the night's rate and rounds. The sampling
+temperature went the same evening (below).
+
+## Temperature, the newline, and the efference copy (2026-09-02, evening)
+
+- **Temperature goes.** Sampling at 0.05 was a hand-imposed determinism:
+  the mouth took its top symbol whenever memory was silent, so a
+  preference of 0.19 became a habit on every tick (the newline). From day
+  15 the mouth samples from its belief as it stands (temperature 1.0):
+  what it is unsure of comes out as varied babble, what it is sure of
+  comes out as a word, and stamina ends the babble as before.
+- **The newline is a page mark, not language.** The caregiver typed one
+  at the start of every line for a thought-reset rule that no longer
+  exists, and with nothing else to hold it back the body made the
+  newline its own most frequent symbol (89 of 141 ticks after the fifth
+  restart of day 14, stress near 8). It now joins the plumbing marks the
+  mouth cannot emit, and it is dropped at the door when typed;
+  utterances are separated by silence.
+- **Corollary discharge.** With the ear-only write rule gone, the
+  mouth's own symbols became memories at full strength, and a babbling
+  body would have dreamt its own noise. Biology's answer is the
+  efference copy: what you are about to say is foretold, so its arrival
+  carries no surprise. The store's write strength is already gated by
+  surprise, so a self-written symbol now carries a surprise of zero and
+  is encoded weakly, as in life, and earns no intrinsic reward. On the
+  tiny test body at temperature 1.0 the strongest trace the store chose
+  was the caregiver's "myy balllll", not the mouth's own runs.
 
 ## Status
 
@@ -605,7 +629,7 @@ made and the next candidate to go.
 
 ```bash
 python3 scripts/diary.py data/organism_diary_0p5b.pt data/tok_char.json --dev mps --port 8018 \
-    --temp 0.05 --store-read-beta 0 --store-boost 1 --store-boost-min 0.15 \
+    --temp 1.0 --store-read-beta 0 --store-boost 1 --store-boost-min 0.15 \
     --live-lr 1e-5 --store-decay 0.9 --save data/organism_diary_0p5b.pt --diary-period 0.5 \
     --diary-cost 0.12 --cort-k 1.0
 ```

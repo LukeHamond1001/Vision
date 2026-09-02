@@ -45,6 +45,9 @@ class Diary(O.Organism):
         self.who1 = torch.tensor([[1]], device=self.dev)   # the mouth's noise
         self.who2 = torch.tensor([[2]], device=self.dev)   # the mouth from memory (part of the thought)
         self._bans = [i for i in range(11) if i != self.sil]   # it may choose silence, never a mark
+        self._nl = self.tok.token_to_id("\n")
+        if self._nl is not None:
+            self._bans.append(int(self._nl))                  # the newline is a page mark, not language (2026-09-02)
         if getattr(a, "sil_decay", None):
             self.m.kc_sil_decay = float(a.sil_decay)      # how long a thought lasts in silence
         # THREE LAWS REMOVED (2026-09-02, the user's order): a new line no longer ends a
@@ -215,7 +218,7 @@ class Diary(O.Organism):
         n = 0
         for ch in s:
             i = self.tok.token_to_id(ch)
-            if i is not None and i >= 11 and len(self.queue) < 600:   # a bounded queue: five minutes of typing
+            if i is not None and i >= 11 and i != self._nl and len(self.queue) < 600:   # a bounded queue; the newline is a page mark and never enters
                 self.queue.append(i); n += 1
         return {"queued": len(self.queue), "took": n}
 
