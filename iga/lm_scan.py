@@ -817,7 +817,12 @@ class ScanLM(nn.Module):
                 noise = noise.to(E.dtype).unsqueeze(-1)
                 keep = self.kc_decay * is_sym + self.kc_sil_decay * (1.0 - is_sym - noise) + noise
                 keep = keep * (1.0 - brk.to(E.dtype).unsqueeze(-1))       # a new line ends the thought
-                bag = bag * keep + E[tk.clamp(min=0)] * is_sym
+                e_t = E[tk.clamp(min=0)]
+                if who is not None and getattr(self, "speakers", 0) > 0 and hasattr(self, "who_in"):
+                    # SOURCE MEMORY (2026-09-02): who wrote a symbol is part of the episode, so
+                    # the speaker sense enters the key with the symbol (what she said / what I said)
+                    e_t = e_t + self.who_in.weight.detach()[who[:, t_].to(tk.device).clamp(0, self.speakers - 1)]
+                bag = bag * keep + e_t * is_sym
                 incl_l.append(nn.functional.normalize(bag, dim=-1))
             st["bag_state"] = bag.detach()
             st["ear_was_word"] = was_word
@@ -1209,6 +1214,14 @@ class ScanLM(nn.Module):
                         z_bg = torch.sigmoid(cell.z(torch.cat([h_prev.detach(), pooled.detach()], dim=-1)))
                         g_bg = z_bg if P_bg is None else z_bg * P_bg[:, i].unsqueeze(-1)
                     v_pairs[u].append((h_prev, R, h_new, g_bg))
+                    if not torch.is_grad_enabled():
+                        # THE LIVED TD PAIRS (2026-09-02): at every band's tick the pair (state before,
+                        # reward since, state after) rides in the state, detached and bounded, so the
+                        # value heads can learn at each band's own timescale from what was lived —
+                        # reward received at seconds and at hours from the same felt faces
+                        vb = st.setdefault("v_buf", {}).setdefault(u, [])
+                        vb.append((h_prev.detach(), R.detach(), h_new.detach()))
+                        del vb[:-32]
                     if self.clocks[k] == 1 and len(gtr) == t:
                         gtr.append(g.detach())
                     if self.dopamine > 0 and (k == self.dopamine_band if self.dopamine_band is not None
@@ -1736,6 +1749,28 @@ class ScanLM(nn.Module):
                 except Exception:
                     pass
         return out
+
+    def buffered_value_loss(self, st):
+        """TD across the ladder on the lived pairs the state carries (the heads learn; the
+        states are as they were lived): reward at every band's own timescale."""
+        vb = st.get("v_buf") if isinstance(st, dict) else None
+        if not vb:
+            return None
+        terms = []
+        for u, pairs in vb.items():
+            if not pairs or str(u) not in self.value:
+                continue
+            head = self.value[str(u)]
+            dev = head.weight.device
+            hp = torch.stack([a[0] for a, _, _ in pairs], 0).to(dev).float()       # [n, d] lane 0
+            R = torch.stack([b.reshape(-1)[0] for _, b, _ in pairs], 0).to(dev).float()
+            hn = torch.stack([c[0] for _, _, c in pairs], 0).to(dev).float()
+            v_prev = head(hp).squeeze(-1)
+            with torch.no_grad():
+                v_next = head(hn).squeeze(-1)
+            td = R + self.value_gamma * v_next - v_prev
+            terms.append((td ** 2).mean())
+        return torch.stack(terms).mean() if terms else None
 
     def pop_value_loss(self):
         c = self._value_loss

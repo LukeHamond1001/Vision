@@ -146,7 +146,7 @@ class Diary(O.Organism):
             for k_, item in enumerate(reversed(list(self.credit)[-12:])):
                 item[1] += felt * (0.8 ** k_)
             self.mood = max(-6.0, min(6.0, self.mood + 0.5 * felt))
-            self._dose_choices()
+            self._dose_choices(level=int(pl[0, 0]) if pl is not None else 0)
         self.ticks += 1
         if len(self.page) > 40000:                 # a bounded page: the front falls away, indices stay absolute
             drop = 20000; del self.page[:drop]; self.page_base += drop
@@ -163,18 +163,18 @@ class Diary(O.Organism):
                               round(self.m._last_own_top[1], 3)] if getattr(self.m, "_last_own_top", None) else None),
                      "dose": getattr(self, "_last_dose", None), "doses": getattr(self, "n_doses", 0)}
 
-    def _dose_choices(self):
-        """the only teacher is your face on what it actually did: choices
-        (letters or silences) whose credit rose above 0.5 are absorbed,
-        choices at or below -1.5 are unlearned (their probability pushed
-        down to a floor, never a hand-written replacement). Silence is
-        never the target unless it chose silence and you warmed to it."""
+    def _dose_choices(self, level=0):
+        """the only teacher is your face on what it actually did. GRADED (2026-09-02, no
+        thresholds): every choice of the last twelve ticks (letters or silences) takes a
+        step scaled by its own credit — up for credit, down for blame (its probability
+        pushed toward a floor, never a hand-written replacement). The same felt face is a
+        reward: it enters the lesson's forward as the press it was, so the value ladder
+        learns from it at every band's timescale, and the basal-ganglia gate learns from
+        the value's error. One system."""
         items = list(self.credit)
-        pos = [i for i, it in enumerate(items) if it[1] > 0.5]
-        neg = [i for i, it in enumerate(items) if it[1] <= -1.5]
-        if not pos and not neg:
+        if not items or max(abs(it[1]) for it in items) < 1e-3:
             return
-        seq = list(self.stream)[-26:]                # the last thirteen ticks as lived, silences included (a short dose keeps the clock)
+        seq = list(self.stream)[-26:]                # the last thirteen ticks as lived, silences included
         if len(seq) < 4:
             for it in items: it[1] = 0.0
             return
@@ -182,34 +182,51 @@ class Diary(O.Organism):
         n_m = len(items)
         # the mouth's recent choices sit at the end of the stream in order; map credit to them
         mouth_pos = [j for j in range(1, len(ids)) if who[j] != 0][-n_m:]
-        sign = {}
+        wts = {}
         for k_, j in enumerate(mouth_pos):
             idx = n_m - len(mouth_pos) + k_
-            if idx in pos: sign[j] = 1.0
-            elif idx in neg: sign[j] = -1.0
-        if not sign:
+            c = float(items[idx][1])
+            if abs(c) >= 1e-3:
+                wts[j] = max(-2.0, min(2.0, c))
+        if not wts:
             for it in items: it[1] = 0.0
             return
         x = torch.tensor([ids[:-1]], device=self.dev); wx = torch.tensor([who[:-1]], device=self.dev)
         y = torch.tensor([ids[1:]], device=self.dev)
-        sg = torch.zeros(1, len(ids) - 1, device=self.dev)
-        for j, sgn in sign.items():
-            sg[0, j - 1] = sgn
+        w = torch.zeros(1, len(ids) - 1, device=self.dev)
+        for j, c in wts.items():
+            w[0, j - 1] = c
+        pl_t = torch.zeros(1, len(ids) - 1, dtype=torch.long, device=self.dev)
+        if level:
+            pl_t[0, -1] = int(level)                  # the felt face, as the reward it was, at the tick it was felt
+        vw = float(getattr(self.a, "value_w", 0.5) or 0.0)
         self.m.train()
         try:
             self.opt.zero_grad(set_to_none=True)
             st_d = self.m.init_state(1, self.dev)
-            lg, st_d, _ = self.m(x, st_d, None, who=wx)
+            lg, st_d, _ = self.m(x, st_d, None, press_levels=pl_t, who=wx)
             ce = torch.nn.functional.cross_entropy(lg[0].float(), y[0], reduction="none")
-            absorb = (ce * (sg[0] > 0).float()).sum()
-            # unlearn: push the chosen symbol's log-probability down until its loss is at least 3 nats
-            unlearn = (torch.relu(3.0 - ce) * (sg[0] < 0).float()).sum()
-            loss = (absorb + unlearn) / sg.abs().sum().clamp(min=1.0)
+            up = (ce * torch.relu(w[0])).sum()
+            down = (torch.relu(3.0 - ce) * torch.relu(-w[0])).sum()   # blame pushes the symbol's loss to at least 3 nats
+            loss = (up + down) / w.abs().sum().clamp(min=1e-3)
+            vl = self.m.pop_value_loss() if hasattr(self.m, "pop_value_loss") else None
+            bl = self.m.buffered_value_loss(self.st) if hasattr(self.m, "buffered_value_loss") else None
+            if vw > 0:
+                if vl is not None:
+                    loss = loss + vw * vl
+                if bl is not None:
+                    loss = loss + vw * bl
+            bg = self.m.pop_bg_loss() if hasattr(self.m, "pop_bg_loss") else None
+            if bg is not None:
+                loss = loss + bg
+            self._pop_side_losses()
             loss.backward()
             self.opt.step()
         finally:
             self.m.eval()
-        self._last_dose = {"absorbed": int((sg > 0).sum()), "unlearned": int((sg < 0).sum()), "tick": self.ticks}
+        self._last_dose = {"up": int((w > 0).sum()), "down": int((w < 0).sum()), "level": int(level),
+                           "value": (round(float(vl.detach()), 3) if vl is not None else None),
+                           "ladder": (round(float(bl.detach()), 3) if bl is not None else None), "tick": self.ticks}
         self.n_doses = getattr(self, "n_doses", 0) + 1
         for it in items: it[1] = 0.0
 
@@ -423,13 +440,21 @@ class Diary(O.Organism):
             self.opt.zero_grad(set_to_none=True)
             (loss * scale).backward(); self.opt.step(); self.n_steps += 1; rem += 1
             cos_log.append(cosv)
+        # the value ladder replays the day's lived pairs once more (reward at every timescale)
+        vw = float(getattr(a, "value_w", 0.5) or 0.0)
+        vsteps = 0
+        if vw > 0 and hasattr(m, "buffered_value_loss"):
+            bl = m.buffered_value_loss(self.st)
+            if bl is not None:
+                self.opt.zero_grad(set_to_none=True)
+                (vw * bl).backward(); self.opt.step(); self.n_steps += 1; vsteps = 1
         m.eval()
         gauge_after = self._gauge(traces)
         dec = lambda ids: self.tok.decode(list(ids))
         return {"starts": len(starts), "traces": len(traces), "empty": empty,
                 "mean_len": round(sum(len(i_) for i_ in traces) / len(traces), 1),
                 "examples": [dec(i_)[:32] for i_ in traces[:8]],
-                "nrem_steps": nrem, "rem_steps": rem,
+                "nrem_steps": nrem, "rem_steps": rem, "value_steps": vsteps,
                 "rem_cos": (round(sum(cos_log) / len(cos_log), 3) if cos_log else None),
                 "gauge": {"before": gauge_before, "after": gauge_after}}
 

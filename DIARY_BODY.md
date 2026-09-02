@@ -632,10 +632,11 @@ silence. Speech has to grow back from the nights: the caregiver's lines,
 tagged by smiles, replayed from the hippocampus into the weights until
 the trunk's own logits carry them. What still stands, and is physiology
 rather than a rule: the cost of a symbol and its lean toward silence,
-the doses on its own choices under a felt face (absorb above 0.5,
-unlearn at or below -1.5, credit twelve ticks back at 0.8), the store's
-fade, the face lesson, and the night's rate and rounds. The sampling
-temperature went the same evening (below).
+the graded doses on its own choices under a felt face (credit twelve
+ticks back at 0.8, every choice stepped by its own credit), the value
+ladder and the basal ganglia learning from the same felt faces, the
+store's fade, the face lesson, and the night's rate and rounds. The
+sampling temperature went the same evening (below).
 
 ## Temperature, the newline, and the efference copy (2026-09-02, evening)
 
@@ -662,6 +663,45 @@ temperature went the same evening (below).
   tiny test body at temperature 1.0 the strongest trace the store chose
   was the caregiver's "myy balllll", not the mouth's own runs.
 
+## One reward system (2026-09-02, evening): create reward, receive it at every timescale
+
+The user's aim in one sentence: one system, which creates its own reward
+and receives it at short and long timescales, with no cheats. The organs
+were in the body already; the diary had left three of them untrained.
+Now:
+
+- **Reward is created in two ways.** From outside, your felt face,
+  which enters the body as the press it was (a level at the tick it was
+  felt). From inside, prediction success: the body's own surprise below
+  its running mean is a small reward, bounded like a press; by the
+  standing law it manages computation and never touches the logits.
+- **The short timescale: graded doses.** A felt face spreads credit over
+  the last twelve ticks, and every choice in that window, letter or
+  silence, takes a step scaled by its own credit, up for credit and down
+  for blame (its probability pushed toward a floor, never a hand-written
+  replacement). The two thresholds that decided who learned (absorb
+  above 0.5, unlearn at or below -1.5) are gone: dopamine scales
+  plasticity, it does not gate it.
+- **The long timescales: the value ladder learns.** Each band carries a
+  value head trained by temporal difference at the band's own cadence,
+  band 3 every symbol and band 8 every 32,768, so a smile is foreseen
+  seconds ahead by the fast band and hours ahead by the slow one. The
+  lived pairs (state before a tick, reward since, state after) ride in
+  the state, detached and bounded to thirty-two per band, and the heads
+  learn from them at every dose and once more each night. Dopamine, the
+  fast band's prediction error, already scales the store's writes; as
+  the heads learn it becomes a true error of expectation rather than the
+  raw press.
+- **The basal ganglia learn.** The fast band's gate learns to open when
+  the value's error is positive (wanting), from the same lessons.
+- **Source memory.** The speaker sense enters the hippocampal key with
+  each symbol, so a memory records who said it.
+
+Measured on the tiny test body: one felt smile credited twelve choices,
+the fast band's value error was 0.08 within the window, and the ladder
+held lived pairs for bands 3 to 6 (32, 32, 13 and 1) after a few minutes
+of life. Flag: `--value-w 0.5`, the weight of the ladder's lesson.
+
 ## Status
 
 - model: speaker channel, ear-writes by speaker, running bag with
@@ -683,7 +723,7 @@ temperature went the same evening (below).
 python3 scripts/diary.py data/organism_diary_0p5b.pt data/tok_char.json --dev mps --port 8018 \
     --temp 1.0 --store-read-beta 0 --store-boost 1 --store-boost-min 0.15 \
     --live-lr 1e-5 --store-decay 0.9 --save data/organism_diary_0p5b.pt --diary-period 0.5 \
-    --diary-cost 0.12 --cort-k 1.0
+    --diary-cost 0.12 --cort-k 1.0 --value-w 0.5 --night-rounds 2 --night-rem 8 --night-sigreg 0.1 --night-starts 48
 ```
 
 The live rate is ten times the word body's on purpose: the first thing
