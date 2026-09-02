@@ -490,6 +490,33 @@ replay teaching quiet. Gates: fifteen of forty-six ran out the two-minute
 cap in the first hour while the babble held the floor near 3.6; once the
 runs stopped the median gate fell to 55 seconds.
 
+## Day 14 (Opus, stage 4: had, scared, saw again; the day the rules went)
+
+Forty-one lines (twenty-nine known, twelve roped: had, scared and saw
+three times each plus one re-exposure apiece after restarts), sixteen
+cues, one night, five restarts of the serve as the laws came out one by
+one, so a measurement day more than a lesson. Four regimes on one page.
+Before the first restart every line drew a reply from memory: "dog will
+go" -> "one thn Igo" (one then I go, four known words never chained by
+anyone), "first milk then ball" and "you had ball" both carried into
+"ball under" unprompted, and the cues "first milk then " -> "ballluder",
+"big dog bigger " -> "dog up", "why dog up? " -> "because bi" answered
+with a second hop each. With memory's raised voice gone but its
+amplification still on, strong memories still spoke. With the
+amplification gone the mouth fell silent within minutes and stress fell
+under 1. With its own symbols entering its thought and its memory, it
+pinned itself: runs of "o" of 196, 111, 113 and 95, 209 newlines of its
+own, stress locked between 4 and 8.8, mood down to -3.6, the gate never
+opening again. Nothing said "had", "scared" or "saw" all day, and the
+three cues for them were silent both times; the three early cues held
+before the night and none answered after it, when every cue met an
+o-run. The night is recorded above: the first that moved the weights.
+The caregiver's faults, both caught by supervision: four smiles from a
+face left held at 2 (unfelt), and eight smiles at its quiet that dosed
+silence and took its own top symbol from 0.16 to 0.93 in six minutes.
+Quiet fraction 1.000, 0.927, 0.864. Lived at the night 516, at the end
+1,300; saved with 82 live steps.
+
 ## The night, remade (2026-09-02): the cortex learns only from hippocampal traces
 
 The user's law, in two sentences: the neocortex trains only on what the
