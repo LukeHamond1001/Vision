@@ -43,7 +43,8 @@ class Diary(O.Organism):
         self.lock = threading.RLock()
         self.period = float(getattr(a, "diary_period", 0.5))
         self.who0 = torch.tensor([[0]], device=self.dev)
-        self.who1 = torch.tensor([[1]], device=self.dev)
+        self.who1 = torch.tensor([[1]], device=self.dev)   # the mouth's noise
+        self.who2 = torch.tensor([[2]], device=self.dev)   # the mouth from memory (part of the thought)
         self._bans = [i for i in range(11) if i != self.sil]   # it may choose silence, never a mark
         self.m.reset_bag(self.st) if hasattr(self.m, "reset_bag") else None
         threading.Thread(target=self._loop, daemon=True).start()
@@ -93,8 +94,11 @@ class Diary(O.Organism):
         ent = float(-(p1 * (p1 + 1e-9).log()).sum() / math.log(max(2, p1.numel())))
         pr = torch.softmax(v / max(0.02, float(self.a.temp)), -1).cpu()
         nxt = int(torch.multinomial(pr, 1, generator=self.gen))
+        backed = bool(_lv and _lv[1] and int(_lv[1][0]) == nxt and nxt != self.sil
+                      and mem_max >= float(getattr(self.a, "store_boost_min", 0.0) or 0.0))
         with torch.no_grad():
-            _, self.st, _ = self.m(torch.tensor([[nxt]], device=self.dev), self.st, affect=aff, who=self.who1)
+            _, self.st, _ = self.m(torch.tensor([[nxt]], device=self.dev), self.st, affect=aff,
+                                    who=(self.who2 if backed else self.who1))
         if nxt != self.sil:
             # speaking costs: each symbol adds a little stress (half-life 120 s),
             # stress favours silence and weighs a little on mood
@@ -120,7 +124,7 @@ class Diary(O.Organism):
                      "face": None if its_face is None else round(its_face, 2),
                      "mood": round(self.mood, 2), "cort": round(self.cortisol, 2), "ent": round(ent, 2),
                      "mem": [[self.tok.decode([int(i_)]), round(float(v_), 2)] for v_, i_ in zip(*_lv)] if _lv else None,
-                     "felt": felt, "said": self.tok.decode([nxt]) if nxt != self.sil else ""}
+                     "felt": felt, "said": self.tok.decode([nxt]) if nxt != self.sil else "", "backed": backed}
 
     def _dose_if_due(self):
         """rolling doses: the mouth's recent symbols carrying credit above 0.5

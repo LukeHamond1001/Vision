@@ -757,7 +757,7 @@ class ScanLM(nn.Module):
         x = x.float() if self.autocast_bf16 else x
         return x[:, 0]
 
-    def _content_bags(self, tokens, st):
+    def _content_bags(self, tokens, st, who=None):
         """content keys: a recency-weighted bag of the last kc_w token
         embeddings, unit norm, detached. Returns (incl, excl): incl[t]
         includes x_t (the read query at t: what follows this?), excl[t]
@@ -778,7 +778,12 @@ class ScanLM(nn.Module):
             for t_ in range(T):
                 excl_l.append(nn.functional.normalize(bag, dim=-1))
                 tk = tokens[:, t_]
-                is_sym = (tk >= skip).to(E.dtype).unsqueeze(-1)
+                is_sym = (tk >= skip)
+                if who is not None:
+                    # the diary's three hands: the ear (0) and the mouth-from-memory (2)
+                    # carry the thought; the mouth's noise (1) is not part of it
+                    is_sym = is_sym & (who[:, t_].to(tk.device) != 1)
+                is_sym = is_sym.to(E.dtype).unsqueeze(-1)
                 bag = bag * (self.kc_decay * is_sym + self.kc_sil_decay * (1.0 - is_sym)) \
                     + E[tk.clamp(min=0)] * is_sym
                 incl_l.append(nn.functional.normalize(bag, dim=-1))
@@ -1048,7 +1053,7 @@ class ScanLM(nn.Module):
         if kc:
             q0 = st.get("bag_prev")
             rd0 = self._read(st, q0, read_ok) if (st["chunk"] > 0 and q0 is not None) else None
-            bag_incl, bag_excl = self._content_bags(tokens, st)
+            bag_incl, bag_excl = self._content_bags(tokens, st, who)
         else:
             rd0 = self._read(st, st["prev_c"], read_ok) if st["chunk"] > 0 else None
         r_slot = self.store_in(rd0 * getattr(self, "store_slot_gain", 1.0)) if rd0 is not None \

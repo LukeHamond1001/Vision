@@ -18,6 +18,12 @@ face on its noise and on its quiet is how it learns when to be still.
   position (that is noise, not a conversation).
 - **The ear writes, the mouth does not,** now inside the model by the
   speaker channel: only speaker 0's symbols become memory values.
+- **Three hands in the bag.** The first GPU run showed the newborn mouth
+  babbling between your letters as you typed, and its junk letters became
+  part of the keys your sentences were stored under. So the mouth has two
+  hands: a letter it writes from memory (speaker 2) joins the thought and
+  advances the echo; a letter it writes from noise (speaker 1) is in the
+  stream but not in the bag.
 - **Memory over letters:** the same content-keyed store with a running
   bag (decay 0.92 per symbol) that fades in silence (x0.6 per silent
   tick), so a pause separates one thought from the next without a mark;
@@ -35,13 +41,13 @@ face on its noise and on its quiet is how it learns when to be still.
 ## The body
 
 `data/organism_diary_0p5b.pt`: conceived from nothing, d 1024 x 29
-layers, untied head, content keys 40/0.92, kernel 4.5, speakers 2,
-silence decay 0.6:
+layers, untied head, content keys 40/0.92, kernel 4.5, three hands
+(speakers 3), silence decay 0.6:
 
 ```bash
 python3 scripts/conceive.py data/organism_diary_0p5b.pt data/tok_char.json \
     --d 1024 --n-layers 29 --content-keys --kc-w 40 --kc-decay 0.92 --kernel 4.5 \
-    --speakers 2 --sil-decay 0.6
+    --speakers 3 --sil-decay 0.6
 ```
 
 ## What to expect
@@ -69,8 +75,13 @@ with noise.
 ```bash
 python3 scripts/diary.py data/organism_diary_0p5b.pt data/tok_char.json --dev mps --port 8018 \
     --temp 0.05 --store-read-beta 1.0 --store-boost 16 --store-boost-min 0.15 \
-    --live-lr 1e-6 --store-decay 0.9 --save data/organism_diary_0p5b.pt --diary-period 0.5
+    --live-lr 1e-5 --store-decay 0.9 --save data/organism_diary_0p5b.pt --diary-period 0.5
 ```
+
+The live rate is ten times the word body's on purpose: the first thing
+frowns must teach a newborn mouth is silence, which is the cheapest
+attractor a trunk can fall into, so here the collapse the word body had
+to avoid is the lesson.
 
 Reflexes it keeps from the word body: press marks banned (silence is
 allowed), a sure memory speaks with one voice while the trunk is unsure
