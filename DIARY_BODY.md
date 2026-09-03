@@ -730,6 +730,18 @@ against no REM, and the guard is what keeps it harmless. The drop was
 the day's, not REM's, and the night stays as it is. It woke with stress 1.1 and mood
 0.0, the highest mood of its life, and its own top symbol "o" at 0.37.
 
+**The fourth night it took by itself (day 19, 20:37, tick 11,405),
+under the two-minute pace all day.** Asleep a hundred seconds. Thirty
+traces, eighteen keys drawing nothing, mean length 6: "og wil up", "big
+dog iger dog p", "give m", "scared bal", "hy ". Sixty NREM steps, eight
+REM at cosine 0.47, one value step. The rich gauge: 0.307 before, 0.467
+after, the largest rise of any night so far on seventy-five symbols. It
+woke with stress 2.6, mood -0.05, and its own top symbol "r" at 0.86,
+the free-running favourite still one letter while the teacher-forced
+trunk carries more of every frame each night; the two readings keep
+diverging, and the day the free-running one turns into a frame is the
+day to wait for.
+
 The trunk-alone cue test on a scratch
 copy of the post-night body: the trunk alone writes a run of "o" to
 every cue (its own top symbol moved from the newline to "o" across the
