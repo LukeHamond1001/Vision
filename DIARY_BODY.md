@@ -605,6 +605,24 @@ losing the two later smiles; the caregiver marked the frozen windows
 void and rebuilt its smile log from the console. Saved with 79 live
 steps.
 
+## Day 19 (Opus, consolidation at the two-minute pace all day)
+
+Forty-three lines and sixteen cues, one event about every two minutes
+from the first line, nothing frozen, nothing void. Three known words
+written awake, "go", "hi" and "my", all in rests, all caught by the
+two-second watch and smiled at within two seconds, all three felt; 337
+bare single letters treated as babble. No cue completed before or after
+the night, but before it only two of eight cues drew any letter and
+after it six of eight did, and its own top symbol changed from "i" to
+"u" across the night. Mood sagged steadily to -3.3 by 20:14 with one
+smile in the first hour and recovered on the second; stress 6 to 8
+before the night, 5 to 6 after; it slept at 20:37 with the pressure at
+11,996 and woke two minutes later at stress 3.6 and mood -0.1. The night
+is recorded above (the largest rise of the gauge so far, its dreams the
+day's lines nearly whole). The trunk-alone test on the day's saved body:
+a run of "u" to every cue, memory on or off, the free-running favourite
+unchanged in kind. Saved with 69 live steps.
+
 ## The night, remade (2026-09-02): the cortex learns only from hippocampal traces
 
 The user's law, in two sentences: the neocortex trains only on what the
