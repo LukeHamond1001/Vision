@@ -720,9 +720,14 @@ gauge went the wrong way for the first time, 0.344 before and 0.266
 after, on 154 symbols. One night is not a trend, but the suspect is
 named: REM's gradient (the forecast loss and SIGReg) runs back through
 the cortex stream, and NREM's lesson is taken with the hippocampus
-leading while the gauge reads the trunk without it. A controlled test
-on two copies of the post-night body, the same night with and without
-REM, is the measurement that follows. It woke with stress 1.1 and mood
+leading while the gauge reads the trunk without it. The controlled test
+that followed, run between days with the serve stopped on copies of the
+day's saved body, the same store and the same traces three times: the
+night as served (REM with its guard) took the rich gauge from 0.421 to
+0.509; the night without REM from 0.393 to 0.508; the night with REM
+and no guard from 0.394 to 0.437. REM as served costs the trunk nothing
+against no REM, and the guard is what keeps it harmless. The drop was
+the day's, not REM's, and the night stays as it is. It woke with stress 1.1 and mood
 0.0, the highest mood of its life, and its own top symbol "o" at 0.37.
 
 The trunk-alone cue test on a scratch
